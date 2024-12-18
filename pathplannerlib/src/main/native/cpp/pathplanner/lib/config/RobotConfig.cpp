@@ -6,6 +6,11 @@
 
 using namespace pathplanner;
 
+RobotConfig::RobotConfig() : diffKinematics(0.7_m), swerveKinematics(
+		frc::Translation2d(0_m, 0_m), frc::Translation2d(0_m, 0_m),
+		frc::Translation2d(0_m, 0_m), frc::Translation2d(0_m, 0_m)) {
+}
+
 RobotConfig::RobotConfig(units::kilogram_t mass,
 		units::kilogram_square_meter_t MOI, ModuleConfig moduleConfig,
 		std::vector<frc::Translation2d> moduleOffsets) : mass(mass), MOI(MOI), moduleConfig(

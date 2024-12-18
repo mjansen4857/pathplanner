@@ -1,32 +1,32 @@
 #include "pathplanner/lib/util/swerve/SwerveSetpointGenerator.h"
 
-SwerveSetpointGenerator::SwerveSetpointGenerator() {
-	this->config = nullptr;
-	this->maxSteerVelocity = 0_rad_per_s;
+SwerveSetpointGenerator::SwerveSetpointGenerator() : maxSteerVelocity(
+		0_rad_per_s) {
 }
 
-SwerveSetpointGenerator::SwerveSetpointGenerator(RobotConfig *config,
-		units::radians_per_second_t maxSteerVelocity) {
-	this->config = config;
-	this->maxSteerVelocity = maxSteerVelocity;
+SwerveSetpointGenerator::SwerveSetpointGenerator(const RobotConfig &config,
+		units::radians_per_second_t maxSteerVelocity) : m_robotConfig(config), maxSteerVelocity(
+		maxSteerVelocity) {
 }
 
 SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		SwerveSetpoint prevSetpoint,
 		frc::ChassisSpeeds desiredStateRobotRelative, units::second_t dt) {
 	std::vector < frc::SwerveModuleState > desiredModuleStates =
-			config->toSwerveModuleStates(desiredStateRobotRelative);
+			m_robotConfig.toSwerveModuleStates(desiredStateRobotRelative);
 	// Make sure desiredState respects velocity limits.
-	desiredModuleStates = config->desaturateWheelSpeeds(desiredModuleStates,
-			config->moduleConfig.maxDriveVelocityMPS);
-	desiredStateRobotRelative = config->toChassisSpeeds(desiredModuleStates);
+	desiredModuleStates = m_robotConfig.desaturateWheelSpeeds(
+			desiredModuleStates,
+			m_robotConfig.moduleConfig.maxDriveVelocityMPS);
+	desiredStateRobotRelative = m_robotConfig.toChassisSpeeds(
+			desiredModuleStates);
 
 	// Special case: desiredState is a complete stop. In this case, module angle is arbitrary, so
 	// just use the previous angle.
 	bool need_to_steer = true;
 	if (epsilonEquals(desiredStateRobotRelative, frc::ChassisSpeeds())) {
 		need_to_steer = false;
-		for (size_t m = 0; m < config->numModules; m++) {
+		for (size_t m = 0; m < m_robotConfig.numModules; m++) {
 			desiredModuleStates[m].angle = prevSetpoint.moduleStates[m].angle;
 			desiredModuleStates[m].speed = 0_mps;
 		}
@@ -40,7 +40,7 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 	units::meters_per_second_t desired_vy[4];
 	frc::Rotation2d desired_heading[4];
 	bool all_modules_should_flip = true;
-	for (size_t m = 0; m < config->numModules; m++) {
+	for (size_t m = 0; m < m_robotConfig.numModules; m++) {
 		prev_vx[m] = prevSetpoint.moduleStates[m].angle.Cos()
 				* prevSetpoint.moduleStates[m].speed;
 		prev_vy[m] = prevSetpoint.moduleStates[m].angle.Sin()
@@ -99,7 +99,7 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 	// Enforce steering velocity limits. We do this by taking the derivative of steering angle at
 	// the current angle, and then backing out the maximum interpolant between start and goal
 	// states. We remember the minimum across all modules, since that is the active constraint.
-	for (size_t m = 0; m < config->numModules; m++) {
+	for (size_t m = 0; m < m_robotConfig.numModules; m++) {
 		if (!need_to_steer) {
 			overrideSteering.push_back(prevSetpoint.moduleStates[m].angle);
 			continue;
@@ -152,8 +152,9 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		// that would create a large enough radius to keep the centripetal force under the
 		// friction force.
 		units::radian_t maxHeadingChange {
-				(dt.value() * config->wheelFrictionForce.value())
-						/ ((config->mass.value() / config->numModules)
+				(dt.value() * m_robotConfig.wheelFrictionForce.value())
+						/ ((m_robotConfig.mass.value()
+								/ m_robotConfig.numModules)
 								* units::math::abs(
 										prevSetpoint.moduleStates[m].speed).value()) };
 		max_theta_step = units::math::min(max_theta_step, maxHeadingChange);
@@ -167,19 +168,20 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 	// Enforce drive wheel torque limits
 	frc::Translation2d chassisForceVec;
 	units::newton_meter_t chassisTorque { 0.0 };
-	for (size_t m = 0; m < config->numModules; m++) {
+	for (size_t m = 0; m < m_robotConfig.numModules; m++) {
 		units::radians_per_second_t lastVelRadPerSec { units::math::abs(
 				prevSetpoint.moduleStates[m].speed
-						/ config->moduleConfig.wheelRadius).value() };
+						/ m_robotConfig.moduleConfig.wheelRadius).value() };
 		units::volt_t inputVoltage { frc::RobotController::GetInputVoltage() };
 		// Use the current battery voltage since we won't be able to supply 12v if the
 		// battery is sagging down to 11v, which will affect the max torque output
-		units::ampere_t currentDraw = config->moduleConfig.driveMotor.Current(
-				lastVelRadPerSec, inputVoltage);
+		units::ampere_t currentDraw =
+				m_robotConfig.moduleConfig.driveMotor.Current(lastVelRadPerSec,
+						inputVoltage);
 		currentDraw = std::min(currentDraw,
-				config->moduleConfig.driveCurrentLimit);
+				m_robotConfig.moduleConfig.driveCurrentLimit);
 		units::newton_meter_t moduleTorque =
-				config->moduleConfig.driveMotor.Torque(currentDraw);
+				m_robotConfig.moduleConfig.driveMotor.Torque(currentDraw);
 
 		units::meters_per_second_t prevSpeed =
 				prevSetpoint.moduleStates[m].speed;
@@ -192,14 +194,14 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 				|| (prevSpeed > 0_mps && desiredSpeed >= prevSpeed)
 				|| (prevSpeed < 0_mps && desiredSpeed <= prevSpeed)) {
 			// Torque loss will be fighting motor
-			moduleTorque -= config->moduleConfig.torqueLoss;
+			moduleTorque -= m_robotConfig.moduleConfig.torqueLoss;
 			forceSign = 1; // Force will be applied in direction of module
 			if (prevSpeed < 0_mps) {
 				forceAngle = forceAngle + frc::Rotation2d(180_deg);
 			}
 		} else {
 			// Torque loss will be helping the motor
-			moduleTorque += config->moduleConfig.torqueLoss;
+			moduleTorque += m_robotConfig.moduleConfig.torqueLoss;
 			forceSign = -1; // Force will be applied in opposite direction of module
 			if (prevSpeed > 0_mps) {
 				forceAngle = forceAngle + frc::Rotation2d(180_deg);
@@ -207,10 +209,10 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		}
 
 		// Limit torque to prevent wheel slip
-		moduleTorque = std::min(moduleTorque, config->maxTorqueFriction);
+		moduleTorque = std::min(moduleTorque, m_robotConfig.maxTorqueFriction);
 
 		units::newton_t forceAtCarpet = moduleTorque
-				/ config->moduleConfig.wheelRadius;
+				/ m_robotConfig.moduleConfig.wheelRadius;
 		frc::Translation2d moduleForceVec = { ((forceAtCarpet * forceSign)
 				/ 1_kg) * 1_s * 1_s, forceAngle };
 
@@ -219,23 +221,25 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 
 		// Calculate the torque this module will apply to the chassis
 		if (!epsilonEquals(0, moduleForceVec.Norm().value())) {
-			frc::Rotation2d angleToModule = config->moduleLocations[m].Angle();
+			frc::Rotation2d angleToModule =
+					m_robotConfig.moduleLocations[m].Angle();
 			frc::Rotation2d theta = moduleForceVec.Angle() - angleToModule;
-			chassisTorque += forceAtCarpet * config->modulePivotDistance[m]
-					* theta.Sin();
+			chassisTorque += forceAtCarpet
+					* m_robotConfig.modulePivotDistance[m] * theta.Sin();
 		}
 	}
 
-	frc::Translation2d chassisAccelVec = chassisForceVec / config->mass.value();
+	frc::Translation2d chassisAccelVec = chassisForceVec
+			/ m_robotConfig.mass.value();
 	units::radians_per_second_squared_t chassisAngularAccel {
-			chassisTorque.value() / config->MOI.value() };
+			chassisTorque.value() / m_robotConfig.MOI.value() };
 
 	// Use kinematics to convert chassis accelerations to module accelerations
 	frc::ChassisSpeeds chassisAccel { chassisAccelVec.X() / 1_s,
 			chassisAccelVec.Y() / 1_s, chassisAngularAccel * 1_s };
-	auto accelStates = config->toSwerveModuleStates(chassisAccel);
+	auto accelStates = m_robotConfig.toSwerveModuleStates(chassisAccel);
 
-	for (size_t m = 0; m < config->numModules; m++) {
+	for (size_t m = 0; m < m_robotConfig.numModules; m++) {
 		if (min_s == 0.0) {
 			// No need to carry on.
 			break;
@@ -271,27 +275,28 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 			/ dt;
 	units::meters_per_second_squared_t chassisAccelY = (retSpeeds.vy - prevVelY)
 			/ dt;
-	units::newton_t chassisForceX = chassisAccelX * config->mass;
-	units::newton_t chassisForceY = chassisAccelY * config->mass;
+	units::newton_t chassisForceX = chassisAccelX * m_robotConfig.mass;
+	units::newton_t chassisForceY = chassisAccelY * m_robotConfig.mass;
 
 	units::radians_per_second_squared_t angularAccel = (retSpeeds.omega
 			- prevSetpoint.robotRelativeSpeeds.omega) / dt;
-	units::newton_meter_t angTorque { angularAccel.value() * config->MOI.value() };
+	units::newton_meter_t angTorque { angularAccel.value()
+			* m_robotConfig.MOI.value() };
 	frc::ChassisSpeeds chassisForces { chassisForceX * 1_s / 1_kg, chassisForceY
 			* 1_s / 1_kg, units::radians_per_second_t { angTorque.value() } };
 
 	std::vector < frc::Translation2d > wheelForces =
-			config->chassisForcesToWheelForceVectors(chassisForces);
+			m_robotConfig.chassisForcesToWheelForceVectors(chassisForces);
 
 	std::vector < frc::SwerveModuleState > retStates =
-			config->toSwerveModuleStates(chassisForces);
+			m_robotConfig.toSwerveModuleStates(chassisForces);
 	std::vector < units::meters_per_second_squared_t
-			> accelFF(config->numModules);
-	std::vector < units::newton_t > linearForceFF(config->numModules);
-	std::vector < units::ampere_t > torqueCurrentFF(config->numModules);
-	std::vector < units::newton_t > forceXFF(config->numModules);
-	std::vector < units::newton_t > forceYFF(config->numModules);
-	for (size_t m = 0; m < config->numModules; m++) {
+			> accelFF(m_robotConfig.numModules);
+	std::vector < units::newton_t > linearForceFF(m_robotConfig.numModules);
+	std::vector < units::ampere_t > torqueCurrentFF(m_robotConfig.numModules);
+	std::vector < units::newton_t > forceXFF(m_robotConfig.numModules);
+	std::vector < units::newton_t > forceYFF(m_robotConfig.numModules);
+	for (size_t m = 0; m < m_robotConfig.numModules; m++) {
 		units::meter_t wheelForceDist = wheelForces[m].Norm();
 		units::newton_t appliedForce =
 				wheelForceDist > 1e-6_m ?
@@ -301,9 +306,9 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 												- retStates[m].angle).Cos() } :
 						0_N;
 		units::newton_meter_t wheelTorque = appliedForce
-				* config->moduleConfig.wheelRadius;
-		units::ampere_t torqueCurrent = config->moduleConfig.driveMotor.Current(
-				wheelTorque);
+				* m_robotConfig.moduleConfig.wheelRadius;
+		units::ampere_t torqueCurrent =
+				m_robotConfig.moduleConfig.driveMotor.Current(wheelTorque);
 
 		std::optional < frc::Rotation2d > maybeOverride = overrideSteering[m];
 		if (maybeOverride.has_value()) {

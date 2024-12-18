@@ -30,7 +30,7 @@ public:
 	 * @param maxSteerVelocity The maximum rotation velocity of a swerve module, in radians
 	 *     per second
 	 */
-	SwerveSetpointGenerator(RobotConfig *config,
+	SwerveSetpointGenerator(const RobotConfig &config,
 			units::radians_per_second_t maxSteerVelocity);
 
 	/**
@@ -77,7 +77,7 @@ private:
 	int MAX_STEER_ITERATIONS = 8;
 	int MAX_DRIVE_ITERATIONS = 10;
 
-	RobotConfig *config = nullptr;
+	RobotConfig m_robotConfig;
 	units::radians_per_second_t maxSteerVelocity;
 	using Function2d = std::function<double(double, double)>;
 

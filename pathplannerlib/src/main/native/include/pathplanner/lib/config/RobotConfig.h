@@ -28,6 +28,8 @@ public:
 	units::newton_t wheelFrictionForce;
 	units::newton_meter_t maxTorqueFriction;
 
+	RobotConfig();
+
 	RobotConfig(units::kilogram_t mass, units::kilogram_square_meter_t MOI,
 			ModuleConfig moduleConfig,
 			std::vector<frc::Translation2d> moduleOffsets);

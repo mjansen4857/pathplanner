@@ -242,9 +242,10 @@ class SwerveSetpointGenerator:
             chassis_force_vec = chassis_force_vec + module_force_vec
 
             # Calculate the torque this module will apply to the chassis
-            angle_to_module = self._config.moduleLocations[m].angle()
-            theta = module_force_vec.angle() - angle_to_module
-            chassis_torque += force_at_carpet * self._config.modulePivotDistance[m] * theta.sin()
+            if not self._epsilonEquals(0.0, module_force_vec.norm()):
+                angle_to_module = self._config.moduleLocations[m].angle()
+                theta = module_force_vec.angle() - angle_to_module
+                chassis_torque += force_at_carpet * self._config.modulePivotDistance[m] * theta.sin()
 
         chassis_accel_vec = chassis_force_vec / self._config.massKG
         chassis_angular_accel = chassis_torque / self._config.MOI

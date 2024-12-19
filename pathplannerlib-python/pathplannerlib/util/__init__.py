@@ -6,7 +6,6 @@ from enum import Enum
 import math
 from typing import List
 
-
 def translation2dFromJson(translationJson: dict) -> Translation2d:
     x = float(translationJson['x'])
     y = float(translationJson['y'])

@@ -4,7 +4,7 @@ import math
 from dataclasses import dataclass, field
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
-from .util import floatLerp, rotationLerp, poseLerp, calculateRadius, FlippingUtil, DriveFeedforwards
+from .util import floatLerp, rotationLerp, calculateRadius, FlippingUtil, DriveFeedforwards
 from .config import RobotConfig
 from .events import *
 from typing import List, Union, TYPE_CHECKING
@@ -60,8 +60,34 @@ class PathPlannerTrajectoryState:
             floatLerp(self.fieldSpeeds.vy, end_val.fieldSpeeds.vy, t),
             floatLerp(self.fieldSpeeds.omega, end_val.fieldSpeeds.omega, t)
         )
-        lerpedState.pose = poseLerp(self.pose, end_val.pose, t)
+
+        lerpedState.heading = self.heading
         lerpedState.linearVelocity = floatLerp(self.linearVelocity, end_val.linearVelocity, t)
+
+        # Integrate the field speeds to get the pose for this interpolated state, since linearly
+        # interpolating the pose gives an inaccurate result if the speeds are changing between states
+        lerpedXPos = self.pose.x
+        lerpedYPos = self.pose.y
+        intTime = self.timeSeconds + 0.01
+        while True:
+            intT = (intTime - self.timeSeconds) / (lerpedState.timeSeconds - self.timeSeconds)
+            intLinearVel = floatLerp(self.linearVelocity, lerpedState.linearVelocity, intT)
+            intVX = intLinearVel * lerpedState.heading.cos()
+            intVY = intLinearVel * lerpedState.heading.sin()
+
+            if intTime >= lerpedState.timeSeconds - 0.01:
+                dt = lerpedState.timeSeconds - intTime
+                lerpedXPos += intVX * dt
+                lerpedYPos += intVY * dt
+                break
+
+            lerpedXPos += intVX * 0.01
+            lerpedYPos += intVY * 0.01
+
+            intTime += 0.01
+
+        lerpedState.pose = Pose2d(lerpedXPos, lerpedYPos,
+                                  rotationLerp(self.pose.rotation(), end_val.pose.rotation(), t))
         lerpedState.feedforwards = self.feedforwards.interpolate(end_val.feedforwards, t)
 
         return lerpedState
@@ -235,7 +261,7 @@ class PathPlannerTrajectory:
                     for m in range(config.numModules):
                         wheelForceDist = wheelForces[m].norm()
                         appliedForce = 0.0 if wheelForceDist <= 1e-6 else wheelForceDist * (
-                            wheelForces[m].angle() - state.moduleStates[m].angle).cos()
+                                wheelForces[m].angle() - state.moduleStates[m].angle).cos()
                         wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters
                         torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
 
@@ -244,7 +270,8 @@ class PathPlannerTrajectory:
                         torqueCurrentFF.append(torqueCurrent)
                         forceXFF.append(wheelForces[m].x)
                         forceYFF.append(wheelForces[m].y)
-                    prevState.feedforwards = DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF, forceYFF)
+                    prevState.feedforwards = DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF,
+                                                               forceYFF)
 
                     # Un-added events have their timestamp set to a waypoint relative position
                     # When adding the event to this trajectory, set its timestamp properly
@@ -491,8 +518,9 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             # This pass will only be handling acceleration of the robot, meaning that the "torque"
             # acting on the module due to friction and other losses will be fighting the motor
             lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters
-            currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, state.constraints.nominalVoltage),
-                              config.moduleConfig.driveCurrentLimit)
+            currentDraw = min(
+                config.moduleConfig.driveMotor.current(lastVelRadPerSec, state.constraints.nominalVoltage),
+                config.moduleConfig.driveCurrentLimit)
             availableTorque = config.moduleConfig.driveMotor.torque(currentDraw) - config.moduleConfig.torqueLoss
             availableTorque = min(availableTorque, config.maxTorqueFriction)
             forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters
@@ -593,8 +621,9 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             # This pass will only be handling deceleration of the robot, meaning that the "torque"
             # acting on the module due to friction and other losses will not be fighting the motor
             lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters
-            currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, state.constraints.nominalVoltage),
-                              config.moduleConfig.driveCurrentLimit)
+            currentDraw = min(
+                config.moduleConfig.driveMotor.current(lastVelRadPerSec, state.constraints.nominalVoltage),
+                config.moduleConfig.driveCurrentLimit)
             availableTorque = config.moduleConfig.driveMotor.torque(currentDraw)
             availableTorque = min(availableTorque, config.maxTorqueFriction)
             forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters

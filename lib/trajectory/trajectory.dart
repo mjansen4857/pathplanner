@@ -619,7 +619,7 @@ class TrajectoryState {
     // interpolating the pose gives an inaccurate result if the speeds are changing between states
     num poseX = pose.x;
     num poseY = pose.y;
-    num intTime = timeSeconds;
+    num intTime = timeSeconds + 0.01;
     while (true) {
       num intT =
           (intTime - timeSeconds) / (lerpedState.timeSeconds - timeSeconds);

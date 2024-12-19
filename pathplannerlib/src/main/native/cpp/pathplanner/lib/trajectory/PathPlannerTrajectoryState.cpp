@@ -25,8 +25,8 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::interpolate(
 
 	// Integrate the field speeds to get the pose for this interpolated state, since linearly
 	// interpolating the pose gives an inaccurate result if the speeds are changing between states
-	units::meter_t lerpedXPos = pose.Translation().X();
-	units::meter_t lerpedYPos = pose.Translation().Y();
+	units::meter_t lerpedXPos = pose.X();
+	units::meter_t lerpedYPos = pose.Y();
 	units::second_t intTime = time + 0.01_s;
 	while (true) {
 		double intT = ((intTime - time) / (lerpedState.time - time))();

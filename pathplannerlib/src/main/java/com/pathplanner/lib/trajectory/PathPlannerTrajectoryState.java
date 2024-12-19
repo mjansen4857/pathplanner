@@ -71,8 +71,8 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
 
     // Integrate the field speeds to get the pose for this interpolated state, since linearly
     // interpolating the pose gives an inaccurate result if the speeds are changing between states
-    double lerpedXPos = pose.getTranslation().getX();
-    double lerpedYPos = pose.getTranslation().getY();
+    double lerpedXPos = pose.getX();
+    double lerpedYPos = pose.getY();
     double intTime = timeSeconds + 0.01;
     while (true) {
       double intT = (intTime - timeSeconds) / (lerpedState.timeSeconds - timeSeconds);

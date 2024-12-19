@@ -65,7 +65,43 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
                 fieldSpeeds.vyMetersPerSecond, endVal.fieldSpeeds.vyMetersPerSecond, t),
             MathUtil.interpolate(
                 fieldSpeeds.omegaRadiansPerSecond, endVal.fieldSpeeds.omegaRadiansPerSecond, t));
-    lerpedState.pose = pose.interpolate(endVal.pose, t);
+
+    // Integrate the field speeds to get the pose for this interpolated state, since linearly
+    // interpolating the pose gives an inaccurate result if the speeds are changing between states
+    double poseX = pose.getTranslation().getX();
+    double poseY = pose.getTranslation().getY();
+    double poseRot = pose.getRotation().getRadians();
+    double intTime = timeSeconds;
+    while (true) {
+      double intT = (intTime - timeSeconds) / (lerpedState.timeSeconds - timeSeconds);
+      double intVX =
+          MathUtil.interpolate(
+              fieldSpeeds.vxMetersPerSecond, lerpedState.fieldSpeeds.vxMetersPerSecond, intT);
+      double intVY =
+          MathUtil.interpolate(
+              fieldSpeeds.vyMetersPerSecond, lerpedState.fieldSpeeds.vyMetersPerSecond, intT);
+      double intRot =
+          MathUtil.interpolate(
+              fieldSpeeds.omegaRadiansPerSecond,
+              lerpedState.fieldSpeeds.omegaRadiansPerSecond,
+              intT);
+
+      if (intTime >= lerpedState.timeSeconds - 0.01) {
+        double dt = lerpedState.timeSeconds - intTime;
+        poseX += intVX * dt;
+        poseY += intVY * dt;
+        poseRot += intRot * dt;
+        break;
+      }
+
+      poseX += intVX * 0.01;
+      poseY += intVY * 0.01;
+      poseRot += intRot * 0.01;
+
+      intTime += 0.01;
+    }
+
+    lerpedState.pose = new Pose2d(poseX, poseY, new Rotation2d(poseRot));
     lerpedState.linearVelocity = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, t);
     lerpedState.feedforwards = feedforwards.interpolate(endVal.feedforwards, t);
 

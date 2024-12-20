@@ -493,59 +493,6 @@ public class SwerveSetpointGenerator {
     }
   }
 
-  @FunctionalInterface
-  private interface Function2d {
-    double f(double x, double y);
-  }
-
-  /**
-   * Find the root of the generic 2D parametric function 'func' using the regula falsi technique.
-   * This is a pretty naive way to do root finding, but it's usually faster than simple bisection
-   * while being robust in ways that e.g. the Newton-Raphson method isn't.
-   *
-   * @param func The Function2d to take the root of.
-   * @param x_0 x value of the lower bracket.
-   * @param y_0 y value of the lower bracket.
-   * @param f_0 value of 'func' at x_0, y_0 (passed in by caller to save a call to 'func' during
-   *     recursion)
-   * @param x_1 x value of the upper bracket.
-   * @param y_1 y value of the upper bracket.
-   * @param f_1 value of 'func' at x_1, y_1 (passed in by caller to save a call to 'func' during
-   *     recursion)
-   * @param iterations_left Number of iterations of root finding left.
-   * @return The parameter value 's' that interpolating between 0 and 1 that corresponds to the
-   *     (approximate) root.
-   */
-  private static double findRoot(
-      Function2d func,
-      double x_0,
-      double y_0,
-      double f_0,
-      double x_1,
-      double y_1,
-      double f_1,
-      int iterations_left) {
-    var s_guess = Math.max(0.0, Math.min(1.0, -f_0 / (f_1 - f_0)));
-
-    if (iterations_left < 0 || epsilonEquals(f_0, f_1)) {
-      return s_guess;
-    }
-
-    var x_guess = (x_1 - x_0) * s_guess + x_0;
-    var y_guess = (y_1 - y_0) * s_guess + y_0;
-    var f_guess = func.f(x_guess, y_guess);
-    if (Math.signum(f_0) == Math.signum(f_guess)) {
-      // 0 and guess on same side of root, so use upper bracket.
-      return s_guess
-          + (1.0 - s_guess)
-              * findRoot(func, x_guess, y_guess, f_guess, x_1, y_1, f_1, iterations_left - 1);
-    } else {
-      // Use lower bracket.
-      return s_guess
-          * findRoot(func, x_0, y_0, f_0, x_guess, y_guess, f_guess, iterations_left - 1);
-    }
-  }
-
   private static double findSteeringMaxS(
       double x_0,
       double y_0,
@@ -560,21 +507,55 @@ public class SwerveSetpointGenerator {
       // Can go all the way to s=1.
       return 1.0;
     }
-    double offset = f_0 + Math.signum(diff) * max_deviation;
-    Function2d func = (x, y) -> unwrapAngle(f_0, Math.atan2(y, x)) - offset;
-    return findRoot(func, x_0, y_0, f_0 - offset, x_1, y_1, f_1 - offset, MAX_STEER_ITERATIONS);
+
+    double offset = f_0 + Math.copySign(max_deviation, diff);
+    double tan_offset = Math.tan(offset);
+
+    double num = x_0 * tan_offset - y_0;
+    double den = (y_1 - y_0) - (x_1 - x_0) * tan_offset;
+    // TODO: Check if it is possible for this to be a divide-by-zero
+    return num / den;
+  }
+
+  private static boolean isValidS(double s) {
+    return Double.isFinite(s) && s >= 0 && s <= 1;
   }
 
   private static double findDriveMaxS(
       double x_0, double y_0, double f_0, double x_1, double y_1, double f_1, double max_vel_step) {
-    double diff = f_1 - f_0;
+    double l_0 = x_0 * x_0 + y_0 * y_0;
+    double l_1 = x_1 * x_1 + y_1 * y_1;
+    double sqrt_l_0 = Math.sqrt(l_0);
+    double diff = Math.sqrt(l_1) - sqrt_l_0;
     if (Math.abs(diff) <= max_vel_step) {
       // Can go all the way to s=1.
       return 1.0;
     }
-    double offset = f_0 + Math.signum(diff) * max_vel_step;
-    Function2d func = (x, y) -> Math.hypot(x, y) - offset;
-    return findRoot(func, x_0, y_0, f_0 - offset, x_1, y_1, f_1 - offset, MAX_DRIVE_ITERATIONS);
+
+    double offset = sqrt_l_0 + Math.copySign(max_vel_step, diff);
+    double x_p = x_0 * x_1;
+    double y_p = y_0 * y_1;
+
+    // Quadratic of s
+    // TODO: Can a ever be 0? Would be a divide-by-zero
+    double a = l_0 + l_1 - 2 * (x_p + y_p);
+    double b = 2 * (x_p + y_p - l_0);
+    double c = l_0 - offset * offset;
+    double root = Math.sqrt(b * b - 4 * a * c);
+
+    // Check if either of the solutions are valid
+    double s_1 = (-b + root) / (2 * a);
+    if (isValidS(s_1)) {
+      return s_1;
+    }
+    double s_2 = (-b - root) / (2 * a);
+    if (isValidS(s_2)) {
+      return s_2;
+    }
+
+    // Since we passed the initial max_vel_step check, a solution should exist,
+    // but if no solution was found anyway, just don't limit movement
+    return 1.0;
   }
 
   private static boolean epsilonEquals(double a, double b, double epsilon) {

@@ -7,11 +7,19 @@ SwerveSetpointGenerator::SwerveSetpointGenerator() : maxSteerVelocity(
 SwerveSetpointGenerator::SwerveSetpointGenerator(const RobotConfig &config,
 		units::radians_per_second_t maxSteerVelocity) : m_robotConfig(config), maxSteerVelocity(
 		maxSteerVelocity) {
+	brownoutVoltage = frc::RobotController::GetBrownoutVoltage();
 }
 
 SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		SwerveSetpoint prevSetpoint,
-		frc::ChassisSpeeds desiredStateRobotRelative, units::second_t dt) {
+		frc::ChassisSpeeds desiredStateRobotRelative, units::second_t dt, units::volt_t inputVoltage) {
+
+	if (std::isnan(inputVoltage.value())) {
+		inputVoltage = 12_V;
+	} else {
+		inputVoltage = units::math::max(inputVoltage, brownoutVoltage);
+	}
+
 	std::vector < frc::SwerveModuleState > desiredModuleStates =
 			m_robotConfig.toSwerveModuleStates(desiredStateRobotRelative);
 	// Make sure desiredState respects velocity limits.
@@ -75,7 +83,7 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 					frc::ChassisSpeeds())) {
 		// It will (likely) be faster to stop the robot, rotate the modules in place to the complement
 		// of the desired angle, and accelerate again.
-		return generateSetpoint(prevSetpoint, frc::ChassisSpeeds(), dt);
+		return generateSetpoint(prevSetpoint, frc::ChassisSpeeds(), dt, inputVoltage);
 	}
 
 	// Compute the deltas between start and goal. We can then interpolate from the start state to
@@ -341,6 +349,12 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 
 	return SwerveSetpoint { retSpeeds, retStates, DriveFeedforwards { accelFF,
 			linearForceFF, torqueCurrentFF, forceXFF, forceYFF } };
+}
+
+SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
+		SwerveSetpoint prevSetpoint, frc::ChassisSpeeds desiredStateRobotRelative,
+		units::second_t dt) {
+	return generateSetpoint(prevSetpoint, desiredStateRobotRelative, dt, units::volt_t{frc::RobotController::GetInputVoltage()});
 }
 
 double SwerveSetpointGenerator::findRoot(Function2d func, double x_0,

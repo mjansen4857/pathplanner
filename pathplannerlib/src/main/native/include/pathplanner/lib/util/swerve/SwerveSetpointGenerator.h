@@ -33,18 +33,40 @@ public:
 	SwerveSetpointGenerator(const RobotConfig &config,
 			units::radians_per_second_t maxSteerVelocity);
 
+
 	/**
-	 * Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
-	 * this method. This method will discretize the speeds for you.
-	 *
-	 * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
-	 *     iteration setpoint instead of the actual measured/estimated kinematic state.
-	 * @param desiredStateRobotRelative The desired state of motion, such as from the driver sticks or
-	 *     a path following algorithm.
-	 * @param dt The loop time.
-	 * @return A Setpoint object that satisfies all the kinematic/friction limits while converging to
-	 *     desiredState quickly.
-	 */
+   * Generate a new setpoint with explicit battery voltage. Note: Do not discretize ChassisSpeeds
+   * passed into or returned from this method. This method will discretize the speeds for you.
+   *
+   * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
+   *     iteration setpoint instead of the actual measured/estimated kinematic state.
+   * @param desiredStateRobotRelative The desired state of motion, such as from the driver sticks or
+   *     a path following algorithm.
+   * @param dt The loop time.
+   * @param inputVoltage The input voltage of the drive motor controllers, in volts. This can also
+   *     be a static nominal voltage if you do not want the setpoint generator to react to changes
+   *     in input voltage. If the given voltage is NaN, it will be assumed to be 12v. The input
+   *     voltage will be clamped to a minimum of the robot controller's brownout voltage.
+   * @return A Setpoint object that satisfies all the kinematic/friction limits while converging to
+   *     desiredState quickly.
+   */
+	SwerveSetpoint generateSetpoint(SwerveSetpoint prevSetpoint,
+			frc::ChassisSpeeds desiredStateRobotRelative, units::second_t dt, units::volt_t inputVoltage);
+  
+   /**
+   * Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
+   * this method. This method will discretize the speeds for you.
+   *
+   * <p>Note: This method will automatically use the current robot controller input voltage.
+   *
+   * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
+   *     iteration setpoint instead of the actual measured/estimated kinematic state.
+   * @param desiredStateRobotRelative The desired state of motion, such as from the driver sticks or
+   *     a path following algorithm.
+   * @param dt The loop time.
+   * @return A Setpoint object that satisfies all the kinematic/friction limits while converging to
+   *     desiredState quickly.
+   */
 	SwerveSetpoint generateSetpoint(SwerveSetpoint prevSetpoint,
 			frc::ChassisSpeeds desiredStateRobotRelative, units::second_t dt);
 
@@ -79,6 +101,7 @@ private:
 
 	RobotConfig m_robotConfig;
 	units::radians_per_second_t maxSteerVelocity;
+	units::volt_t brownoutVoltage;
 	using Function2d = std::function<double(double, double)>;
 
 	/**

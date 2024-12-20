@@ -4,6 +4,7 @@
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/kinematics/SwerveModuleState.h>
 
+namespace pathplanner {
 /**
  * A setpoint for a swerve drivetrain, containing robot-relative chassis speeds and individual
  * module states
@@ -20,3 +21,4 @@ public:
 	std::vector<frc::SwerveModuleState> moduleStates;
 	pathplanner::DriveFeedforwards feedforwards;
 };
+}

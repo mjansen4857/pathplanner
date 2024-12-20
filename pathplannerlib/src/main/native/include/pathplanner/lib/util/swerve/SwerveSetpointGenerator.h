@@ -8,6 +8,7 @@
 
 using namespace pathplanner;
 
+namespace pathplanner {
 /**
  * Swerve setpoint generator based on a version created by FRC team 254.
  *
@@ -149,3 +150,4 @@ private:
 	}
 
 };
+}

@@ -7,13 +7,15 @@ from wpilib import RobotController
 from pathplannerlib.config import RobotConfig
 from pathplannerlib.util import DriveFeedforwards
 import math
-from typing import Callable, overload
+from typing import Callable
+
 
 @dataclass
 class SwerveSetpoint:
     robot_relative_speeds: ChassisSpeeds
     module_states: list[SwerveModuleState]
     feedforwards: DriveFeedforwards
+
 
 class SwerveSetpointGenerator:
     """
@@ -36,6 +38,7 @@ class SwerveSetpointGenerator:
         """
         self._config = config
         self._max_steer_velocity_rads_per_sec = max_steer_velocity_rads_per_sec
+        self._brownoutVoltage = RobotController.getBrownoutVoltage()
 
     @classmethod
     def from_rots_per_sec(cls, config: RobotConfig, max_steer_velocity: float) -> "SwerveSetpointGenerator":
@@ -43,12 +46,13 @@ class SwerveSetpointGenerator:
         Create a new swerve setpoint generator
 
         :param config: The robot configuration
-        :param maxSteerVelocity: The maximum rotation velocity of a swerve module, in rotations
+        :param max_steer_velocity: The maximum rotation velocity of a swerve module, in rotations
         :return: A SwerveSetpointGenerator object
         """
         return cls(config, rotationsToRadians(max_steer_velocity))
 
-    def generateSetpoint(self, prev_setpoint: SwerveSetpoint, desired_state_robot_relative: ChassisSpeeds, dt: float) -> SwerveSetpoint:
+    def generateSetpoint(self, prev_setpoint: SwerveSetpoint, desired_state_robot_relative: ChassisSpeeds, dt: float,
+                         input_voltage: float = None) -> SwerveSetpoint:
         """
         Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
         this method. This method will discretize the speeds for you.
@@ -57,18 +61,31 @@ class SwerveSetpointGenerator:
         :param desired_state_robot_relative: The desired state of motion, such as from the driver sticks or
         a path following algorithm.
         :param dt: The loop time.
+        :param input_voltage: The input voltage of the drive motor controllers, in volts. This can also
+            be a static nominal voltage if you do not want the setpoint generator to react to changes
+            in input voltage. If the given voltage is NaN, it will be assumed to be 12v. The input
+            voltage will be clamped to a minimum of the robot controller's brownout voltage.
         :return: A Setpoint object that satisfies all the kinematic/friction limits while converging to
         desired_state quickly.
         """
+        if input_voltage is None:
+            input_voltage = RobotController.getInputVoltage()
+
+        if math.isnan(input_voltage):
+            input_voltage = 12.0
+        else:
+            input_voltage = max(input_voltage, self._brownoutVoltage)
+
         desired_module_states = self._config.toSwerveModuleStates(desired_state_robot_relative)
         # Make sure desired_state respects velocity limits.
-        SwerveDrive4Kinematics.desaturateWheelSpeeds(desired_module_states, self._config.moduleConfig.maxDriveVelocityMPS)
+        SwerveDrive4Kinematics.desaturateWheelSpeeds(desired_module_states,
+                                                     self._config.moduleConfig.maxDriveVelocityMPS)
         desired_state_robot_relative = self._config.toChassisSpeeds(desired_module_states)
 
         # Special case: desired_state is a complete stop. In this case, module angle is arbitrary, so
         # just use the previous angle.
         need_to_steer = True
-        if self._epsilonEquals(desired_state_robot_relative, ChassisSpeeds()):
+        if self._epsilonEqualsSpeeds(desired_state_robot_relative, ChassisSpeeds()):
             need_to_steer = False
             for m in range(self._config.numModules):
                 desired_module_states[m].angle = prev_setpoint.module_states[m].angle
@@ -85,16 +102,16 @@ class SwerveSetpointGenerator:
         for m in range(self._config.numModules):
             prev_vx.append(
                 prev_setpoint.module_states[m].angle.cos() \
-                    * prev_setpoint.module_states[m].speed
+                * prev_setpoint.module_states[m].speed
             )
             prev_vy.append(
                 prev_setpoint.module_states[m].angle.sin() \
-                    * prev_setpoint.module_states[m].speed
+                * prev_setpoint.module_states[m].speed
             )
             prev_heading.append(prev_setpoint.module_states[m].angle)
             if prev_setpoint.module_states[m].speed < 0.0:
                 prev_heading[m] = prev_heading[m].rotateBy(Rotation2d.fromDegrees(180))
-            
+
             desired_vx.append(
                 desired_module_states[m].angle.cos() * desired_module_states[m].speed
             )
@@ -110,12 +127,12 @@ class SwerveSetpointGenerator:
                 if required_rotation_rad < math.pi / 2.0:
                     all_modules_should_flip = False
         if all_modules_should_flip \
-            and not self._epsilonEquals(prev_setpoint.robot_relative_speeds, ChassisSpeeds()) \
-            and not self._epsilonEquals(desired_state_robot_relative, ChassisSpeeds()):
+                and not self._epsilonEqualsSpeeds(prev_setpoint.robot_relative_speeds, ChassisSpeeds()) \
+                and not self._epsilonEqualsSpeeds(desired_state_robot_relative, ChassisSpeeds()):
             # It will (likely) be faster to stop the robot, rotate the modules in place to the complement
             # of the desired angle, and accelerate again.
-            return self.generateSetpoint(prev_setpoint, ChassisSpeeds(), dt)
-        
+            return self.generateSetpoint(prev_setpoint, ChassisSpeeds(), dt, input_voltage)
+
         # Compute the deltas between start and goal. We can then interpolate from the start state to
         # the goal state; then find the amount we can move from start towards goal in this cycle such
         # that no kinematic limit is exceeded.
@@ -130,7 +147,7 @@ class SwerveSetpointGenerator:
         # In cases where an individual module is stopped, we want to remember the right steering angle
         # to command (since inverse kinematics doesn't care about angle, we can be opportunistically
         # lazy).
-        override_steering: list[Rotation2d | None] = []
+        override_steering = []
         # Enforce steering velocity limits. We do this by taking the derivative of steering angle at
         # the current angle, and then backing out the maximum interpolant between start and goal
         # states. We remember the minimum across all modules, since that is the active constraint.
@@ -149,9 +166,8 @@ class SwerveSetpointGenerator:
                     # Goal angle doesn't matter. Just leave module at its current angle.
                     override_steering[m] = prev_setpoint.module_states[m].angle
                     continue
-                
-                necessary_rotation = (-prev_setpoint.module_states[m].angle
-                    ).rotateBy(desired_module_states[m].angle)
+
+                necessary_rotation = (-prev_setpoint.module_states[m].angle).rotateBy(desired_module_states[m].angle)
                 if self.flipHeading(necessary_rotation):
                     necessary_rotation = necessary_rotation.rotateBy(Rotation2d(math.pi))
 
@@ -181,8 +197,8 @@ class SwerveSetpointGenerator:
             # friction force.
             max_heading_change = \
                 (dt * self._config.wheelFrictionForce) \
-                    / ((self._config.massKG / self._config.numModules)
-                        * math.fabs(prev_setpoint.module_states[m].speed))
+                / ((self._config.massKG / self._config.numModules)
+                   * math.fabs(prev_setpoint.module_states[m].speed))
             max_theta_step = min(max_theta_step, max_heading_change)
 
             s = self._findSteeringMaxS(
@@ -202,12 +218,12 @@ class SwerveSetpointGenerator:
         for m in range(self._config.numModules):
             last_vel_rad_per_sec = \
                 prev_setpoint.module_states[m].speed \
-                    / self._config.moduleConfig.wheelRadiusMeters
+                / self._config.moduleConfig.wheelRadiusMeters
             # Use the current battery voltage since we won't be able to supply 12v if the
             # battery is sagging down to 11v, which will affect the max torque output
             current_draw = \
                 self._config.moduleConfig.driveMotor.current(
-                    math.fabs(last_vel_rad_per_sec), RobotController.getInputVoltage())
+                    math.fabs(last_vel_rad_per_sec), input_voltage)
             current_draw = min(current_draw, self._config.moduleConfig.driveCurrentLimit)
             module_torque = self._config.moduleConfig.driveMotor.torque(current_draw)
 
@@ -215,23 +231,23 @@ class SwerveSetpointGenerator:
             desired_module_states[m].optimize(prev_setpoint.module_states[m].angle)
             desired_speed = desired_module_states[m].speed
 
-            force_sign = None
+            force_sign = 1
             force_angle = prev_setpoint.module_states[m].angle
             if self._epsilonEquals(prev_speed, 0.0) \
-                or (prev_speed > 0 and desired_speed >= prev_speed) \
-                or (prev_speed < 0 and desired_speed <= prev_speed):
+                    or (prev_speed > 0 and desired_speed >= prev_speed) \
+                    or (prev_speed < 0 and desired_speed <= prev_speed):
                 # Torque loss will be fighting motor
                 module_torque -= self._config.moduleConfig.torqueLoss
-                force_sign = 1 # Force will be applied in direction of module
+                force_sign = 1  # Force will be applied in direction of module
                 if prev_speed < 0:
                     force_angle = force_angle + Rotation2d(math.pi)
             else:
                 # Torque loss will be helping the motor
                 module_torque += self._config.moduleConfig.torqueLoss
-                force_sign = -1 # Force will be applied in opposite direction of module
+                force_sign = -1  # Force will be applied in opposite direction of module
                 if prev_speed > 0:
                     force_angle = force_angle + Rotation2d(math.pi)
-            
+
             # Limit torque to prevent wheel slip
             module_torque = min(module_torque, self._config.maxTorqueFriction)
 
@@ -277,7 +293,7 @@ class SwerveSetpointGenerator:
                 max_vel_step
             )
             min_s = min(min_s, s)
-        
+
         ret_speeds = ChassisSpeeds(
             prev_setpoint.robot_relative_speeds.vx + min_s * dx,
             prev_setpoint.robot_relative_speeds.vy + min_s * dy,
@@ -327,7 +343,7 @@ class SwerveSetpointGenerator:
                 ret_states[m].speed *= -1.0
                 applied_force *= -1.0
                 torque_current *= -1.0
-            
+
             accel_FF.append((ret_states[m].speed - prev_setpoint.module_states[m].speed) / dt)
             linear_force_FF.append(applied_force)
             torque_current_FF.append(torque_current)
@@ -362,24 +378,17 @@ class SwerveSetpointGenerator:
         else:
             return angle
 
-    class Function2d:
-        def __init__(self, func: Callable[[float, float], float]):
-            self.func = func
-
-        def __call__(self, x: float, y: float) -> float:
-            return self.func(x, y)
-
     @classmethod
     def _findRoot(
-        cls, 
-        func: Function2d,
-        x_0: float,
-        y_0: float,
-        f_0: float,
-        x_1: float,
-        y_1: float,
-        f_1: float,
-        iterations_left: int
+            cls,
+            func: Callable[[float, float], float],
+            x_0: float,
+            y_0: float,
+            f_0: float,
+            x_1: float,
+            y_1: float,
+            f_1: float,
+            iterations_left: int
     ) -> float:
         """
         Find the root of the generic 2D parametric function 'func' using the regula falsi technique.
@@ -402,7 +411,7 @@ class SwerveSetpointGenerator:
 
         if iterations_left < 0 or cls._epsilonEquals(f_0, f_1):
             return s_guess
-        
+
         x_guess = (x_1 - x_0) * s_guess + x_0
         y_guess = (y_1 - y_0) * s_guess + y_0
         f_guess = func(x_guess, y_guess)
@@ -410,7 +419,7 @@ class SwerveSetpointGenerator:
             # 0 and guess on same side of root, so use upper bracket.
             return s_guess \
                 + (1.0 - s_guess) \
-                    * cls._findRoot(func, x_guess, y_guess, f_guess, x_1, y_1, f_1, iterations_left - 1)
+                * cls._findRoot(func, x_guess, y_guess, f_guess, x_1, y_1, f_1, iterations_left - 1)
         else:
             # Use lower bracket.
             return s_guess \
@@ -418,14 +427,14 @@ class SwerveSetpointGenerator:
 
     @classmethod
     def _findSteeringMaxS(
-        cls,
-        x_0: float,
-        y_0: float,
-        f_0: float,
-        x_1: float,
-        y_1: float,
-        f_1: float,
-        max_deviation: float
+            cls,
+            x_0: float,
+            y_0: float,
+            f_0: float,
+            x_1: float,
+            y_1: float,
+            f_1: float,
+            max_deviation: float
     ) -> float:
         f_1 = cls._unwrapAngle(f_0, f_1)
         diff = f_1 - f_0
@@ -433,62 +442,55 @@ class SwerveSetpointGenerator:
             # Can go all the way to s=1
             return 1.0
         offset = f_0 + cls._signum(diff) * max_deviation
-        func = lambda x, y: cls._unwrapAngle(f_0, math.atan2(y, x)) - offset
+
+        def func(x: float, y: float):
+            return cls._unwrapAngle(f_0, math.atan2(y, x)) - offset
+
         return cls._findRoot(func, x_0, y_0, f_0 - offset, x_1, y_1, f_1 - offset, cls._MAX_STEER_ITERATIONS)
 
     @classmethod
     def _findDriveMaxS(
-        cls,
-        x_0: float,
-        y_0: float,
-        f_0: float,
-        x_1: float,
-        y_1: float,
-        f_1: float,
-        max_vel_step: float
+            cls,
+            x_0: float,
+            y_0: float,
+            f_0: float,
+            x_1: float,
+            y_1: float,
+            f_1: float,
+            max_vel_step: float
     ) -> float:
         diff = f_1 - f_0
         if math.fabs(diff) <= max_vel_step:
             # Can go all the way to s=1.
             return 1.0
         offset = f_0 + cls._signum(diff) * max_vel_step
-        func = lambda x, y: math.hypot(x, y) - offset
+
+        def func(x: float, y: float):
+            return math.hypot(x, y) - offset
+
         return cls._findRoot(func, x_0, y_0, f_0 - offset, x_1, y_1, f_1 - offset, cls._MAX_DRIVE_ITERATIONS)
-        
-        
-    @overload
-    def _epsilonEquals(a: float, b: float, epsilon: float) -> bool:
-        ...
 
-    @overload
-    def _epsilonEquals(a: float, b: float) -> bool:
-        ...
-
-    @overload
-    def _epsilonEquals(s1: ChassisSpeeds, s2: ChassisSpeeds) -> bool:
-        ...
-
-    @overload
-    def _epsilonEquals(s1: ChassisSpeeds, s2: ChassisSpeeds, epsilon: float) -> bool:
-        ...
-    
     @classmethod
     def _epsilonEquals(
-        cls,
-        a: float | ChassisSpeeds,
-        b: float | ChassisSpeeds,
-        epsilon: float = _k_epsilon
+            cls,
+            a: float,
+            b: float,
+            epsilon: float = _k_epsilon
     ) -> bool:
-        if isinstance(a, float) and isinstance(b, float):
-            return (a - epsilon <= b) and (a + epsilon >= b)
-        elif isinstance(a, ChassisSpeeds) and isinstance(b, ChassisSpeeds):
-            return (
+        return (a - epsilon <= b) and (a + epsilon >= b)
+
+    @classmethod
+    def _epsilonEqualsSpeeds(
+            cls,
+            a: ChassisSpeeds,
+            b: ChassisSpeeds,
+            epsilon: float = _k_epsilon
+    ) -> bool:
+        return (
                 cls._epsilonEquals(a.vx, b.vx, epsilon)
                 and cls._epsilonEquals(a.vy, b.vy, epsilon)
                 and cls._epsilonEquals(a.omega, b.omega, epsilon)
-            )
-        else:
-            raise TypeError("Invalid argument types for _epsilonEquals, must be (float, float) or (ChassisSpeeds, ChassisSpeeds).")
+        )
 
     @staticmethod
     def _signum(x: float) -> float:

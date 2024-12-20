@@ -42,6 +42,8 @@ class ChassisSpeeds {
         Translation2d(speeds.vx, speeds.vy).rotateBy(robotAngle);
     return ChassisSpeeds(vx: rotated.x, vy: rotated.y, omega: speeds.omega);
   }
+
+  num get linearVel => hypotenuse(vx.toDouble(), vy.toDouble());
 }
 
 class SwerveModuleState {

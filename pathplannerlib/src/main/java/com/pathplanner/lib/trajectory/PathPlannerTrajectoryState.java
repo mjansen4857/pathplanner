@@ -65,8 +65,37 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
                 fieldSpeeds.vyMetersPerSecond, endVal.fieldSpeeds.vyMetersPerSecond, t),
             MathUtil.interpolate(
                 fieldSpeeds.omegaRadiansPerSecond, endVal.fieldSpeeds.omegaRadiansPerSecond, t));
-    lerpedState.pose = pose.interpolate(endVal.pose, t);
+
+    lerpedState.heading = heading;
     lerpedState.linearVelocity = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, t);
+
+    // Integrate the field speeds to get the pose for this interpolated state, since linearly
+    // interpolating the pose gives an inaccurate result if the speeds are changing between states
+    double lerpedXPos = pose.getX();
+    double lerpedYPos = pose.getY();
+    double intTime = timeSeconds + 0.01;
+    while (true) {
+      double intT = (intTime - timeSeconds) / (lerpedState.timeSeconds - timeSeconds);
+      double intLinearVel = MathUtil.interpolate(linearVelocity, lerpedState.linearVelocity, intT);
+      double intVX = intLinearVel * lerpedState.heading.getCos();
+      double intVY = intLinearVel * lerpedState.heading.getSin();
+
+      if (intTime >= lerpedState.timeSeconds - 0.01) {
+        double dt = lerpedState.timeSeconds - intTime;
+        lerpedXPos += intVX * dt;
+        lerpedYPos += intVY * dt;
+        break;
+      }
+
+      lerpedXPos += intVX * 0.01;
+      lerpedYPos += intVY * 0.01;
+
+      intTime += 0.01;
+    }
+
+    lerpedState.pose =
+        new Pose2d(
+            lerpedXPos, lerpedYPos, pose.getRotation().interpolate(endVal.pose.getRotation(), t));
     lerpedState.feedforwards = feedforwards.interpolate(endVal.feedforwards, t);
 
     return lerpedState;

@@ -116,8 +116,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     reversed.fieldSpeeds =
         new ChassisSpeeds(
             reversedSpeeds.getX(), reversedSpeeds.getY(), fieldSpeeds.omegaRadiansPerSecond);
-    reversed.pose =
-        new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.k180deg));
+    reversed.pose = new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.k180deg));
     reversed.linearVelocity = -linearVelocity;
     reversed.feedforwards = feedforwards.reverse();
     reversed.heading = heading.plus(Rotation2d.k180deg);

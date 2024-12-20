@@ -155,16 +155,16 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 
 	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
 
-	std::string version = "1.0";
-	if (json.at("version").is_string()) {
-		version = json.at("version").get<std::string>();
+	int version = 0;
+	if (json.at("version").is_number_integer()) {
+		version = json.at("version").get<int>();
 	}
 
-	if (version != "v2025.0.0") {
+	if (version > 1) {
 		throw std::runtime_error(
 				"Incompatible file version for '" + trajectoryName
-						+ ".traj'. Actual: '" + version
-						+ "' Expected: 'v2025.0.0'");
+						+ ".traj'. Actual: '" + std::to_string(version)
+						+ "' Expected: <= 1");
 	}
 
 	auto trajJson = json.at("trajectory");
@@ -196,6 +196,10 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 		state.pose = frc::Pose2d(frc::Translation2d(xPos, yPos),
 				frc::Rotation2d(rotationRad));
 		state.fieldSpeeds = frc::ChassisSpeeds { xVel, yVel, angularVelRps };
+		if (units::math::abs(state.linearVelocity) > 1e-6_mps) {
+			state.heading = frc::Rotation2d(state.fieldSpeeds.vx(),
+					state.fieldSpeeds.vy());
+		}
 
 		// The module forces are field relative, rotate them to be robot relative
 		for (size_t i = 0; i < forcesX.size(); i++) {

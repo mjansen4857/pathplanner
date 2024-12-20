@@ -576,7 +576,8 @@ class TrajectoryState {
 
   TrajectoryState();
 
-  TrajectoryState.pregen(this.timeSeconds, this.fieldSpeeds, this.pose);
+  TrajectoryState.pregen(this.timeSeconds, this.fieldSpeeds, this.pose)
+      : heading = Rotation2d.fromComponents(fieldSpeeds.vx, fieldSpeeds.vy);
 
   TrajectoryState copyWithTime(num time) {
     TrajectoryState s = TrajectoryState();

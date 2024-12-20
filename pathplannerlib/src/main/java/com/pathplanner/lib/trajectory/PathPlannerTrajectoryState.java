@@ -20,13 +20,13 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
   public Pose2d pose = Pose2d.kZero;
   /** The linear velocity at this state in m/s */
   public double linearVelocity = 0.0;
+  /** The field-relative heading, or direction of travel, at this state */
+  public Rotation2d heading = Rotation2d.kZero;
 
   /** The feedforwards for each module */
   public DriveFeedforwards feedforwards;
 
   // Values used only during generation, these will not be interpolated
-  /** The field-relative heading, or direction of travel, at this state */
-  protected Rotation2d heading = Rotation2d.kZero;
   /** The distance between this state and the previous state */
   protected double deltaPos = 0.0;
   /** The difference in rotation between this state and the previous state */

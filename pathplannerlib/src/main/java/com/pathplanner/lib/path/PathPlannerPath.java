@@ -349,11 +349,16 @@ public class PathPlannerPath {
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
 
-      String version = json.get("version").toString();
-      String[] versions = version.split("\\.");
+      int version = 0;
 
-      if (versions.length < 2 || !versions[0].equals("v2025") || !versions[1].equals("0")) {
-        throw new FileVersionException(version, "v2025.0.X", trajectoryName + ".traj");
+      try {
+        version = ((Number) json.get("version")).intValue();
+      } catch (Exception ignored) {
+        // Assume version 0
+      }
+
+      if (version > 1) {
+        throw new FileVersionException(Integer.toString(version), "<= 1", trajectoryName + ".traj");
       }
 
       JSONObject trajJson = (JSONObject) json.get("trajectory");

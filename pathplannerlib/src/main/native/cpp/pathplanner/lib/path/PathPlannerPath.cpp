@@ -155,16 +155,16 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 
 	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
 
-	std::string version = "1.0";
-	if (json.at("version").is_string()) {
-		version = json.at("version").get<std::string>();
+	int version = 0;
+	if (json.at("version").is_number_integer()) {
+		version = json.at("version").get<int>();
 	}
 
-	if (version != "v2025.0.0") {
+	if (version > 1) {
 		throw std::runtime_error(
 				"Incompatible file version for '" + trajectoryName
-						+ ".traj'. Actual: '" + version
-						+ "' Expected: 'v2025.0.0'");
+						+ ".traj'. Actual: '" + std::to_string(version)
+						+ "' Expected: <= 1");
 	}
 
 	auto trajJson = json.at("trajectory");

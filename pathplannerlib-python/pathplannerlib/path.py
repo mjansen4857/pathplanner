@@ -520,13 +520,18 @@ class PathPlannerPath:
         with open(filePath, 'r') as f:
             fJson = json.loads(f.read())
 
-            version = str(fJson['version'])
-            versions = version.split('.')
+            version = 0
 
-            if len(versions) < 2 or versions[0] != 'v2025' or versions[1] != '0':
+            try:
+                version = int(fJson['version'])
+            except ValueError:
+                # Assume version 0
+                pass
+
+            if version > 1:
                 raise RuntimeError("Incompatible file version for '" + trajectory_name
-                                   + ".traj'. Actual: '" + version
-                                   + "' Expected: 'v2025.0.X'")
+                                   + ".traj'. Actual: '" + str(version)
+                                   + "' Expected: <= 1")
 
             trajJson = fJson['trajectory']
 

@@ -72,6 +72,7 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::reverse() const {
 			pose.Rotation() + frc::Rotation2d(180_deg));
 	reversed.linearVelocity = -linearVelocity;
 	reversed.feedforwards = feedforwards.reverse();
+	reversed.heading = heading + frc::Rotation2d(180_deg);
 
 	return reversed;
 }
@@ -84,6 +85,7 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::flip() const {
 	flipped.pose = FlippingUtil::flipFieldPose(pose);
 	flipped.fieldSpeeds = FlippingUtil::flipFieldSpeeds(fieldSpeeds);
 	flipped.feedforwards = feedforwards.flip();
+	flipped.heading = FlippingUtil::flipFieldRotation(heading);
 
 	return flipped;
 }

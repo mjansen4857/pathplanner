@@ -112,14 +112,15 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     reversed.timeSeconds = timeSeconds;
     Translation2d reversedSpeeds =
         new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond)
-            .rotateBy(Rotation2d.fromDegrees(180));
+            .rotateBy(Rotation2d.k180deg);
     reversed.fieldSpeeds =
         new ChassisSpeeds(
             reversedSpeeds.getX(), reversedSpeeds.getY(), fieldSpeeds.omegaRadiansPerSecond);
     reversed.pose =
-        new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.fromDegrees(180)));
+        new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.k180deg));
     reversed.linearVelocity = -linearVelocity;
     reversed.feedforwards = feedforwards.reverse();
+    reversed.heading = heading.plus(Rotation2d.k180deg);
 
     return reversed;
   }
@@ -137,6 +138,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     flipped.pose = FlippingUtil.flipFieldPose(pose);
     flipped.fieldSpeeds = FlippingUtil.flipFieldSpeeds(fieldSpeeds);
     flipped.feedforwards = feedforwards.flip();
+    flipped.heading = FlippingUtil.flipFieldRotation(heading);
 
     return flipped;
   }

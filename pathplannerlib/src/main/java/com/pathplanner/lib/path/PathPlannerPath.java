@@ -389,6 +389,11 @@ public class PathPlannerPath {
         state.linearVelocity = Math.hypot(xVel, yVel);
         state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
         state.fieldSpeeds = new ChassisSpeeds(xVel, yVel, angularVelRps);
+        if (Math.abs(state.linearVelocity) > 1e-6) {
+          state.heading =
+              new Rotation2d(
+                  state.fieldSpeeds.vxMetersPerSecond, state.fieldSpeeds.vyMetersPerSecond);
+        }
 
         // The module forces are field relative, rotate them to be robot relative
         for (int i = 0; i < forcesX.length; i++) {

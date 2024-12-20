@@ -196,6 +196,10 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 		state.pose = frc::Pose2d(frc::Translation2d(xPos, yPos),
 				frc::Rotation2d(rotationRad));
 		state.fieldSpeeds = frc::ChassisSpeeds { xVel, yVel, angularVelRps };
+		if (units::math::abs(state.linearVelocity) > 1e-6_mps) {
+			state.heading = frc::Rotation2d(state.fieldSpeeds.vx(),
+					state.fieldSpeeds.vy());
+		}
 
 		// The module forces are field relative, rotate them to be robot relative
 		for (size_t i = 0; i < forcesX.size(); i++) {

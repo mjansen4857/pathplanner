@@ -559,6 +559,8 @@ class PathPlannerPath:
                 state.linearVelocity = math.hypot(xVel, yVel)
                 state.pose = Pose2d(xPos, yPos, rotationRad)
                 state.fieldSpeeds = ChassisSpeeds(xVel, yVel, angularVelRps)
+                if abs(state.linearVelocity) > 1e-6:
+                    state.heading = Rotation2d(state.fieldSpeeds.vx, state.fieldSpeeds.vy)
 
                 # The module forces are field relative, rotate them to be robot relative
                 for i in range(len(forcesX)):

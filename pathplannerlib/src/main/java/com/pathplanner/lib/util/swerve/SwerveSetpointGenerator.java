@@ -560,13 +560,15 @@ public class SwerveSetpointGenerator {
     double p = x_0 * x_1 + y_0 * y_1;
 
     // Quadratic of s
-    // TODO: Can a ever be 0? Would be a divide-by-zero
     double a = l_0 + l_1 - 2 * p;
     double b = 2 * (p - l_0);
     double c = l_0 - target * target;
     double root = Math.sqrt(b * b - 4 * a * c);
 
     // Check if either of the solutions are valid
+    // Won't divide by zero because it is only possible for a to be zero if the
+    // target velocity is exactly the same or the reverse of the current
+    // velocity, which would be caught by the difference check.
     double s_1 = (-b + root) / (2 * a);
     if (isValidS(s_1)) {
       return s_1;

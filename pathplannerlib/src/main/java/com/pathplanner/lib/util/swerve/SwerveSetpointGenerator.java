@@ -26,8 +26,6 @@ import java.util.Optional;
  */
 public class SwerveSetpointGenerator {
   private static final double kEpsilon = 1E-8;
-  private static final int MAX_STEER_ITERATIONS = 8;
-  private static final int MAX_DRIVE_ITERATIONS = 10;
 
   private final RobotConfig config;
   private final double maxSteerVelocityRadsPerSec;
@@ -322,10 +320,8 @@ public class SwerveSetpointGenerator {
           findDriveMaxS(
               prev_vx[m],
               prev_vy[m],
-              Math.hypot(prev_vx[m], prev_vy[m]),
               vx_min_s,
               vy_min_s,
-              Math.hypot(vx_min_s, vy_min_s),
               maxVelStep);
       min_s = Math.min(min_s, s);
     }
@@ -536,7 +532,7 @@ public class SwerveSetpointGenerator {
   }
 
   private static double findDriveMaxS(
-      double x_0, double y_0, double f_0, double x_1, double y_1, double f_1, double max_vel_step) {
+      double x_0, double y_0, double x_1, double y_1, double max_vel_step) {
     // Derivation:
     // Want to find point P(s) between (x_0, y_0) and (x_1, y_1) where the
     // length of P(s) is the target T. P(s) is linearly interpolated between the

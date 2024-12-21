@@ -739,6 +739,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Clear event names
     if (projectDir != _projectDir?.path) {
       ProjectPage.events.clear();
+      ProjectPage.conditions.clear();
     }
 
     setState(() {

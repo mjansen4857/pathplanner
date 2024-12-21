@@ -2,6 +2,7 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/commands/conditional_command_group.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/event_marker.dart';
@@ -11,6 +12,7 @@ import 'package:pathplanner/util/wpimath/math_util.dart';
 import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/conditional_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
@@ -552,6 +554,19 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
                 },
               ));
             },
+          ),
+        ),
+      );
+    } else if (command is ConditionalCommandGroup) {
+      return Card(
+        elevation: 1.0,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ConditionalCommandGroupWidget(
+            command: command,
+            undoStack: widget.undoStack,
+            onUpdated: widget.onPathChangedNoSim,
+            onRemoved: () => _addRemoveCommandChange(markerIdx),
           ),
         ),
       );

@@ -499,26 +499,24 @@ public class SwerveSetpointGenerator {
     }
 
     double target = theta_0 + Math.copySign(max_deviation, diff);
-    double tan_target = Math.tan(target);
 
-    // Derivation:
-    // Want to find point P(s) between (x_0, y_0) and (x_1, y_1) where the
-    // angle of P(s) is the target T. P(s) is linearly interpolated between the
-    // points, so P(s) = (x_0 + (x_1 - x_0) * s, y_0 + (y_1 - y_0) * s).
-    // Then,
-    //   T = atan2(P(s).y, P(s).x)
-    //   tan(T) = P(s).y / P(s).x
-    //   tan(T) = (y_0 + (y_1 - y_0) * s) / (x_0 + (x_1 - x_0) * s)
-    //   tan(T) * (x_0 + (x_1 - x_0) * s) = y_0 + (y_1 - y_0) * s
-    //   tan(T) * x_0 + tan(T) * (x_1 - x_0) * s = y_0 + (y_1 - y_0) * s
-    //   tan(T) * x_0 - y_0 = (y_1 - y_0) * s - tan(T) * (x_1 - x_0) * s
-    //   tan(T) * x_0 - y_0 = s * [(y_1 - y_0) - tan(T) * (x_1 - x_0)]
-    //   s = (tan(T) * x_0 - y_0) / [(y_1 - y_0) - tan(T) * (x_1 - x_0)].
+    // Rotate the velocity vectors such that the target angle becomes the +X
+    // axis. We only need find the Y components, h_0 and h_1, since they are
+    // proportional to the distances from the two points to the solution
+    // point (x_0 + (x_1 - x_0)s, y_0 + (y_1 - y_0)s).
+    double sin = Math.sin(-target);
+    double cos = Math.cos(-target);
+    double h_0 = sin * x_0 + cos * y_0;
+    double h_1 = sin * x_1 + cos * y_1;
 
-    double num = x_0 * tan_target - y_0;
-    double den = (y_1 - y_0) - (x_1 - x_0) * tan_target;
-    // TODO: Check if it is possible for this to be a divide-by-zero
-    return num / den;
+    // Undo linear interpolation from h_0 to h_1:
+    // 0 = h_0 + (h_1 - h_0) * s
+    // -h_0 = (h_1 - h_0) * s
+    // -h_0 / (h_1 - h_0) = s
+    // h_0 / (h_0 - h_1) = s
+    // Guaranteed to not divide by zero, since if h_0 was equal to h_1, theta_0
+    // would be equal to theta_1, which is caught by the difference check.
+    return h_0 / (h_0 - h_1);
   }
 
   private static boolean isValidS(double s) {

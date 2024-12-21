@@ -31,8 +31,8 @@ class PathPlannerTrajectoryState:
     pose: Pose2d = field(default_factory=Pose2d)
     linearVelocity: float = 0.0
     feedforwards: DriveFeedforwards = None
-
     heading: Rotation2d = field(default_factory=Rotation2d)
+
     deltaPos: float = 0.0
     deltaRot: Rotation2d = field(default_factory=Rotation2d)
     moduleStates: List[SwerveModuleTrajectoryState] = field(default_factory=list)
@@ -106,6 +106,7 @@ class PathPlannerTrajectoryState:
         reversedState.pose = Pose2d(self.pose.translation(), self.pose.rotation() + Rotation2d.fromDegrees(180))
         reversedState.linearVelocity = -self.linearVelocity
         reversedState.feedforwards = self.feedforwards.reverse()
+        reversedState.heading = self.heading + Rotation2d.fromDegrees(180)
 
         return reversedState
 
@@ -122,6 +123,7 @@ class PathPlannerTrajectoryState:
         flipped.pose = FlippingUtil.flipFieldPose(self.pose)
         flipped.fieldSpeeds = FlippingUtil.flipFieldSpeeds(self.fieldSpeeds)
         flipped.feedforwards = self.feedforwards.flip()
+        flipped.heading = FlippingUtil.flipFieldRotation(self.heading)
 
         return flipped
 

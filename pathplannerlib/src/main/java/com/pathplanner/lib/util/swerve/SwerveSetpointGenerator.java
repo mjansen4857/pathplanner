@@ -496,23 +496,37 @@ public class SwerveSetpointGenerator {
   private static double findSteeringMaxS(
       double x_0,
       double y_0,
-      double f_0,
+      double theta_0,
       double x_1,
       double y_1,
-      double f_1,
+      double theta_1,
       double max_deviation) {
-    f_1 = unwrapAngle(f_0, f_1);
-    double diff = f_1 - f_0;
+    theta_1 = unwrapAngle(theta_0, theta_1);
+    double diff = theta_1 - theta_0;
     if (Math.abs(diff) <= max_deviation) {
       // Can go all the way to s=1.
       return 1.0;
     }
 
-    double offset = f_0 + Math.copySign(max_deviation, diff);
-    double tan_offset = Math.tan(offset);
+    double target = theta_0 + Math.copySign(max_deviation, diff);
+    double tan_target = Math.tan(target);
 
-    double num = x_0 * tan_offset - y_0;
-    double den = (y_1 - y_0) - (x_1 - x_0) * tan_offset;
+    // Derivation:
+    // Want to find point P(s) between (x_0, y_0) and (x_1, y_1) where the
+    // angle of P(s) is the target T. P(s) is linearly interpolated between the
+    // points, so P(s) = (x_0 + (x_1 - x_0) * s, y_0 + (y_1 - y_0) * s).
+    // Then,
+    //   T = atan2(P(s).y, P(s).x)
+    //   tan(T) = P(s).y / P(s).x
+    //   tan(T) = (y_0 + (y_1 - y_0) * s) / (x_0 + (x_1 - x_0) * s)
+    //   tan(T) * (x_0 + (x_1 - x_0) * s) = y_0 + (y_1 - y_0) * s
+    //   tan(T) * x_0 + tan(T) * (x_1 - x_0) * s = y_0 + (y_1 - y_0) * s
+    //   tan(T) * x_0 - y_0 = (y_1 - y_0) * s - tan(T) * (x_1 - x_0) * s
+    //   tan(T) * x_0 - y_0 = s * [(y_1 - y_0) - tan(T) * (x_1 - x_0)]
+    //   s = (tan(T) * x_0 - y_0) / [(y_1 - y_0) - tan(T) * (x_1 - x_0)].
+
+    double num = x_0 * tan_target - y_0;
+    double den = (y_1 - y_0) - (x_1 - x_0) * tan_target;
     // TODO: Check if it is possible for this to be a divide-by-zero
     return num / den;
   }
@@ -523,6 +537,28 @@ public class SwerveSetpointGenerator {
 
   private static double findDriveMaxS(
       double x_0, double y_0, double f_0, double x_1, double y_1, double f_1, double max_vel_step) {
+    // Derivation:
+    // Want to find point P(s) between (x_0, y_0) and (x_1, y_1) where the
+    // length of P(s) is the target T. P(s) is linearly interpolated between the
+    // points, so P(s) = (x_0 + (x_1 - x_0) * s, y_0 + (y_1 - y_0) * s).
+    // Then,
+    //     T = sqrt(P(s).x^2 + P(s).y^2)
+    //   T^2 = (x_0 + (x_1 - x_0) * s)^2 + (y_0 + (y_1 - y_0) * s)^2
+    //   T^2 = x_0^2 + 2x_0(x_1-x_0)s + (x_1-x_0)^2*s^2
+    //       + y_0^2 + 2y_0(y_1-y_0)s + (y_1-y_0)^2*s^2
+    //   T^2 = x_0^2 + 2x_0x_1s - 2x_0^2*s + x_1^2*s^2 - 2x_0x_1s^2 + x_0^2*s^2
+    //       + y_0^2 + 2y_0y_1s - 2y_0^2*s + y_1^2*s^2 - 2y_0y_1s^2 + y_0^2*s^2
+    //     0 = (x_0^2 + y_0^2 + x_1^2 + y_1^2 - 2x_0x_1 - 2y_0y_1)s^2
+    //       + (2x_0x_1 + 2y_0y_1 - 2x_0^2 - 2y_0^2)s
+    //       + (x_0^2 + y_0^2 - T^2).
+    //
+    // To simplify, we can factor out some common parts:
+    // Let l_0 = x_0^2 + y_0^2, l_1 = x_1^2 + y_1^2, and
+    // p = x_0 * x_1 + y_0 * y_1.
+    // Then we have
+    //   0 = (l_0 + l_1 - 2p)s^2 + 2(p - l_0)s + (l_0 - T^2),
+    // with which we can solve for s using the quadratic formula.
+
     double l_0 = x_0 * x_0 + y_0 * y_0;
     double l_1 = x_1 * x_1 + y_1 * y_1;
     double sqrt_l_0 = Math.sqrt(l_0);
@@ -532,15 +568,14 @@ public class SwerveSetpointGenerator {
       return 1.0;
     }
 
-    double offset = sqrt_l_0 + Math.copySign(max_vel_step, diff);
-    double x_p = x_0 * x_1;
-    double y_p = y_0 * y_1;
+    double target = sqrt_l_0 + Math.copySign(max_vel_step, diff);
+    double p = x_0 * x_1 + y_0 * y_1;
 
     // Quadratic of s
     // TODO: Can a ever be 0? Would be a divide-by-zero
-    double a = l_0 + l_1 - 2 * (x_p + y_p);
-    double b = 2 * (x_p + y_p - l_0);
-    double c = l_0 - offset * offset;
+    double a = l_0 + l_1 - 2 * p;
+    double b = 2 * (p - l_0);
+    double c = l_0 - target * target;
     double root = Math.sqrt(b * b - 4 * a * c);
 
     // Check if either of the solutions are valid

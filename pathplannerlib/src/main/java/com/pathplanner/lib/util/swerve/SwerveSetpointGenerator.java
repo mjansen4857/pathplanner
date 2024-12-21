@@ -316,13 +316,7 @@ public class SwerveSetpointGenerator {
           min_s == 1.0 ? desired_vy[m] : (desired_vy[m] - prev_vy[m]) * min_s + prev_vy[m];
       // Find the max s for this drive wheel. Search on the interval between 0 and min_s, because we
       // already know we can't go faster than that.
-      double s =
-          findDriveMaxS(
-              prev_vx[m],
-              prev_vy[m],
-              vx_min_s,
-              vy_min_s,
-              maxVelStep);
+      double s = findDriveMaxS(prev_vx[m], prev_vy[m], vx_min_s, vy_min_s, maxVelStep);
       min_s = Math.min(min_s, s);
     }
 

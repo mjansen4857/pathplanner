@@ -188,10 +188,18 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		units::ampere_t currentDraw =
 				m_robotConfig.moduleConfig.driveMotor.Current(lastVelRadPerSec,
 						inputVoltage);
+		units::ampere_t reverseCurrentDraw = units::math::abs(
+				m_robotConfig.moduleConfig.driveMotor.Current(-lastVelRadPerSec,
+						-inputVoltage));
 		currentDraw = std::min(currentDraw,
 				m_robotConfig.moduleConfig.driveCurrentLimit);
-		units::newton_meter_t moduleTorque =
+		reverseCurrentDraw = units::math::min(reverseCurrentDraw,
+				m_robotConfig.moduleConfig.driveCurrentLimit);
+		units::newton_meter_t forwardModuleTorque =
 				m_robotConfig.moduleConfig.driveMotor.Torque(currentDraw);
+		units::newton_meter_t reverseModuleTorque =
+				m_robotConfig.moduleConfig.driveMotor.Torque(
+						reverseCurrentDraw);
 
 		units::meters_per_second_t prevSpeed =
 				prevSetpoint.moduleStates[m].speed;
@@ -200,9 +208,11 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 
 		int forceSign;
 		frc::Rotation2d forceAngle = prevSetpoint.moduleStates[m].angle;
+		units::newton_meter_t moduleTorque;
 		if (epsilonEquals(prevSpeed.value(), 0)
 				|| (prevSpeed > 0_mps && desiredSpeed >= prevSpeed)
 				|| (prevSpeed < 0_mps && desiredSpeed <= prevSpeed)) {
+			moduleTorque = forwardModuleTorque;
 			// Torque loss will be fighting motor
 			moduleTorque -= m_robotConfig.moduleConfig.torqueLoss;
 			forceSign = 1; // Force will be applied in direction of module
@@ -210,6 +220,7 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 				forceAngle = forceAngle + frc::Rotation2d(180_deg);
 			}
 		} else {
+			moduleTorque = reverseModuleTorque;
 			// Torque loss will be helping the motor
 			moduleTorque += m_robotConfig.moduleConfig.torqueLoss;
 			forceSign = -1; // Force will be applied in opposite direction of module

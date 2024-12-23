@@ -250,8 +250,13 @@ public class SwerveSetpointGenerator {
       // battery is sagging down to 11v, which will affect the max torque output
       double currentDraw =
           config.moduleConfig.driveMotor.getCurrent(Math.abs(lastVelRadPerSec), inputVoltage);
+      double reverseCurrentDraw =
+          Math.abs(
+              config.moduleConfig.driveMotor.getCurrent(Math.abs(lastVelRadPerSec), -inputVoltage));
       currentDraw = Math.min(currentDraw, config.moduleConfig.driveCurrentLimit);
-      double moduleTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
+      reverseCurrentDraw = Math.min(reverseCurrentDraw, config.moduleConfig.driveCurrentLimit);
+      double forwardModuleTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
+      double reverseModuleTorque = config.moduleConfig.driveMotor.getTorque(reverseCurrentDraw);
 
       double prevSpeed = prevSetpoint.moduleStates()[m].speedMetersPerSecond;
       desiredModuleStates[m].optimize(prevSetpoint.moduleStates()[m].angle);
@@ -259,9 +264,11 @@ public class SwerveSetpointGenerator {
 
       int forceSign;
       Rotation2d forceAngle = prevSetpoint.moduleStates()[m].angle;
+      double moduleTorque;
       if (epsilonEquals(prevSpeed, 0.0)
           || (prevSpeed > 0 && desiredSpeed >= prevSpeed)
           || (prevSpeed < 0 && desiredSpeed <= prevSpeed)) {
+        moduleTorque = forwardModuleTorque;
         // Torque loss will be fighting motor
         moduleTorque -= config.moduleConfig.torqueLoss;
         forceSign = 1; // Force will be applied in direction of module
@@ -269,6 +276,7 @@ public class SwerveSetpointGenerator {
           forceAngle = forceAngle.plus(Rotation2d.k180deg);
         }
       } else {
+        moduleTorque = reverseModuleTorque;
         // Torque loss will be helping the motor
         moduleTorque += config.moduleConfig.torqueLoss;
         forceSign = -1; // Force will be applied in opposite direction of module

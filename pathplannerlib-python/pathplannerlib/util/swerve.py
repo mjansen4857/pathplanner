@@ -219,11 +219,13 @@ class SwerveSetpointGenerator:
                 / self._config.moduleConfig.wheelRadiusMeters
             # Use the current battery voltage since we won't be able to supply 12v if the
             # battery is sagging down to 11v, which will affect the max torque output
-            current_draw = \
-                self._config.moduleConfig.driveMotor.current(
-                    math.fabs(last_vel_rad_per_sec), input_voltage)
+            current_draw = self._config.moduleConfig.driveMotor.current(abs(last_vel_rad_per_sec), input_voltage)
+            reverse_current_draw = abs(
+                self._config.moduleConfig.driveMotor.getCurrent(abs(last_vel_rad_per_sec), -input_voltage))
             current_draw = min(current_draw, self._config.moduleConfig.driveCurrentLimit)
-            module_torque = self._config.moduleConfig.driveMotor.torque(current_draw)
+            reverse_current_draw = min(reverse_current_draw, self._config.moduleConfig.driveCurrentLimit)
+            forward_module_torque = self._config.moduleConfig.driveMotor.torque(current_draw)
+            reverse_module_torque = self._config.moduleConfig.driveMotor.torque(reverse_current_draw)
 
             prev_speed = prev_setpoint.module_states[m].speed
             desired_module_states[m].optimize(prev_setpoint.module_states[m].angle)
@@ -231,15 +233,18 @@ class SwerveSetpointGenerator:
 
             force_sign = 1
             force_angle = prev_setpoint.module_states[m].angle
+            module_torque = 0.0
             if self._epsilonEquals(prev_speed, 0.0) \
                     or (prev_speed > 0 and desired_speed >= prev_speed) \
                     or (prev_speed < 0 and desired_speed <= prev_speed):
+                module_torque = forward_module_torque
                 # Torque loss will be fighting motor
                 module_torque -= self._config.moduleConfig.torqueLoss
                 force_sign = 1  # Force will be applied in direction of module
                 if prev_speed < 0:
                     force_angle = force_angle + Rotation2d(math.pi)
             else:
+                module_torque = reverse_module_torque
                 # Torque loss will be helping the motor
                 module_torque += self._config.moduleConfig.torqueLoss
                 force_sign = -1  # Force will be applied in opposite direction of module

@@ -25,8 +25,6 @@ class SwerveSetpointGenerator:
     forces acting on a module's wheel from exceeding the force of friction.
     """
     _k_epsilon = 1e-8
-    _MAX_STEER_ITERATIONS = 8
-    _MAX_DRIVE_ITERATIONS = 10
 
     def __init__(self, config: RobotConfig, max_steer_velocity_rads_per_sec: float) -> None:
         """
@@ -221,11 +219,13 @@ class SwerveSetpointGenerator:
                 / self._config.moduleConfig.wheelRadiusMeters
             # Use the current battery voltage since we won't be able to supply 12v if the
             # battery is sagging down to 11v, which will affect the max torque output
-            current_draw = \
-                self._config.moduleConfig.driveMotor.current(
-                    math.fabs(last_vel_rad_per_sec), input_voltage)
+            current_draw = self._config.moduleConfig.driveMotor.current(abs(last_vel_rad_per_sec), input_voltage)
+            reverse_current_draw = abs(
+                self._config.moduleConfig.driveMotor.getCurrent(abs(last_vel_rad_per_sec), -input_voltage))
             current_draw = min(current_draw, self._config.moduleConfig.driveCurrentLimit)
-            module_torque = self._config.moduleConfig.driveMotor.torque(current_draw)
+            reverse_current_draw = min(reverse_current_draw, self._config.moduleConfig.driveCurrentLimit)
+            forward_module_torque = self._config.moduleConfig.driveMotor.torque(current_draw)
+            reverse_module_torque = self._config.moduleConfig.driveMotor.torque(reverse_current_draw)
 
             prev_speed = prev_setpoint.module_states[m].speed
             desired_module_states[m].optimize(prev_setpoint.module_states[m].angle)
@@ -233,15 +233,18 @@ class SwerveSetpointGenerator:
 
             force_sign = 1
             force_angle = prev_setpoint.module_states[m].angle
+            module_torque = 0.0
             if self._epsilonEquals(prev_speed, 0.0) \
                     or (prev_speed > 0 and desired_speed >= prev_speed) \
                     or (prev_speed < 0 and desired_speed <= prev_speed):
+                module_torque = forward_module_torque
                 # Torque loss will be fighting motor
                 module_torque -= self._config.moduleConfig.torqueLoss
                 force_sign = 1  # Force will be applied in direction of module
                 if prev_speed < 0:
                     force_angle = force_angle + Rotation2d(math.pi)
             else:
+                module_torque = reverse_module_torque
                 # Torque loss will be helping the motor
                 module_torque += self._config.moduleConfig.torqueLoss
                 force_sign = -1  # Force will be applied in opposite direction of module
@@ -283,15 +286,7 @@ class SwerveSetpointGenerator:
                 desired_vy[m] if min_s == 1.0 else (desired_vy[m] - prev_vy[m]) * min_s + prev_vy[m]
             # Find the max s for this drive wheel. Search on the interval between 0 and min_s, because we
             # already know we can't go faster than that.
-            s = self._findDriveMaxS(
-                prev_vx[m],
-                prev_vy[m],
-                math.hypot(prev_vx[m], prev_vy[m]),
-                vx_min_s,
-                vy_min_s,
-                math.hypot(vx_min_s, vy_min_s),
-                max_vel_step
-            )
+            s = self._findDriveMaxS(prev_vx[m], prev_vy[m], vx_min_s, vy_min_s, max_vel_step)
             min_s = min(min_s, s)
 
         ret_speeds = ChassisSpeeds(
@@ -379,96 +374,107 @@ class SwerveSetpointGenerator:
             return angle
 
     @classmethod
-    def _findRoot(
-            cls,
-            func: Callable[[float, float], float],
-            x_0: float,
-            y_0: float,
-            f_0: float,
-            x_1: float,
-            y_1: float,
-            f_1: float,
-            iterations_left: int
-    ) -> float:
-        """
-        Find the root of the generic 2D parametric function 'func' using the regula falsi technique.
-        This is a pretty naive way to do root finding, but it's usually faster than simple bisection
-        while being robust in ways that e.g. the Newton-Raphson method isn't.
-        :param func: The Function2d to take the root of.
-        :param x_0: x value of the lower bracket.
-        :param y_0: y value of the lower bracket.
-        :param f_0: value of 'func' at x_0, y_0 (passed in by caller to save a call to 'func' during
-        recursion)
-        :param x_1: x value of the upper bracket.
-        :param y_1: y value of the upper bracket.
-        :param f_1: value of 'func' at x_1, y_1 (passed in by caller to save a call to 'func' during
-        recursion)
-        :param iterations_left: Number of iterations of root finding left.
-        :return: The parameter value 's' that interpolating between 0 and 1 that corresponds to the
-        (approximate) root.
-        """
-        s_guess = max(0.0, min(1.0, -f_0 / (f_1 - f_0)))
-
-        if iterations_left < 0 or cls._epsilonEquals(f_0, f_1):
-            return s_guess
-
-        x_guess = (x_1 - x_0) * s_guess + x_0
-        y_guess = (y_1 - y_0) * s_guess + y_0
-        f_guess = func(x_guess, y_guess)
-        if cls._signum(f_0) == cls._signum(f_guess):
-            # 0 and guess on same side of root, so use upper bracket.
-            return s_guess \
-                + (1.0 - s_guess) \
-                * cls._findRoot(func, x_guess, y_guess, f_guess, x_1, y_1, f_1, iterations_left - 1)
-        else:
-            # Use lower bracket.
-            return s_guess \
-                * cls._findRoot(func, x_0, y_0, f_0, x_guess, y_guess, f_guess, iterations_left - 1)
-
-    @classmethod
     def _findSteeringMaxS(
             cls,
             x_0: float,
             y_0: float,
-            f_0: float,
+            theta_0: float,
             x_1: float,
             y_1: float,
-            f_1: float,
+            theta_1: float,
             max_deviation: float
     ) -> float:
-        f_1 = cls._unwrapAngle(f_0, f_1)
-        diff = f_1 - f_0
+        theta_1 = cls._unwrapAngle(theta_0, theta_1)
+        diff = theta_1 - theta_0
         if math.fabs(diff) <= max_deviation:
             # Can go all the way to s=1
             return 1.0
-        offset = f_0 + cls._signum(diff) * max_deviation
 
-        def func(x: float, y: float):
-            return cls._unwrapAngle(f_0, math.atan2(y, x)) - offset
+        target = theta_0 + math.copysign(max_deviation, diff)
 
-        return cls._findRoot(func, x_0, y_0, f_0 - offset, x_1, y_1, f_1 - offset, cls._MAX_STEER_ITERATIONS)
+        # Rotate the velocity vectors such that the target angle becomes the +X
+        # axis. We only need find the Y components, h_0 and h_1, since they are
+        # proportional to the distances from the two points to the solution
+        # point (x_0 + (x_1 - x_0)s, y_0 + (y_1 - y_0)s).
+        sin = math.sin(-target)
+        cos = math.cos(-target)
+        h_0 = sin * x_0 + cos * y_0
+        h_1 = sin * x_1 + cos * y_1
+
+        # Undo linear interpolation from h_0 to h_1:
+        # 0 = h_0 + (h_1 - h_0) * s
+        # -h_0 = (h_1 - h_0) * s
+        # -h_0 / (h_1 - h_0) = s
+        # h_0 / (h_0 - h_1) = s
+        # Guaranteed to not divide by zero, since if h_0 was equal to h_1, theta_0
+        # would be equal to theta_1, which is caught by the difference check.
+        return h_0 / (h_0 - h_1)
 
     @classmethod
     def _findDriveMaxS(
             cls,
             x_0: float,
             y_0: float,
-            f_0: float,
             x_1: float,
             y_1: float,
-            f_1: float,
             max_vel_step: float
     ) -> float:
-        diff = f_1 - f_0
+        # Derivation:
+        # Want to find point P(s) between (x_0, y_0) and (x_1, y_1) where the
+        # length of P(s) is the target T. P(s) is linearly interpolated between the
+        # points, so P(s) = (x_0 + (x_1 - x_0) * s, y_0 + (y_1 - y_0) * s).
+        # Then,
+        #     T = sqrt(P(s).x^2 + P(s).y^2)
+        #   T^2 = (x_0 + (x_1 - x_0) * s)^2 + (y_0 + (y_1 - y_0) * s)^2
+        #   T^2 = x_0^2 + 2x_0(x_1-x_0)s + (x_1-x_0)^2*s^2
+        #       + y_0^2 + 2y_0(y_1-y_0)s + (y_1-y_0)^2*s^2
+        #   T^2 = x_0^2 + 2x_0x_1s - 2x_0^2*s + x_1^2*s^2 - 2x_0x_1s^2 + x_0^2*s^2
+        #       + y_0^2 + 2y_0y_1s - 2y_0^2*s + y_1^2*s^2 - 2y_0y_1s^2 + y_0^2*s^2
+        #     0 = (x_0^2 + y_0^2 + x_1^2 + y_1^2 - 2x_0x_1 - 2y_0y_1)s^2
+        #       + (2x_0x_1 + 2y_0y_1 - 2x_0^2 - 2y_0^2)s
+        #       + (x_0^2 + y_0^2 - T^2).
+        #
+        # To simplify, we can factor out some common parts:
+        # Let l_0 = x_0^2 + y_0^2, l_1 = x_1^2 + y_1^2, and
+        # p = x_0 * x_1 + y_0 * y_1.
+        # Then we have
+        #   0 = (l_0 + l_1 - 2p)s^2 + 2(p - l_0)s + (l_0 - T^2),
+        # with which we can solve for s using the quadratic formula.
+
+        l_0 = x_0 * x_0 + y_0 * y_0
+        l_1 = x_1 * x_1 + y_1 * y_1
+        sqrt_l_0 = math.sqrt(l_0)
+        diff = math.sqrt(l_1) - sqrt_l_0
         if math.fabs(diff) <= max_vel_step:
             # Can go all the way to s=1.
             return 1.0
-        offset = f_0 + cls._signum(diff) * max_vel_step
 
-        def func(x: float, y: float):
-            return math.hypot(x, y) - offset
+        target = sqrt_l_0 + math.copysign(max_vel_step, diff)
+        p = x_0 * x_1 + y_0 * y_1
 
-        return cls._findRoot(func, x_0, y_0, f_0 - offset, x_1, y_1, f_1 - offset, cls._MAX_DRIVE_ITERATIONS)
+        # Quadratic of s
+        a = l_0 + l_1 - 2 * p
+        b = 2 * (p - l_0)
+        c = l_0 - target * target
+        root = math.sqrt(b * b - 4 * a * c)
+
+        def is_valid_s(s):
+            return math.isfinite(s) and s >= 0 and s <= 1
+
+        # Check if either of the solutions are valid
+        # Won't divide by zero because it is only possible for a to be zero if the
+        # target velocity is exactly the same or the reverse of the current
+        # velocity, which would be caught by the difference check.
+        s_1 = (-b + root) / (2 * a)
+        if is_valid_s(s_1):
+            return s_1
+        s_2 = (-b - root) / (2 * a)
+        if is_valid_s(s_2):
+            return s_2
+
+        # Since we passed the initial max_vel_step check, a solution should exist,
+        # but if no solution was found anyway, just don't limit movement
+        return 1.0
 
     @classmethod
     def _epsilonEquals(

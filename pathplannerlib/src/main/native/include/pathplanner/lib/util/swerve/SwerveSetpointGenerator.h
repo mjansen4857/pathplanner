@@ -97,42 +97,23 @@ public:
 
 private:
 	double kEpsilon = 1e-8;
-	int MAX_STEER_ITERATIONS = 8;
-	int MAX_DRIVE_ITERATIONS = 10;
 
 	RobotConfig m_robotConfig;
 	units::radians_per_second_t maxSteerVelocity;
 	units::volt_t brownoutVoltage;
-	using Function2d = std::function<double(double, double)>;
 
-	/**
-	 * Find the root of the generic 2D parametric function 'func' using the regula falsi technique.
-	 * This is a pretty naive way to do root finding, but it's usually faster than simple bisection
-	 * while being robust in ways that e.g. the Newton-Raphson method isn't.
-	 *
-	 * @param func The Function2d to take the root of.
-	 * @param x_0 x value of the lower bracket.
-	 * @param y_0 y value of the lower bracket.
-	 * @param f_0 value of 'func' at x_0, y_0 (passed in by caller to save a call to 'func' during
-	 *     recursion)
-	 * @param x_1 x value of the upper bracket.
-	 * @param y_1 y value of the upper bracket.
-	 * @param f_1 value of 'func' at x_1, y_1 (passed in by caller to save a call to 'func' during
-	 *     recursion)
-	 * @param iterations_left Number of iterations of root finding left.
-	 * @return The parameter value 's' that interpolating between 0 and 1 that corresponds to the
-	 *     (approximate) root.
-	 */
-	double findRoot(Function2d func, double x_0, double y_0, double f_0,
-			double x_1, double y_1, double f_1, int iterations_left);
 	double findSteeringMaxS(units::meters_per_second_t x_0,
 			units::meters_per_second_t y_0, units::radian_t f_0,
 			units::meters_per_second_t x_1, units::meters_per_second_t y_1,
 			units::radian_t f_1, units::radian_t max_deviation);
+
+	inline bool isValidS(double s) {
+		return s >= 0.0 && s <= 1.0 && std::isfinite(s);
+	}
+
 	double findDriveMaxS(units::meters_per_second_t x_0,
-			units::meters_per_second_t y_0, units::meters_per_second_t f_0,
-			units::meters_per_second_t x_1, units::meters_per_second_t y_1,
-			units::meters_per_second_t f_1,
+			units::meters_per_second_t y_0, units::meters_per_second_t x_1,
+			units::meters_per_second_t y_1,
 			units::meters_per_second_t max_vel_step);
 
 	inline bool epsilonEquals(double a, double b, double epsilon) {

@@ -69,8 +69,9 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 					frc::Rotation2d(180_deg));
 		}
 		if (all_modules_should_flip) {
-			units::radian_t required_rotation_rad = units::math::abs(
-					(-prev_heading[m].RotateBy(desired_heading[m])).Radians());
+			units::radian_t required_rotation_rad =
+					units::math::abs(
+							((-prev_heading[m]).RotateBy(desired_heading[m])).Radians());
 			if (required_rotation_rad < 90_deg) {
 				all_modules_should_flip = false;
 			}
@@ -179,18 +180,17 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 	frc::Translation2d chassisForceVec;
 	units::newton_meter_t chassisTorque { 0.0 };
 	for (size_t m = 0; m < m_robotConfig.numModules; m++) {
-		units::radians_per_second_t lastVelRadPerSec { units::math::abs(
-				prevSetpoint.moduleStates[m].speed
+		units::radians_per_second_t lastVelRadPerSec {
+				(prevSetpoint.moduleStates[m].speed
 						/ m_robotConfig.moduleConfig.wheelRadius).value() };
-		units::volt_t inputVoltage { frc::RobotController::GetInputVoltage() };
 		// Use the current battery voltage since we won't be able to supply 12v if the
 		// battery is sagging down to 11v, which will affect the max torque output
 		units::ampere_t currentDraw =
-				m_robotConfig.moduleConfig.driveMotor.Current(lastVelRadPerSec,
-						inputVoltage);
+				m_robotConfig.moduleConfig.driveMotor.Current(
+						units::math::abs(lastVelRadPerSec), inputVoltage);
 		units::ampere_t reverseCurrentDraw = units::math::abs(
-				m_robotConfig.moduleConfig.driveMotor.Current(-lastVelRadPerSec,
-						-inputVoltage));
+				m_robotConfig.moduleConfig.driveMotor.Current(
+						units::math::abs(lastVelRadPerSec), -inputVoltage));
 		currentDraw = std::min(currentDraw,
 				m_robotConfig.moduleConfig.driveCurrentLimit);
 		reverseCurrentDraw = units::math::min(reverseCurrentDraw,
@@ -258,7 +258,8 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 	// Use kinematics to convert chassis accelerations to module accelerations
 	frc::ChassisSpeeds chassisAccel { chassisAccelVec.X() / 1_s,
 			chassisAccelVec.Y() / 1_s, chassisAngularAccel * 1_s };
-	auto accelStates = m_robotConfig.toSwerveModuleStates(chassisAccel);
+	std::vector < frc::SwerveModuleState > accelStates =
+			m_robotConfig.toSwerveModuleStates(chassisAccel);
 
 	for (size_t m = 0; m < m_robotConfig.numModules; m++) {
 		if (min_s == 0.0) {
@@ -279,9 +280,8 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 						(desired_vy[m] - prev_vy[m]) * min_s + prev_vy[m];
 		// Find the max s for this drive wheel. Search on the interval between 0 and min_s, because we
 		// already know we can't go faster than that.
-		double s = findDriveMaxS(prev_vx[m], prev_vy[m],
-				units::math::hypot(prev_vx[m], prev_vy[m]), vx_min_s, vy_min_s,
-				units::math::hypot(vx_min_s, vy_min_s), maxVelStep);
+		double s = findDriveMaxS(prev_vx[m], prev_vy[m], vx_min_s, vy_min_s,
+				maxVelStep);
 		min_s = std::min(min_s, s);
 	}
 
@@ -371,66 +371,97 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 			units::volt_t { frc::RobotController::GetInputVoltage() });
 }
 
-double SwerveSetpointGenerator::findRoot(Function2d func, double x_0,
-		double y_0, double f_0, double x_1, double y_1, double f_1,
-		int iterations_left) {
-	auto s_guess = std::max(0.0, std::min(1.0, -f_0 / (f_1 - f_0)));
-
-	if (iterations_left < 0 || epsilonEquals(f_0, f_1)) {
-		return s_guess;
-	}
-
-	double x_guess = (x_1 - x_0) * s_guess + x_0;
-	double y_guess = (y_1 - y_0) * s_guess + y_0;
-	double f_guess = func(x_guess, y_guess);
-
-	if (std::signbit(f_0) == std::signbit(f_guess)) {
-		return s_guess
-				+ (1.0 - s_guess)
-						* findRoot(func, x_guess, y_guess, f_guess, x_1, y_1,
-								f_1, iterations_left - 1);
-	} else {
-		// Use lower bracket
-		return s_guess
-				* findRoot(func, x_0, y_0, f_0, x_guess, y_guess, f_guess,
-						iterations_left - 1);
-	}
-}
-
 double SwerveSetpointGenerator::findSteeringMaxS(units::meters_per_second_t x_0,
-		units::meters_per_second_t y_0, units::radian_t f_0,
+		units::meters_per_second_t y_0, units::radian_t theta_0,
 		units::meters_per_second_t x_1, units::meters_per_second_t y_1,
-		units::radian_t f_1, units::radian_t max_deviation) {
-	f_1 = unwrapAngle(f_0.value(), f_1.value());
-	units::radian_t diff = f_1 - f_0;
+		units::radian_t theta_1, units::radian_t max_deviation) {
+	theta_1 = unwrapAngle(theta_0.value(), theta_1.value());
+	units::radian_t diff = theta_1 - theta_0;
 	if (units::math::abs(diff) < max_deviation) {
-		return 1.0;
-	}
-	units::radian_t offset = f_0 + std::signbit(diff.value()) * max_deviation;
-	Function2d func = [f_0, offset](double x, double y) -> double {
-		return (unwrapAngle(f_0.value(), std::atan2(y, x)) - offset).value();
-	};
-	return findRoot(func, x_0.value(), y_0.value(),
-			f_0.value() - offset.value(), x_1.value(), y_1.value(),
-			f_1.value() - offset.value(), MAX_STEER_ITERATIONS);
-}
-
-double SwerveSetpointGenerator::findDriveMaxS(units::meters_per_second_t x_0,
-		units::meters_per_second_t y_0, units::meters_per_second_t f_0,
-		units::meters_per_second_t x_1, units::meters_per_second_t y_1,
-		units::meters_per_second_t f_1,
-		units::meters_per_second_t max_vel_step) {
-	units::meters_per_second_t diff = f_1 - f_0;
-	if (units::math::abs(diff) < max_vel_step) {
 		// Can go all the way to s=1.
 		return 1.0;
 	}
-	units::meters_per_second_t offset = f_0
-			+ std::signbit(diff.value()) * max_vel_step;
-	Function2d func = [offset](double x, double y) -> double {
-		return std::hypot(y, x) - offset.value();
-	};
-	return findRoot(func, x_0.value(), y_0.value(),
-			f_0.value() - offset.value(), x_1.value(), y_1.value(),
-			f_1.value() - offset.value(), MAX_DRIVE_ITERATIONS);
+
+	units::radian_t target = theta_0
+			+ units::math::copysign(max_deviation, diff);
+
+	// Rotate the velocity vectors such that the target angle becomes the +X
+	// axis. We only need find the Y components, h_0 and h_1, since they are
+	// proportional to the distances from the two points to the solution
+	// point (x_0 + (x_1 - x_0)s, y_0 + (y_1 - y_0)s).
+	double sin = units::math::sin(-target);
+	double cos = units::math::cos(-target);
+	double h_0 = sin * x_0.value() + cos * y_0.value();
+	double h_1 = sin * x_1.value() + cos * y_1.value();
+	// Undo linear interpolation from h_0 to h_1:
+	// 0 = h_0 + (h_1 - h_0) * s
+	// -h_0 = (h_1 - h_0) * s
+	// -h_0 / (h_1 - h_0) = s
+	// h_0 / (h_0 - h_1) = s
+	// Guaranteed to not divide by zero, since if h_0 was equal to h_1, theta_0
+	// would be equal to theta_1, which is caught by the difference check.
+	return h_0 / (h_0 - h_1);
+}
+
+double SwerveSetpointGenerator::findDriveMaxS(units::meters_per_second_t x_0,
+		units::meters_per_second_t y_0, units::meters_per_second_t x_1,
+		units::meters_per_second_t y_1,
+		units::meters_per_second_t max_vel_step) {
+	// Derivation:
+	// Want to find point P(s) between (x_0, y_0) and (x_1, y_1) where the
+	// length of P(s) is the target T. P(s) is linearly interpolated between the
+	// points, so P(s) = (x_0 + (x_1 - x_0) * s, y_0 + (y_1 - y_0) * s).
+	// Then,
+	//     T = sqrt(P(s).x^2 + P(s).y^2)
+	//   T^2 = (x_0 + (x_1 - x_0) * s)^2 + (y_0 + (y_1 - y_0) * s)^2
+	//   T^2 = x_0^2 + 2x_0(x_1-x_0)s + (x_1-x_0)^2*s^2
+	//       + y_0^2 + 2y_0(y_1-y_0)s + (y_1-y_0)^2*s^2
+	//   T^2 = x_0^2 + 2x_0x_1s - 2x_0^2*s + x_1^2*s^2 - 2x_0x_1s^2 + x_0^2*s^2
+	//       + y_0^2 + 2y_0y_1s - 2y_0^2*s + y_1^2*s^2 - 2y_0y_1s^2 + y_0^2*s^2
+	//     0 = (x_0^2 + y_0^2 + x_1^2 + y_1^2 - 2x_0x_1 - 2y_0y_1)s^2
+	//       + (2x_0x_1 + 2y_0y_1 - 2x_0^2 - 2y_0^2)s
+	//       + (x_0^2 + y_0^2 - T^2).
+	//
+	// To simplify, we can factor out some common parts:
+	// Let l_0 = x_0^2 + y_0^2, l_1 = x_1^2 + y_1^2, and
+	// p = x_0 * x_1 + y_0 * y_1.
+	// Then we have
+	//   0 = (l_0 + l_1 - 2p)s^2 + 2(p - l_0)s + (l_0 - T^2),
+	// with which we can solve for s using the quadratic formula.
+	double l_0 = (x_0 * x_0 + y_0 * y_0).value();
+	double l_1 = (x_1 * x_1 + y_1 * y_1).value();
+	double sqrt_l_0 = std::sqrt(l_0);
+	double diff = std::sqrt(l_1) - sqrt_l_0;
+	if (std::abs(diff) < max_vel_step.value()) {
+		// Can go all the way to s=1.
+		return 1.0;
+	}
+
+	double target = sqrt_l_0
+			+ units::math::copysign(max_vel_step, diff).value();
+	double p = (x_0 * x_1 + y_0 * y_1).value();
+
+	// Quadratic of s
+	double a = l_0 + l_1 - 2 * p;
+	double b = 2 * (p - l_0);
+	double c = l_0 - target * target;
+	double root = std::sqrt(b * b - 4 * a * c);
+
+	// Check if either of the solutions are valid
+	// Won't divide by zero because it is only possible for a to be zero if the
+	// target velocity is exactly the same or the reverse of the current
+	// velocity, which would be caught by the difference check.
+	double s_1 = (-b + root) / (2 * a);
+	if (isValidS(s_1)) {
+		return s_1;
+	}
+
+	double s_2 = (-b - root) / (2 * a);
+	if (isValidS(s_2)) {
+		return s_2;
+	}
+
+	// Since we passed the initial max_vel_step check, a solution should exist,
+	// but if no solution was found anyway, just don't limit movement
+	return 1.0;
 }

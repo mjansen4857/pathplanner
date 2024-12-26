@@ -293,7 +293,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Failed to generate trajectory for ${widget.auto.name}. Please open an issue on the pathplanner github and include the failing path file.',
+            'Failed to generate trajectory for ${widget.auto.name}. This is likely due to bad control point placement. Please adjust your control points to avoid kinks in the path.',
             style: TextStyle(
                 color: Theme.of(context).colorScheme.onErrorContainer),
           ),

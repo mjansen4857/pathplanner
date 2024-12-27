@@ -342,7 +342,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 Navigator.pop(this.context);
                 _showSettingsDialog();
               },
-              icon: const Icon(Icons.settings),
+              icon: Icon(
+                Icons.settings,
+                color: colorScheme.onSurface,
+              ),
               label: 'Settings',
               backgroundColor: colorScheme.surfaceContainer,
               foregroundColor: colorScheme.onSurface,

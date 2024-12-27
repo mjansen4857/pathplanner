@@ -1,4 +1,3 @@
-import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -26,17 +25,12 @@ class ErrorPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = SeedColorScheme.fromSeeds(
-      primaryKey: _teamColor,
-      brightness: Brightness.dark,
-      tones: FlexTones.material3Legacy(Brightness.dark),
-    );
-
     return MaterialApp(
       title: 'Error',
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: colorScheme,
+        brightness: Brightness.dark,
+        colorSchemeSeed: _teamColor,
       ),
       home: Scaffold(
         body: Center(
@@ -59,33 +53,39 @@ class ErrorPopup extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.copy),
-                label: const Text('Copy Stack Trace'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.surface,
-                  surfaceTintColor: colorScheme.surfaceTint,
-                  foregroundColor: colorScheme.primary,
-                ),
-                onPressed: () => Clipboard.setData(
-                    ClipboardData(text: stackTrace.toString())),
-              ),
+              Builder(builder: (context) {
+                ColorScheme colorScheme = Theme.of(context).colorScheme;
+                return ElevatedButton.icon(
+                  icon: const Icon(Icons.copy),
+                  label: const Text('Copy Stack Trace'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.surface,
+                    surfaceTintColor: colorScheme.surfaceTint,
+                    foregroundColor: colorScheme.primary,
+                  ),
+                  onPressed: () => Clipboard.setData(
+                      ClipboardData(text: stackTrace.toString())),
+                );
+              }),
               const SizedBox(height: 8),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.report),
-                label: const Text('Report Issue'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.surface,
-                  surfaceTintColor: colorScheme.surfaceTint,
-                  foregroundColor: colorScheme.error,
-                ),
-                onPressed: () async {
-                  Uri url = Uri.parse(_reportURL);
-                  if (await canLaunchUrl(url)) {
-                    launchUrl(url);
-                  }
-                },
-              ),
+              Builder(builder: (context) {
+                ColorScheme colorScheme = Theme.of(context).colorScheme;
+                return ElevatedButton.icon(
+                  icon: const Icon(Icons.report),
+                  label: const Text('Report Issue'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.surface,
+                    surfaceTintColor: colorScheme.surfaceTint,
+                    foregroundColor: colorScheme.error,
+                  ),
+                  onPressed: () async {
+                    Uri url = Uri.parse(_reportURL);
+                    if (await canLaunchUrl(url)) {
+                      launchUrl(url);
+                    }
+                  },
+                );
+              }),
             ],
           ),
         ),

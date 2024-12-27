@@ -366,14 +366,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.69.2"
-  flex_seed_scheme:
-    dependency: "direct main"
-    description:
-      name: flex_seed_scheme
-      sha256: "7639d2c86268eff84a909026eb169f008064af0fb3696a651b24b0fa24a40334"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.4.1"
   flutter:
     dependency: "direct main"
     description: flutter

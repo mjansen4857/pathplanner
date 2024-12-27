@@ -88,7 +88,10 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
             const SizedBox(width: 8),
             Expanded(
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.close),
+                icon: Icon(
+                  Icons.close,
+                  color: colorScheme.onErrorContainer,
+                ),
                 label: const Text('Discard'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.errorContainer,
@@ -106,7 +109,10 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
             const SizedBox(width: 8),
             Expanded(
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.check),
+                icon: Icon(
+                  Icons.check,
+                  color: colorScheme.onSecondaryContainer,
+                ),
                 label: const Text('Accept'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[700],

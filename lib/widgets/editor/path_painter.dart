@@ -329,7 +329,7 @@ class PathPainter extends CustomPainter {
         robotConfig.bumperOffset,
         scale,
         canvas,
-        color.withOpacity(0.5),
+        color.withAlpha(125),
         colorScheme.surfaceContainer,
         robotFeatures);
   }
@@ -619,7 +619,7 @@ class PathPainter extends CustomPainter {
         robotConfig.bumperOffset,
         scale,
         canvas,
-        Colors.green.withOpacity(0.5),
+        Colors.green.withAlpha(125),
         colorScheme.surfaceContainer,
         robotFeatures);
 
@@ -631,7 +631,7 @@ class PathPainter extends CustomPainter {
         robotConfig.bumperOffset,
         scale,
         canvas,
-        Colors.red.withOpacity(0.5),
+        Colors.red.withAlpha(125),
         colorScheme.surfaceContainer,
         robotFeatures);
   }
@@ -832,7 +832,7 @@ class PathPainter extends CustomPainter {
     if (!showGrid) return;
 
     final paint = Paint()
-      ..color = colorScheme.secondary.withOpacity(0.2) // More transparent
+      ..color = colorScheme.secondary.withAlpha(50) // More transparent
       ..strokeWidth = 1;
 
     double gridSpacing = PathPainterUtil.metersToPixels(0.5, scale, fieldImage);

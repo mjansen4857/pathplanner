@@ -459,16 +459,18 @@ void PathPlannerTrajectory::forwardAccelPass(
 			maxDT = realMaxDT;
 		}
 
-		// Recalculate all module velocities with the allowed DT
-		for (size_t m = 0; m < config.numModules; m++) {
-			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
-					- prevState.moduleStates[m].angle;
-			if (units::math::abs(prevRotDelta.Degrees()) >= 60_deg) {
-				continue;
-			}
+		if (maxDT > 0_s) {
+			// Recalculate all module velocities with the allowed DT
+			for (size_t m = 0; m < config.numModules; m++) {
+				frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
+						- prevState.moduleStates[m].angle;
+				if (units::math::abs(prevRotDelta.Degrees()) >= 60_deg) {
+					continue;
+				}
 
-			state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos
-					/ maxDT;
+				state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos
+						/ maxDT;
+			}
 		}
 
 		// Use the calculated module velocities to calculate the robot speeds
@@ -604,16 +606,18 @@ void PathPlannerTrajectory::reverseAccelPass(
 			maxDT = realMaxDT;
 		}
 
-		// Recalculate all module velocities with the allowed DT
-		for (size_t m = 0; m < config.numModules; m++) {
-			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
-					- states[i - 1].moduleStates[m].angle;
-			if (units::math::abs(prevRotDelta.Degrees()) >= 60_deg) {
-				continue;
-			}
+		if (maxDT > 0_s) {
+			// Recalculate all module velocities with the allowed DT
+			for (size_t m = 0; m < config.numModules; m++) {
+				frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
+						- states[i - 1].moduleStates[m].angle;
+				if (units::math::abs(prevRotDelta.Degrees()) >= 60_deg) {
+					continue;
+				}
 
-			state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos
-					/ maxDT;
+				state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos
+						/ maxDT;
+			}
 		}
 
 		// Use the calculated module velocities to calculate the robot speeds

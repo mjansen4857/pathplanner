@@ -588,13 +588,14 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         if maxDT == 0.0:
             maxDT = realMaxDT
 
-        # Recalculate all module velocities with the allowed DT
-        for m in range(config.numModules):
-            prevRotDelta = state.moduleStates[m].angle - prevState.moduleStates[m].angle
-            if abs(prevRotDelta.degrees()) >= 60:
-                continue
+        if maxDT > 0:
+            # Recalculate all module velocities with the allowed DT
+            for m in range(config.numModules):
+                prevRotDelta = state.moduleStates[m].angle - prevState.moduleStates[m].angle
+                if abs(prevRotDelta.degrees()) >= 60:
+                    continue
 
-            state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
+                state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
 
         # Use the calculated module velocities to calculate the robot speeds
         desiredSpeeds = config.toChassisSpeeds(state.moduleStates)
@@ -684,13 +685,14 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         if maxDT == 0.0:
             maxDT = realMaxDT
 
-        # Recalculate all module velocities with the allowed DT
-        for m in range(config.numModules):
-            prevRotDelta = state.moduleStates[m].angle - states[i - 1].moduleStates[m].angle
-            if abs(prevRotDelta.degrees()) >= 60:
-                continue
+        if maxDT > 0:
+            # Recalculate all module velocities with the allowed DT
+            for m in range(config.numModules):
+                prevRotDelta = state.moduleStates[m].angle - states[i - 1].moduleStates[m].angle
+                if abs(prevRotDelta.degrees()) >= 60:
+                    continue
 
-            state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
+                state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
 
         # Use the calculated module velocities to calculate the robot speeds
         desiredSpeeds = config.toChassisSpeeds(state.moduleStates)

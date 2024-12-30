@@ -1143,6 +1143,10 @@ class PathPlannerPath:
         if self.numPoints() > 0:
             for i in range(self.numPoints()):
                 point = self.getPoint(i)
+
+                if point.constraints is None:
+                    point.constraints = self._globalConstraints
+
                 curveRadius = self._getCurveRadiusAtPoint(i)
 
                 if math.isfinite(curveRadius):

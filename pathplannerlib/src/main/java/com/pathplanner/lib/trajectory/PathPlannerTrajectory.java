@@ -422,15 +422,17 @@ public class PathPlannerTrajectory {
         maxDT = realMaxDT;
       }
 
-      // Recalculate all module velocities with the allowed DT
-      for (int m = 0; m < config.numModules; m++) {
-        Rotation2d prevRotDelta =
-            state.moduleStates[m].angle.minus(prevState.moduleStates[m].angle);
-        if (Math.abs(prevRotDelta.getDegrees()) >= 60) {
-          continue;
-        }
+      if (maxDT > 0) {
+        // Recalculate all module velocities with the allowed DT
+        for (int m = 0; m < config.numModules; m++) {
+          Rotation2d prevRotDelta =
+              state.moduleStates[m].angle.minus(prevState.moduleStates[m].angle);
+          if (Math.abs(prevRotDelta.getDegrees()) >= 60) {
+            continue;
+          }
 
-        state.moduleStates[m].speedMetersPerSecond = nextState.moduleStates[m].deltaPos / maxDT;
+          state.moduleStates[m].speedMetersPerSecond = nextState.moduleStates[m].deltaPos / maxDT;
+        }
       }
 
       // Use the calculated module velocities to calculate the robot speeds
@@ -551,15 +553,17 @@ public class PathPlannerTrajectory {
         maxDT = realMaxDT;
       }
 
-      // Recalculate all module velocities with the allowed DT
-      for (int m = 0; m < config.numModules; m++) {
-        Rotation2d prevRotDelta =
-            state.moduleStates[m].angle.minus(states.get(i - 1).moduleStates[m].angle);
-        if (Math.abs(prevRotDelta.getDegrees()) >= 60) {
-          continue;
-        }
+      if (maxDT > 0) {
+        // Recalculate all module velocities with the allowed DT
+        for (int m = 0; m < config.numModules; m++) {
+          Rotation2d prevRotDelta =
+              state.moduleStates[m].angle.minus(states.get(i - 1).moduleStates[m].angle);
+          if (Math.abs(prevRotDelta.getDegrees()) >= 60) {
+            continue;
+          }
 
-        state.moduleStates[m].speedMetersPerSecond = nextState.moduleStates[m].deltaPos / maxDT;
+          state.moduleStates[m].speedMetersPerSecond = nextState.moduleStates[m].deltaPos / maxDT;
+        }
       }
 
       // Use the calculated module velocities to calculate the robot speeds

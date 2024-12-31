@@ -139,7 +139,5 @@ Set<LogicalKeyboardKey> shortCut(BasicShortCuts basicShortCuts) {
       return {LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.arrowRight};
     case BasicShortCuts.save:
       return {LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.keyS};
-    default:
-      return {};
   }
 }

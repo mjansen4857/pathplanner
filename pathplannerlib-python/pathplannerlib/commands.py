@@ -1,14 +1,17 @@
+from math import hypot
+
 from .controller import *
-from .path import PathPlannerPath, GoalEndState, PathConstraints
+from .path import PathPlannerPath, GoalEndState, PathConstraints, IdealStartingState
 from .trajectory import PathPlannerTrajectory
 from .telemetry import PPLibTelemetry
 from .logging import PathPlannerLogging
 from .util import floatLerp, FlippingUtil, DriveFeedforwards
-from wpimath.geometry import Pose2d
+from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds
 from wpilib import Timer
-from commands2 import Command, Subsystem, SequentialCommandGroup
-from typing import Callable, List
+from commands2 import Command, Subsystem, SequentialCommandGroup, DeferredCommand
+import commands2.cmd as cmd
+from typing import Callable
 from .config import RobotConfig
 from .pathfinding import Pathfinding
 from .events import EventScheduler
@@ -408,6 +411,47 @@ class PathfindThenFollowPath(SequentialCommandGroup):
         """
         super().__init__()
 
+        def buildJoinCommand() -> Command:
+            if goal_path.numPoints() < 2:
+                return cmd.none()
+
+            startPose = pose_supplier()
+            startSpeeds = speeds_supplier()
+            startFieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(startSpeeds, startPose.rotation())
+
+            startHeading = Rotation2d(startFieldSpeeds.vx, startFieldSpeeds.vy)
+
+            endWaypoint = Pose2d(goal_path.getPoint(0).position, goal_path.getInitialHeading())
+            shouldFlip = should_flip_path() and not goal_path.preventFlipping
+            if shouldFlip:
+                endWaypoint = FlippingUtil.flipFieldPose(endWaypoint)
+
+            endState = GoalEndState(pathfinding_constraints.maxVelocityMps, startPose.rotation())
+            if goal_path.getIdealStartingState() is not None:
+                endRot = goal_path.getIdealStartingState().rotation
+                if shouldFlip:
+                    endRot = FlippingUtil.flipFieldRotation(endRot)
+                endState = GoalEndState(goal_path.getIdealStartingState().velocity, endRot)
+
+            joinPath = PathPlannerPath(
+                PathPlannerPath.waypointsFromPoses([Pose2d(startPose.translation(), startHeading), endWaypoint]),
+                pathfinding_constraints,
+                IdealStartingState(hypot(startSpeeds.vx, startSpeeds.vy), startPose.rotation()),
+                endState
+            )
+            joinPath.preventFlipping = True
+
+            return FollowPathCommand(
+                joinPath,
+                pose_supplier,
+                speeds_supplier,
+                output,
+                controller,
+                robot_config,
+                should_flip_path,
+                *requirements
+            )
+
         self.addCommands(
             PathfindingCommand(
                 pathfinding_constraints,
@@ -420,6 +464,7 @@ class PathfindThenFollowPath(SequentialCommandGroup):
                 *requirements,
                 target_path=goal_path
             ),
+            DeferredCommand(buildJoinCommand, requirements),
             FollowPathCommand(
                 goal_path,
                 pose_supplier,

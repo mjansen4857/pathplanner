@@ -14,7 +14,7 @@ on:
         required: true
 
 env:
-  FLUTTER_VERSION: 3.24.4
+  FLUTTER_VERSION: 3.27.1
 
 jobs:
   formatting-analysis:
@@ -34,15 +34,15 @@ jobs:
       
       - name: Get dependencies
         run: flutter pub get
+
+      - name: Check formatting
+        run: dart format -o none --set-exit-if-changed lib/* test/*
       
       - name: Generate mocks
         run: dart run build_runner build
       
       - name: Analyze
         run: flutter analyze
-      
-      - name: Check formatting
-        run: dart format -o none --set-exit-if-changed lib/* test/*
   
   test:
     name: "[GUI] Run Tests"

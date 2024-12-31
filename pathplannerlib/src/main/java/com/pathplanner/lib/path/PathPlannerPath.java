@@ -969,6 +969,11 @@ public class PathPlannerPath {
     if (numPoints() > 0) {
       for (int i = 0; i < allPoints.size(); i++) {
         PathPoint point = allPoints.get(i);
+
+        if (point.constraints == null) {
+          point.constraints = globalConstraints;
+        }
+
         double curveRadius = getCurveRadiusAtPoint(i, allPoints);
 
         if (Double.isFinite(curveRadius)) {

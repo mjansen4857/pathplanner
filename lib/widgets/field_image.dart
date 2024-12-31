@@ -55,7 +55,6 @@ class FieldImage {
         name = 'Charged Up';
         break;
       case OfficialField.crescendo:
-      default:
         image = Image.asset(
           'images/field24.png',
           fit: BoxFit.contain,

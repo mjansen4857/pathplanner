@@ -95,7 +95,7 @@ public:
 	}
 
 private:
-	double kEpsilon = 1e-8;
+	double kEpsilon = 1e-6;
 
 	RobotConfig m_robotConfig;
 	units::turns_per_second_t maxSteerVelocity;

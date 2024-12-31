@@ -68,6 +68,57 @@ public class SwerveSubsystem extends Subsystem {
 ```
 
 </tab>
+
+<tab title="C++" group-key="cpp">
+
+```C++
+#include <pathplanner/lib/config/RobotConfig.h>
+#include <pathplanner/lib/util/swerve/SwerveSetpointGenerator.h>
+#include <pathplanner/lib/util/swerve/SwerveSetpoint.h>
+#include <frc/geometry/Pose2d.h>
+#include <frc/kinematics/ChassisSpeeds.h>
+
+using namespace pathplanner;
+
+SwerveSubsystem::SwerveSubsystem(){
+    // All other subsystem initialization
+    // ...
+
+    // Load the RobotConfig from the GUI settings. You should probably
+    // store this in your Constants file
+    RobotConfig config = RobotConfig::fromGUISettings();
+
+    setpointGenerator = SwerveSetpointGenerator(
+		config,
+		10_rad_per_s
+	);
+
+	// Initialize the previous setpoint to the robot's current speeds & module states
+	frc::ChassisSpeeds currentSpeeds = getCurrentSpeeds(); // Method to get current robot-relative chassis speeds
+	std::vector<frc::SwerveModuleState> currentStates = getCurrentModuleStates(); // Method to get the current swerve module states
+	previousSetpoint = SwerveSetpoint(currentSpeeds, currentStates, DriveFeedforwards::zeros(config.numModules));
+}
+
+/**
+ * This method will take in desired robot-relative chassis speeds,
+ * generate a swerve setpoint, then set the target state for each module
+ *
+ * @param speeds The desired robot-relative speeds
+ */
+void SwerveSubsystem::driveRobotRelative(frc::ChassisSpeeds speeds) {
+	// Note: it is important to not discretize speeds before or after
+	// using the setpoint generator, as it will discretize them for you
+	previousSetpoint = setpointGenerator.generateSetpoint(
+		previousSetpoint, // The previous setpoint
+		speeds, // The desired target speeds
+		0.02_s // The loop time of the robot code, in seconds
+	);
+	setModuleStates(previousSetpoint.moduleStates()); // Method that will drive the robot given target module states
+}
+```
+
+</tab>
+
 <tab title="Python" group-key="python">
 
 ```Python
@@ -111,56 +162,6 @@ class SwerveSubsystem(Subsystem):
       0.02, # The loop time of the robot code, in seconds
     )
     self.setModuleStates(self.previousSetpoint.moduleStates) # Method that will drive the robot given target module states
-```
-
-</tab>
-
-<tab title="C++" group-key="cpp">
-
-```C++
-#include <pathplanner/lib/config/RobotConfig.h>
-#include <pathplanner/lib/util/swerve/SwerveSetpointGenerator.h>
-#include <pathplanner/lib/util/swerve/SwerveSetpoint.h>
-#include <frc/geometry/Pose2d.h>
-#include <frc/kinematics/ChassisSpeeds.h>
-
-using namespace pathplanner;
-
-SwerveSubsystem::SwerveSubsystem(){
-    // All other subsystem initialization
-    // ...
-
-    // Load the RobotConfig from the GUI settings. You should probably
-    // store this in your Constants file
-    RobotConfig config = RobotConfig::fromGUISettings();
-
-    setpointGenerator = SwerveSetpointGenerator(
-		config,
-		10_rad_per_s
-	)
-
-	// Initialize the previous setpoint to the robot's current speeds & module states
-	frc::ChassisSpeeds currentSpeeds = getCurrentSpeeds(); // Method to get current robot-relative chassis speeds
-	std::vector<frc::SwerveModuleState> currentStates = getCurrentModuleStates(); // Method to get the current swerve module states
-	previousSetpoint = SwerveSetpoint(currentSpeeds, currentStates, DriveFeedforwards::zeros(config.numModules));
-}
-
-/**
- * This method will take in desired robot-relative chassis speeds,
- * generate a swerve setpoint, then set the target state for each module
- *
- * @param speeds The desired robot-relative speeds
- */
-void SwerveSubsystem::driveRobotRelative(frc::ChassisSpeeds speeds) {
-	// Note: it is important to not discretize speeds before or after
-	// using the setpoint generator, as it will discretize them for you
-	previousSetpoint = setpointGenerator.generateSetpoint(
-		previousSetpoint, // The previous setpoint
-		speeds, // The desired target speeds
-		0.02_s // The loop time of the robot code, in seconds
-	);
-	setModuleStates(previousSetpoint.moduleStates()); // Method that will drive the robot given target module states
-}
 ```
 
 </tab>

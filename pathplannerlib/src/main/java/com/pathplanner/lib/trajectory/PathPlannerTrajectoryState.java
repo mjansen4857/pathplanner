@@ -20,13 +20,13 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
   public Pose2d pose = Pose2d.kZero;
   /** The linear velocity at this state in m/s */
   public double linearVelocity = 0.0;
+  /** The field-relative heading, or direction of travel, at this state */
+  public Rotation2d heading = Rotation2d.kZero;
 
   /** The feedforwards for each module */
   public DriveFeedforwards feedforwards;
 
   // Values used only during generation, these will not be interpolated
-  /** The field-relative heading, or direction of travel, at this state */
-  protected Rotation2d heading = Rotation2d.kZero;
   /** The distance between this state and the previous state */
   protected double deltaPos = 0.0;
   /** The difference in rotation between this state and the previous state */
@@ -65,8 +65,37 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
                 fieldSpeeds.vyMetersPerSecond, endVal.fieldSpeeds.vyMetersPerSecond, t),
             MathUtil.interpolate(
                 fieldSpeeds.omegaRadiansPerSecond, endVal.fieldSpeeds.omegaRadiansPerSecond, t));
-    lerpedState.pose = pose.interpolate(endVal.pose, t);
+
+    lerpedState.heading = heading;
     lerpedState.linearVelocity = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, t);
+
+    // Integrate the field speeds to get the pose for this interpolated state, since linearly
+    // interpolating the pose gives an inaccurate result if the speeds are changing between states
+    double lerpedXPos = pose.getX();
+    double lerpedYPos = pose.getY();
+    double intTime = timeSeconds + 0.01;
+    while (true) {
+      double intT = (intTime - timeSeconds) / (lerpedState.timeSeconds - timeSeconds);
+      double intLinearVel = MathUtil.interpolate(linearVelocity, lerpedState.linearVelocity, intT);
+      double intVX = intLinearVel * lerpedState.heading.getCos();
+      double intVY = intLinearVel * lerpedState.heading.getSin();
+
+      if (intTime >= lerpedState.timeSeconds - 0.01) {
+        double dt = lerpedState.timeSeconds - intTime;
+        lerpedXPos += intVX * dt;
+        lerpedYPos += intVY * dt;
+        break;
+      }
+
+      lerpedXPos += intVX * 0.01;
+      lerpedYPos += intVY * 0.01;
+
+      intTime += 0.01;
+    }
+
+    lerpedState.pose =
+        new Pose2d(
+            lerpedXPos, lerpedYPos, pose.getRotation().interpolate(endVal.pose.getRotation(), t));
     lerpedState.feedforwards = feedforwards.interpolate(endVal.feedforwards, t);
 
     return lerpedState;
@@ -83,14 +112,14 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     reversed.timeSeconds = timeSeconds;
     Translation2d reversedSpeeds =
         new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond)
-            .rotateBy(Rotation2d.fromDegrees(180));
+            .rotateBy(Rotation2d.k180deg);
     reversed.fieldSpeeds =
         new ChassisSpeeds(
             reversedSpeeds.getX(), reversedSpeeds.getY(), fieldSpeeds.omegaRadiansPerSecond);
-    reversed.pose =
-        new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.fromDegrees(180)));
+    reversed.pose = new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.k180deg));
     reversed.linearVelocity = -linearVelocity;
     reversed.feedforwards = feedforwards.reverse();
+    reversed.heading = heading.plus(Rotation2d.k180deg);
 
     return reversed;
   }
@@ -108,6 +137,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     flipped.pose = FlippingUtil.flipFieldPose(pose);
     flipped.fieldSpeeds = FlippingUtil.flipFieldSpeeds(fieldSpeeds);
     flipped.feedforwards = feedforwards.flip();
+    flipped.heading = FlippingUtil.flipFieldRotation(heading);
 
     return flipped;
   }

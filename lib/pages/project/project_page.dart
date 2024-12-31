@@ -282,7 +282,7 @@ class _ProjectPageState extends State<ProjectPage> {
     return Stack(
       children: [
         Container(
-          color: colorScheme.surfaceTint.withOpacity(0.05),
+          color: colorScheme.surfaceTint.withAlpha(15),
           child: MultiSplitViewTheme(
             data: MultiSplitViewThemeData(
               dividerPainter: DividerPainters.grooved1(
@@ -416,7 +416,7 @@ class _ProjectPageState extends State<ProjectPage> {
               child: Stack(
                 children: [
                   Container(
-                    color: colorScheme.surfaceTint.withOpacity(0.1),
+                    color: colorScheme.surfaceTint.withAlpha(30),
                   ),
                   const Center(child: Icon(Icons.edit_note_rounded)),
                 ],

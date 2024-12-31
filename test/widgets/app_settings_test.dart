@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/app_settings.dart';
@@ -18,7 +19,8 @@ void main() {
     SharedPreferences.setMockInitialValues({
       PrefsKeys.holonomicMode: true,
       PrefsKeys.hotReloadEnabled: true,
-      PrefsKeys.teamColor: Colors.black.value,
+      PrefsKeys.teamColor: int.parse(Colors.black.toHexString(),
+          radix: 16), // deprecating 'value' is so dumb
       PrefsKeys.ntServerAddress: '10.30.15.2',
       PrefsKeys.defaultMaxVel: 1.0,
       PrefsKeys.defaultMaxAccel: 2.0,
@@ -256,7 +258,8 @@ void main() {
     await widgetTester.tap(resetButton);
     await widgetTester.pumpAndSettle();
 
-    expect(teamColor.value, Defaults.teamColor);
+    expect(int.parse(teamColor.toHexString(), radix: 16),
+        Defaults.teamColor); // deprecating 'value' is so dumb
   });
 
   testWidgets('telemetry host text field', (widgetTester) async {

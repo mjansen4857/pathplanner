@@ -10,6 +10,7 @@ from pathplannerlib.pathfinding import *
 from pathplannerlib.telemetry import *
 from pathplannerlib.trajectory import *
 from pathplannerlib.util import *
+from pathplannerlib.util.swerve import *
 
 # Test that just imports everything to make sure there are no circular imports
 def importTest():

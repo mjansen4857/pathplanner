@@ -336,7 +336,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 legend: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
+                    color: Colors.black.withAlpha(150),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Row(
@@ -479,11 +479,11 @@ class _TelemetryPageState extends State<TelemetryPage> {
         drawVerticalLine: true,
         drawHorizontalLine: true,
         getDrawingVerticalLine: (value) => FlLine(
-          color: Colors.grey.withOpacity(0.1),
+          color: Colors.grey.withAlpha(25),
           strokeWidth: 0.5,
         ),
         getDrawingHorizontalLine: (value) => FlLine(
-          color: Colors.grey.withOpacity(0.1),
+          color: Colors.grey.withAlpha(25),
           strokeWidth: 0.5,
         ),
       ),
@@ -506,7 +506,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
             }).toList();
           },
           getTooltipColor: (LineBarSpot touchedSpot) {
-            return Colors.black.withOpacity(0.5);
+            return Colors.black.withAlpha(125);
           },
         ),
       ),
@@ -535,8 +535,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  lineGradients[i].colors.first.withOpacity(0.3),
-                  lineGradients[i].colors.last.withOpacity(0.0),
+                  lineGradients[i].colors.first.withAlpha(75),
+                  lineGradients[i].colors.last.withAlpha(0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -551,7 +551,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
+        color: Colors.black.withAlpha(150),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -642,7 +642,7 @@ class TelemetryPainter extends CustomPainter {
           bumperOffset,
           scale,
           canvas,
-          Colors.grey[600]!.withOpacity(0.75),
+          Colors.grey[600]!.withAlpha(200),
           colorScheme.surfaceContainer,
           robotFeatures);
     }

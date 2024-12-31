@@ -349,11 +349,16 @@ public class PathPlannerPath {
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
 
-      String version = json.get("version").toString();
-      String[] versions = version.split("\\.");
+      int version = 0;
 
-      if (versions.length < 2 || !versions[0].equals("v2025") || !versions[1].equals("0")) {
-        throw new FileVersionException(version, "v2025.0.X", trajectoryName + ".traj");
+      try {
+        version = ((Number) json.get("version")).intValue();
+      } catch (Exception ignored) {
+        // Assume version 0
+      }
+
+      if (version > 1) {
+        throw new FileVersionException(Integer.toString(version), "<= 1", trajectoryName + ".traj");
       }
 
       JSONObject trajJson = (JSONObject) json.get("trajectory");
@@ -384,6 +389,11 @@ public class PathPlannerPath {
         state.linearVelocity = Math.hypot(xVel, yVel);
         state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
         state.fieldSpeeds = new ChassisSpeeds(xVel, yVel, angularVelRps);
+        if (Math.abs(state.linearVelocity) > 1e-6) {
+          state.heading =
+              new Rotation2d(
+                  state.fieldSpeeds.vxMetersPerSecond, state.fieldSpeeds.vyMetersPerSecond);
+        }
 
         // The module forces are field relative, rotate them to be robot relative
         for (int i = 0; i < forcesX.length; i++) {
@@ -650,8 +660,9 @@ public class PathPlannerPath {
       // The ideal starting state is known, generate the ideal trajectory
       Rotation2d heading = getInitialHeading();
       Translation2d fieldSpeeds = new Translation2d(idealStartingState.velocityMPS(), heading);
-      ChassisSpeeds startingSpeeds = new ChassisSpeeds(fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0);
-      startingSpeeds.toRobotRelativeSpeeds(idealStartingState.rotation());
+      ChassisSpeeds startingSpeeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0, idealStartingState.rotation());
       idealTrajectory =
           Optional.of(
               generateTrajectory(startingSpeeds, idealStartingState.rotation(), robotConfig));
@@ -958,6 +969,11 @@ public class PathPlannerPath {
     if (numPoints() > 0) {
       for (int i = 0; i < allPoints.size(); i++) {
         PathPoint point = allPoints.get(i);
+
+        if (point.constraints == null) {
+          point.constraints = globalConstraints;
+        }
+
         double curveRadius = getCurveRadiusAtPoint(i, allPoints);
 
         if (Double.isFinite(curveRadius)) {

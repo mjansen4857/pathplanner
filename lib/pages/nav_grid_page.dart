@@ -291,7 +291,7 @@ class _NavigationPainter extends CustomPainter {
       ..strokeWidth = 1;
     var fillPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = Colors.red.withOpacity(0.4);
+      ..color = Colors.red.withAlpha(100);
 
     for (int row = 0; row < grid.length; row++) {
       for (int col = 0; col < grid[row].length; col++) {

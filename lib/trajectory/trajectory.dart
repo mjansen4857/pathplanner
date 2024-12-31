@@ -264,15 +264,17 @@ class PathPlannerTrajectory {
         maxDT = realMaxDT;
       }
 
-      // Recalculate all module velocities with the allowed DT
-      for (int m = 0; m < numModules; m++) {
-        Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
-            states[i - 1].moduleStates[m].angle;
-        if (prevRotDelta.degrees.abs() >= 60) {
-          continue;
+      if (maxDT > 0) {
+        // Recalculate all module velocities with the allowed DT
+        for (int m = 0; m < numModules; m++) {
+          Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
+              states[i - 1].moduleStates[m].angle;
+          if (prevRotDelta.degrees.abs() >= 60) {
+            continue;
+          }
+          states[i].moduleStates[m].speedMetersPerSecond =
+              states[i + 1].moduleStates[m].deltaPos / maxDT;
         }
-        states[i].moduleStates[m].speedMetersPerSecond =
-            states[i + 1].moduleStates[m].deltaPos / maxDT;
       }
 
       // Use the calculated module velocities to calculate the robot speeds
@@ -401,16 +403,18 @@ class PathPlannerTrajectory {
         maxDT = realMaxDT;
       }
 
-      // Recalculate all module velocities with the allowed DT
-      for (int m = 0; m < numModules; m++) {
-        Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
-            states[i - 1].moduleStates[m].angle;
-        if (prevRotDelta.degrees.abs() >= 60) {
-          continue;
-        }
+      if (maxDT > 0) {
+        // Recalculate all module velocities with the allowed DT
+        for (int m = 0; m < numModules; m++) {
+          Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
+              states[i - 1].moduleStates[m].angle;
+          if (prevRotDelta.degrees.abs() >= 60) {
+            continue;
+          }
 
-        states[i].moduleStates[m].speedMetersPerSecond =
-            states[i + 1].moduleStates[m].deltaPos / maxDT;
+          states[i].moduleStates[m].speedMetersPerSecond =
+              states[i + 1].moduleStates[m].deltaPos / maxDT;
+        }
       }
 
       // Use the calculated module velocities to calculate the robot speeds
@@ -576,7 +580,8 @@ class TrajectoryState {
 
   TrajectoryState();
 
-  TrajectoryState.pregen(this.timeSeconds, this.fieldSpeeds, this.pose);
+  TrajectoryState.pregen(this.timeSeconds, this.fieldSpeeds, this.pose)
+      : heading = Rotation2d.fromComponents(fieldSpeeds.vx, fieldSpeeds.vy);
 
   TrajectoryState copyWithTime(num time) {
     TrajectoryState s = TrajectoryState();
@@ -610,7 +615,39 @@ class TrajectoryState {
         MathUtil.interpolate(fieldSpeeds.omega, endVal.fieldSpeeds.omega, t);
     lerpedState.fieldSpeeds =
         ChassisSpeeds(vx: lerpedXVel, vy: lerpedYVel, omega: lerpedRotVel);
-    lerpedState.pose = pose.interpolate(endVal.pose, t);
+
+    lerpedState.heading = heading;
+    num lerpedLinearVel = MathUtil.interpolate(
+        fieldSpeeds.linearVel, endVal.fieldSpeeds.linearVel, t);
+
+    // Integrate the field speeds to get the pose for this interpolated state, since linearly
+    // interpolating the pose gives an inaccurate result if the speeds are changing between states
+    num poseX = pose.x;
+    num poseY = pose.y;
+    num intTime = timeSeconds + 0.01;
+    while (true) {
+      num intT =
+          (intTime - timeSeconds) / (lerpedState.timeSeconds - timeSeconds);
+      num intLinearVel =
+          MathUtil.interpolate(fieldSpeeds.linearVel, lerpedLinearVel, intT);
+      num intVX = intLinearVel * lerpedState.heading.cosine;
+      num intVY = intLinearVel * lerpedState.heading.sine;
+
+      if (intTime >= lerpedState.timeSeconds - 0.01) {
+        num dt = lerpedState.timeSeconds - intTime;
+        poseX += intVX * dt;
+        poseY += intVY * dt;
+        break;
+      }
+
+      poseX += intVX * 0.01;
+      poseY += intVY * 0.01;
+
+      intTime += 0.01;
+    }
+
+    lerpedState.pose = Pose2d(Translation2d(poseX, poseY),
+        pose.rotation.interpolate(endVal.pose.rotation, t));
     lerpedState.deltaPos = MathUtil.interpolate(deltaPos, endVal.deltaPos, t);
     lerpedState.deltaRot = deltaRot.interpolate(endVal.deltaRot, t);
 

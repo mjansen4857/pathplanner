@@ -28,11 +28,10 @@ public:
 	 * Create a new swerve setpoint generator
 	 *
 	 * @param config The robot configuration
-	 * @param maxSteerVelocity The maximum rotation velocity of a swerve module, in radians
-	 *     per second
+	 * @param maxSteerVelocity The maximum rotation velocity of a swerve module, in turns per second
 	 */
 	SwerveSetpointGenerator(const RobotConfig &config,
-			units::radians_per_second_t maxSteerVelocity);
+			units::turns_per_second_t maxSteerVelocity);
 
 	/**
 	 * Generate a new setpoint with explicit battery voltage. Note: Do not discretize ChassisSpeeds
@@ -99,7 +98,7 @@ private:
 	double kEpsilon = 1e-8;
 
 	RobotConfig m_robotConfig;
-	units::radians_per_second_t maxSteerVelocity;
+	units::turns_per_second_t maxSteerVelocity;
 	units::volt_t brownoutVoltage;
 
 	double findSteeringMaxS(units::meters_per_second_t x_0,

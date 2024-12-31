@@ -85,8 +85,7 @@ public class SwerveSetpointGenerator {
     SwerveModuleState[] desiredModuleStates =
         config.toSwerveModuleStates(desiredStateRobotRelative);
     // Make sure desiredState respects velocity limits.
-    SwerveDriveKinematics.desaturateWheelSpeeds(
-        desiredModuleStates, maxSpeed);
+    SwerveDriveKinematics.desaturateWheelSpeeds(desiredModuleStates, maxSpeed);
     desiredStateRobotRelative = config.toChassisSpeeds(desiredModuleStates);
 
     // Special case: desiredState is a complete stop. In this case, module angle is arbitrary, so

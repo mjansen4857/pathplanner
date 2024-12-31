@@ -24,6 +24,9 @@ public:
 
 	units::newton_meter_t torqueLoss;
 
+	ModuleConfig() : driveMotor(frc::DCMotor::CIM()) {
+	}
+
 	/**
 	 * Configuration of a robot drive module. This can either be a swerve module, or one side of a
 	 * differential drive train.

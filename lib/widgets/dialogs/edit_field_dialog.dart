@@ -36,10 +36,13 @@ class _EditFieldDialogState extends State<EditFieldDialog> {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
     return KeyBoardShortcuts(
       keysToPress: {LogicalKeyboardKey.enter},
       onKeysPressed: () => confirm(context),
       child: AlertDialog(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
         title: const Text('Edit Custom Field'),
         content: Column(
           mainAxisSize: MainAxisSize.min,

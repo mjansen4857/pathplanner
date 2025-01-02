@@ -410,7 +410,10 @@ class _AppSettingsState extends State<AppSettings> {
                   showDialog(
                       context: context,
                       builder: (context) {
+                        ColorScheme colorScheme = Theme.of(context).colorScheme;
                         return AlertDialog(
+                          backgroundColor: colorScheme.surface,
+                          surfaceTintColor: colorScheme.surfaceTint,
                           title: const Text('Delete Custom Field Image'),
                           content: Text(
                               'Are you sure you want to delete the custom field "${_selectedField.name}"? This cannot be undone.'),
@@ -472,7 +475,10 @@ class _AppSettingsState extends State<AppSettings> {
                   context: context,
                   barrierColor: Colors.transparent,
                   builder: (BuildContext context) {
+                    ColorScheme colorScheme = Theme.of(context).colorScheme;
                     return AlertDialog(
+                      backgroundColor: colorScheme.surface,
+                      surfaceTintColor: colorScheme.surfaceTint,
                       title: const Text('Pick Theme Color'),
                       content: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -534,10 +540,13 @@ class _AppSettingsState extends State<AppSettings> {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
+                  ColorScheme colorScheme = Theme.of(context).colorScheme;
                   return KeyBoardShortcuts(
                     keysToPress: {LogicalKeyboardKey.enter},
                     onKeysPressed: () => Navigator.of(context).pop(),
                     child: AlertDialog(
+                      backgroundColor: colorScheme.surface,
+                      surfaceTintColor: colorScheme.surfaceTint,
                       title: const Text('Failed to Import Field'),
                       content:
                           Text('Field with the name "$name" already exists.'),

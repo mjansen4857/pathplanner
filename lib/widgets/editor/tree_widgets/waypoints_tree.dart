@@ -414,7 +414,10 @@ class _WaypointsTreeState extends State<WaypointsTree> {
     showDialog(
         context: context,
         builder: (context) {
+          ColorScheme colorScheme = Theme.of(context).colorScheme;
           return AlertDialog(
+            backgroundColor: colorScheme.surface,
+            surfaceTintColor: colorScheme.surfaceTint,
             title: const Text('Link Waypoint'),
             content: SizedBox(
               width: 400,

@@ -811,7 +811,18 @@ class _ProjectPageState extends State<ProjectPage> {
                                                           context: context,
                                                           builder: (BuildContext
                                                               context) {
+                                                            ColorScheme
+                                                                colorScheme =
+                                                                Theme.of(
+                                                                        context)
+                                                                    .colorScheme;
                                                             return AlertDialog(
+                                                              backgroundColor:
+                                                                  colorScheme
+                                                                      .surface,
+                                                              surfaceTintColor:
+                                                                  colorScheme
+                                                                      .surfaceTint,
                                                               title: const Text(
                                                                   'Unable to Rename'),
                                                               content: Text(
@@ -1052,7 +1063,10 @@ class _ProjectPageState extends State<ProjectPage> {
       showDialog(
           context: context,
           builder: (BuildContext context) {
+            ColorScheme colorScheme = Theme.of(context).colorScheme;
             return AlertDialog(
+              backgroundColor: colorScheme.surface,
+              surfaceTintColor: colorScheme.surfaceTint,
               title: const Text('Unable to Rename'),
               content: Text('The file "$newName.path" already exists'),
               actions: [
@@ -1300,7 +1314,18 @@ class _ProjectPageState extends State<ProjectPage> {
                                                           context: context,
                                                           builder: (BuildContext
                                                               context) {
+                                                            ColorScheme
+                                                                colorScheme =
+                                                                Theme.of(
+                                                                        context)
+                                                                    .colorScheme;
                                                             return AlertDialog(
+                                                              backgroundColor:
+                                                                  colorScheme
+                                                                      .surface,
+                                                              surfaceTintColor:
+                                                                  colorScheme
+                                                                      .surfaceTint,
                                                               title: const Text(
                                                                   'Unable to Rename'),
                                                               content: Text(
@@ -1524,7 +1549,10 @@ class _ProjectPageState extends State<ProjectPage> {
                 showDialog(
                   context: this.context,
                   builder: (context) {
+                    ColorScheme colorScheme = Theme.of(context).colorScheme;
                     return AlertDialog(
+                      backgroundColor: colorScheme.surface,
+                      surfaceTintColor: colorScheme.surfaceTint,
                       title: const Text('Delete Folder'),
                       content: SizedBox(
                         width: 400,
@@ -1787,7 +1815,10 @@ class _ProjectPageState extends State<ProjectPage> {
       showDialog(
           context: context,
           builder: (BuildContext context) {
+            ColorScheme colorScheme = Theme.of(context).colorScheme;
             return AlertDialog(
+              backgroundColor: colorScheme.surface,
+              surfaceTintColor: colorScheme.surfaceTint,
               title: const Text('Unable to Rename'),
               content: Text('The file "$newName.auto" already exists'),
               actions: [

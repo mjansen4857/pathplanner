@@ -228,7 +228,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 			std::string name = markerJson.at("name").get<std::string>();
 
 			auto fromJson = markerJson.at("from");
-			auto fromOffsetJson = markerJson.at("offset");
+			auto fromOffsetJson = fromJson.at("offset");
 
 			units::second_t fromTargetTimestamp {
 					fromJson.at("targetTimestamp").get<double>() };

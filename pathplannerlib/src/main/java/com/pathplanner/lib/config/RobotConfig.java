@@ -325,48 +325,44 @@ public class RobotConfig {
       new Alert("Module Location Mismatch", AlertType.kError);
 
   /**
-   * Checks if this configuration differs from the GUI configuration. Loads the GUI config and
-   * compares all properties, setting alerts for any mismatches.
+   * Checks if this configuration matches the GUI configuration. Loads the GUI config and compares
+   * all properties, setting alerts for any mismatches.
    *
-   * @return true if any configuration is invalid or GUI config cannot be loaded, false if all match
+   * @return true if all configuration matches GUI config, false if any are invalid or GUI config
+   *     cannot be loaded
    */
-  public boolean hasInvalidConfig() {
+  public boolean hasValidConfig() {
     RobotConfig guiConfig;
     try {
       guiConfig = RobotConfig.fromGUISettings();
     } catch (IOException | ParseException e) {
       BAD_GUI_CONFIG.set(true);
-      return true;
+      return false;
     }
 
-    boolean isInvalid = false;
-    isInvalid |= checkInvalidPhysicalProperties(guiConfig);
-    isInvalid |= checkInvalidDriveSystem(guiConfig);
-    isInvalid |= checkInvalidWheelProperties(guiConfig);
-    isInvalid |= checkInvalidModuleLocations(guiConfig);
-
-    return isInvalid;
+    return validatePhysicalProperties(guiConfig)
+        && validateDriveSystem(guiConfig)
+        && validateWheelProperties(guiConfig)
+        && validateModuleLocations(guiConfig);
   }
 
   /**
-   * Compares physical properties against GUI configuration.
+   * Validates physical properties against GUI configuration.
    *
    * @param guiConfig Configuration loaded from GUI
-   * @return true if any physical properties are invalid, false if all match
+   * @return true if all physical properties match, false if any are invalid
    */
-  private boolean checkInvalidPhysicalProperties(RobotConfig guiConfig) {
-    boolean isInvalid = false;
-
+  private boolean validatePhysicalProperties(RobotConfig guiConfig) {
     if (this.MOI != guiConfig.MOI) {
       MOI_ALERT.setText(String.format("MOI: %.2f vs %.2f", this.MOI, guiConfig.MOI));
       MOI_ALERT.set(true);
-      isInvalid = true;
+      return false;
     }
 
     if (this.massKG != guiConfig.massKG) {
       MASS_ALERT.setText(String.format("Mass: %.2f vs %.2f kg", this.massKG, guiConfig.massKG));
       MASS_ALERT.set(true);
-      isInvalid = true;
+      return false;
     }
 
     if (this.maxTorqueFriction != guiConfig.maxTorqueFriction) {
@@ -375,34 +371,32 @@ public class RobotConfig {
               "Torque Friction: %.2f vs %.2f",
               this.maxTorqueFriction, guiConfig.maxTorqueFriction));
       TORQUE_ALERT.set(true);
-      isInvalid = true;
+      return false;
     }
 
-    return isInvalid;
+    return true;
   }
 
   /**
-   * Compares drive system configuration against GUI configuration.
+   * Validates drive system configuration against GUI configuration.
    *
    * @param guiConfig Configuration loaded from GUI
-   * @return true if any drive system properties are invalid, false if all match
+   * @return true if all drive system properties match, false if any are invalid
    */
-  private boolean checkInvalidDriveSystem(RobotConfig guiConfig) {
-    boolean isInvalid = false;
-
+  private boolean validateDriveSystem(RobotConfig guiConfig) {
     if (this.moduleConfig.driveCurrentLimit != guiConfig.moduleConfig.driveCurrentLimit) {
       CURRENT_ALERT.setText(
           String.format(
               "Drive Current Limit: %.2f vs %.2f",
               this.moduleConfig.driveCurrentLimit, guiConfig.moduleConfig.driveCurrentLimit));
       CURRENT_ALERT.set(true);
-      isInvalid = true;
+      return false;
     }
 
     if (!this.moduleConfig.driveMotor.equals(guiConfig.moduleConfig.driveMotor)) {
       MOTOR_ALERT.setText("Drive Motor configurations differ");
       MOTOR_ALERT.set(true);
-      isInvalid = true;
+      return false;
     }
 
     if (this.moduleConfig.maxDriveVelocityMPS != guiConfig.moduleConfig.maxDriveVelocityMPS) {
@@ -411,28 +405,26 @@ public class RobotConfig {
               "Max Drive Velocity: %.2f vs %.2f m/s",
               this.moduleConfig.maxDriveVelocityMPS, guiConfig.moduleConfig.maxDriveVelocityMPS));
       VELOCITY_ALERT.set(true);
-      isInvalid = true;
+      return false;
     }
 
-    return isInvalid;
+    return true;
   }
 
   /**
-   * Compares wheel properties against GUI configuration.
+   * Validates wheel properties against GUI configuration.
    *
    * @param guiConfig Configuration loaded from GUI
-   * @return true if any wheel properties are invalid, false if all match
+   * @return true if all wheel properties match, false if any are invalid
    */
-  private boolean checkInvalidWheelProperties(RobotConfig guiConfig) {
-    boolean isInvalid = false;
-
+  private boolean validateWheelProperties(RobotConfig guiConfig) {
     if (this.moduleConfig.wheelCOF != guiConfig.moduleConfig.wheelCOF) {
       COF_ALERT.setText(
           String.format(
               "Wheel COF: %.2f vs %.2f",
               this.moduleConfig.wheelCOF, guiConfig.moduleConfig.wheelCOF));
       COF_ALERT.set(true);
-      isInvalid = true;
+      return false;
     }
 
     if (this.moduleConfig.wheelRadiusMeters != guiConfig.moduleConfig.wheelRadiusMeters) {
@@ -441,27 +433,27 @@ public class RobotConfig {
               "Wheel Radius: %.3f vs %.3f m",
               this.moduleConfig.wheelRadiusMeters, guiConfig.moduleConfig.wheelRadiusMeters));
       RADIUS_ALERT.set(true);
-      isInvalid = true;
+      return false;
     }
 
-    return isInvalid;
+    return true;
   }
 
   /**
-   * Compares module locations against GUI configuration.
+   * Validates module locations against GUI configuration.
    *
    * @param guiConfig Configuration loaded from GUI
-   * @return true if any module locations are invalid, false if all match
+   * @return true if all module locations match, false if any are invalid
    */
-  private boolean checkInvalidModuleLocations(RobotConfig guiConfig) {
+  private boolean validateModuleLocations(RobotConfig guiConfig) {
     if (this.moduleLocations.length != guiConfig.moduleLocations.length) {
       LOCATION_ALERT.setText("Number of modules does not match GUI configuration");
       LOCATION_ALERT.set(true);
-      return true;
+      return false;
     }
 
     StringBuilder locationDifferences = new StringBuilder();
-    boolean isInvalid = false;
+    boolean hasLocationMismatch = false;
 
     for (int i = 0; i < this.moduleLocations.length; i++) {
       if (!this.moduleLocations[i].equals(guiConfig.moduleLocations[i])) {
@@ -469,14 +461,16 @@ public class RobotConfig {
             String.format(
                 "Module %d: %s vs %s | ",
                 i, this.moduleLocations[i].toString(), guiConfig.moduleLocations[i].toString()));
-        isInvalid = true;
+        hasLocationMismatch = true;
       }
     }
 
-    if (isInvalid) {
+    if (hasLocationMismatch) {
       LOCATION_ALERT.setText(locationDifferences.toString());
       LOCATION_ALERT.set(true);
+      return false;
     }
-    return isInvalid;
+
+    return true;
   }
 }

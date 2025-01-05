@@ -9,7 +9,7 @@
 Download from the Microsoft Store to receive auto-updates for stable releases. Manual installs and pre-releases can be found [here](https://github.com/mjansen4857/pathplanner/releases).
 
 ## About
-![PathPlanner](https://github.com/mjansen4857/pathplanner/assets/9343077/a395bdb4-71f9-4d88-9ff7-55241b26f4de)
+![PathPlanner](https://github.com/user-attachments/assets/5b87c1a4-8fdb-4eb9-bf29-71f79a826a82)
 
 
 PathPlanner is a motion profile generator for FRC robots created by team 3015. The main features of PathPlanner include:

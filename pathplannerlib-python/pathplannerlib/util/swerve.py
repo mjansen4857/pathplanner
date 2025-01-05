@@ -74,10 +74,11 @@ class SwerveSetpointGenerator:
         else:
             input_voltage = max(input_voltage, self._brownoutVoltage)
 
+        maxSpeed = self._config.moduleConfig.maxDriveVelocityMPS * min(1, input_voltage / 12)
+
         desired_module_states = self._config.toSwerveModuleStates(desired_state_robot_relative)
         # Make sure desired_state respects velocity limits.
-        SwerveDrive4Kinematics.desaturateWheelSpeeds(desired_module_states,
-                                                     self._config.moduleConfig.maxDriveVelocityMPS)
+        SwerveDrive4Kinematics.desaturateWheelSpeeds(desired_module_states, maxSpeed)
         desired_state_robot_relative = self._config.toChassisSpeeds(desired_module_states)
 
         # Special case: desired_state is a complete stop. In this case, module angle is arbitrary, so
@@ -223,7 +224,9 @@ class SwerveSetpointGenerator:
             reverse_current_draw = abs(
                 self._config.moduleConfig.driveMotor.getCurrent(abs(last_vel_rad_per_sec), -input_voltage))
             current_draw = min(current_draw, self._config.moduleConfig.driveCurrentLimit)
+            current_draw = max(current_draw, 0.0)
             reverse_current_draw = min(reverse_current_draw, self._config.moduleConfig.driveCurrentLimit)
+            reverse_current_draw = max(reverse_current_draw, 0.0)
             forward_module_torque = self._config.moduleConfig.driveMotor.torque(current_draw)
             reverse_module_torque = self._config.moduleConfig.driveMotor.torque(reverse_current_draw)
 

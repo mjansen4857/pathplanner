@@ -1,4 +1,5 @@
 #include "pathplanner/lib/util/swerve/SwerveSetpointGenerator.h"
+#include <algorithm>
 
 SwerveSetpointGenerator::SwerveSetpointGenerator() : maxSteerVelocity(
 		0_rad_per_s) {
@@ -20,13 +21,15 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 	} else {
 		inputVoltage = units::math::max(inputVoltage, brownoutVoltage);
 	}
+	units::meters_per_second_t maxSpeed =
+			m_robotConfig.moduleConfig.maxDriveVelocityMPS
+					* std::min(1.0, inputVoltage() / 12.0);
 
 	std::vector < frc::SwerveModuleState > desiredModuleStates =
 			m_robotConfig.toSwerveModuleStates(desiredStateRobotRelative);
 	// Make sure desiredState respects velocity limits.
 	desiredModuleStates = m_robotConfig.desaturateWheelSpeeds(
-			desiredModuleStates,
-			m_robotConfig.moduleConfig.maxDriveVelocityMPS);
+			desiredModuleStates, maxSpeed);
 	desiredStateRobotRelative = m_robotConfig.toChassisSpeeds(
 			desiredModuleStates);
 
@@ -191,10 +194,12 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		units::ampere_t reverseCurrentDraw = units::math::abs(
 				m_robotConfig.moduleConfig.driveMotor.Current(
 						units::math::abs(lastVelRadPerSec), -inputVoltage));
-		currentDraw = std::min(currentDraw,
+		currentDraw = units::math::min(currentDraw,
 				m_robotConfig.moduleConfig.driveCurrentLimit);
+		currentDraw = units::math::max(currentDraw, 0_A);
 		reverseCurrentDraw = units::math::min(reverseCurrentDraw,
 				m_robotConfig.moduleConfig.driveCurrentLimit);
+		reverseCurrentDraw = units::math::max(reverseCurrentDraw, 0_A);
 		units::newton_meter_t forwardModuleTorque =
 				m_robotConfig.moduleConfig.driveMotor.Torque(currentDraw);
 		units::newton_meter_t reverseModuleTorque =

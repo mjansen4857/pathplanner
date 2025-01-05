@@ -141,6 +141,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       children: [
         Center(
           child: InteractiveViewer(
+            maxScale: 10.0,
             child: GestureDetector(
               onTapDown: (details) {
                 FocusScopeNode currentScope = FocusScope.of(context);

@@ -93,6 +93,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       children: [
         Center(
           child: InteractiveViewer(
+            maxScale: 10.0,
             child: Padding(
               padding: const EdgeInsets.all(48),
               child: Stack(

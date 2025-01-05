@@ -8,7 +8,7 @@ class PrefsKeys {
   static const String currentProjectDir = 'currentProjectDir';
   static const String macOSBookmark = 'macOSBookmark';
   static const String fieldImage = 'fieldImage';
-  static const String seen2024ResetPopup = 'seen2024ResetPopup';
+  static const String seen2025ResetPopup = 'seen2025ResetPopup';
   static const String holonomicMode = 'holonomicMode';
   static const String ntServerAddress = 'pplibClientHost';
   static const String pathSortOption = 'pathSortOption';
@@ -25,7 +25,6 @@ class PrefsKeys {
   static const String defaultMaxAngVel = 'defaultMaxAngVel';
   static const String defaultMaxAngAccel = 'defaultMaxAngAccel';
   static const String defaultNominalVoltage = 'defaultNominalVoltage';
-  static const String seen2024Warning = 'seen2024Warning';
   static const String robotMass = 'robotMass';
   static const String robotMOI = 'robotMOI';
   static const String robotTrackwidth = 'robotTrackwidth';

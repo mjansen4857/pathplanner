@@ -22,14 +22,6 @@ using the following JSON file URL:
 https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib.json
 ```
 
-**Beta Version**
-
-To install the beta version of PathPlannerLib, use the following vendor json file
-
-```text
-https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib-beta.json
-```
-
 **Legacy Versions**
 
 The following legacy PathPlannerLib json files can be used to install the last release from previous years for

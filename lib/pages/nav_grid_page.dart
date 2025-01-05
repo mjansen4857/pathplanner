@@ -156,7 +156,10 @@ class _NavGridPageState extends State<NavGridPage> {
     showDialog(
       context: this.context,
       builder: (context) {
+        ColorScheme colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
           title: const Text('Edit Grid'),
           content: SizedBox(
             width: 350,

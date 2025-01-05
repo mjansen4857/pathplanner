@@ -24,9 +24,13 @@ class SettingsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return DefaultTabController(
       length: 2,
       child: AlertDialog(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
         title: const TabBar(
           tabs: [
             Tab(

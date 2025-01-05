@@ -64,6 +64,8 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
+      backgroundColor: colorScheme.surface,
+      surfaceTintColor: colorScheme.surfaceTint,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

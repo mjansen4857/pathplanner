@@ -24,7 +24,7 @@ class SwerveSetpointGenerator:
     kinematic constraints on module rotation and wheel velocity/torque, as well as preventing any 
     forces acting on a module's wheel from exceeding the force of friction.
     """
-    _k_epsilon = 1e-8
+    _k_epsilon = 1e-6
 
     def __init__(self, config: RobotConfig, max_steer_velocity_rads_per_sec: float) -> None:
         """

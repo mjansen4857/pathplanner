@@ -135,7 +135,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           context: this.context,
           barrierDismissible: false,
           builder: (context) {
+            ColorScheme colorScheme = Theme.of(context).colorScheme;
+
             return AlertDialog(
+              backgroundColor: colorScheme.surface,
+              surfaceTintColor: colorScheme.surfaceTint,
               title: const Text('New Field Image Available'),
               content: const SizedBox(
                 width: 400,
@@ -187,7 +191,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             context: this.context,
             barrierDismissible: false,
             builder: (context) {
+              ColorScheme colorScheme = Theme.of(context).colorScheme;
               return AlertDialog(
+                backgroundColor: colorScheme.surface,
+                surfaceTintColor: colorScheme.surfaceTint,
                 title: const Text('Non-standard Field Mirroring'),
                 content: const SizedBox(
                   width: 300,

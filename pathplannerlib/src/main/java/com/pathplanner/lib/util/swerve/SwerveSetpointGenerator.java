@@ -25,7 +25,7 @@ import java.util.Optional;
  * forces acting on a module's wheel from exceeding the force of friction.
  */
 public class SwerveSetpointGenerator {
-  private static final double kEpsilon = 1E-8;
+  private static final double kEpsilon = 1E-6;
 
   private final RobotConfig config;
   private final double maxSteerVelocityRadsPerSec;

@@ -1,5 +1,6 @@
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include "pathplanner/lib/auto/NamedCommands.h"
+#include "pathplanner/lib/auto/NamedConditions.h"
 #include "pathplanner/lib/auto/AutoBuilder.h"
 #include <frc2/command/Commands.h>
 #include <string>
@@ -47,6 +48,10 @@ frc2::CommandPtr CommandUtil::commandFromJson(const wpi::json &json,
 		return CommandUtil::raceGroupFromJson(data, loadChoreoPaths);
 	} else if (type == "deadline") {
 		return CommandUtil::deadlineGroupFromJson(data, loadChoreoPaths);
+	} else if (type == "conditional") {
+		return CommandUtil::conditionalGroupFromJson(data, loadChoreoPaths);
+	} else if (type == "wait_until") {
+		return CommandUtil::waitUntilCommandFromJson(data);
 	}
 
 	return frc2::cmd::None();
@@ -134,4 +139,23 @@ frc2::CommandPtr CommandUtil::deadlineGroupFromJson(const wpi::json &json,
 	}
 
 	return frc2::cmd::Deadline(std::move(deadline), std::move(commands));
+}
+
+frc2::CommandPtr CommandUtil::conditionalGroupFromJson(const wpi::json &json,
+		bool loadChoreoPaths) {
+	std::string name = json.at("namedConditional").get<std::string>();
+
+	wpi::json::const_reference onTrueJson = json.at("onTrue");
+	wpi::json::const_reference onFalseJson = json.at("onFalse");
+
+	return frc2::cmd::Either(
+			CommandUtil::commandFromJson(onTrueJson, loadChoreoPaths),
+			CommandUtil::commandFromJson(onFalseJson, loadChoreoPaths),
+			NamedConditions::getCondition(name));
+}
+
+frc2::CommandPtr CommandUtil::waitUntilCommandFromJson(const wpi::json &json) {
+	std::string name = json.at("namedConditional").get<std::string>();
+
+	return frc2::cmd::WaitUntil(NamedConditions::getCondition(name));
 }

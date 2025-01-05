@@ -86,7 +86,7 @@ void main() {
           child: SplitPathEditor(
             prefs: prefs,
             path: path,
-            fieldImage: FieldImage.defaultField,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
             undoStack: undoStack,
             simulate: true,
           ),
@@ -113,7 +113,7 @@ void main() {
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),
@@ -142,7 +142,7 @@ void main() {
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),
@@ -180,7 +180,7 @@ void main() {
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),
@@ -189,7 +189,7 @@ void main() {
     var tapLocation = PathPainterUtil.pointToPixelOffset(
             path.waypoints.first.anchor,
             PathPainter.scale,
-            FieldImage.defaultField) +
+            FieldImage.official(OfficialField.crescendo)) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(-2.0, 23.0); // Some weird buffer going on
 
@@ -447,7 +447,7 @@ void main() {
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),
@@ -482,7 +482,7 @@ void main() {
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),
@@ -509,7 +509,7 @@ void main() {
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),
@@ -546,7 +546,7 @@ void main() {
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),
@@ -583,7 +583,7 @@ void main() {
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),
@@ -649,7 +649,7 @@ void main() {
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),

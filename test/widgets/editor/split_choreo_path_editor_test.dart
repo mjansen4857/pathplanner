@@ -51,7 +51,7 @@ void main() {
         body: SplitChoreoPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),
@@ -76,7 +76,7 @@ void main() {
         body: SplitChoreoPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),
@@ -105,7 +105,7 @@ void main() {
         body: SplitChoreoPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: FieldImage.official(OfficialField.crescendo),
           undoStack: undoStack,
         ),
       ),

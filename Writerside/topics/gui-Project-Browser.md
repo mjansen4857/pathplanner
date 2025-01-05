@@ -1,6 +1,6 @@
 # Project Browser
 
-![](cover.png)
+![](project_page.png)
 
 The project browser is the main screen of PathPlanner and allows you to manage your path/auto files as well as open them
 for editing. The project browser is split in two, with paths on the left and autos on the right. The relative sizes of

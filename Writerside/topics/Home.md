@@ -2,7 +2,7 @@
 
 Download from
 the [Microsoft Store](https://www.microsoft.com/en-us/p/frc-pathplanner/9nqbkb5dw909?cid=storebadge&ocid=badge&rtc=1&activetab=pivot:overviewtab)
-or the [Mac App Store](https://apps.apple.com/us/app/frc-pathplanner/id1593046876) to receive auto-updates. Manual
+to receive auto-updates. Manual
 installs can be found [here](https://github.com/mjansen4857/pathplanner/releases).
 
 ![](cover.png)

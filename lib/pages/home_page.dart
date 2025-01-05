@@ -128,8 +128,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       _animController.forward();
 
-      if (!(widget.prefs.getBool(PrefsKeys.seen2024ResetPopup) ?? false) &&
-          _fieldImage?.name != 'Crescendo' &&
+      if (!(widget.prefs.getBool(PrefsKeys.seen2025ResetPopup) ?? false) &&
+          _fieldImage?.name != 'Reefscape' &&
           mounted) {
         showDialog(
           context: this.context,
@@ -147,7 +147,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                        'The 2024 field image is now available. Would you like to set your field image to the 2024 field and reset the default navgrid for the 2024 field?'),
+                        'The 2025 field image is now available. Would you like to set your field image to the 2025 field and reset the navgrid to the new default?'),
                   ],
                 ),
               ),
@@ -155,14 +155,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    widget.prefs.setBool(PrefsKeys.seen2024ResetPopup, true);
+                    widget.prefs.setBool(PrefsKeys.seen2025ResetPopup, true);
                   },
                   child: const Text('No'),
                 ),
                 TextButton(
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    widget.prefs.setBool(PrefsKeys.seen2024ResetPopup, true);
+                    widget.prefs.setBool(PrefsKeys.seen2025ResetPopup, true);
                     setState(() {
                       _fieldImage = FieldImage.defaultField;
                       widget.prefs
@@ -183,46 +183,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             );
           },
         );
-      }
-
-      if (!(widget.prefs.getBool(PrefsKeys.seen2024Warning) ?? false) &&
-          mounted) {
-        showDialog(
-            context: this.context,
-            barrierDismissible: false,
-            builder: (context) {
-              ColorScheme colorScheme = Theme.of(context).colorScheme;
-              return AlertDialog(
-                backgroundColor: colorScheme.surface,
-                surfaceTintColor: colorScheme.surfaceTint,
-                title: const Text('Non-standard Field Mirroring'),
-                content: const SizedBox(
-                  width: 300,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                          'The 2024 FRC game has non-standard field mirroring that would prevent using the same auto path for both alliances without transformation.'),
-                      SizedBox(height: 16),
-                      Text(
-                          'PathPlannerLib has functionality to automatically transform paths to work for the correct alliance depending on the current alliance color.'),
-                      SizedBox(height: 16),
-                      Text(
-                          'In order for this to work correctly, you MUST create all of your paths on the blue (left) side of the field.'),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      widget.prefs.setBool(PrefsKeys.seen2024Warning, true);
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              );
-            });
       }
     });
   }

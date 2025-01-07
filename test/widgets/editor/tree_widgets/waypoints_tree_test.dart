@@ -455,8 +455,10 @@ void main() {
   });
 
   testWidgets('linked waypoint', (widgetTester) async {
-    Waypoint.linked['existing link'] = const Translation2d(0, 0);
-    Waypoint.linked['new link'] = const Translation2d(0, 0);
+    Waypoint.linked['existing link'] =
+        const Pose2d(Translation2d(0, 0), Rotation2d());
+    Waypoint.linked['new link'] =
+        const Pose2d(Translation2d(0, 0), Rotation2d());
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(

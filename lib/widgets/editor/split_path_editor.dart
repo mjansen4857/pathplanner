@@ -382,6 +382,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           widget.path.idealStartingState.rotation = endRotation;
                           widget.path.generateAndSavePath();
                           _simulatePath();
+                          widget.onPathChanged?.call();
                         });
                       },
                       (oldValue) {
@@ -389,6 +390,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           widget.path.idealStartingState.rotation = oldValue!;
                           widget.path.generateAndSavePath();
                           _simulatePath();
+                          widget.onPathChanged?.call();
                         });
                       },
                     ));
@@ -401,6 +403,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           widget.path.goalEndState.rotation = endRotation;
                           widget.path.generateAndSavePath();
                           _simulatePath();
+                          widget.onPathChanged?.call();
                         });
                       },
                       (oldValue) {
@@ -408,6 +411,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           widget.path.goalEndState.rotation = oldValue!;
                           widget.path.generateAndSavePath();
                           _simulatePath();
+                          widget.onPathChanged?.call();
                         });
                       },
                     ));
@@ -423,6 +427,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                               endRotation;
                           widget.path.generateAndSavePath();
                           _simulatePath();
+                          widget.onPathChanged?.call();
                         });
                       },
                       (oldValue) {
@@ -431,6 +436,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                               oldValue!;
                           widget.path.generateAndSavePath();
                           _simulatePath();
+                          widget.onPathChanged?.call();
                         });
                       },
                     ));

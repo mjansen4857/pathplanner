@@ -38,8 +38,8 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Waypoint.linked['link1'] = const Translation2d(0, 0);
-    Waypoint.linked['link2'] = const Translation2d(0, 0);
+    Waypoint.linked['link1'] = const Pose2d(Translation2d(0, 0), Rotation2d());
+    Waypoint.linked['link2'] = const Pose2d(Translation2d(0, 0), Rotation2d());
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -107,7 +107,7 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Waypoint.linked['link1'] = const Translation2d(0, 0);
+    Waypoint.linked['link1'] = const Pose2d(Translation2d(0, 0), Rotation2d());
 
     bool removed = false;
 
@@ -205,7 +205,7 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Waypoint.linked['link1'] = const Translation2d(0, 0);
+    Waypoint.linked['link1'] = const Pose2d(Translation2d(0, 0), Rotation2d());
 
     bool renamed = false;
 
@@ -310,8 +310,8 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Waypoint.linked['link1'] = const Translation2d(0, 0);
-    Waypoint.linked['link2'] = const Translation2d(0, 0);
+    Waypoint.linked['link1'] = const Pose2d(Translation2d(0, 0), Rotation2d());
+    Waypoint.linked['link2'] = const Pose2d(Translation2d(0, 0), Rotation2d());
 
     bool renamed = false;
 
@@ -415,7 +415,7 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Waypoint.linked['link1'] = const Translation2d(0, 0);
+    Waypoint.linked['link1'] = const Pose2d(Translation2d(0, 0), Rotation2d());
 
     bool renamed = false;
 

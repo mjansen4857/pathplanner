@@ -73,6 +73,25 @@ class PathPlannerPath {
     required this.idealStartingState,
     required this.useDefaultConstraints,
   }) : pathPoints = [] {
+    // Set the up the values of linked waypoints
+    for (int i = 0; i < waypoints.length; i++) {
+      final w = waypoints[i];
+      if (w.linkedName != null) {
+        if (i == 0) {
+          // Link rotation will be from ideal starting state
+          Waypoint.linked[w.linkedName!] =
+              Pose2d(w.anchor, idealStartingState.rotation);
+        } else if (i == waypoints.length - 1) {
+          // Link rotation will be from goal end state
+          Waypoint.linked[w.linkedName!] =
+              Pose2d(w.anchor, goalEndState.rotation);
+        } else if (!Waypoint.linked.containsKey(w.linkedName!)) {
+          // If waypoint is not already in linked map, just use a 0 rotation for now
+          Waypoint.linked[w.linkedName!] = Pose2d(w.anchor, const Rotation2d());
+        }
+      }
+    }
+
     generatePathPoints();
   }
 

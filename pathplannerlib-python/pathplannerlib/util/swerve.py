@@ -6,6 +6,7 @@ from wpimath.units import rotationsToRadians
 from wpilib import RobotController
 from pathplannerlib.config import RobotConfig
 from pathplannerlib.util import DriveFeedforwards
+from pathplannerlib.path import PathConstraints
 import math
 from typing import Callable
 
@@ -50,7 +51,7 @@ class SwerveSetpointGenerator:
         return cls(config, rotationsToRadians(max_steer_velocity))
 
     def generateSetpoint(self, prev_setpoint: SwerveSetpoint, desired_state_robot_relative: ChassisSpeeds, dt: float,
-                         input_voltage: float = None) -> SwerveSetpoint:
+                         input_voltage: float = None, constraints: PathConstraints = None) -> SwerveSetpoint:
         """
         Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
         this method. This method will discretize the speeds for you.
@@ -63,6 +64,8 @@ class SwerveSetpointGenerator:
             be a static nominal voltage if you do not want the setpoint generator to react to changes
             in input voltage. If the given voltage is NaN, it will be assumed to be 12v. The input
             voltage will be clamped to a minimum of the robot controller's brownout voltage.
+        :param constraints: he arbitrary constraints to respect along with the robot's max capabilities.
+            If this is None, the generator will only limit setpoints by the robot's max capabilities.
         :return: A Setpoint object that satisfies all the kinematic/friction limits while converging to
         desired_state quickly.
         """
@@ -75,6 +78,16 @@ class SwerveSetpointGenerator:
             input_voltage = max(input_voltage, self._brownoutVoltage)
 
         maxSpeed = self._config.moduleConfig.maxDriveVelocityMPS * min(1, input_voltage / 12)
+
+        # Limit the max velocities in desired state based on constraints
+        if constraints is not None:
+            vel = Translation2d(desired_state_robot_relative.vx, desired_state_robot_relative.vy)
+            linearVel = vel.norm()
+            if linearVel > constraints.maxVelocityMps:
+                vel = vel * (constraints.maxVelocityMps / linearVel)
+            desired_state_robot_relative = ChassisSpeeds(vel.x, vel.y, max(min(desired_state_robot_relative.omega,
+                                                                               constraints.maxAngularVelocityRps),
+                                                                           -constraints.maxAngularVelocityRps))
 
         desired_module_states = self._config.toSwerveModuleStates(desired_state_robot_relative)
         # Make sure desired_state respects velocity limits.
@@ -130,7 +143,7 @@ class SwerveSetpointGenerator:
                 and not self._epsilonEqualsSpeeds(desired_state_robot_relative, ChassisSpeeds()):
             # It will (likely) be faster to stop the robot, rotate the modules in place to the complement
             # of the desired angle, and accelerate again.
-            return self.generateSetpoint(prev_setpoint, ChassisSpeeds(), dt, input_voltage)
+            return self.generateSetpoint(prev_setpoint, ChassisSpeeds(), dt, input_voltage, constraints)
 
         # Compute the deltas between start and goal. We can then interpolate from the start state to
         # the goal state; then find the amount we can move from start towards goal in this cycle such
@@ -271,6 +284,13 @@ class SwerveSetpointGenerator:
 
         chassis_accel_vec = chassis_force_vec / self._config.massKG
         chassis_angular_accel = chassis_torque / self._config.MOI
+
+        if constraints is not None:
+            linearAccel = chassis_accel_vec.norm()
+            if linearAccel > constraints.maxAccelerationMpsSq:
+                chassis_accel_vec = chassis_accel_vec * (constraints.maxAccelerationMpsSq / linearAccel)
+            chassis_angular_accel = max(min(chassis_angular_accel, constraints.maxAngularAccelerationRpsSq),
+                                        -constraints.maxAngularAccelerationRpsSq)
 
         # Use kinematics to convert chassis accelerations to module accelerations
         chassis_accel = \

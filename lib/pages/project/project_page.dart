@@ -368,10 +368,10 @@ class _ProjectPageState extends State<ProjectPage> {
                   },
                   onLinkedRenamed: (String oldName, String newName) {
                     setState(() {
-                      Translation2d? pos = Waypoint.linked.remove(oldName);
+                      Pose2d? pose = Waypoint.linked.remove(oldName);
 
-                      if (pos != null) {
-                        Waypoint.linked[newName] = pos;
+                      if (pose != null) {
+                        Waypoint.linked[newName] = pose;
 
                         for (PathPlannerPath path in _paths) {
                           bool changed = false;
@@ -1020,16 +1020,43 @@ class _ProjectPageState extends State<ProjectPage> {
           hotReload: widget.hotReload,
           simulatePath: widget.simulatePath,
           onPathChanged: () {
+            // Update the linked rotation for the start/end states
+            if (path.waypoints.first.linkedName != null) {
+              Waypoint.linked[path.waypoints.first.linkedName!] = Pose2d(
+                  path.waypoints.first.anchor,
+                  path.idealStartingState.rotation);
+            }
+            if (path.waypoints.last.linkedName != null) {
+              Waypoint.linked[path.waypoints.last.linkedName!] = Pose2d(
+                  path.waypoints.last.anchor, path.goalEndState.rotation);
+            }
+
             // Make sure all paths with linked waypoints are updated
             for (PathPlannerPath p in _paths) {
               bool changed = false;
 
-              for (Waypoint w in p.waypoints) {
-                if (w.linkedName != null) {
-                  var anchor = Waypoint.linked[w.linkedName];
+              for (int i = 0; i < p.waypoints.length; i++) {
+                Waypoint w = p.waypoints[i];
+                if (w.linkedName != null &&
+                    Waypoint.linked.containsKey(w.linkedName!)) {
+                  Pose2d link = Waypoint.linked[w.linkedName!]!;
 
-                  if (anchor != null && anchor.getDistance(w.anchor) >= 0.01) {
-                    w.move(anchor.x, anchor.y);
+                  if (link.translation.getDistance(w.anchor) >= 0.01) {
+                    w.move(link.translation.x, link.translation.y);
+                    changed = true;
+                  }
+
+                  if (i == 0 &&
+                      (link.rotation - p.idealStartingState.rotation)
+                              .degrees
+                              .abs() >
+                          0.01) {
+                    p.idealStartingState.rotation = link.rotation;
+                    changed = true;
+                  } else if (i == p.waypoints.length - 1 &&
+                      (link.rotation - p.goalEndState.rotation).degrees.abs() >
+                          0.01) {
+                    p.goalEndState.rotation = link.rotation;
                     changed = true;
                   }
                 }

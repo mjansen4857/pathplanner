@@ -3,7 +3,9 @@ package com.pathplanner.lib.util.swerve;
 import static edu.wpi.first.units.Units.*;
 
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.DriveFeedforwards;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -62,6 +64,9 @@ public class SwerveSetpointGenerator {
    *     iteration setpoint instead of the actual measured/estimated kinematic state.
    * @param desiredStateRobotRelative The desired state of motion, such as from the driver sticks or
    *     a path following algorithm.
+   * @param constraints The arbitrary constraints to respect along with the robot's max
+   *     capabilities. If this is null, the generator will only limit setpoints by the robot's max
+   *     capabilities.
    * @param dt The loop time.
    * @param inputVoltage The input voltage of the drive motor controllers, in volts. This can also
    *     be a static nominal voltage if you do not want the setpoint generator to react to changes
@@ -73,6 +78,7 @@ public class SwerveSetpointGenerator {
   public SwerveSetpoint generateSetpoint(
       final SwerveSetpoint prevSetpoint,
       ChassisSpeeds desiredStateRobotRelative,
+      PathConstraints constraints,
       double dt,
       double inputVoltage) {
     if (Double.isNaN(inputVoltage)) {
@@ -81,6 +87,26 @@ public class SwerveSetpointGenerator {
       inputVoltage = Math.max(inputVoltage, brownoutVoltage);
     }
     double maxSpeed = config.moduleConfig.maxDriveVelocityMPS * Math.min(1, inputVoltage / 12);
+
+    // Limit the max velocities in desired state based on constraints
+    if (constraints != null) {
+      Translation2d vel =
+          new Translation2d(
+              desiredStateRobotRelative.vxMetersPerSecond,
+              desiredStateRobotRelative.vyMetersPerSecond);
+      double linearVel = vel.getNorm();
+      if (linearVel > constraints.maxVelocityMPS()) {
+        vel = vel.times(constraints.maxVelocityMPS() / linearVel);
+      }
+      desiredStateRobotRelative =
+          new ChassisSpeeds(
+              vel.getX(),
+              vel.getY(),
+              MathUtil.clamp(
+                  desiredStateRobotRelative.omegaRadiansPerSecond,
+                  -constraints.maxAngularVelocityRadPerSec(),
+                  constraints.maxAngularVelocityRadPerSec()));
+    }
 
     SwerveModuleState[] desiredModuleStates =
         config.toSwerveModuleStates(desiredStateRobotRelative);
@@ -139,7 +165,7 @@ public class SwerveSetpointGenerator {
         && !epsilonEquals(desiredStateRobotRelative, new ChassisSpeeds())) {
       // It will (likely) be faster to stop the robot, rotate the modules in place to the complement
       // of the desired angle, and accelerate again.
-      return generateSetpoint(prevSetpoint, new ChassisSpeeds(), dt, inputVoltage);
+      return generateSetpoint(prevSetpoint, new ChassisSpeeds(), constraints, dt, inputVoltage);
     }
 
     // Compute the deltas between start and goal. We can then interpolate from the start state to
@@ -307,6 +333,18 @@ public class SwerveSetpointGenerator {
     Translation2d chassisAccelVec = chassisForceVec.div(config.massKG);
     double chassisAngularAccel = chassisTorque / config.MOI;
 
+    if (constraints != null) {
+      double linearAccel = chassisAccelVec.getNorm();
+      if (linearAccel > constraints.maxAccelerationMPSSq()) {
+        chassisAccelVec = chassisAccelVec.times(constraints.maxAccelerationMPSSq() / linearAccel);
+      }
+      chassisAngularAccel =
+          MathUtil.clamp(
+              chassisAngularAccel,
+              -constraints.maxAngularAccelerationRadPerSecSq(),
+              constraints.maxAngularAccelerationRadPerSecSq());
+    }
+
     // Use kinematics to convert chassis accelerations to module accelerations
     ChassisSpeeds chassisAccel =
         new ChassisSpeeds(chassisAccelVec.getX(), chassisAccelVec.getY(), chassisAngularAccel);
@@ -409,6 +447,99 @@ public class SwerveSetpointGenerator {
    *     iteration setpoint instead of the actual measured/estimated kinematic state.
    * @param desiredStateRobotRelative The desired state of motion, such as from the driver sticks or
    *     a path following algorithm.
+   * @param constraints The arbitrary constraints to respect along with the robot's max
+   *     capabilities. If this is null, the generator will only limit setpoints by the robot's max
+   *     capabilities.
+   * @param dt The loop time.
+   * @param inputVoltage The input voltage of the drive motor controllers, in volts. This can also
+   *     be a static nominal voltage if you do not want the setpoint generator to react to changes
+   *     in input voltage. If the given voltage is NaN, it will be assumed to be 12v. The input
+   *     voltage will be clamped to a minimum of the robot controller's brownout voltage.
+   * @return A Setpoint object that satisfies all the kinematic/friction limits while converging to
+   *     desiredState quickly.
+   */
+  public SwerveSetpoint generateSetpoint(
+      final SwerveSetpoint prevSetpoint,
+      ChassisSpeeds desiredStateRobotRelative,
+      PathConstraints constraints,
+      Time dt,
+      Voltage inputVoltage) {
+    return generateSetpoint(
+        prevSetpoint,
+        desiredStateRobotRelative,
+        constraints,
+        dt.in(Seconds),
+        inputVoltage.in(Volts));
+  }
+
+  /**
+   * Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
+   * this method. This method will discretize the speeds for you.
+   *
+   * <p>Note: This method will automatically use the current robot controller input voltage.
+   *
+   * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
+   *     iteration setpoint instead of the actual measured/estimated kinematic state.
+   * @param desiredStateRobotRelative The desired state of motion, such as from the driver sticks or
+   *     a path following algorithm.
+   * @param constraints The arbitrary constraints to respect along with the robot's max
+   *     capabilities. If this is null, the generator will only limit setpoints by the robot's max
+   *     capabilities.
+   * @param dt The loop time.
+   * @return A Setpoint object that satisfies all the kinematic/friction limits while converging to
+   *     desiredState quickly.
+   */
+  public SwerveSetpoint generateSetpoint(
+      SwerveSetpoint prevSetpoint,
+      ChassisSpeeds desiredStateRobotRelative,
+      PathConstraints constraints,
+      double dt) {
+    return generateSetpoint(
+        prevSetpoint,
+        desiredStateRobotRelative,
+        constraints,
+        dt,
+        RobotController.getInputVoltage());
+  }
+
+  /**
+   * Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
+   * this method. This method will discretize the speeds for you.
+   *
+   * <p>Note: This method will automatically use the current robot controller input voltage.
+   *
+   * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
+   *     iteration setpoint instead of the actual measured/estimated kinematic state.
+   * @param desiredStateRobotRelative The desired state of motion, such as from the driver sticks or
+   *     a path following algorithm.
+   * @param constraints The arbitrary constraints to respect along with the robot's max
+   *     capabilities. If this is null, the generator will only limit setpoints by the robot's max
+   *     capabilities.
+   * @param dt The loop time.
+   * @return A Setpoint object that satisfies all the kinematic/friction limits while converging to
+   *     desiredState quickly.
+   */
+  public SwerveSetpoint generateSetpoint(
+      SwerveSetpoint prevSetpoint,
+      ChassisSpeeds desiredStateRobotRelative,
+      PathConstraints constraints,
+      Time dt) {
+    return generateSetpoint(
+        prevSetpoint,
+        desiredStateRobotRelative,
+        constraints,
+        dt.in(Seconds),
+        RobotController.getBatteryVoltage());
+  }
+
+  /**
+   * Generate a new setpoint with explicit battery voltage. Note: Do not discretize ChassisSpeeds
+   * passed into or returned from this method. This method will discretize the speeds for you.
+   *
+   * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
+   *     iteration setpoint instead of the actual measured/estimated kinematic state.
+   * @param desiredStateRobotRelative The desired state of motion, such as from the driver sticks or
+   *     a path following algorithm.
    * @param dt The loop time.
    * @param inputVoltage The input voltage of the drive motor controllers, in volts. This can also
    *     be a static nominal voltage if you do not want the setpoint generator to react to changes
@@ -423,7 +554,7 @@ public class SwerveSetpointGenerator {
       Time dt,
       Voltage inputVoltage) {
     return generateSetpoint(
-        prevSetpoint, desiredStateRobotRelative, dt.in(Seconds), inputVoltage.in(Volts));
+        prevSetpoint, desiredStateRobotRelative, null, dt.in(Seconds), inputVoltage.in(Volts));
   }
 
   /**
@@ -443,7 +574,7 @@ public class SwerveSetpointGenerator {
   public SwerveSetpoint generateSetpoint(
       SwerveSetpoint prevSetpoint, ChassisSpeeds desiredStateRobotRelative, double dt) {
     return generateSetpoint(
-        prevSetpoint, desiredStateRobotRelative, dt, RobotController.getInputVoltage());
+        prevSetpoint, desiredStateRobotRelative, null, dt, RobotController.getInputVoltage());
   }
 
   /**
@@ -465,6 +596,7 @@ public class SwerveSetpointGenerator {
     return generateSetpoint(
         prevSetpoint,
         desiredStateRobotRelative,
+        null,
         dt.in(Seconds),
         RobotController.getBatteryVoltage());
   }

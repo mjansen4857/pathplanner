@@ -13,7 +13,8 @@ SwerveSetpointGenerator::SwerveSetpointGenerator(const RobotConfig &config,
 
 SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		SwerveSetpoint prevSetpoint,
-		frc::ChassisSpeeds desiredStateRobotRelative, units::second_t dt,
+		frc::ChassisSpeeds desiredStateRobotRelative,
+		std::optional<PathConstraints> constraints, units::second_t dt,
 		units::volt_t inputVoltage) {
 
 	if (std::isnan(inputVoltage.value())) {
@@ -24,6 +25,24 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 	units::meters_per_second_t maxSpeed =
 			m_robotConfig.moduleConfig.maxDriveVelocityMPS
 					* std::min(1.0, inputVoltage() / 12.0);
+
+	// Limit the max velocities in desired state based on constraints
+	if (constraints.has_value()) {
+		frc::Translation2d vel(
+				units::meter_t { desiredStateRobotRelative.vx() },
+				units::meter_t { desiredStateRobotRelative.vy() });
+		units::meters_per_second_t linearVel { vel.Norm()() };
+		if (linearVel > constraints.value().getMaxVelocity()) {
+			vel = vel * (constraints.value().getMaxVelocity()() / linearVel());
+		}
+		auto angVel = units::math::max(
+				units::math::min(desiredStateRobotRelative.omega,
+						constraints.value().getMaxAngularVelocity()),
+				-constraints.value().getMaxAngularVelocity());
+		desiredStateRobotRelative = frc::ChassisSpeeds(
+				units::meters_per_second_t { vel.X()() },
+				units::meters_per_second_t { vel.Y()() }, angVel);
+	}
 
 	std::vector < frc::SwerveModuleState > desiredModuleStates =
 			m_robotConfig.toSwerveModuleStates(desiredStateRobotRelative);
@@ -88,8 +107,8 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 					frc::ChassisSpeeds())) {
 		// It will (likely) be faster to stop the robot, rotate the modules in place to the complement
 		// of the desired angle, and accelerate again.
-		return generateSetpoint(prevSetpoint, frc::ChassisSpeeds(), dt,
-				inputVoltage);
+		return generateSetpoint(prevSetpoint, frc::ChassisSpeeds(), constraints,
+				dt, inputVoltage);
 	}
 
 	// Compute the deltas between start and goal. We can then interpolate from the start state to
@@ -260,6 +279,20 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 	units::radians_per_second_squared_t chassisAngularAccel {
 			chassisTorque.value() / m_robotConfig.MOI.value() };
 
+	if (constraints.has_value()) {
+		units::meters_per_second_squared_t linearAccel {
+				chassisAccelVec.Norm()() };
+		if (linearAccel > constraints.value().getMaxAcceleration()) {
+			chassisAccelVec = chassisAccelVec
+					* (constraints.value().getMaxAcceleration()()
+							/ linearAccel());
+		}
+		chassisAngularAccel = units::math::max(
+				units::math::min(chassisAngularAccel,
+						constraints.value().getMaxAngularAcceleration()),
+				-constraints.value().getMaxAngularAcceleration());
+	}
+
 	// Use kinematics to convert chassis accelerations to module accelerations
 	frc::ChassisSpeeds chassisAccel { chassisAccelVec.X() / 1_s,
 			chassisAccelVec.Y() / 1_s, chassisAngularAccel * 1_s };
@@ -371,9 +404,11 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 
 SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		SwerveSetpoint prevSetpoint,
-		frc::ChassisSpeeds desiredStateRobotRelative, units::second_t dt) {
-	return generateSetpoint(prevSetpoint, desiredStateRobotRelative, dt,
-			units::volt_t { frc::RobotController::GetInputVoltage() });
+		frc::ChassisSpeeds desiredStateRobotRelative,
+		std::optional<PathConstraints> constraints, units::second_t dt) {
+	return generateSetpoint(prevSetpoint, desiredStateRobotRelative,
+			constraints, dt, units::volt_t {
+					frc::RobotController::GetInputVoltage() });
 }
 
 double SwerveSetpointGenerator::findSteeringMaxS(units::meters_per_second_t x_0,

@@ -95,8 +95,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }
       }
 
-      if (projectDir == null || !fs.directory(projectDir).existsSync()) {
-        projectDir = await Navigator.push(
+      while (true) {
+        if (projectDir != null) {
+          try {
+            if (!fs.directory(projectDir).existsSync()) {
+              projectDir = null;
+            }
+          } catch (e, stack) {
+            Log.error('Failed to check if project exists', e, stack);
+            projectDir = null;
+          }
+        }
+
+        projectDir ??= await Navigator.push(
           _key.currentContext!,
           PageRouteBuilder(
             pageBuilder: (context, anim1, anim2) => WelcomePage(
@@ -106,9 +117,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             reverseTransitionDuration: Duration.zero,
           ),
         );
-      }
 
-      _initFromProjectDir(projectDir!);
+        try {
+          _initFromProjectDir(projectDir!);
+          // Break from the loop if we've successfully loaded the project
+          break;
+        } catch (e, stack) {
+          Log.error('Failed to initialize from project directory', e, stack);
+        }
+      }
 
       setState(() {
         _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??

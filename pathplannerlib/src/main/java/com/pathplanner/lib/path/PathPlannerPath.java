@@ -429,7 +429,7 @@ public class PathPlannerPath {
 
         if (markerJson.get("event") != null) {
           Command eventCommand =
-              CommandUtil.commandFromJson((JSONObject) markerJson.get("event"), true);
+              CommandUtil.commandFromJson((JSONObject) markerJson.get("event"), true, false);
           fullEvents.add(new ScheduleCommandEvent(fromTimestamp, eventCommand));
         }
       }

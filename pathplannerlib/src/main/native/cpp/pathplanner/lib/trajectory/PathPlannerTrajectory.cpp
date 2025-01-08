@@ -307,9 +307,6 @@ void PathPlannerTrajectory::generateStates(
 	for (size_t i = 0; i < states.size(); i++) {
 		for (size_t m = 0; m < config.numModules; m++) {
 			if (i != states.size() - 1) {
-				states[i].moduleStates[m].fieldAngle =
-						(states[i + 1].moduleStates[m].fieldPos
-								- states[i].moduleStates[m].fieldPos).Angle();
 				frc::Translation2d fieldTranslation =
 						states[i + 1].moduleStates[m].fieldPos
 								- states[i].moduleStates[m].fieldPos;

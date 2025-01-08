@@ -60,6 +60,20 @@ public class PathPlannerAuto extends Command {
    *     autonomous routine
    */
   public PathPlannerAuto(String autoName) {
+    this(autoName, false);
+  }
+
+  /**
+   * Constructs a new PathPlannerAuto command.
+   *
+   * @param autoName the name of the autonomous routine to load and run
+   * @param mirror Mirror all paths to the other side of the current alliance. For example, if a
+   *     path is on the right of the blue alliance side of the field, it will be mirrored to the
+   *     left of the blue alliance side of the field.
+   * @throws AutoBuilderException if AutoBuilder is not configured before attempting to load the
+   *     autonomous routine
+   */
+  public PathPlannerAuto(String autoName, boolean mirror) {
     if (!AutoBuilder.isConfigured()) {
       throw new AutoBuilderException(
           "AutoBuilder was not configured before attempting to load a PathPlannerAuto from file");
@@ -86,7 +100,7 @@ public class PathPlannerAuto extends Command {
         throw new FileVersionException(version, "2025.X", autoName + ".auto");
       }
 
-      initFromJson(json);
+      initFromJson(json, mirror);
     } catch (FileNotFoundException e) {
       DriverStation.reportError(e.getMessage(), e.getStackTrace());
       autoCommand = Commands.none();
@@ -620,27 +634,29 @@ public class PathPlannerAuto extends Command {
    */
   public void hotReload(JSONObject autoJson) {
     try {
-      initFromJson(autoJson);
+      initFromJson(autoJson, false);
     } catch (Exception e) {
       DriverStation.reportError("Failed to load path during hot reload", e.getStackTrace());
     }
   }
 
-  private void initFromJson(JSONObject autoJson)
+  private void initFromJson(JSONObject autoJson, boolean mirror)
       throws IOException, ParseException, FileVersionException {
     boolean choreoAuto = autoJson.get("choreoAuto") != null && (boolean) autoJson.get("choreoAuto");
     JSONObject commandJson = (JSONObject) autoJson.get("command");
-    Command cmd = CommandUtil.commandFromJson(commandJson, choreoAuto);
+    Command cmd = CommandUtil.commandFromJson(commandJson, choreoAuto, mirror);
     boolean resetOdom = autoJson.get("resetOdom") != null && (boolean) autoJson.get("resetOdom");
     List<PathPlannerPath> pathsInAuto = pathsFromCommandJson(commandJson, choreoAuto);
     if (!pathsInAuto.isEmpty()) {
+      PathPlannerPath path0 = pathsInAuto.get(0);
+      if (mirror) {
+        path0 = path0.mirrorPath();
+      }
       if (AutoBuilder.isHolonomic()) {
         this.startingPose =
-            new Pose2d(
-                pathsInAuto.get(0).getPoint(0).position,
-                pathsInAuto.get(0).getIdealStartingState().rotation());
+            new Pose2d(path0.getPoint(0).position, path0.getIdealStartingState().rotation());
       } else {
-        this.startingPose = pathsInAuto.get(0).getStartingDifferentialPose();
+        this.startingPose = path0.getStartingDifferentialPose();
       }
     } else {
       this.startingPose = null;

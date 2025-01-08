@@ -7,10 +7,7 @@ import com.pathplanner.lib.events.OneShotTriggerEvent;
 import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-import com.pathplanner.lib.util.DriveFeedforwards;
-import com.pathplanner.lib.util.FileVersionException;
-import com.pathplanner.lib.util.GeometryUtil;
-import com.pathplanner.lib.util.PPLibTelemetry;
+import com.pathplanner.lib.util.*;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
@@ -1185,6 +1182,89 @@ public class PathPlannerPath {
     path.reversed = reversed;
     path.isChoreoPath = isChoreoPath;
     path.idealTrajectory = flippedTraj;
+    path.preventFlipping = preventFlipping;
+    path.name = name;
+
+    return path;
+  }
+
+  private static Translation2d mirrorTranslation(Translation2d translation) {
+    return new Translation2d(translation.getX(), FlippingUtil.fieldSizeY - translation.getY());
+  }
+
+  /**
+   * Mirror a path to the other side of the current alliance. For example, if this path is on the
+   * right of the blue alliance side of the field, it will be mirrored to the left of the blue
+   * alliance side of the field.
+   *
+   * @return The mirrored path
+   */
+  public PathPlannerPath mirrorPath() {
+    PathPlannerPath path = new PathPlannerPath();
+    path.waypoints =
+        waypoints.stream()
+            .map(
+                w -> {
+                  Translation2d prevControl = null;
+                  Translation2d anchor = mirrorTranslation(w.anchor());
+                  Translation2d nextControl = null;
+
+                  if (w.prevControl() != null) {
+                    prevControl = mirrorTranslation(w.prevControl());
+                  }
+                  if (w.nextControl() != null) {
+                    nextControl = mirrorTranslation(w.nextControl());
+                  }
+                  return new Waypoint(prevControl, anchor, nextControl);
+                })
+            .toList();
+    path.rotationTargets =
+        rotationTargets.stream()
+            .map(t -> new RotationTarget(t.position(), t.rotation().unaryMinus()))
+            .toList();
+    path.pointTowardsZones =
+        pointTowardsZones.stream()
+            .map(
+                z ->
+                    new PointTowardsZone(
+                        z.name(),
+                        mirrorTranslation(z.targetPosition()),
+                        z.rotationOffset(),
+                        z.minPosition(),
+                        z.maxPosition()))
+            .toList();
+    path.constraintZones = constraintZones;
+    path.eventMarkers = eventMarkers;
+    path.globalConstraints = globalConstraints;
+    if (idealStartingState != null) {
+      path.idealStartingState =
+          new IdealStartingState(
+              idealStartingState.velocityMPS(), idealStartingState.rotation().unaryMinus());
+    } else {
+      path.idealStartingState = null;
+    }
+    path.goalEndState =
+        new GoalEndState(goalEndState.velocityMPS(), goalEndState.rotation().unaryMinus());
+    path.allPoints =
+        allPoints.stream()
+            .map(
+                p -> {
+                  PathPoint point = new PathPoint(mirrorTranslation(p.position));
+                  point.distanceAlongPath = p.distanceAlongPath;
+                  point.maxV = p.maxV;
+                  if (p.rotationTarget != null) {
+                    point.rotationTarget =
+                        new RotationTarget(
+                            p.rotationTarget.position(), p.rotationTarget.rotation().unaryMinus());
+                  }
+                  point.constraints = p.constraints;
+                  point.waypointRelativePos = p.waypointRelativePos;
+                  return point;
+                })
+            .toList();
+    path.reversed = reversed;
+    path.isChoreoPath = isChoreoPath;
+    path.idealTrajectory = Optional.empty(); // TODO
     path.preventFlipping = preventFlipping;
     path.name = name;
 

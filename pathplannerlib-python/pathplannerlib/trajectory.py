@@ -578,12 +578,13 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         for m in range(config.numModules):
             prevRotDelta = state.moduleStates[m].angle - prevState.moduleStates[m].angle
             modVel = state.moduleStates[m].speed
-            dt = nextState.moduleStates[m].deltaPos / modVel
+            if modVel != 0.0:
+                dt = nextState.moduleStates[m].deltaPos / modVel
 
-            if math.isfinite(dt):
-                realMaxDT = max(realMaxDT, dt)
-                if abs(prevRotDelta.degrees()) < 60:
-                    maxDT = max(maxDT, dt)
+                if math.isfinite(dt):
+                    realMaxDT = max(realMaxDT, dt)
+                    if abs(prevRotDelta.degrees()) < 60:
+                        maxDT = max(maxDT, dt)
 
         if maxDT == 0.0:
             maxDT = realMaxDT
@@ -674,13 +675,14 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         for m in range(config.numModules):
             prevRotDelta = state.moduleStates[m].angle - states[i - 1].moduleStates[m].angle
             modVel = state.moduleStates[m].speed
-            dt = nextState.moduleStates[m].deltaPos / modVel
+            if modVel != 0.0:
+                dt = nextState.moduleStates[m].deltaPos / modVel
 
-            if math.isfinite(dt):
-                realMaxDT = max(realMaxDT, dt)
+                if math.isfinite(dt):
+                    realMaxDT = max(realMaxDT, dt)
 
-                if abs(prevRotDelta.degrees()) < 60:
-                    maxDT = max(maxDT, dt)
+                    if abs(prevRotDelta.degrees()) < 60:
+                        maxDT = max(maxDT, dt)
 
         if maxDT == 0.0:
             maxDT = realMaxDT

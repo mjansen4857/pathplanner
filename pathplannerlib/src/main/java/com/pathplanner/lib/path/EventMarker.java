@@ -64,7 +64,7 @@ public record EventMarker(
     Command cmd = null;
     if (markerJson.get("command") != null) {
       try {
-        cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"), false);
+        cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"), false, false);
       } catch (Exception ignored) {
         // Path files won't be loaded from event markers
       }

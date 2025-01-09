@@ -23,7 +23,7 @@ class FieldImage {
 
   static List<FieldImage>? _officialFields;
 
-  static final FieldImage defaultField = offialFields().last;
+  static final FieldImage defaultField = FieldImage.official(OfficialField.reefscape);
 
   static List<FieldImage> offialFields() {
     _officialFields ??= [
@@ -78,7 +78,7 @@ class FieldImage {
         pixelsPerMeter = 200.0;
         name = 'Reefscape';
         break;
-      case OfficialField.reefscape:
+      case OfficialField.reefscapeAnnotated:
         image = Image.asset(
           'images/field25-annotated.png',
           fit: BoxFit.contain,

@@ -78,7 +78,7 @@ public class FlippingUtil {
           -fieldSpeeds.omegaRadiansPerSecond);
       case kRotational -> new ChassisSpeeds(
           -fieldSpeeds.vxMetersPerSecond,
-          -fieldSpeeds.vxMetersPerSecond,
+          -fieldSpeeds.vyMetersPerSecond,
           fieldSpeeds.omegaRadiansPerSecond);
     };
   }

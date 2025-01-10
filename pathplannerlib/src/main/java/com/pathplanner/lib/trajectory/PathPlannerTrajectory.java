@@ -137,6 +137,8 @@ public class PathPlannerTrajectory {
           state.timeSeconds = prevState.timeSeconds;
           if (i != 1) {
             prevState.feedforwards = states.get(i - 2).feedforwards;
+          } else {
+            prevState.feedforwards = DriveFeedforwards.zeros(config.numModules);
           }
         } else {
           double dt = (2 * state.deltaPos) / sumV;

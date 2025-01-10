@@ -109,59 +109,73 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 
 			units::meters_per_second_t v0 = prevState.linearVelocity;
 			units::meters_per_second_t v = state.linearVelocity;
-			units::second_t dt = (2 * state.deltaPos) / (v + v0);
-			state.time = prevState.time + dt;
-
-			frc::ChassisSpeeds prevRobotSpeeds =
-					frc::ChassisSpeeds::FromFieldRelativeSpeeds(
-							prevState.fieldSpeeds, prevState.pose.Rotation());
-			frc::ChassisSpeeds robotSpeeds =
-					frc::ChassisSpeeds::FromFieldRelativeSpeeds(
-							state.fieldSpeeds, state.pose.Rotation());
-
-			auto chassisAccelX = (robotSpeeds.vx - prevRobotSpeeds.vx) / dt;
-			auto chassisAccelY = (robotSpeeds.vy - prevRobotSpeeds.vy) / dt;
-			auto chassisForceX = chassisAccelX * config.mass;
-			auto chassisForceY = chassisAccelY * config.mass;
-
-			auto angularAccel = (robotSpeeds.omega - prevRobotSpeeds.omega)
-					/ dt;
-			auto angTorque = angularAccel * config.MOI;
-			frc::ChassisSpeeds chassisForces { units::meters_per_second_t {
-					chassisForceX() }, units::meters_per_second_t {
-					chassisForceY() },
-					units::radians_per_second_t { angTorque() }, };
-
-			auto wheelForces = config.chassisForcesToWheelForceVectors(
-					chassisForces);
-			std::vector < units::meters_per_second_squared_t > accelFF;
-			std::vector < units::newton_t > linearForceFF;
-			std::vector < units::ampere_t > torqueCurrentFF;
-			std::vector < units::newton_t > forceXFF;
-			std::vector < units::newton_t > forceYFF;
-			for (size_t m = 0; m < config.numModules; m++) {
-				units::meter_t wheelForceDist = wheelForces[m].Norm();
-				units::newton_t appliedForce { 0.0 };
-				if (wheelForceDist() > 1e-6) {
-					appliedForce = units::newton_t { wheelForceDist()
-							* (wheelForces[m].Angle()
-									- state.moduleStates[m].angle).Cos() };
+			units::meters_per_second_t sumV = v + v0;
+			if (units::math::abs(sumV) < 1e-6_mps) {
+				state.time = prevState.time;
+				if (i != 1) {
+					prevState.feedforwards = m_states[i - 2].feedforwards;
+				} else {
+					prevState.feedforwards = DriveFeedforwards::zeros(
+							config.numModules);
 				}
-				units::newton_meter_t wheelTorque = appliedForce
-						* config.moduleConfig.wheelRadius;
-				units::ampere_t torqueCurrent =
-						config.moduleConfig.driveMotor.Current(wheelTorque);
+			} else {
+				units::second_t dt = (2 * state.deltaPos) / sumV;
+				state.time = prevState.time + dt;
 
-				accelFF.emplace_back(
-						(state.moduleStates[m].speed
-								- prevState.moduleStates[m].speed) / dt);
-				linearForceFF.emplace_back(appliedForce);
-				torqueCurrentFF.emplace_back(torqueCurrent);
-				forceXFF.emplace_back(units::newton_t { wheelForces[m].X()() });
-				forceYFF.emplace_back(units::newton_t { wheelForces[m].Y()() });
+				frc::ChassisSpeeds prevRobotSpeeds =
+						frc::ChassisSpeeds::FromFieldRelativeSpeeds(
+								prevState.fieldSpeeds,
+								prevState.pose.Rotation());
+				frc::ChassisSpeeds robotSpeeds =
+						frc::ChassisSpeeds::FromFieldRelativeSpeeds(
+								state.fieldSpeeds, state.pose.Rotation());
+
+				auto chassisAccelX = (robotSpeeds.vx - prevRobotSpeeds.vx) / dt;
+				auto chassisAccelY = (robotSpeeds.vy - prevRobotSpeeds.vy) / dt;
+				auto chassisForceX = chassisAccelX * config.mass;
+				auto chassisForceY = chassisAccelY * config.mass;
+
+				auto angularAccel = (robotSpeeds.omega - prevRobotSpeeds.omega)
+						/ dt;
+				auto angTorque = angularAccel * config.MOI;
+				frc::ChassisSpeeds chassisForces { units::meters_per_second_t {
+						chassisForceX() }, units::meters_per_second_t {
+						chassisForceY() }, units::radians_per_second_t {
+						angTorque() }, };
+
+				auto wheelForces = config.chassisForcesToWheelForceVectors(
+						chassisForces);
+				std::vector < units::meters_per_second_squared_t > accelFF;
+				std::vector < units::newton_t > linearForceFF;
+				std::vector < units::ampere_t > torqueCurrentFF;
+				std::vector < units::newton_t > forceXFF;
+				std::vector < units::newton_t > forceYFF;
+				for (size_t m = 0; m < config.numModules; m++) {
+					units::meter_t wheelForceDist = wheelForces[m].Norm();
+					units::newton_t appliedForce { 0.0 };
+					if (wheelForceDist() > 1e-6) {
+						appliedForce = units::newton_t { wheelForceDist()
+								* (wheelForces[m].Angle()
+										- state.moduleStates[m].angle).Cos() };
+					}
+					units::newton_meter_t wheelTorque = appliedForce
+							* config.moduleConfig.wheelRadius;
+					units::ampere_t torqueCurrent =
+							config.moduleConfig.driveMotor.Current(wheelTorque);
+
+					accelFF.emplace_back(
+							(state.moduleStates[m].speed
+									- prevState.moduleStates[m].speed) / dt);
+					linearForceFF.emplace_back(appliedForce);
+					torqueCurrentFF.emplace_back(torqueCurrent);
+					forceXFF.emplace_back(
+							units::newton_t { wheelForces[m].X()() });
+					forceYFF.emplace_back(
+							units::newton_t { wheelForces[m].Y()() });
+				}
+				prevState.feedforwards = DriveFeedforwards { accelFF,
+						linearForceFF, torqueCurrentFF, forceXFF, forceYFF };
 			}
-			prevState.feedforwards = DriveFeedforwards { accelFF, linearForceFF,
-					torqueCurrentFF, forceXFF, forceYFF };
 
 			// Un-added events have their timestamp set to a waypoint relative position
 			// When adding the event to this trajectory, set its timestamp properly

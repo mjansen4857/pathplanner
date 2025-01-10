@@ -10,6 +10,7 @@ enum OfficialField {
   chargedUp,
   crescendo,
   reefscape,
+  reefscapeAnnotated
 }
 
 class FieldImage {
@@ -22,7 +23,8 @@ class FieldImage {
 
   static List<FieldImage>? _officialFields;
 
-  static final FieldImage defaultField = offialFields().last;
+  static final FieldImage defaultField =
+      FieldImage.official(OfficialField.reefscape);
 
   static List<FieldImage> offialFields() {
     _officialFields ??= [
@@ -30,6 +32,7 @@ class FieldImage {
       FieldImage.official(OfficialField.chargedUp),
       FieldImage.official(OfficialField.crescendo),
       FieldImage.official(OfficialField.reefscape),
+      FieldImage.official(OfficialField.reefscapeAnnotated),
     ];
     return _officialFields!;
   }
@@ -69,6 +72,16 @@ class FieldImage {
       case OfficialField.reefscape:
         image = Image.asset(
           'images/field25.png',
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.medium,
+        );
+        defaultSize = const ui.Size(3510, 1610);
+        pixelsPerMeter = 200.0;
+        name = 'Reefscape';
+        break;
+      case OfficialField.reefscapeAnnotated:
+        image = Image.asset(
+          'images/field25-annotated.png',
           fit: BoxFit.contain,
           filterQuality: FilterQuality.medium,
         );

@@ -132,53 +132,61 @@ public class PathPlannerTrajectory {
 
         double v0 = prevState.linearVelocity;
         double v = state.linearVelocity;
-        double dt = (2 * state.deltaPos) / (v + v0);
-        state.timeSeconds = prevState.timeSeconds + dt;
+        double sumV = v + v0;
+        if (Math.abs(sumV) < 1e-6) {
+          state.timeSeconds = prevState.timeSeconds;
+          if (i != 1) {
+            prevState.feedforwards = states.get(i - 2).feedforwards;
+          }
+        } else {
+          double dt = (2 * state.deltaPos) / sumV;
+          state.timeSeconds = prevState.timeSeconds + dt;
 
-        ChassisSpeeds prevRobotSpeeds =
-            ChassisSpeeds.fromFieldRelativeSpeeds(
-                prevState.fieldSpeeds, prevState.pose.getRotation());
-        ChassisSpeeds robotSpeeds =
-            ChassisSpeeds.fromFieldRelativeSpeeds(state.fieldSpeeds, state.pose.getRotation());
-        double chassisAccelX =
-            (robotSpeeds.vxMetersPerSecond - prevRobotSpeeds.vxMetersPerSecond) / dt;
-        double chassisAccelY =
-            (robotSpeeds.vyMetersPerSecond - prevRobotSpeeds.vyMetersPerSecond) / dt;
-        double chassisForceX = chassisAccelX * config.massKG;
-        double chassisForceY = chassisAccelY * config.massKG;
+          ChassisSpeeds prevRobotSpeeds =
+              ChassisSpeeds.fromFieldRelativeSpeeds(
+                  prevState.fieldSpeeds, prevState.pose.getRotation());
+          ChassisSpeeds robotSpeeds =
+              ChassisSpeeds.fromFieldRelativeSpeeds(state.fieldSpeeds, state.pose.getRotation());
+          double chassisAccelX =
+              (robotSpeeds.vxMetersPerSecond - prevRobotSpeeds.vxMetersPerSecond) / dt;
+          double chassisAccelY =
+              (robotSpeeds.vyMetersPerSecond - prevRobotSpeeds.vyMetersPerSecond) / dt;
+          double chassisForceX = chassisAccelX * config.massKG;
+          double chassisForceY = chassisAccelY * config.massKG;
 
-        double angularAccel =
-            (robotSpeeds.omegaRadiansPerSecond - prevRobotSpeeds.omegaRadiansPerSecond) / dt;
-        double angTorque = angularAccel * config.MOI;
-        ChassisSpeeds chassisForces = new ChassisSpeeds(chassisForceX, chassisForceY, angTorque);
+          double angularAccel =
+              (robotSpeeds.omegaRadiansPerSecond - prevRobotSpeeds.omegaRadiansPerSecond) / dt;
+          double angTorque = angularAccel * config.MOI;
+          ChassisSpeeds chassisForces = new ChassisSpeeds(chassisForceX, chassisForceY, angTorque);
 
-        Translation2d[] wheelForces = config.chassisForcesToWheelForceVectors(chassisForces);
-        double[] accelFF = new double[config.numModules];
-        double[] linearForceFF = new double[config.numModules];
-        double[] torqueCurrentFF = new double[config.numModules];
-        double[] forceXFF = new double[config.numModules];
-        double[] forceYFF = new double[config.numModules];
-        for (int m = 0; m < config.numModules; m++) {
-          double wheelForceDist = wheelForces[m].getNorm();
-          double appliedForce =
-              wheelForceDist > 1e-6
-                  ? wheelForceDist
-                      * wheelForces[m].getAngle().minus(state.moduleStates[m].angle).getCos()
-                  : 0.0;
-          double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
-          double torqueCurrent = config.moduleConfig.driveMotor.getCurrent(wheelTorque);
+          Translation2d[] wheelForces = config.chassisForcesToWheelForceVectors(chassisForces);
+          double[] accelFF = new double[config.numModules];
+          double[] linearForceFF = new double[config.numModules];
+          double[] torqueCurrentFF = new double[config.numModules];
+          double[] forceXFF = new double[config.numModules];
+          double[] forceYFF = new double[config.numModules];
+          for (int m = 0; m < config.numModules; m++) {
+            double wheelForceDist = wheelForces[m].getNorm();
+            double appliedForce =
+                wheelForceDist > 1e-6
+                    ? wheelForceDist
+                        * wheelForces[m].getAngle().minus(state.moduleStates[m].angle).getCos()
+                    : 0.0;
+            double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
+            double torqueCurrent = config.moduleConfig.driveMotor.getCurrent(wheelTorque);
 
-          accelFF[m] =
-              (state.moduleStates[m].speedMetersPerSecond
-                      - prevState.moduleStates[m].speedMetersPerSecond)
-                  / dt;
-          linearForceFF[m] = appliedForce;
-          torqueCurrentFF[m] = torqueCurrent;
-          forceXFF[m] = wheelForces[m].getX();
-          forceYFF[m] = wheelForces[m].getY();
+            accelFF[m] =
+                (state.moduleStates[m].speedMetersPerSecond
+                        - prevState.moduleStates[m].speedMetersPerSecond)
+                    / dt;
+            linearForceFF[m] = appliedForce;
+            torqueCurrentFF[m] = torqueCurrent;
+            forceXFF[m] = wheelForces[m].getX();
+            forceYFF[m] = wheelForces[m].getY();
+          }
+          prevState.feedforwards =
+              new DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF, forceYFF);
         }
-        prevState.feedforwards =
-            new DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF, forceYFF);
 
         // Un-added events have their timestamp set to a waypoint relative position
         // When adding the event to this trajectory, set its timestamp properly

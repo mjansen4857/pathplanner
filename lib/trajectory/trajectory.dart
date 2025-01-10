@@ -450,8 +450,13 @@ class PathPlannerTrajectory {
           pow(states[i - 1].fieldSpeeds.vy, 2));
       num v = sqrt(
           pow(states[i].fieldSpeeds.vx, 2) + pow(states[i].fieldSpeeds.vy, 2));
-      num dt = (2 * states[i].deltaPos) / (v + v0);
-      states[i].timeSeconds = states[i - 1].timeSeconds + dt;
+      num sumV = v + v0;
+      if (sumV.abs() < 1e-6) {
+        states[i].timeSeconds = states[i - 1].timeSeconds;
+      } else {
+        num dt = (2 * states[i].deltaPos) / sumV;
+        states[i].timeSeconds = states[i - 1].timeSeconds + dt;
+      }
     }
 
     DateTime now = DateTime.now();

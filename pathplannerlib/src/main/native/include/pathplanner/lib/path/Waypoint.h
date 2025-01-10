@@ -8,7 +8,7 @@
 
 namespace pathplanner {
 
-#define AUTO_CONTROL_DISTANCE_FACTOR 1.0 / 3.0
+#define AUTO_CONTROL_DISTANCE_FACTOR 0.4
 
 class Waypoint {
 public:

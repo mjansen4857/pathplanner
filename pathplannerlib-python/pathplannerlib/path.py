@@ -20,7 +20,7 @@ import json
 
 targetIncrement: Final[float] = 0.05
 targetSpacing: Final[float] = 0.2
-autoControlDistanceFactor: Final[float] = 1.0 / 3.0
+autoControlDistanceFactor: Final[float] = 0.4
 
 
 @dataclass(frozen=True)

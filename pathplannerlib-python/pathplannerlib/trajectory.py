@@ -239,41 +239,49 @@ class PathPlannerTrajectory:
 
                     v0 = prevState.linearVelocity
                     v = state.linearVelocity
-                    dt = (2 * state.deltaPos) / (v + v0)
-                    state.timeSeconds = prevState.timeSeconds + dt
+                    sumV = v + v0
+                    if abs(sumV) < 1e-6:
+                        state.timeSeconds = prevState.timeSeconds
+                        if i != 1:
+                            prevState.feedforwards = self._states[i - 2].feedforwards
+                        else:
+                            prevState.feedforwards = DriveFeedforwards.zeros(config.numModules)
+                    else:
+                        dt = (2 * state.deltaPos) / sumV
+                        state.timeSeconds = prevState.timeSeconds + dt
 
-                    prevRobotSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(prevState.fieldSpeeds,
-                                                                            prevState.pose.rotation())
-                    robotSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(state.fieldSpeeds, state.pose.rotation())
-                    chassisAccelX = (robotSpeeds.vx - prevRobotSpeeds.vx) / dt
-                    chassisAccelY = (robotSpeeds.vy - prevRobotSpeeds.vy) / dt
-                    chassisForceX = chassisAccelX * config.massKG
-                    chassisForceY = chassisAccelY * config.massKG
+                        prevRobotSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(prevState.fieldSpeeds,
+                                                                                prevState.pose.rotation())
+                        robotSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(state.fieldSpeeds, state.pose.rotation())
+                        chassisAccelX = (robotSpeeds.vx - prevRobotSpeeds.vx) / dt
+                        chassisAccelY = (robotSpeeds.vy - prevRobotSpeeds.vy) / dt
+                        chassisForceX = chassisAccelX * config.massKG
+                        chassisForceY = chassisAccelY * config.massKG
 
-                    angularAccel = (robotSpeeds.omega - prevRobotSpeeds.omega) / dt
-                    angTorque = angularAccel * config.MOI
-                    chassisForces = ChassisSpeeds(chassisForceX, chassisForceY, angTorque)
+                        angularAccel = (robotSpeeds.omega - prevRobotSpeeds.omega) / dt
+                        angTorque = angularAccel * config.MOI
+                        chassisForces = ChassisSpeeds(chassisForceX, chassisForceY, angTorque)
 
-                    wheelForces = config.chassisForcesToWheelForceVectors(chassisForces)
-                    accelFF = []
-                    linearForceFF = []
-                    torqueCurrentFF = []
-                    forceXFF = []
-                    forceYFF = []
-                    for m in range(config.numModules):
-                        wheelForceDist = wheelForces[m].norm()
-                        appliedForce = 0.0 if wheelForceDist <= 1e-6 else wheelForceDist * (
-                                wheelForces[m].angle() - state.moduleStates[m].angle).cos()
-                        wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters
-                        torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
+                        wheelForces = config.chassisForcesToWheelForceVectors(chassisForces)
+                        accelFF = []
+                        linearForceFF = []
+                        torqueCurrentFF = []
+                        forceXFF = []
+                        forceYFF = []
+                        for m in range(config.numModules):
+                            wheelForceDist = wheelForces[m].norm()
+                            appliedForce = 0.0 if wheelForceDist <= 1e-6 else wheelForceDist * (
+                                    wheelForces[m].angle() - state.moduleStates[m].angle).cos()
+                            wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters
+                            torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
 
-                        accelFF.append((state.moduleStates[m].speed - prevState.moduleStates[m].speed) / dt)
-                        linearForceFF.append(appliedForce)
-                        torqueCurrentFF.append(torqueCurrent)
-                        forceXFF.append(wheelForces[m].x)
-                        forceYFF.append(wheelForces[m].y)
-                    prevState.feedforwards = DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF,
-                                                               forceYFF)
+                            accelFF.append((state.moduleStates[m].speed - prevState.moduleStates[m].speed) / dt)
+                            linearForceFF.append(appliedForce)
+                            torqueCurrentFF.append(torqueCurrent)
+                            forceXFF.append(wheelForces[m].x)
+                            forceYFF.append(wheelForces[m].y)
+                        prevState.feedforwards = DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF,
+                                                                   forceYFF)
 
                     # Un-added events have their timestamp set to a waypoint relative position
                     # When adding the event to this trajectory, set its timestamp properly

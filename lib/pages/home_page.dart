@@ -146,7 +146,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _animController.forward();
 
       if (!(widget.prefs.getBool(PrefsKeys.seen2025ResetPopup) ?? false) &&
-          _fieldImage?.name != 'Reefscape' &&
+          (_fieldImage?.name != 'Reefscape' &&
+              _fieldImage?.name != 'Reefscape (Annotated)') &&
           mounted) {
         showDialog(
           context: this.context,

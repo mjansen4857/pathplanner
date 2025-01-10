@@ -87,7 +87,7 @@ class FieldImage {
         );
         defaultSize = const ui.Size(3510, 1610);
         pixelsPerMeter = 200.0;
-        name = 'Reefscape';
+        name = 'Reefscape (Annotated)';
         break;
     }
     isCustom = false;

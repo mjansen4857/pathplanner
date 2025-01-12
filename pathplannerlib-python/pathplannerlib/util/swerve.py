@@ -235,7 +235,7 @@ class SwerveSetpointGenerator:
             # battery is sagging down to 11v, which will affect the max torque output
             current_draw = self._config.moduleConfig.driveMotor.current(abs(last_vel_rad_per_sec), input_voltage)
             reverse_current_draw = abs(
-                self._config.moduleConfig.driveMotor.getCurrent(abs(last_vel_rad_per_sec), -input_voltage))
+                self._config.moduleConfig.driveMotor.current(abs(last_vel_rad_per_sec), -input_voltage))
             current_draw = min(current_draw, self._config.moduleConfig.driveCurrentLimit)
             current_draw = max(current_draw, 0.0)
             reverse_current_draw = min(reverse_current_draw, self._config.moduleConfig.driveCurrentLimit)

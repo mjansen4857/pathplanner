@@ -109,7 +109,7 @@ class GoalEndState:
 @dataclass(frozen=True)
 class IdealStartingState:
     """
-    Describes the ideal starting state of the robot when finishing a path
+    Describes the ideal starting state of the robot when starting a path
 
     Args:
         velocity (float): The ideal starting velocity (M/S)

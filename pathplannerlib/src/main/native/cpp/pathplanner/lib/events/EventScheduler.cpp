@@ -11,7 +11,7 @@ void EventScheduler::execute(units::second_t time) {
 	}
 
 	// Run currently running commands
-	for (auto entry : m_eventCommands) {
+	for (auto &entry : m_eventCommands) {
 		if (!entry.second) {
 			continue;
 		}
@@ -28,7 +28,7 @@ void EventScheduler::execute(units::second_t time) {
 
 void EventScheduler::end() {
 	// Cancel all currently running commands
-	for (auto entry : m_eventCommands) {
+	for (auto &entry : m_eventCommands) {
 		if (!entry.second) {
 			continue;
 		}
@@ -37,7 +37,7 @@ void EventScheduler::end() {
 	}
 
 	// Cancel any unhandled events
-	for (auto e : m_upcomingEvents) {
+	for (auto &e : m_upcomingEvents) {
 		e->cancelEvent(this);
 	}
 
@@ -49,13 +49,13 @@ void EventScheduler::scheduleCommand(std::shared_ptr<frc2::Command> command) {
 	// Check for commands that should be cancelled by this command
 	auto commandReqs = command->GetRequirements();
 	if (!commandReqs.empty()) {
-		for (auto entry : m_eventCommands) {
+		for (auto &entry : m_eventCommands) {
 			if (!entry.second) {
 				continue;
 			}
 
 			auto otherReqs = entry.first->GetRequirements();
-			for (auto requirement : otherReqs) {
+			for (const auto &requirement : otherReqs) {
 				if (commandReqs.find(requirement) != commandReqs.end()) {
 					cancelCommand(command);
 				}
@@ -68,7 +68,7 @@ void EventScheduler::scheduleCommand(std::shared_ptr<frc2::Command> command) {
 }
 
 void EventScheduler::cancelCommand(std::shared_ptr<frc2::Command> command) {
-	for (auto entry : m_eventCommands) {
+	for (auto &entry : m_eventCommands) {
 		if (entry.first == command && entry.second) {
 			command->End(true);
 			entry.second = false;

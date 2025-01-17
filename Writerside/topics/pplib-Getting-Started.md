@@ -49,6 +49,15 @@ https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib2022.json
 
 The Python version is compatible with RobotPy and available to install from PyPI via the `pip` command
 
+> **Warning**
+>
+> If using a RoboRIO 1, you must disable the NI webserver via `robotpy installer niweb disable` in order to ensure there
+> is enough available memory.
+>
+> If you need to re-image your rio, you will need to re-enable the webserver.
+>
+{style="warning"}
+
 <br/>
 
 ```text

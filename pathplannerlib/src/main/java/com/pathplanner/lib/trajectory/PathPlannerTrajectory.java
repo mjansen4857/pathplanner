@@ -133,7 +133,7 @@ public class PathPlannerTrajectory {
         double v0 = prevState.linearVelocity;
         double v = state.linearVelocity;
         double sumV = v + v0;
-        if (Math.abs(sumV) < 1e-6) {
+        if (Math.abs(sumV) < 1e-6 || Math.abs(state.deltaPos) < 1e-6) {
           state.timeSeconds = prevState.timeSeconds;
           if (i != 1) {
             prevState.feedforwards = states.get(i - 2).feedforwards;

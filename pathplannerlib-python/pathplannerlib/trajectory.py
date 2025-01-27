@@ -240,7 +240,7 @@ class PathPlannerTrajectory:
                     v0 = prevState.linearVelocity
                     v = state.linearVelocity
                     sumV = v + v0
-                    if abs(sumV) < 1e-6:
+                    if abs(sumV) < 1e-6 or abs(state.deltaPos) < 1e-6:
                         state.timeSeconds = prevState.timeSeconds
                         if i != 1:
                             prevState.feedforwards = self._states[i - 2].feedforwards

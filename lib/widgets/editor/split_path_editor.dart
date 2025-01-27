@@ -768,6 +768,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       if (_simTraj != null) {
         try {
           if (!_paused) {
+            _previewController.stop();
+            _previewController.reset();
             _previewController.duration = Duration(
                 milliseconds:
                     (_simTraj!.states.last.timeSeconds * 1000).toInt());

@@ -119,7 +119,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         );
 
         try {
-          _initFromProjectDir(projectDir!);
+          await _initFromProjectDir(projectDir!);
           // Break from the loop if we've successfully loaded the project
           break;
         } catch (e, stack) {
@@ -276,7 +276,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               IconButton(
                 icon: const Icon(Icons.open_in_new_rounded, size: 20),
                 tooltip: 'Open Project',
-                onPressed: () => _openProjectDialog(this.context),
+                onPressed: () => _openProjectDialog(),
               ),
             ],
           ),
@@ -677,16 +677,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  void _openProjectDialog(BuildContext context) async {
+  void _openProjectDialog() async {
     String initialDirectory = _projectDir?.path ?? fs.currentDirectory.path;
     String? projectFolder = await getDirectoryPath(
         confirmButtonText: 'Open Project', initialDirectory: initialDirectory);
     if (projectFolder != null) {
-      _initFromProjectDir(projectFolder);
+      try {
+        await _initFromProjectDir(projectFolder);
+      } catch (e, stack) {
+        Log.error('Failed to initialize from project directory', e, stack);
+        // Try again
+        _openProjectDialog();
+      }
     }
   }
 
-  void _initFromProjectDir(String projectDir) async {
+  Future<void> _initFromProjectDir(String projectDir) async {
     widget.prefs.setString(PrefsKeys.currentProjectDir, projectDir);
 
     if (Platform.isMacOS) {

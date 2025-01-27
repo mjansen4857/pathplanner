@@ -110,7 +110,8 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 			units::meters_per_second_t v0 = prevState.linearVelocity;
 			units::meters_per_second_t v = state.linearVelocity;
 			units::meters_per_second_t sumV = v + v0;
-			if (units::math::abs(sumV) < 1e-6_mps) {
+			if (units::math::abs(sumV) < 1e-6_mps
+					|| units::math::abs(state.deltaPos) < 1e-6_m) {
 				state.time = prevState.time;
 				if (i != 1) {
 					prevState.feedforwards = m_states[i - 2].feedforwards;

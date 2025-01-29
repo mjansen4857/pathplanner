@@ -31,6 +31,16 @@ public:
 	PathPlannerAuto(std::string autoName);
 
 	/**
+	 * Constructs a new PathPlannerAuto command.
+	 *
+	 * @param autoName the name of the autonomous routine to load and run
+	 * @param mirror Mirror all paths to the other side of the current alliance. For example, if a
+	 * path is on the right of the blue alliance side of the field, it will be mirrored to the
+	 * left of the blue alliance side of the field.
+	 */
+	PathPlannerAuto(std::string autoName, bool mirror);
+
+	/**
 	 * Create a PathPlannerAuto from a custom command
 	 *
 	 * @param autoCommand The command this auto should run
@@ -218,7 +228,7 @@ private:
 	static std::vector<std::shared_ptr<PathPlannerPath>> pathsFromCommandJson(
 			const wpi::json &json, bool choreoPaths);
 
-	void initFromJson(const wpi::json &json);
+	void initFromJson(const wpi::json &json, bool mirror);
 
 	static int m_instances;
 };

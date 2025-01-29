@@ -12,7 +12,11 @@ using namespace pathplanner;
 std::string PathPlannerAuto::currentPathName = "";
 int PathPlannerAuto::m_instances = 0;
 
-PathPlannerAuto::PathPlannerAuto(std::string autoName) {
+PathPlannerAuto::PathPlannerAuto(std::string autoName) : PathPlannerAuto(autoName, false) {
+
+}
+
+PathPlannerAuto::PathPlannerAuto(std::string autoName, bool mirror) {
 	if (!AutoBuilder::isConfigured()) {
 		throw FRC_MakeError(frc::err::CommandIllegalUse,
 				"AutoBuilder was not configured before attempting to load a PathPlannerAuto from file");
@@ -41,7 +45,7 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 						+ "' Expected: '2025.0'");
 	}
 
-	initFromJson(json);
+	initFromJson(json, mirror);
 
 	AddRequirements(m_autoCommand->GetRequirements());
 	SetName(autoName);
@@ -148,7 +152,7 @@ std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::getPathGroupFromA
 	return pathsFromCommandJson(json.at("command"), choreoAuto);
 }
 
-void PathPlannerAuto::initFromJson(const wpi::json &json) {
+void PathPlannerAuto::initFromJson(const wpi::json &json, bool mirror) {
 	bool choreoAuto = json.contains("choreoAuto")
 			&& json.at("choreoAuto").get<bool>();
 	wpi::json::const_reference commandJson = json.at("command");
@@ -156,12 +160,16 @@ void PathPlannerAuto::initFromJson(const wpi::json &json) {
 			&& json.at("resetOdom").get<bool>();
 	auto pathsInAuto = pathsFromCommandJson(commandJson, choreoAuto);
 	if (!pathsInAuto.empty()) {
+		std::shared_ptr<PathPlannerPath> path0 = pathsInAuto[0];
+		if(mirror) {
+			path0 = path0->mirrorPath();
+		}
 		if (AutoBuilder::isHolonomic()) {
 			m_startingPose =
-					frc::Pose2d(pathsInAuto[0]->getPoint(0).position,
-							pathsInAuto[0]->getIdealStartingState().value().getRotation());
+					frc::Pose2d(path0->getPoint(0).position,
+							path0->getIdealStartingState().value().getRotation());
 		} else {
-			m_startingPose = pathsInAuto[0]->getStartingDifferentialPose();
+			m_startingPose = path0->getStartingDifferentialPose();
 		}
 	} else {
 		m_startingPose = frc::Pose2d();
@@ -170,10 +178,10 @@ void PathPlannerAuto::initFromJson(const wpi::json &json) {
 	if (resetOdom) {
 		m_autoCommand = frc2::cmd::Sequence(
 				AutoBuilder::resetOdom(m_startingPose),
-				CommandUtil::commandFromJson(commandJson, choreoAuto)).Unwrap();
+				CommandUtil::commandFromJson(commandJson, choreoAuto, mirror)).Unwrap();
 	} else {
 		m_autoCommand =
-				CommandUtil::commandFromJson(commandJson, choreoAuto).Unwrap();
+				CommandUtil::commandFromJson(commandJson, choreoAuto, mirror).Unwrap();
 	}
 }
 

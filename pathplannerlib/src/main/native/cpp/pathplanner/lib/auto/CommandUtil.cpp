@@ -40,7 +40,8 @@ frc2::CommandPtr CommandUtil::commandFromJson(const wpi::json &json,
 	} else if (type == "path") {
 		return CommandUtil::pathCommandFromJson(data, loadChoreoPaths, mirror);
 	} else if (type == "sequential") {
-		return CommandUtil::sequentialGroupFromJson(data, loadChoreoPaths, mirror);
+		return CommandUtil::sequentialGroupFromJson(data, loadChoreoPaths,
+				mirror);
 	} else if (type == "parallel") {
 		return CommandUtil::parallelGroupFromJson(data, loadChoreoPaths, mirror);
 	} else if (type == "race") {
@@ -72,7 +73,10 @@ frc2::CommandPtr CommandUtil::pathCommandFromJson(const wpi::json &json,
 		bool loadChoreoPaths, bool mirror) {
 	std::string pathName = json.at("pathName").get<std::string>();
 
-	std::shared_ptr<PathPlannerPath> path = loadChoreoPaths ? PathPlannerPath::fromChoreoTrajectory(pathName) : PathPlannerPath::fromPathFile(pathName);
+	std::shared_ptr < PathPlannerPath > path =
+			loadChoreoPaths ?
+					PathPlannerPath::fromChoreoTrajectory(pathName) :
+					PathPlannerPath::fromPathFile(pathName);
 
 	if (mirror) {
 		path = path->mirrorPath();
@@ -87,7 +91,8 @@ frc2::CommandPtr CommandUtil::sequentialGroupFromJson(const wpi::json &json,
 
 	for (wpi::json::const_reference commandJson : json.at("commands")) {
 		commands.push_back(
-				CommandUtil::commandFromJson(commandJson, loadChoreoPaths, mirror));
+				CommandUtil::commandFromJson(commandJson, loadChoreoPaths,
+						mirror));
 	}
 
 	return frc2::cmd::Sequence(std::move(commands));
@@ -99,7 +104,8 @@ frc2::CommandPtr CommandUtil::parallelGroupFromJson(const wpi::json &json,
 
 	for (wpi::json::const_reference commandJson : json.at("commands")) {
 		commands.push_back(
-				CommandUtil::commandFromJson(commandJson, loadChoreoPaths, mirror));
+				CommandUtil::commandFromJson(commandJson, loadChoreoPaths,
+						mirror));
 	}
 
 	return frc2::cmd::Parallel(std::move(commands));
@@ -111,7 +117,8 @@ frc2::CommandPtr CommandUtil::raceGroupFromJson(const wpi::json &json,
 
 	for (wpi::json::const_reference commandJson : json.at("commands")) {
 		commands.push_back(
-				CommandUtil::commandFromJson(commandJson, loadChoreoPaths, mirror));
+				CommandUtil::commandFromJson(commandJson, loadChoreoPaths,
+						mirror));
 	}
 
 	return frc2::cmd::Race(std::move(commands));
@@ -131,7 +138,8 @@ frc2::CommandPtr CommandUtil::deadlineGroupFromJson(const wpi::json &json,
 
 	for (size_t i = 1; i < commandsJson.size(); i++) {
 		commands.push_back(
-				CommandUtil::commandFromJson(commandsJson[i], loadChoreoPaths, mirror));
+				CommandUtil::commandFromJson(commandsJson[i], loadChoreoPaths,
+						mirror));
 	}
 
 	return frc2::cmd::Deadline(std::move(deadline), std::move(commands));

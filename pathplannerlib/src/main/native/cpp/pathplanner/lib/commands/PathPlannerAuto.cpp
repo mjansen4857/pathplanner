@@ -12,7 +12,8 @@ using namespace pathplanner;
 std::string PathPlannerAuto::currentPathName = "";
 int PathPlannerAuto::m_instances = 0;
 
-PathPlannerAuto::PathPlannerAuto(std::string autoName) : PathPlannerAuto(autoName, false) {
+PathPlannerAuto::PathPlannerAuto(std::string autoName) : PathPlannerAuto(
+		autoName, false) {
 
 }
 
@@ -160,14 +161,13 @@ void PathPlannerAuto::initFromJson(const wpi::json &json, bool mirror) {
 			&& json.at("resetOdom").get<bool>();
 	auto pathsInAuto = pathsFromCommandJson(commandJson, choreoAuto);
 	if (!pathsInAuto.empty()) {
-		std::shared_ptr<PathPlannerPath> path0 = pathsInAuto[0];
-		if(mirror) {
+		std::shared_ptr < PathPlannerPath > path0 = pathsInAuto[0];
+		if (mirror) {
 			path0 = path0->mirrorPath();
 		}
 		if (AutoBuilder::isHolonomic()) {
-			m_startingPose =
-					frc::Pose2d(path0->getPoint(0).position,
-							path0->getIdealStartingState().value().getRotation());
+			m_startingPose = frc::Pose2d(path0->getPoint(0).position,
+					path0->getIdealStartingState().value().getRotation());
 		} else {
 			m_startingPose = path0->getStartingDifferentialPose();
 		}
@@ -176,12 +176,13 @@ void PathPlannerAuto::initFromJson(const wpi::json &json, bool mirror) {
 	}
 
 	if (resetOdom) {
-		m_autoCommand = frc2::cmd::Sequence(
-				AutoBuilder::resetOdom(m_startingPose),
-				CommandUtil::commandFromJson(commandJson, choreoAuto, mirror)).Unwrap();
-	} else {
 		m_autoCommand =
-				CommandUtil::commandFromJson(commandJson, choreoAuto, mirror).Unwrap();
+				frc2::cmd::Sequence(AutoBuilder::resetOdom(m_startingPose),
+						CommandUtil::commandFromJson(commandJson, choreoAuto,
+								mirror)).Unwrap();
+	} else {
+		m_autoCommand = CommandUtil::commandFromJson(commandJson, choreoAuto,
+				mirror).Unwrap();
 	}
 }
 

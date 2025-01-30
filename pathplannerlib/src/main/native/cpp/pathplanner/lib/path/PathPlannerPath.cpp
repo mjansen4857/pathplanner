@@ -242,7 +242,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 			frc2::CommandPtr eventCommand = frc2::cmd::None();
 			if (!markerJson.at("event").is_null()) {
 				eventCommand = CommandUtil::commandFromJson(
-						markerJson.at("event"), true);
+						markerJson.at("event"), true, false);
 			}
 			fullEvents.emplace_back(
 					std::make_shared < ScheduleCommandEvent
@@ -763,6 +763,144 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	path->m_reversed = m_reversed;
 	path->m_isChoreoPath = m_isChoreoPath;
 	path->m_idealTrajectory = flippedTraj;
+	path->preventFlipping = preventFlipping;
+	path->name = name;
+
+	return path;
+}
+
+frc::Translation2d PathPlannerPath::mirrorTranslation(
+		frc::Translation2d translation) {
+	return frc::Translation2d { translation.X(), FlippingUtil::fieldSizeY
+			- translation.Y() };
+}
+
+std::shared_ptr<PathPlannerPath> PathPlannerPath::mirrorPath() {
+	std::optional < PathPlannerTrajectory > mirroredTraj = std::nullopt;
+	if (m_idealTrajectory.has_value()) {
+		auto traj = m_idealTrajectory.value();
+		// Flip the ideal trajectory
+		std::vector < PathPlannerTrajectoryState > newStates;
+		for (const auto &s : traj.getStates()) {
+			PathPlannerTrajectoryState state;
+
+			state.time = s.time;
+			state.linearVelocity = s.linearVelocity;
+			state.pose = frc::Pose2d(mirrorTranslation(s.pose.Translation()),
+					-s.pose.Rotation());
+			state.fieldSpeeds = frc::ChassisSpeeds(s.fieldSpeeds.vx,
+					-s.fieldSpeeds.vy, -s.fieldSpeeds.omega);
+
+			const auto &ff = s.feedforwards;
+			if (ff.accelerations.size() == 4) {
+				state.feedforwards = DriveFeedforwards { std::vector<
+						units::meters_per_second_squared_t> {
+						ff.accelerations[1], ff.accelerations[0],
+						ff.accelerations[3], ff.accelerations[2] }, std::vector<
+						units::newton_t> { ff.linearForces[1],
+						ff.linearForces[0], ff.linearForces[3],
+						ff.linearForces[2] }, std::vector<units::ampere_t> {
+						ff.torqueCurrents[1], ff.torqueCurrents[0],
+						ff.torqueCurrents[3], ff.torqueCurrents[2] },
+						std::vector<units::newton_t> {
+								ff.robotRelativeForcesX[1],
+								ff.robotRelativeForcesX[0],
+								ff.robotRelativeForcesX[3],
+								ff.robotRelativeForcesX[2] }, std::vector<
+								units::newton_t> { ff.robotRelativeForcesY[1],
+								ff.robotRelativeForcesY[0],
+								ff.robotRelativeForcesY[3],
+								ff.robotRelativeForcesY[2] } };
+			} else if (ff.accelerations.size() == 2) {
+				state.feedforwards = DriveFeedforwards { std::vector<
+						units::meters_per_second_squared_t> {
+						ff.accelerations[1], ff.accelerations[0] }, std::vector<
+						units::newton_t> { ff.linearForces[1],
+						ff.linearForces[0] }, std::vector<units::ampere_t> {
+						ff.torqueCurrents[1], ff.torqueCurrents[0] },
+						std::vector<units::newton_t> {
+								ff.robotRelativeForcesX[1],
+								ff.robotRelativeForcesX[0] }, std::vector<
+								units::newton_t> { ff.robotRelativeForcesY[1],
+								ff.robotRelativeForcesY[0] } };
+			} else {
+				state.feedforwards = ff;
+			}
+			state.heading = -s.heading;
+
+			newStates.push_back(state);
+		}
+		mirroredTraj = PathPlannerTrajectory(newStates, traj.getEvents());
+	}
+
+	auto path = std::make_shared < PathPlannerPath
+			> (m_globalConstraints, m_goalEndState);
+
+	std::vector < Waypoint > newWaypoints;
+	for (const auto &w : m_waypoints) {
+		std::optional < frc::Translation2d > prevControl;
+		frc::Translation2d anchor = mirrorTranslation(w.anchor);
+		std::optional < frc::Translation2d > nextControl;
+
+		if (w.prevControl.has_value()) {
+			prevControl = mirrorTranslation(w.prevControl.value());
+		}
+		if (w.nextControl.has_value()) {
+			nextControl = mirrorTranslation(w.nextControl.value());
+		}
+		newWaypoints.emplace_back(prevControl, anchor, nextControl);
+	}
+	path->m_waypoints = newWaypoints;
+
+	std::vector < RotationTarget > newRotationTargets;
+	for (const auto &t : m_rotationTargets) {
+		newRotationTargets.emplace_back(t.getPosition(), -t.getTarget());
+	}
+	path->m_rotationTargets = newRotationTargets;
+
+	std::vector < PointTowardsZone > newPointTowardsZones;
+	for (auto &z : m_pointTowardsZones) {
+		newPointTowardsZones.emplace_back(PointTowardsZone { z.getName(),
+				mirrorTranslation(z.getTargetPosition()), z.getRotationOffset(),
+				z.getMinWaypointRelativePos(), z.getMaxWaypointRelativePos() });
+	}
+	path->m_pointTowardsZones = newPointTowardsZones;
+
+	path->m_constraintZones = m_constraintZones;
+	path->m_eventMarkers = m_eventMarkers;
+	path->m_globalConstraints = m_globalConstraints;
+
+	if (m_idealStartingState.has_value()) {
+		path->m_idealStartingState = IdealStartingState(
+				m_idealStartingState.value().getVelocity(),
+				-m_idealStartingState.value().getRotation());
+	} else {
+		path->m_idealStartingState = std::nullopt;
+	}
+
+	path->m_goalEndState = GoalEndState(m_goalEndState.getVelocity(),
+			-m_goalEndState.getRotation());
+
+	std::vector < PathPoint > newAllPoints;
+	for (const auto &p : m_allPoints) {
+		PathPoint point(mirrorTranslation(p.position));
+		point.distanceAlongPath = p.distanceAlongPath;
+		point.maxV = p.maxV;
+
+		if (p.rotationTarget.has_value()) {
+			point.rotationTarget = RotationTarget(
+					p.rotationTarget.value().getPosition(),
+					-p.rotationTarget.value().getTarget());
+		}
+		point.constraints = p.constraints;
+		point.waypointRelativePos = p.waypointRelativePos;
+		newAllPoints.push_back(point);
+	}
+	path->m_allPoints = newAllPoints;
+
+	path->m_reversed = m_reversed;
+	path->m_isChoreoPath = m_isChoreoPath;
+	path->m_idealTrajectory = mirroredTraj;
 	path->preventFlipping = preventFlipping;
 	path->name = name;
 

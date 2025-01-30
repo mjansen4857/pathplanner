@@ -14,7 +14,7 @@ EventMarker EventMarker::fromJson(const wpi::json &json) {
 
 	if (!json.at("command").is_null()) {
 		return EventMarker(name, pos, endPos,
-				CommandUtil::commandFromJson(json.at("command"), false));
+				CommandUtil::commandFromJson(json.at("command"), false, false));
 	}
 
 	return EventMarker(name, pos, endPos, frc2::cmd::None());

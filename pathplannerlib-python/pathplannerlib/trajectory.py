@@ -564,7 +564,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
                                                              state.pose.rotation())
         accelStates = config.toSwerveModuleStates(chassisAccel)
         for m in range(config.numModules):
-            moduleAcceleration = accelStates[m].speed
+            moduleAcceleration = abs(accelStates[m].speed)
 
             # Calculate the module velocity at the current state
             # vf^2 = v0^2 + 2ad
@@ -669,7 +669,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
                                                              state.pose.rotation())
         accelStates = config.toSwerveModuleStates(chassisAccel)
         for m in range(config.numModules):
-            moduleAcceleration = accelStates[m].speed
+            moduleAcceleration = abs(accelStates[m].speed)
 
             # Calculate the module velocity at the current state
             # vf^2 = v0^2 + 2ad

@@ -219,7 +219,7 @@ class PathPlannerTrajectory {
       var accelStates =
           robotConfig.kinematics.toSwerveModuleStates(chassisAccel);
       for (int m = 0; m < numModules; m++) {
-        num moduleAcceleration = accelStates[m].speedMetersPerSecond;
+        num moduleAcceleration = accelStates[m].speedMetersPerSecond.abs();
 
         // Calculate the module velocity at the current state
         // vf^2 = v0^2 + 2ad
@@ -371,7 +371,7 @@ class PathPlannerTrajectory {
 
       // Use the robot accelerations to calculate how each module should decelerate
       for (int m = 0; m < numModules; m++) {
-        num moduleAcceleration = accelStates[m].speedMetersPerSecond;
+        num moduleAcceleration = accelStates[m].speedMetersPerSecond.abs();
 
         // Calculate the module velocity at the current state
         // vf^2 = v0^2 + 2ad

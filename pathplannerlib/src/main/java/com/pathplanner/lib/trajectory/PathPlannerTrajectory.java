@@ -382,7 +382,7 @@ public class PathPlannerTrajectory {
               accelVec.getX(), accelVec.getY(), angularAccel, state.pose.getRotation());
       var accelStates = config.toSwerveModuleStates(chassisAccel);
       for (int m = 0; m < config.numModules; m++) {
-        double moduleAcceleration = accelStates[m].speedMetersPerSecond;
+        double moduleAcceleration = Math.abs(accelStates[m].speedMetersPerSecond);
 
         // Calculate the module velocity at the current state
         // vf^2 = v0^2 + 2ad
@@ -527,7 +527,7 @@ public class PathPlannerTrajectory {
               state.pose.getRotation());
       var accelStates = config.toSwerveModuleStates(chassisAccel);
       for (int m = 0; m < config.numModules; m++) {
-        double moduleAcceleration = accelStates[m].speedMetersPerSecond;
+        double moduleAcceleration = Math.abs(accelStates[m].speedMetersPerSecond);
 
         // Calculate the module velocity at the current state
         // vf^2 = v0^2 + 2ad

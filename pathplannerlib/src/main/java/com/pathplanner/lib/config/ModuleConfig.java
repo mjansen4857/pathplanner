@@ -91,4 +91,70 @@ public class ModuleConfig {
         driveCurrentLimit.in(Amps),
         numMotors);
   }
+
+  /**
+   * Configuration of a robot drive module. This can either be a swerve module, or one side of a
+   * differential drive train.
+   *
+   * @param wheelRadiusMeters Radius of the drive wheels, in meters.
+   * @param maxDriveVelocityMPS The max speed that the drive motor can reach while actually driving
+   *     the robot at full output, in M/S.
+   * @param wheelCOF The coefficient of friction between the drive wheel and the carpet. If you are
+   *     unsure, just use a placeholder value of 1.0.
+   * @param driveMotor The DCMotor representing the drive motor gearbox, NOT including gear
+   *     reduction
+   * @param driveGearing The gear reduction between the drive motor and the wheels
+   * @param driveCurrentLimit The current limit of the drive motor, in Amps
+   * @param numMotors The number of motors per module. For swerve, this is 1. For differential, this
+   *     is usually 2.
+   */
+  public ModuleConfig(
+      double wheelRadiusMeters,
+      double maxDriveVelocityMPS,
+      double wheelCOF,
+      DCMotor driveMotor,
+      double driveGearing,
+      double driveCurrentLimit,
+      int numMotors) {
+    this(
+        wheelRadiusMeters,
+        maxDriveVelocityMPS,
+        wheelCOF,
+        driveMotor.withReduction(driveGearing),
+        driveCurrentLimit,
+        numMotors);
+  }
+
+  /**
+   * Configuration of a robot drive module. This can either be a swerve module, or one side of a
+   * differential drive train.
+   *
+   * @param wheelRadius Radius of the drive wheels.
+   * @param maxDriveVelocity The max speed that the drive motor can reach while actually driving the
+   *     robot at full output.
+   * @param wheelCOF The coefficient of friction between the drive wheel and the carpet. If you are
+   *     unsure, just use a placeholder value of 1.0.
+   * @param driveMotor The DCMotor representing the drive motor gearbox, NOT including gear
+   *     reduction
+   * @param driveGearing The gear reduction between the drive motor and the wheels
+   * @param driveCurrentLimit The current limit of the drive motor
+   * @param numMotors The number of motors per module. For swerve, this is 1. For differential, this
+   *     is usually 2.
+   */
+  public ModuleConfig(
+      Distance wheelRadius,
+      LinearVelocity maxDriveVelocity,
+      double wheelCOF,
+      DCMotor driveMotor,
+      double driveGearing,
+      Current driveCurrentLimit,
+      int numMotors) {
+    this(
+        wheelRadius.in(Meters),
+        maxDriveVelocity.in(MetersPerSecond),
+        wheelCOF,
+        driveMotor.withReduction(driveGearing),
+        driveCurrentLimit.in(Amps),
+        numMotors);
+  }
 }

@@ -7,10 +7,7 @@ import com.pathplanner.lib.events.OneShotTriggerEvent;
 import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-import com.pathplanner.lib.util.DriveFeedforwards;
-import com.pathplanner.lib.util.FileVersionException;
-import com.pathplanner.lib.util.GeometryUtil;
-import com.pathplanner.lib.util.PPLibTelemetry;
+import com.pathplanner.lib.util.*;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
@@ -349,11 +346,16 @@ public class PathPlannerPath {
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
 
-      String version = json.get("version").toString();
-      String[] versions = version.split("\\.");
+      int version = 0;
 
-      if (versions.length < 2 || !versions[0].equals("v2025") || !versions[1].equals("0")) {
-        throw new FileVersionException(version, "v2025.0.X", trajectoryName + ".traj");
+      try {
+        version = ((Number) json.get("version")).intValue();
+      } catch (Exception ignored) {
+        // Assume version 0
+      }
+
+      if (version > 1) {
+        throw new FileVersionException(Integer.toString(version), "<= 1", trajectoryName + ".traj");
       }
 
       JSONObject trajJson = (JSONObject) json.get("trajectory");
@@ -384,6 +386,11 @@ public class PathPlannerPath {
         state.linearVelocity = Math.hypot(xVel, yVel);
         state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
         state.fieldSpeeds = new ChassisSpeeds(xVel, yVel, angularVelRps);
+        if (Math.abs(state.linearVelocity) > 1e-6) {
+          state.heading =
+              new Rotation2d(
+                  state.fieldSpeeds.vxMetersPerSecond, state.fieldSpeeds.vyMetersPerSecond);
+        }
 
         // The module forces are field relative, rotate them to be robot relative
         for (int i = 0; i < forcesX.length; i++) {
@@ -422,7 +429,7 @@ public class PathPlannerPath {
 
         if (markerJson.get("event") != null) {
           Command eventCommand =
-              CommandUtil.commandFromJson((JSONObject) markerJson.get("event"), true);
+              CommandUtil.commandFromJson((JSONObject) markerJson.get("event"), true, false);
           fullEvents.add(new ScheduleCommandEvent(fromTimestamp, eventCommand));
         }
       }
@@ -650,8 +657,9 @@ public class PathPlannerPath {
       // The ideal starting state is known, generate the ideal trajectory
       Rotation2d heading = getInitialHeading();
       Translation2d fieldSpeeds = new Translation2d(idealStartingState.velocityMPS(), heading);
-      ChassisSpeeds startingSpeeds = new ChassisSpeeds(fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0);
-      startingSpeeds.toRobotRelativeSpeeds(idealStartingState.rotation());
+      ChassisSpeeds startingSpeeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0, idealStartingState.rotation());
       idealTrajectory =
           Optional.of(
               generateTrajectory(startingSpeeds, idealStartingState.rotation(), robotConfig));
@@ -958,6 +966,11 @@ public class PathPlannerPath {
     if (numPoints() > 0) {
       for (int i = 0; i < allPoints.size(); i++) {
         PathPoint point = allPoints.get(i);
+
+        if (point.constraints == null) {
+          point.constraints = globalConstraints;
+        }
+
         double curveRadius = getCurveRadiusAtPoint(i, allPoints);
 
         if (Double.isFinite(curveRadius)) {
@@ -1169,6 +1182,178 @@ public class PathPlannerPath {
     path.reversed = reversed;
     path.isChoreoPath = isChoreoPath;
     path.idealTrajectory = flippedTraj;
+    path.preventFlipping = preventFlipping;
+    path.name = name;
+
+    return path;
+  }
+
+  private static Translation2d mirrorTranslation(Translation2d translation) {
+    return new Translation2d(translation.getX(), FlippingUtil.fieldSizeY - translation.getY());
+  }
+
+  /**
+   * Mirror a path to the other side of the current alliance. For example, if this path is on the
+   * right of the blue alliance side of the field, it will be mirrored to the left of the blue
+   * alliance side of the field.
+   *
+   * @return The mirrored path
+   */
+  public PathPlannerPath mirrorPath() {
+    PathPlannerPath path = new PathPlannerPath();
+
+    Optional<PathPlannerTrajectory> mirroredTraj = Optional.empty();
+    if (idealTrajectory.isPresent()) {
+      PathPlannerTrajectory traj = idealTrajectory.get();
+      // Flip the ideal trajectory
+      mirroredTraj =
+          Optional.of(
+              new PathPlannerTrajectory(
+                  traj.getStates().stream()
+                      .map(
+                          s -> {
+                            var state = new PathPlannerTrajectoryState();
+
+                            state.timeSeconds = s.timeSeconds;
+                            state.linearVelocity = s.linearVelocity;
+                            state.pose =
+                                new Pose2d(
+                                    mirrorTranslation(s.pose.getTranslation()),
+                                    s.pose.getRotation().unaryMinus());
+                            state.fieldSpeeds =
+                                new ChassisSpeeds(
+                                    s.fieldSpeeds.vxMetersPerSecond,
+                                    -s.fieldSpeeds.vyMetersPerSecond,
+                                    -s.fieldSpeeds.omegaRadiansPerSecond);
+                            DriveFeedforwards ff = s.feedforwards;
+                            if (ff.accelerationsMPSSq().length == 4) {
+                              state.feedforwards =
+                                  new DriveFeedforwards(
+                                      new double[] {
+                                        ff.accelerationsMPSSq()[1],
+                                        ff.accelerationsMPSSq()[0],
+                                        ff.accelerationsMPSSq()[3],
+                                        ff.accelerationsMPSSq()[2]
+                                      },
+                                      new double[] {
+                                        ff.linearForcesNewtons()[1],
+                                        ff.linearForcesNewtons()[0],
+                                        ff.linearForcesNewtons()[3],
+                                        ff.linearForcesNewtons()[2]
+                                      },
+                                      new double[] {
+                                        ff.torqueCurrentsAmps()[1],
+                                        ff.torqueCurrentsAmps()[0],
+                                        ff.torqueCurrentsAmps()[3],
+                                        ff.torqueCurrentsAmps()[2]
+                                      },
+                                      new double[] {
+                                        ff.robotRelativeForcesXNewtons()[1],
+                                        ff.robotRelativeForcesXNewtons()[0],
+                                        ff.robotRelativeForcesXNewtons()[3],
+                                        ff.robotRelativeForcesXNewtons()[2]
+                                      },
+                                      new double[] {
+                                        ff.robotRelativeForcesYNewtons()[1],
+                                        ff.robotRelativeForcesYNewtons()[0],
+                                        ff.robotRelativeForcesYNewtons()[3],
+                                        ff.robotRelativeForcesYNewtons()[2]
+                                      });
+                            } else if (ff.accelerationsMPSSq().length == 2) {
+                              state.feedforwards =
+                                  new DriveFeedforwards(
+                                      new double[] {
+                                        ff.accelerationsMPSSq()[1], ff.accelerationsMPSSq()[0]
+                                      },
+                                      new double[] {
+                                        ff.linearForcesNewtons()[1], ff.linearForcesNewtons()[0]
+                                      },
+                                      new double[] {
+                                        ff.torqueCurrentsAmps()[1], ff.torqueCurrentsAmps()[0]
+                                      },
+                                      new double[] {
+                                        ff.robotRelativeForcesXNewtons()[1],
+                                        ff.robotRelativeForcesXNewtons()[0]
+                                      },
+                                      new double[] {
+                                        ff.robotRelativeForcesYNewtons()[1],
+                                        ff.robotRelativeForcesYNewtons()[0]
+                                      });
+                            } else {
+                              state.feedforwards = ff;
+                            }
+                            state.heading = s.heading.unaryMinus();
+
+                            return state;
+                          })
+                      .toList(),
+                  traj.getEvents()));
+    }
+
+    path.waypoints =
+        waypoints.stream()
+            .map(
+                w -> {
+                  Translation2d prevControl = null;
+                  Translation2d anchor = mirrorTranslation(w.anchor());
+                  Translation2d nextControl = null;
+
+                  if (w.prevControl() != null) {
+                    prevControl = mirrorTranslation(w.prevControl());
+                  }
+                  if (w.nextControl() != null) {
+                    nextControl = mirrorTranslation(w.nextControl());
+                  }
+                  return new Waypoint(prevControl, anchor, nextControl);
+                })
+            .toList();
+    path.rotationTargets =
+        rotationTargets.stream()
+            .map(t -> new RotationTarget(t.position(), t.rotation().unaryMinus()))
+            .toList();
+    path.pointTowardsZones =
+        pointTowardsZones.stream()
+            .map(
+                z ->
+                    new PointTowardsZone(
+                        z.name(),
+                        mirrorTranslation(z.targetPosition()),
+                        z.rotationOffset(),
+                        z.minPosition(),
+                        z.maxPosition()))
+            .toList();
+    path.constraintZones = constraintZones;
+    path.eventMarkers = eventMarkers;
+    path.globalConstraints = globalConstraints;
+    if (idealStartingState != null) {
+      path.idealStartingState =
+          new IdealStartingState(
+              idealStartingState.velocityMPS(), idealStartingState.rotation().unaryMinus());
+    } else {
+      path.idealStartingState = null;
+    }
+    path.goalEndState =
+        new GoalEndState(goalEndState.velocityMPS(), goalEndState.rotation().unaryMinus());
+    path.allPoints =
+        allPoints.stream()
+            .map(
+                p -> {
+                  PathPoint point = new PathPoint(mirrorTranslation(p.position));
+                  point.distanceAlongPath = p.distanceAlongPath;
+                  point.maxV = p.maxV;
+                  if (p.rotationTarget != null) {
+                    point.rotationTarget =
+                        new RotationTarget(
+                            p.rotationTarget.position(), p.rotationTarget.rotation().unaryMinus());
+                  }
+                  point.constraints = p.constraints;
+                  point.waypointRelativePos = p.waypointRelativePos;
+                  return point;
+                })
+            .toList();
+    path.reversed = reversed;
+    path.isChoreoPath = isChoreoPath;
+    path.idealTrajectory = mirroredTraj;
     path.preventFlipping = preventFlipping;
     path.name = name;
 

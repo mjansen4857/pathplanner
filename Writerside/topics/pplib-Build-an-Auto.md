@@ -149,7 +149,7 @@ class SwerveSubsystem(Subsystem):
         config = RobotConfig.fromGUISettings()
 
         # Configure the AutoBuilder last
-        AutoBuilder.configureHolonomic(
+        AutoBuilder.configure(
             self.getPose, # Robot pose supplier
             self.resetPose, # Method to reset odometry (will be called if your auto has a starting pose)
             self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
@@ -283,7 +283,7 @@ class DriveSubsystem(Subsystem):
         config = RobotConfig.fromGUISettings()
 
         # Configure the AutoBuilder last
-        AutoBuilder.configureHolonomic(
+        AutoBuilder.configure(
             self.getPose, # Robot pose supplier
             self.resetPose, # Method to reset odometry (will be called if your auto has a starting pose)
             self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE

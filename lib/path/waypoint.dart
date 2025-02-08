@@ -5,7 +5,7 @@ import 'package:pathplanner/util/wpimath/geometry.dart';
 
 class Waypoint {
   static const num minControlLength = 0.25;
-  static HashMap<String, Translation2d> linked = HashMap();
+  static HashMap<String, Pose2d> linked = HashMap();
 
   Translation2d anchor;
   Translation2d? prevControl;
@@ -24,10 +24,6 @@ class Waypoint {
     this.isLocked = false,
     this.linkedName,
   }) {
-    if (linkedName != null) {
-      linked[linkedName!] = Translation2d(anchor.x, anchor.y);
-    }
-
     // Set the lengths to their current length to enforce minimum
     if (prevControl != null) {
       setPrevControlLength(prevControlLength!);
@@ -86,7 +82,8 @@ class Waypoint {
     }
 
     if (linkedName != null) {
-      linked[linkedName!] = anchor;
+      linked[linkedName!] =
+          Pose2d(anchor, linked[linkedName!]?.rotation ?? const Rotation2d());
     }
   }
 

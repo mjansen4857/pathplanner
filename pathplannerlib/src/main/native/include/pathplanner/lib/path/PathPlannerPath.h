@@ -317,6 +317,15 @@ public:
 	std::shared_ptr<PathPlannerPath> flipPath();
 
 	/**
+	 * Mirror a path to the other side of the current alliance. For example, if this path is on the
+	 * right of the blue alliance side of the field, it will be mirrored to the left of the blue
+	 * alliance side of the field.
+	 *
+	 * @return The mirrored path
+	 */
+	std::shared_ptr<PathPlannerPath> mirrorPath();
+
+	/**
 	 * Get a list of poses representing every point in this path. This can be used to display a path
 	 * on a field 2d widget, for example.
 	 *
@@ -384,6 +393,8 @@ private:
 		}
 		return std::nullopt;
 	}
+
+	static frc::Translation2d mirrorTranslation(frc::Translation2d translation);
 
 	frc::Translation2d samplePath(double waypointRelativePos) const;
 

@@ -40,6 +40,8 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
       keysToPress: {LogicalKeyboardKey.enter},
       onKeysPressed: () => confirm(context),
       child: AlertDialog(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
         title: const Text('Import Custom Field'),
         content: Column(
           mainAxisSize: MainAxisSize.min,

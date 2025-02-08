@@ -14,7 +14,7 @@ import org.json.simple.JSONObject;
  * @param nextControl Next control point
  */
 public record Waypoint(Translation2d prevControl, Translation2d anchor, Translation2d nextControl) {
-  private static final double AUTO_CONTROL_DISTANCE_FACTOR = 1.0 / 3.0;
+  private static final double AUTO_CONTROL_DISTANCE_FACTOR = 0.4;
 
   /**
    * Flip this waypoint to the other side of the field, maintaining a blue alliance origin

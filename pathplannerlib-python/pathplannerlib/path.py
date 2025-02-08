@@ -20,7 +20,7 @@ import json
 
 targetIncrement: Final[float] = 0.05
 targetSpacing: Final[float] = 0.2
-autoControlDistanceFactor: Final[float] = 1.0 / 3.0
+autoControlDistanceFactor: Final[float] = 0.4
 
 
 @dataclass(frozen=True)
@@ -109,7 +109,7 @@ class GoalEndState:
 @dataclass(frozen=True)
 class IdealStartingState:
     """
-    Describes the ideal starting state of the robot when finishing a path
+    Describes the ideal starting state of the robot when starting a path
 
     Args:
         velocity (float): The ideal starting velocity (M/S)
@@ -520,13 +520,18 @@ class PathPlannerPath:
         with open(filePath, 'r') as f:
             fJson = json.loads(f.read())
 
-            version = str(fJson['version'])
-            versions = version.split('.')
+            version = 0
 
-            if len(versions) < 2 or versions[0] != 'v2025' or versions[1] != '0':
+            try:
+                version = int(fJson['version'])
+            except ValueError:
+                # Assume version 0
+                pass
+
+            if version > 1:
                 raise RuntimeError("Incompatible file version for '" + trajectory_name
-                                   + ".traj'. Actual: '" + version
-                                   + "' Expected: 'v2025.0.X'")
+                                   + ".traj'. Actual: '" + str(version)
+                                   + "' Expected: <= 1")
 
             trajJson = fJson['trajectory']
 
@@ -554,6 +559,8 @@ class PathPlannerPath:
                 state.linearVelocity = math.hypot(xVel, yVel)
                 state.pose = Pose2d(xPos, yPos, rotationRad)
                 state.fieldSpeeds = ChassisSpeeds(xVel, yVel, angularVelRps)
+                if abs(state.linearVelocity) > 1e-6:
+                    state.heading = Rotation2d(state.fieldSpeeds.vx, state.fieldSpeeds.vy)
 
                 # The module forces are field relative, rotate them to be robot relative
                 for i in range(len(forcesX)):
@@ -1136,6 +1143,10 @@ class PathPlannerPath:
         if self.numPoints() > 0:
             for i in range(self.numPoints()):
                 point = self.getPoint(i)
+
+                if point.constraints is None:
+                    point.constraints = self._globalConstraints
+
                 curveRadius = self._getCurveRadiusAtPoint(i)
 
                 if math.isfinite(curveRadius):

@@ -5,29 +5,17 @@
 <tabs>
 <tab title="Java/C++">
 
-PathPlannerLib can be added to your robot code project using the "Install New Libraries (online)" feature in VSCode
-using the following JSON file URL:
+The easiest way to install PathPlannerLib is to find and install it via the WPILib Vendor Dependency Manager in VSCode.
 
-> **Note**
->
-> The main PathPlannerLib json file will not be updated for beta versions. To use the beta, you will need to use the
-> beta json file below. Once PathPlannerLib is fully released after kickoff, you will need to switch back to the main
-> vendor json file.
->
-{style="note"}
+![](vendor_dep_manager.png)
+
+Alternatively, PathPlannerLib can be added to your robot code project using the "Install New Libraries (online)" feature
+in VSCode using the following JSON file URL:
 
 <br/>
 
 ```text
 https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib.json
-```
-
-**Beta Version**
-
-To install the beta version of PathPlannerLib, use the following vendor json file
-
-```text
-https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib-beta.json
 ```
 
 **Legacy Versions**
@@ -60,6 +48,15 @@ https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib2022.json
 <tab title="Python">
 
 The Python version is compatible with RobotPy and available to install from PyPI via the `pip` command
+
+> **Warning**
+>
+> If using a RoboRIO 1, you must disable the NI webserver via `robotpy installer niweb disable` in order to ensure there
+> is enough available memory.
+>
+> If you need to re-image your rio, you will need to re-enable the webserver.
+>
+{style="warning"}
 
 <br/>
 

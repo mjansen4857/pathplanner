@@ -414,7 +414,10 @@ class _WaypointsTreeState extends State<WaypointsTree> {
     showDialog(
         context: context,
         builder: (context) {
+          ColorScheme colorScheme = Theme.of(context).colorScheme;
           return AlertDialog(
+            backgroundColor: colorScheme.surface,
+            surfaceTintColor: colorScheme.surfaceTint,
             title: const Text('Link Waypoint'),
             content: SizedBox(
               width: 400,
@@ -473,12 +476,22 @@ class _WaypointsTreeState extends State<WaypointsTree> {
 
                     if (Waypoint.linked.containsKey(name)) {
                       // Linked waypoint exists, update this waypoint
-                      Translation2d anchor = Waypoint.linked[name]!;
+                      Pose2d link = Waypoint.linked[name]!;
+                      Translation2d anchor = link.translation;
 
                       widget.undoStack
                           .add(_waypointChange(waypoints[waypointIdx], () {
                         waypoints[waypointIdx].linkedName = name;
                         waypoints[waypointIdx].move(anchor.x, anchor.y);
+
+                        if (waypointIdx == 0) {
+                          // Update the ideal starting state rotation
+                          widget.path.idealStartingState.rotation =
+                              link.rotation;
+                        } else if (waypointIdx == waypoints.length - 1) {
+                          // Update the goal end state rotation
+                          widget.path.goalEndState.rotation = link.rotation;
+                        }
                       }, (oldVal) {
                         waypoints[waypointIdx] = oldVal.clone();
                       }));
@@ -487,7 +500,19 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                       widget.undoStack
                           .add(_waypointChange(waypoints[waypointIdx], () {
                         waypoints[waypointIdx].linkedName = name;
-                        Waypoint.linked[name] = waypoints[waypointIdx].anchor;
+
+                        Rotation2d linkRotation = const Rotation2d();
+                        if (waypointIdx == 0) {
+                          // Use ideal starting state rotation
+                          linkRotation =
+                              widget.path.idealStartingState.rotation;
+                        } else if (waypointIdx == waypoints.length - 1) {
+                          // Use goal end state rotation
+                          linkRotation = widget.path.goalEndState.rotation;
+                        }
+
+                        Waypoint.linked[name] =
+                            Pose2d(waypoints[waypointIdx].anchor, linkRotation);
                       }, (oldVal) {
                         waypoints[waypointIdx] = oldVal.clone();
                         Waypoint.linked.remove(name);

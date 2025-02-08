@@ -58,7 +58,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                 flex: 4,
                 child: Container(
                   height: 38,
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withAlpha(15),
                   child: Row(
                     children: [
                       const SizedBox(width: 4),
@@ -120,7 +120,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                   flex: 5,
                   child: InkWell(
                     onTap: widget.onOpened,
-                    hoverColor: Colors.white.withOpacity(0.05),
+                    hoverColor: Colors.white.withAlpha(15),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -251,7 +251,10 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
     showDialog(
       context: context,
       builder: (context) {
+        ColorScheme colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
           title: const Text('Delete File'),
           content: Text(
               'Are you sure you want to delete the file: ${widget.name}? This cannot be undone.\n\nIf this is a path, any autos using it will have their reference to it removed.'),

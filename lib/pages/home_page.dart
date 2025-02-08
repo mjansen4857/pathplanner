@@ -95,8 +95,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }
       }
 
-      if (projectDir == null || !fs.directory(projectDir).existsSync()) {
-        projectDir = await Navigator.push(
+      while (true) {
+        if (projectDir != null) {
+          try {
+            if (!fs.directory(projectDir).existsSync()) {
+              projectDir = null;
+            }
+          } catch (e, stack) {
+            Log.error('Failed to check if project exists', e, stack);
+            projectDir = null;
+          }
+        }
+
+        projectDir ??= await Navigator.push(
           _key.currentContext!,
           PageRouteBuilder(
             pageBuilder: (context, anim1, anim2) => WelcomePage(
@@ -106,9 +117,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             reverseTransitionDuration: Duration.zero,
           ),
         );
-      }
 
-      _initFromProjectDir(projectDir!);
+        try {
+          await _initFromProjectDir(projectDir!);
+          // Break from the loop if we've successfully loaded the project
+          break;
+        } catch (e, stack) {
+          Log.error('Failed to initialize from project directory', e, stack);
+        }
+      }
 
       setState(() {
         _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
@@ -128,14 +145,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       _animController.forward();
 
-      if (!(widget.prefs.getBool(PrefsKeys.seen2024ResetPopup) ?? false) &&
-          _fieldImage?.name != 'Crescendo' &&
+      if (!(widget.prefs.getBool(PrefsKeys.seen2025ResetPopup) ?? false) &&
+          (_fieldImage?.name != 'Reefscape' &&
+              _fieldImage?.name != 'Reefscape (Annotated)') &&
           mounted) {
         showDialog(
           context: this.context,
           barrierDismissible: false,
           builder: (context) {
+            ColorScheme colorScheme = Theme.of(context).colorScheme;
+
             return AlertDialog(
+              backgroundColor: colorScheme.surface,
+              surfaceTintColor: colorScheme.surfaceTint,
               title: const Text('New Field Image Available'),
               content: const SizedBox(
                 width: 400,
@@ -143,7 +165,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                        'The 2024 field image is now available. Would you like to set your field image to the 2024 field and reset the default navgrid for the 2024 field?'),
+                        'The 2025 field image is now available. Would you like to set your field image to the 2025 field and reset the navgrid to the new default?'),
                   ],
                 ),
               ),
@@ -151,14 +173,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    widget.prefs.setBool(PrefsKeys.seen2024ResetPopup, true);
+                    widget.prefs.setBool(PrefsKeys.seen2025ResetPopup, true);
                   },
                   child: const Text('No'),
                 ),
                 TextButton(
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    widget.prefs.setBool(PrefsKeys.seen2024ResetPopup, true);
+                    widget.prefs.setBool(PrefsKeys.seen2025ResetPopup, true);
                     setState(() {
                       _fieldImage = FieldImage.defaultField;
                       widget.prefs
@@ -179,43 +201,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             );
           },
         );
-      }
-
-      if (!(widget.prefs.getBool(PrefsKeys.seen2024Warning) ?? false) &&
-          mounted) {
-        showDialog(
-            context: this.context,
-            barrierDismissible: false,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text('Non-standard Field Mirroring'),
-                content: const SizedBox(
-                  width: 300,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                          'The 2024 FRC game has non-standard field mirroring that would prevent using the same auto path for both alliances without transformation.'),
-                      SizedBox(height: 16),
-                      Text(
-                          'PathPlannerLib has functionality to automatically transform paths to work for the correct alliance depending on the current alliance color.'),
-                      SizedBox(height: 16),
-                      Text(
-                          'In order for this to work correctly, you MUST create all of your paths on the blue (left) side of the field.'),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      widget.prefs.setBool(PrefsKeys.seen2024Warning, true);
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              );
-            });
       }
     });
   }
@@ -291,7 +276,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               IconButton(
                 icon: const Icon(Icons.open_in_new_rounded, size: 20),
                 tooltip: 'Open Project',
-                onPressed: () => _openProjectDialog(this.context),
+                onPressed: () => _openProjectDialog(),
               ),
             ],
           ),
@@ -342,7 +327,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 Navigator.pop(this.context);
                 _showSettingsDialog();
               },
-              icon: const Icon(Icons.settings),
+              icon: Icon(
+                Icons.settings,
+                color: colorScheme.onSurface,
+              ),
               label: 'Settings',
               backgroundColor: colorScheme.surfaceContainer,
               foregroundColor: colorScheme.onSurface,
@@ -689,16 +677,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  void _openProjectDialog(BuildContext context) async {
+  void _openProjectDialog() async {
     String initialDirectory = _projectDir?.path ?? fs.currentDirectory.path;
     String? projectFolder = await getDirectoryPath(
         confirmButtonText: 'Open Project', initialDirectory: initialDirectory);
     if (projectFolder != null) {
-      _initFromProjectDir(projectFolder);
+      try {
+        await _initFromProjectDir(projectFolder);
+      } catch (e, stack) {
+        Log.error('Failed to initialize from project directory', e, stack);
+        // Try again
+        _openProjectDialog();
+      }
     }
   }
 
-  void _initFromProjectDir(String projectDir) async {
+  Future<void> _initFromProjectDir(String projectDir) async {
     widget.prefs.setString(PrefsKeys.currentProjectDir, projectDir);
 
     if (Platform.isMacOS) {

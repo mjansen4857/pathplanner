@@ -133,7 +133,7 @@ class PathPainterUtil {
       );
       canvas.drawRRect(
         RRect.fromRectAndRadius(bgRect, const Radius.circular(3)),
-        Paint()..color = Colors.black.withOpacity(0.6),
+        Paint()..color = Colors.black.withAlpha(150),
       );
 
       TextPainter outlinePainter = TextPainter(

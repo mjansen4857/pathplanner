@@ -156,7 +156,10 @@ class _NavGridPageState extends State<NavGridPage> {
     showDialog(
       context: this.context,
       builder: (context) {
+        ColorScheme colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
           title: const Text('Edit Grid'),
           content: SizedBox(
             width: 350,
@@ -291,7 +294,7 @@ class _NavigationPainter extends CustomPainter {
       ..strokeWidth = 1;
     var fillPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = Colors.red.withOpacity(0.4);
+      ..color = Colors.red.withAlpha(100);
 
     for (int row = 0; row < grid.length; row++) {
       for (int col = 0; col < grid[row].length; col++) {

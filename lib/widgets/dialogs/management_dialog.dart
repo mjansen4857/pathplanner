@@ -132,29 +132,34 @@ class _ManagementDialogState extends State<ManagementDialog> {
                         onPressed: () {
                           showDialog(
                               context: context,
-                              builder: (BuildContext context) => AlertDialog(
-                                    title: const Text('Remove Event'),
-                                    content: Text(
-                                        'Are you sure you want to remove the event "$eventName"? This cannot be undone.'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: Navigator.of(context).pop,
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            widget.onEventDeleted(eventName);
-                                            ProjectPage.events
-                                                .remove(eventName);
-                                          });
+                              builder: (BuildContext context) {
+                                ColorScheme colorScheme =
+                                    Theme.of(context).colorScheme;
+                                return AlertDialog(
+                                  backgroundColor: colorScheme.surface,
+                                  surfaceTintColor: colorScheme.surfaceTint,
+                                  title: const Text('Remove Event'),
+                                  content: Text(
+                                      'Are you sure you want to remove the event "$eventName"? This cannot be undone.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: Navigator.of(context).pop,
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          widget.onEventDeleted(eventName);
+                                          ProjectPage.events.remove(eventName);
+                                        });
 
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: const Text('Confirm'),
-                                      ),
-                                    ],
-                                  ));
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text('Confirm'),
+                                    ),
+                                  ],
+                                );
+                              });
                         },
                         icon: Icon(
                           Icons.delete_forever_rounded,
@@ -203,27 +208,33 @@ class _ManagementDialogState extends State<ManagementDialog> {
                       onPressed: () {
                         showDialog(
                             context: context,
-                            builder: (BuildContext context) => AlertDialog(
-                                  title: const Text('Remove Linked Waypoint'),
-                                  content: Text(
-                                      'Are you sure you want to remove the linked waypoint "$waypointName"? This cannot be undone.'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: Navigator.of(context).pop,
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          widget.onLinkedDeleted(waypointName);
-                                        });
+                            builder: (BuildContext context) {
+                              ColorScheme colorScheme =
+                                  Theme.of(context).colorScheme;
+                              return AlertDialog(
+                                backgroundColor: colorScheme.surface,
+                                surfaceTintColor: colorScheme.surfaceTint,
+                                title: const Text('Remove Linked Waypoint'),
+                                content: Text(
+                                    'Are you sure you want to remove the linked waypoint "$waypointName"? This cannot be undone.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: Navigator.of(context).pop,
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        widget.onLinkedDeleted(waypointName);
+                                      });
 
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text('Confirm'),
-                                    ),
-                                  ],
-                                ));
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Confirm'),
+                                  ),
+                                ],
+                              );
+                            });
                       },
                       icon: Icon(
                         Icons.delete_forever_rounded,
@@ -243,55 +254,58 @@ class _ManagementDialogState extends State<ManagementDialog> {
     TextEditingController controller =
         TextEditingController(text: originalName);
 
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     showDialog(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Rename Event'),
-        content: SizedBox(
-          height: 42,
-          width: 400,
-          child: TextField(
-            controller: controller,
-            style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-              labelText: 'Event Name',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      builder: (BuildContext context) {
+        ColorScheme colorScheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
+          title: const Text('Rename Event'),
+          content: SizedBox(
+            height: 42,
+            width: 400,
+            child: TextField(
+              controller: controller,
+              style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                labelText: 'Event Name',
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: Navigator.of(context).pop,
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text == originalName) {
-                Navigator.of(context).pop();
-              } else if (ProjectPage.events.contains(controller.text)) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('An event with that name already exists'),
-                  ),
-                );
-              } else {
-                Navigator.of(context).pop();
-                setState(() {
-                  widget.onEventRenamed(originalName, controller.text);
-                  ProjectPage.events.remove(originalName);
-                  ProjectPage.events.add(controller.text);
-                });
-              }
-            },
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: Navigator.of(context).pop,
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (controller.text == originalName) {
+                  Navigator.of(context).pop();
+                } else if (ProjectPage.events.contains(controller.text)) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('An event with that name already exists'),
+                    ),
+                  );
+                } else {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    widget.onEventRenamed(originalName, controller.text);
+                    ProjectPage.events.remove(originalName);
+                    ProjectPage.events.add(controller.text);
+                  });
+                }
+              },
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -299,54 +313,57 @@ class _ManagementDialogState extends State<ManagementDialog> {
     TextEditingController controller =
         TextEditingController(text: originalName);
 
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     showDialog(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Rename Linked Waypoint'),
-        content: SizedBox(
-          height: 42,
-          width: 400,
-          child: TextField(
-            controller: controller,
-            style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-              labelText: 'Waypoint Name',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      builder: (BuildContext context) {
+        ColorScheme colorScheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
+          title: const Text('Rename Linked Waypoint'),
+          content: SizedBox(
+            height: 42,
+            width: 400,
+            child: TextField(
+              controller: controller,
+              style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                labelText: 'Waypoint Name',
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: Navigator.of(context).pop,
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text == originalName) {
-                Navigator.of(context).pop();
-              } else if (Waypoint.linked.containsKey(controller.text)) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content:
-                        Text('A linked waypoint with that name already exists'),
-                  ),
-                );
-              } else {
-                Navigator.of(context).pop();
-                setState(() {
-                  widget.onLinkedRenamed(originalName, controller.text);
-                });
-              }
-            },
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: Navigator.of(context).pop,
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (controller.text == originalName) {
+                  Navigator.of(context).pop();
+                } else if (Waypoint.linked.containsKey(controller.text)) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'A linked waypoint with that name already exists'),
+                    ),
+                  );
+                } else {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    widget.onLinkedRenamed(originalName, controller.text);
+                  });
+                }
+              },
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

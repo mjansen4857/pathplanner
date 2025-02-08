@@ -4,15 +4,16 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 
 /** Utility class for flipping positions/rotations to the other side of the field */
 public class FlippingUtil {
   /** The type of symmetry for the current field */
-  public static FieldSymmetry symmetryType = FieldSymmetry.kMirrored;
+  public static FieldSymmetry symmetryType = FieldSymmetry.kRotational;
   /** The X size or length of the current field in meters */
-  public static double fieldSizeX = 16.54175;
+  public static double fieldSizeX = Units.feetToMeters(57.573);
   /** The Y size or width of the current field in meters */
-  public static double fieldSizeY = 8.211;
+  public static double fieldSizeY = Units.feetToMeters(26.417);
 
   /** Enum representing the different types of field symmetry */
   public enum FieldSymmetry {
@@ -46,8 +47,8 @@ public class FlippingUtil {
    */
   public static Rotation2d flipFieldRotation(Rotation2d rotation) {
     return switch (symmetryType) {
-      case kMirrored -> new Rotation2d(Math.PI).minus(rotation);
-      case kRotational -> rotation.minus(new Rotation2d(Math.PI));
+      case kMirrored -> Rotation2d.kPi.minus(rotation);
+      case kRotational -> rotation.minus(Rotation2d.kPi);
     };
   }
 
@@ -77,7 +78,7 @@ public class FlippingUtil {
           -fieldSpeeds.omegaRadiansPerSecond);
       case kRotational -> new ChassisSpeeds(
           -fieldSpeeds.vxMetersPerSecond,
-          -fieldSpeeds.vxMetersPerSecond,
+          -fieldSpeeds.vyMetersPerSecond,
           fieldSpeeds.omegaRadiansPerSecond);
     };
   }

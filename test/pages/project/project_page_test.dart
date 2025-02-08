@@ -483,8 +483,8 @@ void main() {
 
     await widgetTester.tap(find.text('Duplicate'));
     await widgetTester.pumpAndSettle();
-    for (var element in widgetTester.allWidgets){
-        print("TEXT ELEMENT " + element.toStringDeep());
+    for (var element in widgetTester.allWidgets) {
+      print("TEXT ELEMENT " + element.toStringDeep());
     }
     expect(find.widgetWithText(ProjectItemCard, 'Example Path (2)'),
         findsOneWidget);

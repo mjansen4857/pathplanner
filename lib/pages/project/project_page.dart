@@ -923,14 +923,17 @@ class _ProjectPageState extends State<ProjectPage> {
         RegExp exp = RegExp(r'\(\d+\)');
         String source = pathName.substring(pathName.length - 3);
         String originalPathName = pathName;
-        while (pathNames.contains(pathName) || pathName == '$originalPathName (0)') {
-        source = pathName.substring(pathName.length - 3);
+        while (pathNames.contains(pathName) ||
+            pathName == '$originalPathName (0)') {
+          source = pathName.substring(pathName.length - 3);
           if (exp.hasMatch(source)) {
             RegExpMatch? match = exp.firstMatch(source);
             int index = int.parse(match![0]!.substring(1, 2));
-            while(pathNames.contains(pathName) || pathName.substring(pathName.length-3) == '(0)'){
+            while (pathNames.contains(pathName) ||
+                pathName.substring(pathName.length - 3) == '(0)') {
               index++;
-              pathName = '${pathName.substring(0, pathName.length - 3)}($index)';
+              pathName =
+                  '${pathName.substring(0, pathName.length - 3)}($index)';
             }
           } else {
             pathName = '$pathName (0)';
@@ -1482,14 +1485,17 @@ class _ProjectPageState extends State<ProjectPage> {
         RegExp exp = RegExp(r'\(\d+\)');
         String source = autoName.substring(autoName.length - 3);
         String originalAutoName = autoName;
-        while (autoNames.contains(autoName) || autoName == '$originalAutoName (0)') {
-        source = autoName.substring(autoName.length - 3);
+        while (autoNames.contains(autoName) ||
+            autoName == '$originalAutoName (0)') {
+          source = autoName.substring(autoName.length - 3);
           if (exp.hasMatch(source)) {
             RegExpMatch? match = exp.firstMatch(source);
             int index = int.parse(match![0]!.substring(1, 2));
-            while(autoNames.contains(autoName) || autoName.substring(autoName.length-3) == '(0)'){
+            while (autoNames.contains(autoName) ||
+                autoName.substring(autoName.length - 3) == '(0)') {
               index++;
-              autoName = '${autoName.substring(0, autoName.length - 3)}($index)';
+              autoName =
+                  '${autoName.substring(0, autoName.length - 3)}($index)';
             }
           } else {
             autoName = '$autoName (0)';

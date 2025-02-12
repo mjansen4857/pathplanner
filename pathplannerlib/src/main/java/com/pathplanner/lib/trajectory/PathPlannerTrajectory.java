@@ -235,15 +235,21 @@ public class PathPlannerTrajectory {
         nextRotationTargetRot = path.getPoint(nextRotationTargetIdx).rotationTarget.rotation();
       }
 
-      // Holonomic rotation is interpolated. We use the distance along the path
-      // to calculate how much to interpolate since the distribution of path points
-      // is not the same along the whole segment
-      double t =
-          (path.getPoint(i).distanceAlongPath
-                  - path.getPoint(prevRotationTargetIdx).distanceAlongPath)
-              / (path.getPoint(nextRotationTargetIdx).distanceAlongPath
-                  - path.getPoint(prevRotationTargetIdx).distanceAlongPath);
-      Rotation2d holonomicRot = cosineInterpolate(prevRotationTargetRot, nextRotationTargetRot, t);
+      Rotation2d holonomicRot;
+      if (prevRotationTargetIdx != nextRotationTargetIdx) {
+        // Holonomic rotation is interpolated. We use the distance along the path
+        // to calculate how much to interpolate since the distribution of path points
+        // is not the same along the whole segment
+        double t =
+            (path.getPoint(i).distanceAlongPath
+                    - path.getPoint(prevRotationTargetIdx).distanceAlongPath)
+                / (path.getPoint(nextRotationTargetIdx).distanceAlongPath
+                    - path.getPoint(prevRotationTargetIdx).distanceAlongPath);
+        holonomicRot = cosineInterpolate(prevRotationTargetRot, nextRotationTargetRot, t);
+      } else {
+        // If both rotation targets fall on the same point, just use the next one.
+        holonomicRot = nextRotationTargetRot;
+      }
 
       Pose2d robotPose = new Pose2d(p.position, holonomicRot);
       var state = new PathPlannerTrajectoryState();

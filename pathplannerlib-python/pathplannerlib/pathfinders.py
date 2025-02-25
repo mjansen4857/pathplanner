@@ -211,6 +211,7 @@ class LocalADStar(Pathfinder):
             self._requestRealStartPos = start_position
 
             self._requestMinor = True
+            self._newPathAvailable = False
             self._requestLock.release()
 
     def setGoalPosition(self, goal_position: Translation2d) -> None:
@@ -229,6 +230,7 @@ class LocalADStar(Pathfinder):
             self._requestMinor = True
             self._requestMajor = True
             self._requestReset = True
+            self._newPathAvailable = False
             self._requestLock.release()
 
     def setDynamicObstacles(self, obs: List[Tuple[Translation2d, Translation2d]],

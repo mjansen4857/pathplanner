@@ -459,10 +459,13 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
         # Holonomic rotation is interpolated. We use the distance along the path
         # to calculate how much to interpolate since the distribution of path points
         # is not the same along the whole segment
-        t = (path.getPoint(i).distanceAlongPath - path.getPoint(prevRotationTargetIdx).distanceAlongPath) / (
-                path.getPoint(nextRotationTargetIdx).distanceAlongPath - path.getPoint(
-            prevRotationTargetIdx).distanceAlongPath)
-        holonomicRot = _cosineInterpolate(prevRotationTargetRot, nextRotationTargetRot, t)
+        if prevRotationTargetIdx != nextRotationTargetIdx:
+            t = (path.getPoint(i).distanceAlongPath - path.getPoint(prevRotationTargetIdx).distanceAlongPath) / (
+                    path.getPoint(nextRotationTargetIdx).distanceAlongPath - path.getPoint(
+                prevRotationTargetIdx).distanceAlongPath)
+            holonomicRot = _cosineInterpolate(prevRotationTargetRot, nextRotationTargetRot, t)
+        else:
+            holonomicRot = nextRotationTargetRot
 
         robotPose = Pose2d(p.position, holonomicRot)
         state = PathPlannerTrajectoryState()

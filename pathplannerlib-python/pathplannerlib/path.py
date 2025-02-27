@@ -951,7 +951,7 @@ class PathPlannerPath:
         waypoints = [Waypoint.fromJson(w) for w in path_json['waypoints']]
         globalConstraints = PathConstraints.fromJson(path_json['globalConstraints'])
         goalEndState = GoalEndState.fromJson(path_json['goalEndState'])
-        idealStartingState = IdealStartingState.fromJson(path_json['idealStartingState'])
+        idealStartingState = IdealStartingState.fromJson(path_json['previewStartingState'])
         isReversed = bool(path_json['reversed'])
         rotationTargets = [RotationTarget.fromJson(rotJson) for rotJson in path_json['rotationTargets']]
         pointTowardsZones = [PointTowardsZone.fromJson(zoneJson) for zoneJson in

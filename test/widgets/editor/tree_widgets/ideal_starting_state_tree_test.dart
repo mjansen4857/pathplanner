@@ -19,8 +19,7 @@ void main() {
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
-    path.idealStartingState =
-        IdealStartingState(1.0, Rotation2d.fromDegrees(45));
+    path.idealStartingState = IdealStartingState(1.0, Rotation2d.fromDegrees(45));
     path.previewStartingStateExpanded = true;
     pathChanged = false;
   });
@@ -46,8 +45,8 @@ void main() {
 
     expect(find.byType(NumberTextField), findsWidgets);
 
-    await widgetTester.tap(find.text(
-        'Ideal Starting State')); // Use text so it doesn't tap middle of expanded card
+    await widgetTester.tap(
+        find.text('Preview Starting State')); // Use text so it doesn't tap middle of expanded card
     await widgetTester.pumpAndSettle();
     expect(find.byType(NumberTextField), findsNothing);
   });

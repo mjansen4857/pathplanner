@@ -92,7 +92,7 @@
   },
   "reversed": false,
   "folder": null,
-  "idealStartingState": {
+  "previewStartingState": {
     "velocity": 0,
     "rotation": 0.0
   },

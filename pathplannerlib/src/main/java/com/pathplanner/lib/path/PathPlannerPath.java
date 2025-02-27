@@ -598,7 +598,7 @@ public class PathPlannerPath {
     PathConstraints globalConstraints =
         PathConstraints.fromJson((JSONObject) pathJson.get("globalConstraints"));
     IdealStartingState idealStartingState =
-        IdealStartingState.fromJson((JSONObject) pathJson.get("idealStartingState"));
+        IdealStartingState.fromJson((JSONObject) pathJson.get("previewStartingState"));
     GoalEndState goalEndState = GoalEndState.fromJson((JSONObject) pathJson.get("goalEndState"));
     boolean reversed = (boolean) pathJson.get("reversed");
     List<RotationTarget> rotationTargets = new ArrayList<>();

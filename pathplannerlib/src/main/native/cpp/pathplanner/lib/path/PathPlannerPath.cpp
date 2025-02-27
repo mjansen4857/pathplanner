@@ -348,7 +348,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromJson(
 			json.at("globalConstraints"));
 	GoalEndState goalEndState = GoalEndState::fromJson(json.at("goalEndState"));
 	IdealStartingState idealStartingState = IdealStartingState::fromJson(
-			json.at("idealStartingState"));
+			json.at("previewStartingState"));
 	bool reversed = json.at("reversed").get<bool>();
 	std::vector < RotationTarget > rotationTargets;
 	std::vector < PointTowardsZone > pointTowardsZones;

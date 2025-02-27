@@ -27,7 +27,7 @@ class IdealStartingStateTree extends StatelessWidget {
       title: Wrap(
         alignment: WrapAlignment.spaceBetween,
         children: [
-          const Text('Ideal Starting State'),
+          const Text('Preview Starting State'),
           InfoCard(
               value:
                   '${path.idealStartingState.rotation.degrees.toStringAsFixed(2)}° starting with ${path.idealStartingState.velocityMPS.toStringAsFixed(2)} M/S'),
@@ -54,8 +54,7 @@ class IdealStartingStateTree extends StatelessWidget {
                   minValue: 0.0,
                   onSubmitted: (value) {
                     if (value != null) {
-                      _addChange(
-                          () => path.idealStartingState.velocityMPS = value);
+                      _addChange(() => path.idealStartingState.velocityMPS = value);
                     }
                   },
                 ),
@@ -69,8 +68,7 @@ class IdealStartingStateTree extends StatelessWidget {
                     onSubmitted: (value) {
                       if (value != null) {
                         _addChange(() => path.idealStartingState.rotation =
-                            Rotation2d.fromDegrees(
-                                MathUtil.inputModulus(value, -180, 180)));
+                            Rotation2d.fromDegrees(MathUtil.inputModulus(value, -180, 180)));
                       }
                     },
                   ),

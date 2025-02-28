@@ -51,20 +51,25 @@ public class RobotConfig {
 
   // Validation alerts
   private static final Alert BAD_GUI_CONFIG =
-      new Alert("GUI Config Couldn't be loaded", AlertType.kError);
-  private static final Alert MOI_ALERT = new Alert("MOI Config Mismatch", AlertType.kError);
-  private static final Alert MASS_ALERT = new Alert("Mass Config Mismatch", AlertType.kError);
-  private static final Alert TORQUE_ALERT = new Alert("Torque Friction Mismatch", AlertType.kError);
+      new Alert("PathPlanner", "GUI Config Couldn't be loaded", AlertType.kError);
+  private static final Alert MOI_ALERT =
+      new Alert("PathPlanner", "MOI Config Mismatch", AlertType.kError);
+  private static final Alert MASS_ALERT =
+      new Alert("PathPlanner", "Mass Config Mismatch", AlertType.kError);
+  private static final Alert TORQUE_ALERT =
+      new Alert("PathPlanner", "Torque Friction Mismatch", AlertType.kError);
   private static final Alert CURRENT_ALERT =
-      new Alert("Drive Current Limit Mismatch", AlertType.kError);
+      new Alert("PathPlanner", "Drive Current Limit Mismatch", AlertType.kError);
   private static final Alert MOTOR_ALERT =
-      new Alert("Drive Motor Config Mismatch", AlertType.kError);
+      new Alert("PathPlanner", "Drive Motor Config Mismatch", AlertType.kError);
   private static final Alert VELOCITY_ALERT =
-      new Alert("Max Drive Velocity Mismatch", AlertType.kError);
-  private static final Alert COF_ALERT = new Alert("Wheel COF Mismatch", AlertType.kError);
-  private static final Alert RADIUS_ALERT = new Alert("Wheel Radius Mismatch", AlertType.kError);
+      new Alert("PathPlanner", "Max Drive Velocity Mismatch", AlertType.kError);
+  private static final Alert COF_ALERT =
+      new Alert("PathPlanner", "Wheel COF Mismatch", AlertType.kError);
+  private static final Alert RADIUS_ALERT =
+      new Alert("PathPlanner", "Wheel Radius Mismatch", AlertType.kError);
   private static final Alert LOCATION_ALERT =
-      new Alert("Module Location Mismatch", AlertType.kError);
+      new Alert("PathPlanner", "Module Location Mismatch", AlertType.kError);
 
   /**
    * Create a robot config object for a HOLONOMIC DRIVE robot

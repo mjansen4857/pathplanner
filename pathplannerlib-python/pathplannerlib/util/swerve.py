@@ -488,12 +488,13 @@ class SwerveSetpointGenerator:
         # Won't divide by zero because it is only possible for a to be zero if the
         # target velocity is exactly the same or the reverse of the current
         # velocity, which would be caught by the difference check.
-        s_1 = (-b + root) / (2 * a)
-        if is_valid_s(s_1):
-            return s_1
-        s_2 = (-b - root) / (2 * a)
-        if is_valid_s(s_2):
-            return s_2
+        if a != 0.0:
+            s_1 = (-b + root) / (2 * a)
+            if is_valid_s(s_1):
+                return s_1
+            s_2 = (-b - root) / (2 * a)
+            if is_valid_s(s_2):
+                return s_2
 
         # Since we passed the initial max_vel_step check, a solution should exist,
         # but if no solution was found anyway, just don't limit movement

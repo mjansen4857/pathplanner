@@ -288,13 +288,6 @@ void PathPlannerTrajectory::generateStates(
 			state.heading = states[i - 1].heading;
 		}
 
-		if (!config.isHolonomic) {
-			state.pose = frc::Pose2d(state.pose.Translation(),
-					path->isReversed() ?
-							(state.heading + frc::Rotation2d(180_deg)) :
-							state.heading);
-		}
-
 		if (i != 0) {
 			state.deltaPos = state.pose.Translation().Distance(
 					states[i - 1].pose.Translation());

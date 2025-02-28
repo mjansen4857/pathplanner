@@ -480,10 +480,6 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
         else:
             state.heading = states[i - 1].heading
 
-        if not config.isHolonomic:
-            state.pose = Pose2d(state.pose.translation(),
-                                (state.heading + Rotation2d.fromDegrees(180)) if path.isReversed() else state.heading)
-
         if i != 0:
             state.deltaPos = state.pose.translation().distance(states[i - 1].pose.translation())
             state.deltaRot = state.pose.rotation() - states[i - 1].pose.rotation()

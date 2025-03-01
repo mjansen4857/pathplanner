@@ -12,6 +12,7 @@ class ProjectItemCard extends StatefulWidget {
   final FieldImage fieldImage;
   final List<List<Translation2d>> paths;
   final VoidCallback onOpened;
+  final VoidCallback? onReverse;
   final VoidCallback? onDuplicated;
   final VoidCallback? onDeleted;
   final ValueChanged<String>? onRenamed;
@@ -26,6 +27,7 @@ class ProjectItemCard extends StatefulWidget {
     required this.fieldImage,
     required this.paths,
     required this.onOpened,
+    this.onReverse,
     this.onDuplicated,
     this.onDeleted,
     this.onRenamed,
@@ -78,6 +80,9 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                           child: PopupMenuButton<String>(
                             tooltip: '',
                             onSelected: (value) {
+                              if (value == 'reverse') {
+                                widget.onReverse?.call();
+                              }
                               if (value == 'duplicate') {
                                 widget.onDuplicated?.call();
                               } else if (value == 'delete') {
@@ -86,6 +91,16 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                             },
                             itemBuilder: (_) {
                               return const [
+                                PopupMenuItem(
+                                  value: 'reverse',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.compare_arrows),
+                                      SizedBox(width: 12),
+                                      Text('Reverse'),
+                                    ],
+                                  ),
+                                ),
                                 PopupMenuItem(
                                   value: 'duplicate',
                                   child: Row(
@@ -171,8 +186,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                                     curve: Curves.easeInOut,
                                     duration: const Duration(milliseconds: 200),
                                     child: BackdropFilter(
-                                      filter: ImageFilter.blur(
-                                          sigmaX: 5.0, sigmaY: 5.0),
+                                      filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
                                       child: Container(),
                                     ),
                                   ),
@@ -182,8 +196,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                                     child: AnimatedScale(
                                       scale: _hovering ? 1.0 : 0.0,
                                       curve: Curves.easeInOut,
-                                      duration:
-                                          const Duration(milliseconds: 200),
+                                      duration: const Duration(milliseconds: 200),
                                       child: Icon(
                                         Icons.edit,
                                         color: colorScheme.onSurface,
@@ -208,9 +221,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
           Align(
             alignment: Alignment.bottomLeft,
             child: Padding(
-              padding: widget.compact
-                  ? const EdgeInsets.all(8.0)
-                  : const EdgeInsets.all(12.0),
+              padding: widget.compact ? const EdgeInsets.all(8.0) : const EdgeInsets.all(12.0),
               child: Tooltip(
                 message: widget.warningMessage,
                 child: FittedBox(

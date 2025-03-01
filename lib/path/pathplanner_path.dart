@@ -712,6 +712,36 @@ class PathPlannerPath {
     );
   }
 
+  PathPlannerPath reverse(String newName) {
+    Stopwatch s = Stopwatch()..start();
+    final result = PathPlannerPath(
+      name: newName,
+      waypoints: reverseWaypoints(waypoints),
+      globalConstraints: globalConstraints.clone(),
+      goalEndState: goalEndState.reverse(),
+      constraintZones: cloneConstraintZones(constraintZones),
+      pointTowardsZones: clonePointTowardsZones(pointTowardsZones),
+      rotationTargets: reverseRotationTargets(rotationTargets),
+      eventMarkers: cloneEventMarkers(eventMarkers),
+      pathDir: pathDir,
+      fs: fs,
+      reversed: !reversed,
+      folder: folder,
+      idealStartingState: idealStartingState.reverse(),
+      useDefaultConstraints: useDefaultConstraints,
+    );
+    try {
+      File pathFile = fs.file(join(pathDir, '$newName.path'));
+      const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+      pathFile.writeAsString(encoder.convert(result));
+      lastModified = DateTime.now().toUtc();
+      Log.debug('Reversed and Saved "$name.path" in ${s.elapsedMilliseconds}ms');
+    } catch (ex, stack) {
+      Log.error('Failed to save path', ex, stack);
+    }
+    return result;
+  }
+
   List<Translation2d> get pathPositions => [
         for (final p in pathPoints) p.position,
       ];
@@ -719,6 +749,12 @@ class PathPlannerPath {
   static List<Waypoint> cloneWaypoints(List<Waypoint> waypoints) {
     return [
       for (final waypoint in waypoints) waypoint.clone(),
+    ];
+  }
+
+  static List<Waypoint> reverseWaypoints(List<Waypoint> waypoints) {
+    return [
+      for (final waypoint in waypoints) waypoint.reverse(),
     ];
   }
 
@@ -737,6 +773,12 @@ class PathPlannerPath {
   static List<RotationTarget> cloneRotationTargets(List<RotationTarget> targets) {
     return [
       for (final target in targets) target.clone(),
+    ];
+  }
+
+  static List<RotationTarget> reverseRotationTargets(List<RotationTarget> targets) {
+    return [
+      for (final target in targets) target.reverse(),
     ];
   }
 

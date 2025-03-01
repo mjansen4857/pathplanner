@@ -19,11 +19,8 @@ import 'package:pathplanner/pages/home_page.dart';
 
 void main() async {
   final zone = Zone.current.fork(
-    specification: ZoneSpecification(handleUncaughtError: (Zone self,
-        ZoneDelegate parent,
-        Zone zone,
-        Object error,
-        StackTrace stackTrace) async {
+    specification: ZoneSpecification(handleUncaughtError:
+        (Zone self, ZoneDelegate parent, Zone zone, Object error, StackTrace stackTrace) async {
       zone.run(() async {
         Log.error('Uncaught Error', error, stackTrace);
 
@@ -76,9 +73,8 @@ void main() async {
       size: const Size(1280, 720),
       minimumSize: const Size(640, 360),
       center: true,
-      title: 'PathPlanner',
-      titleBarStyle:
-          Platform.isMacOS ? TitleBarStyle.normal : TitleBarStyle.hidden,
+      title: 'PathPlanner(for lvlib24)',
+      titleBarStyle: Platform.isMacOS ? TitleBarStyle.normal : TitleBarStyle.hidden,
     );
 
     windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -99,15 +95,12 @@ void main() async {
       prefs.setString(PrefsKeys.ntServerAddress, Defaults.ntServerAddress);
     }
 
-    bool useSim =
-        prefs.getBool(PrefsKeys.telemetryUseSim) ?? Defaults.telemetryUseSim;
+    bool useSim = prefs.getBool(PrefsKeys.telemetryUseSim) ?? Defaults.telemetryUseSim;
     String telemetryAddress = useSim
         ? '127.0.0.1'
-        : (prefs.getString(PrefsKeys.ntServerAddress) ??
-            Defaults.ntServerAddress);
+        : (prefs.getString(PrefsKeys.ntServerAddress) ?? Defaults.ntServerAddress);
 
-    PPLibTelemetry telemetry =
-        PPLibTelemetry(serverBaseAddress: telemetryAddress);
+    PPLibTelemetry telemetry = PPLibTelemetry(serverBaseAddress: telemetryAddress);
 
     runApp(PathPlanner(
       appVersion: packageInfo.version,
@@ -142,13 +135,12 @@ class PathPlanner extends StatefulWidget {
 }
 
 class _PathPlannerState extends State<PathPlanner> {
-  late Color _teamColor =
-      Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
+  late Color _teamColor = Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PathPlanner',
+      title: 'PathPlanner(for lvlib24)',
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: _teamColor,
@@ -164,8 +156,8 @@ class _PathPlannerState extends State<PathPlanner> {
         onTeamColorChanged: (Color color) {
           setState(() {
             _teamColor = color;
-            widget.prefs.setInt(PrefsKeys.teamColor,
-                int.parse(_teamColor.toHexString(), radix: 16));
+            widget.prefs
+                .setInt(PrefsKeys.teamColor, int.parse(_teamColor.toHexString(), radix: 16));
           });
         },
       ),

@@ -21,10 +21,13 @@ class WaitCommand extends Command {
   }
 
   @override
+  Command reverse() {
+    return WaitCommand(waitTime: waitTime);
+  }
+
+  @override
   bool operator ==(Object other) =>
-      other is WaitCommand &&
-      other.runtimeType == runtimeType &&
-      other.waitTime == waitTime;
+      other is WaitCommand && other.runtimeType == runtimeType && other.waitTime == waitTime;
 
   @override
   int get hashCode => Object.hash(type, waitTime);

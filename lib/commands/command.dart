@@ -15,6 +15,8 @@ abstract class Command {
 
   Command clone();
 
+  Command reverse();
+
   @nonVirtual
   Map<String, dynamic> toJson() {
     return {

@@ -110,8 +110,8 @@ class _ProjectPageState extends State<ProjectPage> {
     _pathSearchController = TextEditingController();
     _autoSearchController = TextEditingController();
 
-    double leftWeight = widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ??
-        Defaults.projectLeftWeight;
+    double leftWeight =
+        widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ?? Defaults.projectLeftWeight;
     _controller.areas = [
       Area(
         weight: leftWeight,
@@ -123,22 +123,16 @@ class _ProjectPageState extends State<ProjectPage> {
       ),
     ];
 
-    _pathSortValue = widget.prefs.getString(PrefsKeys.pathSortOption) ??
-        Defaults.pathSortOption;
-    _autoSortValue = widget.prefs.getString(PrefsKeys.autoSortOption) ??
-        Defaults.autoSortOption;
-    _pathsCompact = widget.prefs.getBool(PrefsKeys.pathsCompactView) ??
-        Defaults.pathsCompactView;
-    _autosCompact = widget.prefs.getBool(PrefsKeys.autosCompactView) ??
-        Defaults.autosCompactView;
+    _pathSortValue = widget.prefs.getString(PrefsKeys.pathSortOption) ?? Defaults.pathSortOption;
+    _autoSortValue = widget.prefs.getString(PrefsKeys.autoSortOption) ?? Defaults.autoSortOption;
+    _pathsCompact = widget.prefs.getBool(PrefsKeys.pathsCompactView) ?? Defaults.pathsCompactView;
+    _autosCompact = widget.prefs.getBool(PrefsKeys.autosCompactView) ?? Defaults.autosCompactView;
 
     _pathGridCount = _getCrossAxisCountForWeight(leftWeight);
     _autosGridCount = _getCrossAxisCountForWeight(1.0 - leftWeight);
 
-    _pathFolders = widget.prefs.getStringList(PrefsKeys.pathFolders) ??
-        Defaults.pathFolders;
-    _autoFolders = widget.prefs.getStringList(PrefsKeys.autoFolders) ??
-        Defaults.autoFolders;
+    _pathFolders = widget.prefs.getStringList(PrefsKeys.pathFolders) ?? Defaults.pathFolders;
+    _autoFolders = widget.prefs.getStringList(PrefsKeys.autoFolders) ?? Defaults.autoFolders;
 
     // Set up choreo directory watcher
     if (widget.watchChorDir) {
@@ -159,8 +153,8 @@ class _ProjectPageState extends State<ProjectPage> {
                   Navigator.of(this.context).pop();
                 }
 
-                ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(content: Text('Reloaded Choreo paths')));
+                ScaffoldMessenger.of(this.context)
+                    .showSnackBar(const SnackBar(content: Text('Reloaded Choreo paths')));
               }
             });
           });
@@ -182,20 +176,15 @@ class _ProjectPageState extends State<ProjectPage> {
 
   void _load() async {
     // Make sure dirs exist
-    _pathsDirectory =
-        fs.directory(join(widget.pathplannerDirectory.path, 'paths'));
+    _pathsDirectory = fs.directory(join(widget.pathplannerDirectory.path, 'paths'));
     _pathsDirectory.createSync(recursive: true);
-    _autosDirectory =
-        fs.directory(join(widget.pathplannerDirectory.path, 'autos'));
+    _autosDirectory = fs.directory(join(widget.pathplannerDirectory.path, 'autos'));
     _autosDirectory.createSync(recursive: true);
     _choreoDirectory = fs.directory(widget.choreoDirectory);
 
-    var paths =
-        await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path, fs);
-    var autos =
-        await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path, fs);
-    List<ChoreoPath> choreoPaths =
-        await ChoreoPath.loadAllPathsInDir(_choreoDirectory.path, fs);
+    var paths = await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path, fs);
+    var autos = await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path, fs);
+    List<ChoreoPath> choreoPaths = await ChoreoPath.loadAllPathsInDir(_choreoDirectory.path, fs);
 
     List<String> allPathNames = [];
     for (PathPlannerPath path in paths) {
@@ -217,8 +206,7 @@ class _ProjectPageState extends State<ProjectPage> {
         autos[i].folder = null;
       }
 
-      autos[i].handleMissingPaths(
-          autos[i].choreoAuto ? allChoreoPathNames : allPathNames);
+      autos[i].handleMissingPaths(autos[i].choreoAuto ? allChoreoPathNames : allPathNames);
     }
 
     if (!mounted) {
@@ -254,8 +242,7 @@ class _ProjectPageState extends State<ProjectPage> {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     // Update _pathSortValue from shared preferences
-    _pathSortValue = widget.prefs.getString(PrefsKeys.pathSortOption) ??
-        Defaults.pathSortOption;
+    _pathSortValue = widget.prefs.getString(PrefsKeys.pathSortOption) ?? Defaults.pathSortOption;
 
     if (_loading) {
       return const Center(
@@ -295,10 +282,8 @@ class _ProjectPageState extends State<ProjectPage> {
               controller: _controller,
               onWeightChange: () {
                 setState(() {
-                  _pathGridCount =
-                      _getCrossAxisCountForWeight(_controller.areas[0].weight!);
-                  _autosGridCount = _getCrossAxisCountForWeight(
-                      1.0 - _controller.areas[0].weight!);
+                  _pathGridCount = _getCrossAxisCountForWeight(_controller.areas[0].weight!);
+                  _autosGridCount = _getCrossAxisCountForWeight(1.0 - _controller.areas[0].weight!);
                 });
                 widget.prefs.setDouble(PrefsKeys.projectLeftWeight,
                     _controller.areas[0].weight ?? Defaults.projectLeftWeight);
@@ -428,8 +413,7 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 
-  void _replaceNamedCommand(
-      String originalName, String? newName, Command command) {
+  void _replaceNamedCommand(String originalName, String? newName, Command command) {
     if (command is NamedCommand && command.name == originalName) {
       command.name = newName;
     } else if (command is CommandGroup) {
@@ -458,8 +442,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   sortValue: _pathSortValue,
                   viewValue: _pathsCompact,
                   onSortChanged: (value) async {
-                    await widget.prefs
-                        .setString(PrefsKeys.pathSortOption, value);
+                    await widget.prefs.setString(PrefsKeys.pathSortOption, value);
                     setState(() {
                       _pathSortValue = value;
                       _sortPaths(_pathSortValue);
@@ -487,8 +470,7 @@ class _ProjectPageState extends State<ProjectPage> {
                       _pathFolders.add(folderName);
                       _sortPaths(_pathSortValue);
                     });
-                    widget.prefs
-                        .setStringList(PrefsKeys.pathFolders, _pathFolders);
+                    widget.prefs.setStringList(PrefsKeys.pathFolders, _pathFolders);
                     widget.onFoldersChanged?.call();
                   },
                   onAddItem: () {
@@ -556,8 +538,7 @@ class _ProjectPageState extends State<ProjectPage> {
                 const SizedBox(height: 8),
                 Expanded(
                   child: GridView.count(
-                    crossAxisCount:
-                        _pathsCompact ? _pathGridCount + 1 : _pathGridCount,
+                    crossAxisCount: _pathsCompact ? _pathGridCount + 1 : _pathGridCount,
                     childAspectRatio: _pathsCompact ? 2.5 : 1.55,
                     children: [
                       for (int i = 0; i < _choreoPaths.length; i++)
@@ -615,8 +596,7 @@ class _ProjectPageState extends State<ProjectPage> {
                     _pathFolders.add(folderName);
                     _sortPaths(_pathSortValue);
                   });
-                  widget.prefs
-                      .setStringList(PrefsKeys.pathFolders, _pathFolders);
+                  widget.prefs.setStringList(PrefsKeys.pathFolders, _pathFolders);
                   widget.onFoldersChanged?.call();
                 },
                 onAddItem: () {
@@ -662,8 +642,7 @@ class _ProjectPageState extends State<ProjectPage> {
                               });
                             },
                             builder: (context, candidates, rejects) {
-                              ColorScheme colorScheme =
-                                  Theme.of(context).colorScheme;
+                              ColorScheme colorScheme = Theme.of(context).colorScheme;
                               return Card(
                                 elevation: 2,
                                 color: candidates.isNotEmpty
@@ -678,15 +657,13 @@ class _ProjectPageState extends State<ProjectPage> {
                                     });
                                   },
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                     child: Row(
                                       children: [
                                         Icon(
                                           Icons.drive_file_move_rtl_outlined,
-                                          color: candidates.isNotEmpty
-                                              ? colorScheme.onPrimary
-                                              : null,
+                                          color:
+                                              candidates.isNotEmpty ? colorScheme.onPrimary : null,
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
@@ -732,8 +709,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                   });
                                 },
                                 child: const Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(horizontal: 8.0),
+                                  padding: EdgeInsets.symmetric(horizontal: 8.0),
                                   child: Row(
                                     children: [
                                       Icon(Icons.folder_outlined),
@@ -764,8 +740,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                 });
                               },
                               builder: (context, candidates, rejects) {
-                                ColorScheme colorScheme =
-                                    Theme.of(context).colorScheme;
+                                ColorScheme colorScheme = Theme.of(context).colorScheme;
                                 return Card(
                                   elevation: 2,
                                   color: candidates.isNotEmpty
@@ -780,8 +755,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                       });
                                     },
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8.0),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Row(
                                         children: [
                                           Icon(
@@ -803,64 +777,42 @@ class _ProjectPageState extends State<ProjectPage> {
                                                       : null,
                                                 ),
                                                 onRename: (newName) {
-                                                  if (newName !=
-                                                      _pathFolders[i]) {
-                                                    if (_pathFolders
-                                                        .contains(newName)) {
+                                                  if (newName != _pathFolders[i]) {
+                                                    if (_pathFolders.contains(newName)) {
                                                       showDialog(
                                                           context: context,
-                                                          builder: (BuildContext
-                                                              context) {
-                                                            ColorScheme
-                                                                colorScheme =
-                                                                Theme.of(
-                                                                        context)
-                                                                    .colorScheme;
+                                                          builder: (BuildContext context) {
+                                                            ColorScheme colorScheme =
+                                                                Theme.of(context).colorScheme;
                                                             return AlertDialog(
-                                                              backgroundColor:
-                                                                  colorScheme
-                                                                      .surface,
+                                                              backgroundColor: colorScheme.surface,
                                                               surfaceTintColor:
-                                                                  colorScheme
-                                                                      .surfaceTint,
-                                                              title: const Text(
-                                                                  'Unable to Rename'),
+                                                                  colorScheme.surfaceTint,
+                                                              title: const Text('Unable to Rename'),
                                                               content: Text(
                                                                   'The folder "$newName" already exists'),
                                                               actions: [
                                                                 TextButton(
                                                                   onPressed:
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .pop,
-                                                                  child:
-                                                                      const Text(
-                                                                          'OK'),
+                                                                      Navigator.of(context).pop,
+                                                                  child: const Text('OK'),
                                                                 ),
                                                               ],
                                                             );
                                                           });
                                                     } else {
                                                       setState(() {
-                                                        for (PathPlannerPath path
-                                                            in _paths) {
-                                                          if (path.folder ==
-                                                              _pathFolders[i]) {
-                                                            path.folder =
-                                                                newName;
+                                                        for (PathPlannerPath path in _paths) {
+                                                          if (path.folder == _pathFolders[i]) {
+                                                            path.folder = newName;
                                                             path.generateAndSavePath();
                                                           }
                                                         }
-                                                        _pathFolders[i] =
-                                                            newName;
+                                                        _pathFolders[i] = newName;
                                                       });
-                                                      widget.prefs
-                                                          .setStringList(
-                                                              PrefsKeys
-                                                                  .pathFolders,
-                                                              _pathFolders);
-                                                      widget.onFoldersChanged
-                                                          ?.call();
+                                                      widget.prefs.setStringList(
+                                                          PrefsKeys.pathFolders, _pathFolders);
+                                                      widget.onFoldersChanged?.call();
                                                     }
                                                   }
                                                 },
@@ -880,18 +832,14 @@ class _ProjectPageState extends State<ProjectPage> {
                     if (_pathFolders.isNotEmpty || _choreoPaths.isNotEmpty)
                       const SizedBox(height: 8),
                     GridView.count(
-                      crossAxisCount:
-                          _pathsCompact ? _pathGridCount + 1 : _pathGridCount,
+                      crossAxisCount: _pathsCompact ? _pathGridCount + 1 : _pathGridCount,
                       childAspectRatio: _pathsCompact ? 2.5 : 1.55,
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
                         for (int i = 0; i < _paths.length; i++)
                           if (_paths[i].folder == _pathFolder &&
-                              _paths[i]
-                                  .name
-                                  .toLowerCase()
-                                  .contains(_pathSearchQuery.toLowerCase()))
+                              _paths[i].name.toLowerCase().contains(_pathSearchQuery.toLowerCase()))
                             _buildPathCard(i, context),
                       ],
                     ),
@@ -926,6 +874,21 @@ class _ProjectPageState extends State<ProjectPage> {
 
         setState(() {
           _paths.add(_paths[i].duplicate(pathName));
+          _sortPaths(_pathSortValue);
+        });
+      },
+      onReverse: () {
+        List<String> pathNames = [];
+        for (PathPlannerPath path in _paths) {
+          pathNames.add(path.name);
+        }
+        String pathName = 'Reverse of ${_paths[i].name}';
+        while (pathNames.contains(pathName)) {
+          pathName = 'Reverse of $pathName';
+        }
+
+        setState(() {
+          _paths.add(_paths[i].reverse(pathName));
           _sortPaths(_pathSortValue);
         });
       },
@@ -1022,13 +985,12 @@ class _ProjectPageState extends State<ProjectPage> {
           onPathChanged: () {
             // Update the linked rotation for the start/end states
             if (path.waypoints.first.linkedName != null) {
-              Waypoint.linked[path.waypoints.first.linkedName!] = Pose2d(
-                  path.waypoints.first.anchor,
-                  path.idealStartingState.rotation);
+              Waypoint.linked[path.waypoints.first.linkedName!] =
+                  Pose2d(path.waypoints.first.anchor, path.idealStartingState.rotation);
             }
             if (path.waypoints.last.linkedName != null) {
-              Waypoint.linked[path.waypoints.last.linkedName!] = Pose2d(
-                  path.waypoints.last.anchor, path.goalEndState.rotation);
+              Waypoint.linked[path.waypoints.last.linkedName!] =
+                  Pose2d(path.waypoints.last.anchor, path.goalEndState.rotation);
             }
 
             // Make sure all paths with linked waypoints are updated
@@ -1037,8 +999,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
               for (int i = 0; i < p.waypoints.length; i++) {
                 Waypoint w = p.waypoints[i];
-                if (w.linkedName != null &&
-                    Waypoint.linked.containsKey(w.linkedName!)) {
+                if (w.linkedName != null && Waypoint.linked.containsKey(w.linkedName!)) {
                   Pose2d link = Waypoint.linked[w.linkedName!]!;
 
                   if (link.translation.getDistance(w.anchor) >= 0.01) {
@@ -1047,15 +1008,11 @@ class _ProjectPageState extends State<ProjectPage> {
                   }
 
                   if (i == 0 &&
-                      (link.rotation - p.idealStartingState.rotation)
-                              .degrees
-                              .abs() >
-                          0.01) {
+                      (link.rotation - p.idealStartingState.rotation).degrees.abs() > 0.01) {
                     p.idealStartingState.rotation = link.rotation;
                     changed = true;
                   } else if (i == p.waypoints.length - 1 &&
-                      (link.rotation - p.goalEndState.rotation).degrees.abs() >
-                          0.01) {
+                      (link.rotation - p.goalEndState.rotation).degrees.abs() > 0.01) {
                     p.goalEndState.rotation = link.rotation;
                     changed = true;
                   }
@@ -1172,14 +1129,13 @@ class _ProjectPageState extends State<ProjectPage> {
                     _autoFolders.add(folderName);
                     _sortAutos(_autoSortValue);
                   });
-                  widget.prefs
-                      .setStringList(PrefsKeys.autoFolders, _autoFolders);
+                  widget.prefs.setStringList(PrefsKeys.autoFolders, _autoFolders);
                   widget.onFoldersChanged?.call();
                 },
                 onAddItem: () {
                   if (_choreoPaths.isNotEmpty) {
-                    final RenderBox renderBox = _addAutoKey.currentContext
-                        ?.findRenderObject() as RenderBox;
+                    final RenderBox renderBox =
+                        _addAutoKey.currentContext?.findRenderObject() as RenderBox;
                     final Size size = renderBox.size;
                     final Offset offset = renderBox.localToGlobal(Offset.zero);
 
@@ -1228,8 +1184,7 @@ class _ProjectPageState extends State<ProjectPage> {
                               });
                             },
                             builder: (context, candidates, rejects) {
-                              ColorScheme colorScheme =
-                                  Theme.of(context).colorScheme;
+                              ColorScheme colorScheme = Theme.of(context).colorScheme;
                               return Card(
                                 elevation: 2,
                                 color: candidates.isNotEmpty
@@ -1244,15 +1199,13 @@ class _ProjectPageState extends State<ProjectPage> {
                                     });
                                   },
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                     child: Row(
                                       children: [
                                         Icon(
                                           Icons.drive_file_move_rtl_outlined,
-                                          color: candidates.isNotEmpty
-                                              ? colorScheme.onPrimary
-                                              : null,
+                                          color:
+                                              candidates.isNotEmpty ? colorScheme.onPrimary : null,
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
@@ -1294,8 +1247,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                 });
                               },
                               builder: (context, candidates, rejects) {
-                                ColorScheme colorScheme =
-                                    Theme.of(context).colorScheme;
+                                ColorScheme colorScheme = Theme.of(context).colorScheme;
                                 return Card(
                                   elevation: 2,
                                   color: candidates.isNotEmpty
@@ -1310,8 +1262,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                       });
                                     },
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8.0),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Row(
                                         children: [
                                           Icon(
@@ -1333,64 +1284,42 @@ class _ProjectPageState extends State<ProjectPage> {
                                                       : null,
                                                 ),
                                                 onRename: (newName) {
-                                                  if (newName !=
-                                                      _autoFolders[i]) {
-                                                    if (_autoFolders
-                                                        .contains(newName)) {
+                                                  if (newName != _autoFolders[i]) {
+                                                    if (_autoFolders.contains(newName)) {
                                                       showDialog(
                                                           context: context,
-                                                          builder: (BuildContext
-                                                              context) {
-                                                            ColorScheme
-                                                                colorScheme =
-                                                                Theme.of(
-                                                                        context)
-                                                                    .colorScheme;
+                                                          builder: (BuildContext context) {
+                                                            ColorScheme colorScheme =
+                                                                Theme.of(context).colorScheme;
                                                             return AlertDialog(
-                                                              backgroundColor:
-                                                                  colorScheme
-                                                                      .surface,
+                                                              backgroundColor: colorScheme.surface,
                                                               surfaceTintColor:
-                                                                  colorScheme
-                                                                      .surfaceTint,
-                                                              title: const Text(
-                                                                  'Unable to Rename'),
+                                                                  colorScheme.surfaceTint,
+                                                              title: const Text('Unable to Rename'),
                                                               content: Text(
                                                                   'The folder "$newName" already exists'),
                                                               actions: [
                                                                 TextButton(
                                                                   onPressed:
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .pop,
-                                                                  child:
-                                                                      const Text(
-                                                                          'OK'),
+                                                                      Navigator.of(context).pop,
+                                                                  child: const Text('OK'),
                                                                 ),
                                                               ],
                                                             );
                                                           });
                                                     } else {
                                                       setState(() {
-                                                        for (PathPlannerAuto auto
-                                                            in _autos) {
-                                                          if (auto.folder ==
-                                                              _autoFolders[i]) {
-                                                            auto.folder =
-                                                                newName;
+                                                        for (PathPlannerAuto auto in _autos) {
+                                                          if (auto.folder == _autoFolders[i]) {
+                                                            auto.folder = newName;
                                                             auto.saveFile();
                                                           }
                                                         }
-                                                        _autoFolders[i] =
-                                                            newName;
+                                                        _autoFolders[i] = newName;
                                                       });
-                                                      widget.prefs
-                                                          .setStringList(
-                                                              PrefsKeys
-                                                                  .autoFolders,
-                                                              _autoFolders);
-                                                      widget.onFoldersChanged
-                                                          ?.call();
+                                                      widget.prefs.setStringList(
+                                                          PrefsKeys.autoFolders, _autoFolders);
+                                                      widget.onFoldersChanged?.call();
                                                     }
                                                   }
                                                 },
@@ -1409,18 +1338,14 @@ class _ProjectPageState extends State<ProjectPage> {
                     ),
                     if (_autoFolders.isNotEmpty) const SizedBox(height: 8),
                     GridView.count(
-                      crossAxisCount:
-                          _autosCompact ? _autosGridCount + 1 : _autosGridCount,
+                      crossAxisCount: _autosCompact ? _autosGridCount + 1 : _autosGridCount,
                       childAspectRatio: _autosCompact ? 2.5 : 1.55,
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
                         for (int i = 0; i < _autos.length; i++)
                           if (_autos[i].folder == _autoFolder &&
-                              _autos[i]
-                                  .name
-                                  .toLowerCase()
-                                  .contains(_autoSearchQuery.toLowerCase()))
+                              _autos[i].name.toLowerCase().contains(_autoSearchQuery.toLowerCase()))
                             _buildAutoCard(i, context),
                       ],
                     ),
@@ -1438,11 +1363,9 @@ class _ProjectPageState extends State<ProjectPage> {
     String? warningMessage;
 
     if (_autos[i].hasEmptyPathCommands()) {
-      warningMessage =
-          'Contains a FollowPathCommand that does not have a path selected';
+      warningMessage = 'Contains a FollowPathCommand that does not have a path selected';
     } else if (_autos[i].hasEmptyNamedCommand()) {
-      warningMessage =
-          'Contains a NamedCommand that does not have a command selected';
+      warningMessage = 'Contains a NamedCommand that does not have a command selected';
     }
 
     final autoCard = ProjectItemCard(
@@ -1452,13 +1375,11 @@ class _ProjectPageState extends State<ProjectPage> {
       choreoItem: _autos[i].choreoAuto,
       paths: _autos[i].choreoAuto
           ? [
-              for (ChoreoPath path
-                  in _getChoreoPathsFromNames(_autos[i].getAllPathNames()))
+              for (ChoreoPath path in _getChoreoPathsFromNames(_autos[i].getAllPathNames()))
                 path.pathPositions,
             ]
           : [
-              for (PathPlannerPath path
-                  in _getPathsFromNames(_autos[i].getAllPathNames()))
+              for (PathPlannerPath path in _getPathsFromNames(_autos[i].getAllPathNames()))
                 path.pathPositions,
             ],
       onDuplicated: () {
@@ -1473,6 +1394,21 @@ class _ProjectPageState extends State<ProjectPage> {
 
         setState(() {
           _autos.add(_autos[i].duplicate(autoName));
+          _sortAutos(_autoSortValue);
+        });
+      },
+      onReverse: () {
+        List<String> autoNames = [];
+        for (PathPlannerAuto auto in _autos) {
+          autoNames.add(auto.name);
+        }
+        String autoName = 'Reverse of ${_autos[i].name}';
+        while (autoNames.contains(autoName)) {
+          autoName = 'Reverse of $autoName';
+        }
+
+        setState(() {
+          _autos.add(_autos[i].reverse(autoName));
           _sortAutos(_autoSortValue);
         });
       },
@@ -1509,8 +1445,7 @@ class _ProjectPageState extends State<ProjectPage> {
         });
 
         if (pathNameToOpen != null) {
-          final pathToOpen =
-              _paths.firstWhereOrNull((p) => p.name == pathNameToOpen);
+          final pathToOpen = _paths.firstWhereOrNull((p) => p.name == pathNameToOpen);
           if (pathToOpen != null) {
             _openPath(pathToOpen);
           }
@@ -1604,13 +1539,11 @@ class _ProjectPageState extends State<ProjectPage> {
                               }
 
                               setState(() {
-                                _paths.removeWhere(
-                                    (path) => path.folder == _pathFolder);
+                                _paths.removeWhere((path) => path.folder == _pathFolder);
                                 _pathFolders.remove(_pathFolder);
                                 _pathFolder = null;
                               });
-                              widget.prefs.setStringList(
-                                  PrefsKeys.pathFolders, _pathFolders);
+                              widget.prefs.setStringList(PrefsKeys.pathFolders, _pathFolders);
                             } else {
                               for (int a = 0; a < _autos.length; a++) {
                                 if (_autos[a].folder == _autoFolder) {
@@ -1619,13 +1552,11 @@ class _ProjectPageState extends State<ProjectPage> {
                               }
 
                               setState(() {
-                                _autos.removeWhere(
-                                    (auto) => auto.folder == _autoFolder);
+                                _autos.removeWhere((auto) => auto.folder == _autoFolder);
                                 _autoFolders.remove(_autoFolder);
                                 _autoFolder = null;
                               });
-                              widget.prefs.setStringList(
-                                  PrefsKeys.autoFolders, _autoFolders);
+                              widget.prefs.setStringList(PrefsKeys.autoFolders, _autoFolders);
                             }
                             widget.onFoldersChanged?.call();
                           },
@@ -1684,13 +1615,10 @@ class _ProjectPageState extends State<ProjectPage> {
     required VoidCallback onAddFolder,
     required VoidCallback onDeleteFolder,
   }) {
-    final bool isRootFolder =
-        isPathsView ? _pathFolder == null : _autoFolder == null;
+    final bool isRootFolder = isPathsView ? _pathFolder == null : _autoFolder == null;
 
     return IconButton.filledTonal(
-      icon: Icon(isRootFolder
-          ? Icons.create_new_folder_outlined
-          : Icons.delete_forever_rounded),
+      icon: Icon(isRootFolder ? Icons.create_new_folder_outlined : Icons.delete_forever_rounded),
       tooltip: isRootFolder
           ? 'Add new folder'
           : isPathsView
@@ -1811,8 +1739,7 @@ class _ProjectPageState extends State<ProjectPage> {
   List<PathPlannerPath> _getPathsFromNames(List<String> names) {
     List<PathPlannerPath> paths = [];
     for (String name in names) {
-      List<PathPlannerPath> matched =
-          _paths.where((path) => path.name == name).toList();
+      List<PathPlannerPath> matched = _paths.where((path) => path.name == name).toList();
       if (matched.isNotEmpty) {
         paths.add(matched[0]);
       }
@@ -1823,8 +1750,7 @@ class _ProjectPageState extends State<ProjectPage> {
   List<ChoreoPath> _getChoreoPathsFromNames(List<String> names) {
     List<ChoreoPath> paths = [];
     for (String name in names) {
-      List<ChoreoPath> matched =
-          _choreoPaths.where((path) => path.name == name).toList();
+      List<ChoreoPath> matched = _choreoPaths.where((path) => path.name == name).toList();
       if (matched.isNotEmpty) {
         paths.add(matched[0]);
       }
@@ -1867,8 +1793,7 @@ class _ProjectPageState extends State<ProjectPage> {
   void _sortPaths(String sortOption) {
     // Get the latest sort option from shared preferences
     String latestSortOption =
-        widget.prefs.getString(PrefsKeys.pathSortOption) ??
-            Defaults.pathSortOption;
+        widget.prefs.getString(PrefsKeys.pathSortOption) ?? Defaults.pathSortOption;
 
     switch (latestSortOption) {
       case 'recent':
@@ -1926,18 +1851,15 @@ class _ProjectPageState extends State<ProjectPage> {
 
   PathConstraints _getDefaultConstraints() {
     return PathConstraints(
-      maxVelocityMPS: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
-          Defaults.defaultMaxVel,
-      maxAccelerationMPSSq: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
-          Defaults.defaultMaxAccel,
+      maxVelocityMPS: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ?? Defaults.defaultMaxVel,
+      maxAccelerationMPSSq:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ?? Defaults.defaultMaxAccel,
       maxAngularVelocityDeg:
-          widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
-              Defaults.defaultMaxAngVel,
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ?? Defaults.defaultMaxAngVel,
       maxAngularAccelerationDeg:
-          widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
-              Defaults.defaultMaxAngAccel,
-      nominalVoltage: widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ??
-          Defaults.defaultNominalVoltage,
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ?? Defaults.defaultMaxAngAccel,
+      nominalVoltage:
+          widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ?? Defaults.defaultNominalVoltage,
     );
   }
 }

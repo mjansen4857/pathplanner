@@ -38,12 +38,10 @@ class Waypoint {
   Waypoint.fromJson(Map<String, dynamic> json)
       : this(
           anchor: Translation2d.fromJson(json['anchor']),
-          prevControl: json['prevControl'] != null
-              ? Translation2d.fromJson(json['prevControl'])
-              : null,
-          nextControl: json['nextControl'] != null
-              ? Translation2d.fromJson(json['nextControl'])
-              : null,
+          prevControl:
+              json['prevControl'] != null ? Translation2d.fromJson(json['prevControl']) : null,
+          nextControl:
+              json['nextControl'] != null ? Translation2d.fromJson(json['nextControl']) : null,
           isLocked: json['isLocked'] ?? false,
           linkedName: json['linkedName'],
         );
@@ -58,9 +56,8 @@ class Waypoint {
     };
   }
 
-  Rotation2d get heading => (nextControl != null)
-      ? (nextControl! - anchor).angle
-      : (anchor - prevControl!).angle;
+  Rotation2d get heading =>
+      (nextControl != null) ? (nextControl! - anchor).angle : (anchor - prevControl!).angle;
 
   bool get isStartPoint => prevControl == null;
 
@@ -82,8 +79,7 @@ class Waypoint {
     }
 
     if (linkedName != null) {
-      linked[linkedName!] =
-          Pose2d(anchor, linked[linkedName!]?.rotation ?? const Rotation2d());
+      linked[linkedName!] = Pose2d(anchor, linked[linkedName!]?.rotation ?? const Rotation2d());
     }
   }
 
@@ -97,22 +93,34 @@ class Waypoint {
     );
   }
 
+  Waypoint reverse() {
+    Translation2d anchorPt = Translation2d(17.55 - anchor.x, 8.05 - anchor.y);
+    Translation2d? prev =
+        prevControl == null ? null : Translation2d(17.55 - prevControl!.x, 8.05 - prevControl!.y);
+    Translation2d? next =
+        nextControl == null ? null : Translation2d(17.55 - nextControl!.x, 8.05 - nextControl!.y);
+
+    return Waypoint(
+      anchor: anchorPt,
+      prevControl: prev,
+      nextControl: next,
+      linkedName: linkedName,
+    );
+  }
+
   void setHeading(Rotation2d heading) {
     if (prevControl != null) {
-      prevControl =
-          anchor - Translation2d.fromAngle(prevControlLength!, heading);
+      prevControl = anchor - Translation2d.fromAngle(prevControlLength!, heading);
     }
     if (nextControl != null) {
-      nextControl =
-          anchor + Translation2d.fromAngle(nextControlLength!, heading);
+      nextControl = anchor + Translation2d.fromAngle(nextControlLength!, heading);
     }
   }
 
   void addNextControl() {
     if (prevControl != null) {
-      nextControl = anchor +
-          Translation2d.fromAngle(
-              prevControlLength!, (anchor - prevControl!).angle);
+      nextControl =
+          anchor + Translation2d.fromAngle(prevControlLength!, (anchor - prevControl!).angle);
     }
   }
 
@@ -122,8 +130,7 @@ class Waypoint {
         length = minControlLength;
       }
       length = max(length, minControlLength);
-      prevControl = anchor +
-          Translation2d.fromAngle(length, (prevControl! - anchor).angle);
+      prevControl = anchor + Translation2d.fromAngle(length, (prevControl! - anchor).angle);
     }
   }
 
@@ -133,8 +140,7 @@ class Waypoint {
         length = minControlLength;
       }
       length = max(length, minControlLength);
-      nextControl = anchor +
-          Translation2d.fromAngle(length, (nextControl! - anchor).angle);
+      nextControl = anchor + Translation2d.fromAngle(length, (nextControl! - anchor).angle);
     }
   }
 
@@ -144,16 +150,14 @@ class Waypoint {
 
   bool isPointInNextControl(num xPos, num yPos, num radius) {
     if (nextControl != null) {
-      return pow(xPos - nextControl!.x, 2) + pow(yPos - nextControl!.y, 2) <
-          pow(radius, 2);
+      return pow(xPos - nextControl!.x, 2) + pow(yPos - nextControl!.y, 2) < pow(radius, 2);
     }
     return false;
   }
 
   bool isPointInPrevControl(num xPos, num yPos, num radius) {
     if (prevControl != null) {
-      return pow(xPos - prevControl!.x, 2) + pow(yPos - prevControl!.y, 2) <
-          pow(radius, 2);
+      return pow(xPos - prevControl!.x, 2) + pow(yPos - prevControl!.y, 2) < pow(radius, 2);
     }
     return false;
   }
@@ -175,8 +179,7 @@ class Waypoint {
     } else if (_isNextControlDragging) {
       if (isLocked) {
         Translation2d lineEnd = nextControl! + (nextControl! - anchor);
-        Translation2d newPoint =
-            _closestPointOnLine(anchor, lineEnd, Translation2d(x, y));
+        Translation2d newPoint = _closestPointOnLine(anchor, lineEnd, Translation2d(x, y));
         if (newPoint.x - anchor.x != 0 || newPoint.y - anchor.y != 0) {
           nextControl = newPoint;
         }
@@ -185,17 +188,15 @@ class Waypoint {
       }
 
       if (prevControl != null) {
-        prevControl = anchor +
-            Translation2d.fromAngle(
-                prevControlLength!, (anchor - nextControl!).angle);
+        prevControl =
+            anchor + Translation2d.fromAngle(prevControlLength!, (anchor - nextControl!).angle);
       }
       // Set the length to enforce minimum
       setNextControlLength(nextControlLength!);
     } else if (_isPrevControlDragging) {
       if (isLocked) {
         Translation2d lineEnd = prevControl! + (prevControl! - anchor);
-        Translation2d newPoint =
-            _closestPointOnLine(anchor, lineEnd, Translation2d(x, y));
+        Translation2d newPoint = _closestPointOnLine(anchor, lineEnd, Translation2d(x, y));
         if (newPoint.x - anchor.x != 0 || newPoint.y - anchor.y != 0) {
           prevControl = newPoint;
         }
@@ -204,9 +205,8 @@ class Waypoint {
       }
 
       if (nextControl != null) {
-        nextControl = anchor +
-            Translation2d.fromAngle(
-                nextControlLength!, (anchor - prevControl!).angle);
+        nextControl =
+            anchor + Translation2d.fromAngle(nextControlLength!, (anchor - prevControl!).angle);
       }
       // Set the length to enforce minimum
       setPrevControlLength(prevControlLength!);
@@ -228,8 +228,7 @@ class Waypoint {
       return lineStart;
     }
 
-    num t = ((p.x - lineStart.x) * dx + (p.y - lineStart.y) * dy) /
-        (dx * dx + dy * dy);
+    num t = ((p.x - lineStart.x) * dx + (p.y - lineStart.y) * dy) / (dx * dx + dy * dy);
 
     Translation2d closestPoint;
     if (t < 0) {

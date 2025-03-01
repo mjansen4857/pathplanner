@@ -58,14 +58,24 @@ class PathPlannerAuto {
     );
   }
 
-  PathPlannerAuto.fromJson(
-      Map<String, dynamic> json, String name, String autosDir, FileSystem fs)
+  PathPlannerAuto reverse(String newName) {
+    return PathPlannerAuto(
+      name: newName,
+      sequence: sequence.reverse() as SequentialCommandGroup,
+      resetOdom: resetOdom,
+      autoDir: autoDir,
+      fs: fs,
+      folder: folder,
+      choreoAuto: choreoAuto,
+    );
+  }
+
+  PathPlannerAuto.fromJson(Map<String, dynamic> json, String name, String autosDir, FileSystem fs)
       : this(
           autoDir: autosDir,
           fs: fs,
           name: name,
-          sequence:
-              Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
+          sequence: Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
           resetOdom: json['resetOdom'] ?? true,
           folder: json['folder'],
           choreoAuto: json['choreoAuto'] ?? false,
@@ -81,8 +91,7 @@ class PathPlannerAuto {
     };
   }
 
-  static Future<List<PathPlannerAuto>> loadAllAutosInDir(
-      String autosDir, FileSystem fs) async {
+  static Future<List<PathPlannerAuto>> loadAllAutosInDir(String autosDir, FileSystem fs) async {
     List<PathPlannerAuto> autos = [];
 
     List<FileSystemEntity> files = fs.directory(autosDir).listSync();
@@ -94,8 +103,7 @@ class PathPlannerAuto {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String autoName = basenameWithoutExtension(e.path);
 
-          PathPlannerAuto auto =
-              PathPlannerAuto.fromJson(json, autoName, autosDir, fs);
+          PathPlannerAuto auto = PathPlannerAuto.fromJson(json, autoName, autosDir, fs);
           auto.lastModified = (await file.lastModified()).toUtc();
 
           if (json['version'] != fileVersion) {
@@ -146,8 +154,7 @@ class PathPlannerAuto {
     saveFile();
   }
 
-  void _updatePathNameInCommands(
-      List<Command> commands, String oldPathName, String newPathName) {
+  void _updatePathNameInCommands(List<Command> commands, String oldPathName, String newPathName) {
     for (Command cmd in commands) {
       if (cmd is PathCommand && cmd.pathName == oldPathName) {
         cmd.pathName = newPathName;

@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
       - main
+permissions:
+  contents: write
 jobs:
   main:
     runs-on: windows-latest
@@ -20,9 +22,26 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - run: flutter --version
       - run: flutter build windows
-      - uses: actions/upload-artifact@master
+      - name: Build iss script
+        run: dart run inno_bundle:build --no-app --release --no-installer
+
+      - name: Output config into github output
+        id: envs
+        # thanks to https://github.com/actions/runner/issues/2224#issuecomment-1289925992
+        run: echo $(dart run inno_bundle:build --envs --no-hf) | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Build installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          name: windows
-          path: build\windows\x64\runner\Release
+          path: ./build/windows/x64/installer/Release/inno-script.iss
+
+      - name: Release installer
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ./build/windows/x64/installer/Release/${{ steps.envs.outputs.APP_NAME_CAMEL_CASE }}-x86_64-${{ steps.envs.outputs.APP_VERSION }}-Installer.exe
+          name: "${{ steps.envs.outputs.APP_VERSION }}_${{ github.run_id }}"
+          target_commitish: "${{ github.sha }}"
+          tag_name: "v${{ steps.envs.outputs.APP_VERSION }}_${{ github.run_id }}"

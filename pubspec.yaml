@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 0.0.0+1
+version: 25.2.2+1
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -68,6 +68,18 @@ dev_dependencies:
   mockito: ^5.4.4
   build_runner: ^2.4.12
   cider: ^0.2.8
+  inno_bundle: ^0.8.0
+
+
+inno_bundle:
+  id: f887e5f0-4690-1e07-8efc-a12ea7711afb # <-- Put your app id here
+  publisher: YCY # Optional, but recommended.
+  name: FRC PathPlanner for Lvlib24 # 
+  admin: auto
+  languages:
+    - english
+  installer_icon: images/icon.png
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

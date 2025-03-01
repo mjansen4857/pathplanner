@@ -20,7 +20,6 @@ import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
 import 'package:pathplanner/widgets/pplib_update_card.dart';
-import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -53,8 +52,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Directory? _projectDir;
   late Directory _pathplannerDir;
   late Directory _choreoDir;
-  final SecureBookmarks? _bookmarks =
-      Platform.isMacOS ? SecureBookmarks() : null;
+  final SecureBookmarks? _bookmarks = Platform.isMacOS ? SecureBookmarks() : null;
   final List<FieldImage> _fieldImages = FieldImage.offialFields();
   FieldImage? _fieldImage;
   late AnimationController _animController;
@@ -71,21 +69,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    _animController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 250));
-    _scaleAnimation =
-        CurvedAnimation(parent: _animController, curve: Curves.ease);
+    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
+    _scaleAnimation = CurvedAnimation(parent: _animController, curve: Curves.ease);
 
     _loadFieldImages().then((_) async {
       String? projectDir = widget.prefs.getString(PrefsKeys.currentProjectDir);
       if (projectDir != null && Platform.isMacOS && fs is LocalFileSystem) {
         if (widget.prefs.getString(PrefsKeys.macOSBookmark) != null) {
           try {
-            await _bookmarks!.resolveBookmark(
-                widget.prefs.getString(PrefsKeys.macOSBookmark)!);
+            await _bookmarks!.resolveBookmark(widget.prefs.getString(PrefsKeys.macOSBookmark)!);
 
-            await _bookmarks
-                .startAccessingSecurityScopedResource(fs.file(projectDir));
+            await _bookmarks.startAccessingSecurityScopedResource(fs.file(projectDir));
           } catch (e) {
             Log.error('Failed to resolve secure bookmarks', e);
             projectDir = null;
@@ -128,11 +122,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
 
       setState(() {
-        _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
-            Defaults.hotReloadEnabled;
+        _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ?? Defaults.hotReloadEnabled;
 
-        String? selectedFieldName =
-            widget.prefs.getString(PrefsKeys.fieldImage);
+        String? selectedFieldName = widget.prefs.getString(PrefsKeys.fieldImage);
         if (selectedFieldName != null) {
           for (FieldImage image in _fieldImages) {
             if (image.name == selectedFieldName) {
@@ -146,8 +138,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _animController.forward();
 
       if (!(widget.prefs.getBool(PrefsKeys.seen2025ResetPopup) ?? false) &&
-          (_fieldImage?.name != 'Reefscape' &&
-              _fieldImage?.name != 'Reefscape (Annotated)') &&
+          (_fieldImage?.name != 'Reefscape' && _fieldImage?.name != 'Reefscape (Annotated)') &&
           mounted) {
         showDialog(
           context: this.context,
@@ -183,17 +174,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     widget.prefs.setBool(PrefsKeys.seen2025ResetPopup, true);
                     setState(() {
                       _fieldImage = FieldImage.defaultField;
-                      widget.prefs
-                          .setString(PrefsKeys.fieldImage, _fieldImage!.name);
+                      widget.prefs.setString(PrefsKeys.fieldImage, _fieldImage!.name);
                     });
 
                     // Load default grid
-                    String fileContent =
-                        await DefaultAssetBundle.of(this.context)
-                            .loadString('resources/default_navgrid.json');
-                    fs
-                        .file(join(_pathplannerDir.path, 'navgrid.json'))
-                        .writeAsString(fileContent);
+                    String fileContent = await DefaultAssetBundle.of(this.context)
+                        .loadString('resources/default_navgrid.json');
+                    fs.file(join(_pathplannerDir.path, 'navgrid.json')).writeAsString(fileContent);
                   },
                   child: const Text('Yes (Recommended)'),
                 ),
@@ -208,8 +195,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void dispose() {
     if (Platform.isMacOS && _projectDir != null) {
-      _bookmarks!
-          .stopAccessingSecurityScopedResource(fs.file(_projectDir!.path));
+      _bookmarks!.stopAccessingSecurityScopedResource(fs.file(_projectDir!.path));
     }
 
     _pageController.dispose();
@@ -435,8 +421,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   undoStack: widget.undoStack,
                   telemetry: widget.telemetry,
                   hotReload: _hotReload,
-                  onFoldersChanged: () =>
-                      _saveProjectSettingsToFile(_projectDir!),
+                  onFoldersChanged: () => _saveProjectSettingsToFile(_projectDir!),
                   simulatePath: true,
                   watchChorDir: true,
                 ),
@@ -461,10 +446,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  UpdateCard(
-                    currentVersion: widget.appVersion,
-                    updateChecker: widget.updateChecker,
-                  ),
                   PPLibUpdateCard(
                     projectDir: _projectDir!,
                     fs: widget.fs,
@@ -485,12 +466,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ProjectPage.settingsUpdated = true;
     _saveProjectSettingsToFile(_projectDir!);
 
-    bool useSim = widget.prefs.getBool(PrefsKeys.telemetryUseSim) ??
-        Defaults.telemetryUseSim;
+    bool useSim = widget.prefs.getBool(PrefsKeys.telemetryUseSim) ?? Defaults.telemetryUseSim;
     if (!useSim) {
       String serverAddress =
-          widget.prefs.getString(PrefsKeys.ntServerAddress) ??
-              Defaults.ntServerAddress;
+          widget.prefs.getString(PrefsKeys.ntServerAddress) ?? Defaults.ntServerAddress;
 
       if (serverAddress != widget.telemetry.getServerAddress()) {
         widget.telemetry.setServerAddress(serverAddress);
@@ -498,8 +477,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     setState(() {
-      _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
-          Defaults.hotReloadEnabled;
+      _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ?? Defaults.hotReloadEnabled;
     });
   }
 
@@ -513,50 +491,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final fileContents = await settingsFile.readAsString();
         json = jsonDecode(fileContents);
       } catch (err, stack) {
-        Log.error(
-            'An error occurred while loading project settings', err, stack);
+        Log.error('An error occurred while loading project settings', err, stack);
       }
     }
 
     _setPrefDoubleFromJSON(json, PrefsKeys.robotWidth, Defaults.robotWidth);
     _setPrefDoubleFromJSON(json, PrefsKeys.robotLength, Defaults.robotLength);
-    widget.prefs.setBool(PrefsKeys.holonomicMode,
-        json[PrefsKeys.holonomicMode] ?? Defaults.holonomicMode);
+    widget.prefs
+        .setBool(PrefsKeys.holonomicMode, json[PrefsKeys.holonomicMode] ?? Defaults.holonomicMode);
     widget.prefs.setStringList(
         PrefsKeys.pathFolders,
-        (json[PrefsKeys.pathFolders] as List<dynamic>?)
-                ?.map((e) => e as String)
-                .toList() ??
+        (json[PrefsKeys.pathFolders] as List<dynamic>?)?.map((e) => e as String).toList() ??
             Defaults.pathFolders);
     widget.prefs.setStringList(
         PrefsKeys.autoFolders,
-        (json[PrefsKeys.autoFolders] as List<dynamic>?)
-                ?.map((e) => e as String)
-                .toList() ??
+        (json[PrefsKeys.autoFolders] as List<dynamic>?)?.map((e) => e as String).toList() ??
             Defaults.autoFolders);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.defaultMaxVel, Defaults.defaultMaxVel);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.defaultMaxAccel, Defaults.defaultMaxAccel);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.defaultMaxAngVel, Defaults.defaultMaxAngVel);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.defaultMaxAngAccel, Defaults.defaultMaxAngAccel);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.defaultNominalVoltage, Defaults.defaultNominalVoltage);
+    _setPrefDoubleFromJSON(json, PrefsKeys.defaultMaxVel, Defaults.defaultMaxVel);
+    _setPrefDoubleFromJSON(json, PrefsKeys.defaultMaxAccel, Defaults.defaultMaxAccel);
+    _setPrefDoubleFromJSON(json, PrefsKeys.defaultMaxAngVel, Defaults.defaultMaxAngVel);
+    _setPrefDoubleFromJSON(json, PrefsKeys.defaultMaxAngAccel, Defaults.defaultMaxAngAccel);
+    _setPrefDoubleFromJSON(json, PrefsKeys.defaultNominalVoltage, Defaults.defaultNominalVoltage);
     _setPrefDoubleFromJSON(json, PrefsKeys.robotMass, Defaults.robotMass);
     _setPrefDoubleFromJSON(json, PrefsKeys.robotMOI, Defaults.robotMOI);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.robotTrackwidth, Defaults.robotTrackwidth);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.driveWheelRadius, Defaults.driveWheelRadius);
+    _setPrefDoubleFromJSON(json, PrefsKeys.robotTrackwidth, Defaults.robotTrackwidth);
+    _setPrefDoubleFromJSON(json, PrefsKeys.driveWheelRadius, Defaults.driveWheelRadius);
     _setPrefDoubleFromJSON(json, PrefsKeys.driveGearing, Defaults.driveGearing);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.maxDriveSpeed, Defaults.maxDriveSpeed);
-    widget.prefs.setString(PrefsKeys.driveMotor,
-        json[PrefsKeys.driveMotor] ?? Defaults.driveMotor);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.driveCurrentLimit, Defaults.driveCurrentLimit);
+    _setPrefDoubleFromJSON(json, PrefsKeys.maxDriveSpeed, Defaults.maxDriveSpeed);
+    widget.prefs.setString(PrefsKeys.driveMotor, json[PrefsKeys.driveMotor] ?? Defaults.driveMotor);
+    _setPrefDoubleFromJSON(json, PrefsKeys.driveCurrentLimit, Defaults.driveCurrentLimit);
     _setPrefDoubleFromJSON(json, PrefsKeys.wheelCOF, Defaults.wheelCOF);
     _setPrefDoubleFromJSON(json, PrefsKeys.flModuleX, Defaults.flModuleX);
     _setPrefDoubleFromJSON(json, PrefsKeys.flModuleY, Defaults.flModuleY);
@@ -566,22 +529,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _setPrefDoubleFromJSON(json, PrefsKeys.blModuleY, Defaults.blModuleY);
     _setPrefDoubleFromJSON(json, PrefsKeys.brModuleX, Defaults.brModuleX);
     _setPrefDoubleFromJSON(json, PrefsKeys.brModuleY, Defaults.brModuleY);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.bumperOffsetX, Defaults.bumperOffsetX);
-    _setPrefDoubleFromJSON(
-        json, PrefsKeys.bumperOffsetY, Defaults.bumperOffsetY);
+    _setPrefDoubleFromJSON(json, PrefsKeys.bumperOffsetX, Defaults.bumperOffsetX);
+    _setPrefDoubleFromJSON(json, PrefsKeys.bumperOffsetY, Defaults.bumperOffsetY);
     widget.prefs.setStringList(
         PrefsKeys.robotFeatures,
-        (json[PrefsKeys.robotFeatures] as List?)
-                ?.map((e) => e as String)
-                .toList() ??
+        (json[PrefsKeys.robotFeatures] as List?)?.map((e) => e as String).toList() ??
             Defaults.robotFeatures);
   }
 
-  void _setPrefDoubleFromJSON(
-      Map<String, dynamic> json, String prefsKey, double defaultValue) {
-    widget.prefs
-        .setDouble(prefsKey, json[prefsKey]?.toDouble() ?? defaultValue);
+  void _setPrefDoubleFromJSON(Map<String, dynamic> json, String prefsKey, double defaultValue) {
+    widget.prefs.setDouble(prefsKey, json[prefsKey]?.toDouble() ?? defaultValue);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
@@ -594,80 +551,52 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     const JsonEncoder encoder = JsonEncoder.withIndent('  ');
 
     Map<String, dynamic> settings = {
-      PrefsKeys.robotWidth:
-          widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth,
-      PrefsKeys.robotLength:
-          widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength,
-      PrefsKeys.holonomicMode: widget.prefs.getBool(PrefsKeys.holonomicMode) ??
-          Defaults.holonomicMode,
+      PrefsKeys.robotWidth: widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth,
+      PrefsKeys.robotLength: widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength,
+      PrefsKeys.holonomicMode:
+          widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode,
       PrefsKeys.pathFolders:
-          widget.prefs.getStringList(PrefsKeys.pathFolders) ??
-              Defaults.pathFolders,
+          widget.prefs.getStringList(PrefsKeys.pathFolders) ?? Defaults.pathFolders,
       PrefsKeys.autoFolders:
-          widget.prefs.getStringList(PrefsKeys.autoFolders) ??
-              Defaults.autoFolders,
+          widget.prefs.getStringList(PrefsKeys.autoFolders) ?? Defaults.autoFolders,
       PrefsKeys.defaultMaxVel:
-          widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
-              Defaults.defaultMaxVel,
+          widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ?? Defaults.defaultMaxVel,
       PrefsKeys.defaultMaxAccel:
-          widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
-              Defaults.defaultMaxAccel,
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ?? Defaults.defaultMaxAccel,
       PrefsKeys.defaultMaxAngVel:
-          widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
-              Defaults.defaultMaxAngVel,
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ?? Defaults.defaultMaxAngVel,
       PrefsKeys.defaultMaxAngAccel:
-          widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
-              Defaults.defaultMaxAccel,
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ?? Defaults.defaultMaxAccel,
       PrefsKeys.defaultNominalVoltage:
-          widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ??
-              Defaults.defaultNominalVoltage,
-      PrefsKeys.robotMass:
-          widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
-      PrefsKeys.robotMOI:
-          widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
+          widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ?? Defaults.defaultNominalVoltage,
+      PrefsKeys.robotMass: widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
+      PrefsKeys.robotMOI: widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
       PrefsKeys.robotTrackwidth:
-          widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
-              Defaults.robotTrackwidth,
+          widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ?? Defaults.robotTrackwidth,
       PrefsKeys.driveWheelRadius:
-          widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
-              Defaults.driveWheelRadius,
-      PrefsKeys.driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
-          Defaults.driveGearing,
+          widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ?? Defaults.driveWheelRadius,
+      PrefsKeys.driveGearing:
+          widget.prefs.getDouble(PrefsKeys.driveGearing) ?? Defaults.driveGearing,
       PrefsKeys.maxDriveSpeed:
-          widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
-              Defaults.maxDriveSpeed,
-      PrefsKeys.driveMotor:
-          widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
+          widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ?? Defaults.maxDriveSpeed,
+      PrefsKeys.driveMotor: widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
       PrefsKeys.driveCurrentLimit:
-          widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
-              Defaults.driveCurrentLimit,
-      PrefsKeys.wheelCOF:
-          widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
-      PrefsKeys.flModuleX:
-          widget.prefs.getDouble(PrefsKeys.flModuleX) ?? Defaults.flModuleX,
-      PrefsKeys.flModuleY:
-          widget.prefs.getDouble(PrefsKeys.flModuleY) ?? Defaults.flModuleY,
-      PrefsKeys.frModuleX:
-          widget.prefs.getDouble(PrefsKeys.frModuleX) ?? Defaults.frModuleX,
-      PrefsKeys.frModuleY:
-          widget.prefs.getDouble(PrefsKeys.frModuleY) ?? Defaults.frModuleY,
-      PrefsKeys.blModuleX:
-          widget.prefs.getDouble(PrefsKeys.blModuleX) ?? Defaults.blModuleX,
-      PrefsKeys.blModuleY:
-          widget.prefs.getDouble(PrefsKeys.blModuleY) ?? Defaults.blModuleY,
-      PrefsKeys.brModuleX:
-          widget.prefs.getDouble(PrefsKeys.brModuleX) ?? Defaults.brModuleX,
-      PrefsKeys.brModuleY:
-          widget.prefs.getDouble(PrefsKeys.brModuleY) ?? Defaults.brModuleY,
+          widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ?? Defaults.driveCurrentLimit,
+      PrefsKeys.wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
+      PrefsKeys.flModuleX: widget.prefs.getDouble(PrefsKeys.flModuleX) ?? Defaults.flModuleX,
+      PrefsKeys.flModuleY: widget.prefs.getDouble(PrefsKeys.flModuleY) ?? Defaults.flModuleY,
+      PrefsKeys.frModuleX: widget.prefs.getDouble(PrefsKeys.frModuleX) ?? Defaults.frModuleX,
+      PrefsKeys.frModuleY: widget.prefs.getDouble(PrefsKeys.frModuleY) ?? Defaults.frModuleY,
+      PrefsKeys.blModuleX: widget.prefs.getDouble(PrefsKeys.blModuleX) ?? Defaults.blModuleX,
+      PrefsKeys.blModuleY: widget.prefs.getDouble(PrefsKeys.blModuleY) ?? Defaults.blModuleY,
+      PrefsKeys.brModuleX: widget.prefs.getDouble(PrefsKeys.brModuleX) ?? Defaults.brModuleX,
+      PrefsKeys.brModuleY: widget.prefs.getDouble(PrefsKeys.brModuleY) ?? Defaults.brModuleY,
       PrefsKeys.bumperOffsetX:
-          widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
-              Defaults.bumperOffsetX,
+          widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ?? Defaults.bumperOffsetX,
       PrefsKeys.bumperOffsetY:
-          widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
-              Defaults.bumperOffsetY,
+          widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ?? Defaults.bumperOffsetY,
       PrefsKeys.robotFeatures:
-          widget.prefs.getStringList(PrefsKeys.robotFeatures) ??
-              Defaults.robotFeatures,
+          widget.prefs.getStringList(PrefsKeys.robotFeatures) ?? Defaults.robotFeatures,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {
@@ -704,13 +633,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Check if WPILib project
     setState(() {
       if (fs.file(join(projectDir, 'build.gradle')).existsSync()) {
-        _pathplannerDir = fs.directory(
-            join(projectDir, 'src', 'main', 'deploy', 'pathplanner'));
-        _choreoDir =
-            fs.directory(join(projectDir, 'src', 'main', 'deploy', 'choreo'));
+        _pathplannerDir = fs.directory(join(projectDir, 'src', 'main', 'deploy', 'pathplanner'));
+        _choreoDir = fs.directory(join(projectDir, 'src', 'main', 'deploy', 'choreo'));
       } else {
-        _pathplannerDir =
-            fs.directory(join(projectDir, 'deploy', 'pathplanner'));
+        _pathplannerDir = fs.directory(join(projectDir, 'deploy', 'pathplanner'));
         _choreoDir = fs.directory(join(projectDir, 'deploy', 'choreo'));
       }
     });
@@ -722,11 +648,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     navgridFile.exists().then((value) async {
       if (!value && mounted) {
         // Load default grid
-        String fileContent = await DefaultAssetBundle.of(this.context)
-            .loadString('resources/default_navgrid.json');
-        fs
-            .file(join(_pathplannerDir.path, 'navgrid.json'))
-            .writeAsString(fileContent);
+        String fileContent =
+            await DefaultAssetBundle.of(this.context).loadString('resources/default_navgrid.json');
+        fs.file(join(_pathplannerDir.path, 'navgrid.json')).writeAsString(fileContent);
       }
     });
 
@@ -743,8 +667,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadFieldImages() async {
-    Directory appDir =
-        fs.directory((await getApplicationSupportDirectory()).path);
+    Directory appDir = fs.directory((await getApplicationSupportDirectory()).path);
     Directory imagesDir = fs.directory(join(appDir.path, 'custom_fields'));
 
     imagesDir.createSync(recursive: true);

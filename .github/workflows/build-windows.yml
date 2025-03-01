@@ -23,9 +23,16 @@ jobs:
         with:
           channel: stable
       - run: flutter build windows
+      - uses: actions/upload-artifact@master
+        with:
+          name: pathplanner-windows
+          path: build\windows\x64\runner\Release
       - name: Build iss script
         run: dart run inno_bundle:build --no-app --release --no-installer
-
+      - uses: actions/upload-artifact@master
+        with:
+          name: pathplanner-windows-iss
+          path: build\windows\x64\installer\Release
       - name: Output config into github output
         id: envs
         # thanks to https://github.com/actions/runner/issues/2224#issuecomment-1289925992

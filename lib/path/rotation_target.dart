@@ -27,6 +27,10 @@ class RotationTarget {
         waypointRelativePos, rotation.rotateBy(Rotation2d.fromDegrees(180)), displayInEditor);
   }
 
+  RotationTarget reverseH() {
+    return RotationTarget(waypointRelativePos, -rotation, displayInEditor);
+  }
+
   @override
   bool operator ==(Object other) =>
       other is RotationTarget &&

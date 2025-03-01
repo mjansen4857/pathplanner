@@ -725,9 +725,39 @@ class PathPlannerPath {
       eventMarkers: cloneEventMarkers(eventMarkers),
       pathDir: pathDir,
       fs: fs,
-      reversed: !reversed,
+      reversed: reversed,
       folder: folder,
       idealStartingState: idealStartingState.reverse(),
+      useDefaultConstraints: useDefaultConstraints,
+    );
+    try {
+      File pathFile = fs.file(join(pathDir, '$newName.path'));
+      const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+      pathFile.writeAsString(encoder.convert(result));
+      lastModified = DateTime.now().toUtc();
+      Log.debug('Reversed and Saved "$name.path" in ${s.elapsedMilliseconds}ms');
+    } catch (ex, stack) {
+      Log.error('Failed to save path', ex, stack);
+    }
+    return result;
+  }
+
+  PathPlannerPath reverseH(String newName) {
+    Stopwatch s = Stopwatch()..start();
+    final result = PathPlannerPath(
+      name: newName,
+      waypoints: reverseHWaypoints(waypoints),
+      globalConstraints: globalConstraints.clone(),
+      goalEndState: goalEndState.reverseH(),
+      constraintZones: cloneConstraintZones(constraintZones),
+      pointTowardsZones: clonePointTowardsZones(pointTowardsZones),
+      rotationTargets: reverseHRotationTargets(rotationTargets),
+      eventMarkers: cloneEventMarkers(eventMarkers),
+      pathDir: pathDir,
+      fs: fs,
+      reversed: reversed,
+      folder: folder,
+      idealStartingState: idealStartingState.reverseH(),
       useDefaultConstraints: useDefaultConstraints,
     );
     try {
@@ -758,6 +788,12 @@ class PathPlannerPath {
     ];
   }
 
+  static List<Waypoint> reverseHWaypoints(List<Waypoint> waypoints) {
+    return [
+      for (final waypoint in waypoints) waypoint.reverseH(),
+    ];
+  }
+
   static List<ConstraintsZone> cloneConstraintZones(List<ConstraintsZone> zones) {
     return [
       for (final zone in zones) zone.clone(),
@@ -779,6 +815,12 @@ class PathPlannerPath {
   static List<RotationTarget> reverseRotationTargets(List<RotationTarget> targets) {
     return [
       for (final target in targets) target.reverse(),
+    ];
+  }
+
+  static List<RotationTarget> reverseHRotationTargets(List<RotationTarget> targets) {
+    return [
+      for (final target in targets) target.reverseH(),
     ];
   }
 

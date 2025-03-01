@@ -13,6 +13,7 @@ class ProjectItemCard extends StatefulWidget {
   final List<List<Translation2d>> paths;
   final VoidCallback onOpened;
   final VoidCallback? onReverse;
+  final VoidCallback? onReverseH;
   final VoidCallback? onDuplicated;
   final VoidCallback? onDeleted;
   final ValueChanged<String>? onRenamed;
@@ -28,6 +29,7 @@ class ProjectItemCard extends StatefulWidget {
     required this.paths,
     required this.onOpened,
     this.onReverse,
+    this.onReverseH,
     this.onDuplicated,
     this.onDeleted,
     this.onRenamed,
@@ -82,8 +84,9 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                             onSelected: (value) {
                               if (value == 'reverse') {
                                 widget.onReverse?.call();
-                              }
-                              if (value == 'duplicate') {
+                              } else if (value == 'reverseH') {
+                                widget.onReverseH?.call();
+                              } else if (value == 'duplicate') {
                                 widget.onDuplicated?.call();
                               } else if (value == 'delete') {
                                 _showDeleteDialog();
@@ -98,6 +101,16 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                                       Icon(Icons.compare_arrows),
                                       SizedBox(width: 12),
                                       Text('Reverse'),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'reverseH',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.compare_arrows),
+                                      SizedBox(width: 12),
+                                      Text('Reverse H'),
                                     ],
                                   ),
                                 ),

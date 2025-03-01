@@ -25,6 +25,10 @@ class GoalEndState {
     return GoalEndState(velocityMPS, rotation.rotateBy(Rotation2d.fromDegrees(180)));
   }
 
+  GoalEndState reverseH() {
+    return GoalEndState(velocityMPS, -rotation);
+  }
+
   @override
   bool operator ==(Object other) =>
       other is GoalEndState &&

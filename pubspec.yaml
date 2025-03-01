@@ -78,7 +78,7 @@ inno_bundle:
   admin: auto
   languages:
     - english
-  installer_icon: images/icon.png
+  installer_icon: images/icon-64.ico
 
 
 # For information on the generic Dart part of this file, see the

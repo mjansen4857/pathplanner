@@ -945,7 +945,8 @@ class PathPlannerPath:
             path._allPoints[i].maxV = p.maxV
             path._allPoints[i].constraints = p.constraints
             path._allPoints[i].waypointRelativePos = p.waypointRelativePos
-        path._rotationTargets = [RotationTarget(t.waypointRelativePosition, -t.target) for t in self._rotationTargets]
+        if self._rotationTargets is not None:
+            path._rotationTargets = [RotationTarget(t.waypointRelativePosition, -t.target) for t in self._rotationTargets]
         path._reversed = self._reversed
         path._isChoreoPath = self._isChoreoPath
         path._idealTrajectory = mirroredTraj

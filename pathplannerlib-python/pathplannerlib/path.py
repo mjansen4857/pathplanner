@@ -936,21 +936,16 @@ class PathPlannerPath:
             path._idealStartingState = None
         path._goalEndState = GoalEndState(self._goalEndState.velocity, -self._goalEndState.rotation)
 
-        path.all_points = [
+        path._allPoints = [
             PathPoint(self._mirrorTranslation(p.position))
             for p in self._allPoints
         ]
         for i, p in enumerate(self._allPoints):
-            path.all_points[i].distanceAlongPath = p.distanceAlongPath
-            path.all_points[i].maxV = p.maxV
-            path.all_points[i].constraints = p.constraints
-            path.all_points[i].waypointRelativePos = p.waypointRelativePos
-
-            if p.rotationTarget is not None:
-                path.all_points[i].rotationTarget = RotationTarget(
-                    p.rotationTarget.position, -p.rotationTarget.rotation
-                )
-
+            path._allPoints[i].distanceAlongPath = p.distanceAlongPath
+            path._allPoints[i].maxV = p.maxV
+            path._allPoints[i].constraints = p.constraints
+            path._allPoints[i].waypointRelativePos = p.waypointRelativePos
+        path._rotationTargets = [RotationTarget(t.waypointRelativePosition, -t.target) for t in self._rotationTargets]
         path._reversed = self._reversed
         path._isChoreoPath = self._isChoreoPath
         path._idealTrajectory = mirroredTraj

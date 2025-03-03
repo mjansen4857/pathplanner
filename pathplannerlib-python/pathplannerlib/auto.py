@@ -85,6 +85,7 @@ class CommandUtil:
 
         :param command_json: the json dict to build the command from
         :param load_choreo_paths: Load path commands using choreo trajectories
+        :param mirror: Should the paths be mirrored
         :return: a command built from the json dict
         """
         cmd_type = str(command_json['type'])

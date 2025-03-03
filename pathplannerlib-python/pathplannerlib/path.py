@@ -367,7 +367,7 @@ class PathPlannerPath:
     _eventMarkers: List[EventMarker]
     _globalConstraints: PathConstraints
     _goalEndState: GoalEndState
-    _idealStartingState: IdealStartingState
+    _idealStartingState: Union[IdealStartingState, None]
     _allPoints: List[PathPoint]
     _reversed: bool
 

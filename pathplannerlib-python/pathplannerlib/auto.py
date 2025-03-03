@@ -79,7 +79,7 @@ class CommandUtil:
         )
 
     @staticmethod
-    def commandFromJson(command_json: dict, load_choreo_paths: bool) -> Command:
+    def commandFromJson(command_json: dict, load_choreo_paths: bool, mirror: bool) -> Command:
         """
         Builds a command from the given json object
 
@@ -95,15 +95,15 @@ class CommandUtil:
         elif cmd_type == 'named':
             return CommandUtil._namedCommandFromData(data)
         elif cmd_type == 'path':
-            return CommandUtil._pathCommandFromData(data, load_choreo_paths)
+            return CommandUtil._pathCommandFromData(data, load_choreo_paths, mirror)
         elif cmd_type == 'sequential':
-            return CommandUtil._sequentialGroupFromData(data, load_choreo_paths)
+            return CommandUtil._sequentialGroupFromData(data, load_choreo_paths, mirror)
         elif cmd_type == 'parallel':
-            return CommandUtil._parallelGroupFromData(data, load_choreo_paths)
+            return CommandUtil._parallelGroupFromData(data, load_choreo_paths, mirror)
         elif cmd_type == 'race':
-            return CommandUtil._raceGroupFromData(data, load_choreo_paths)
+            return CommandUtil._raceGroupFromData(data, load_choreo_paths, mirror)
         elif cmd_type == 'deadline':
-            return CommandUtil._deadlineGroupFromData(data, load_choreo_paths)
+            return CommandUtil._deadlineGroupFromData(data, load_choreo_paths, mirror)
 
         return cmd.none()
 
@@ -122,32 +122,32 @@ class CommandUtil:
         return NamedCommands.getCommand(name)
 
     @staticmethod
-    def _pathCommandFromData(data_json: dict, load_choreo_paths: bool) -> Command:
+    def _pathCommandFromData(data_json: dict, load_choreo_paths: bool, mirror: bool) -> Command:
         pathName = str(data_json['pathName'])
 
-        if load_choreo_paths:
-            return AutoBuilder.followPath(PathPlannerPath.fromChoreoTrajectory(pathName))
-        else:
-            return AutoBuilder.followPath(PathPlannerPath.fromPathFile(pathName))
+        path = PathPlannerPath.fromChoreoTrajectory(pathName) if load_choreo_paths else PathPlannerPath.fromPathFile(pathName)
+        if mirror:
+            path = path.mirrorPath()
+        return AutoBuilder.followPath(path)
 
     @staticmethod
-    def _sequentialGroupFromData(data_json: dict, load_choreo_paths: bool) -> Command:
-        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths) for cmd_json in data_json['commands']]
+    def _sequentialGroupFromData(data_json: dict, load_choreo_paths: bool, mirror: bool) -> Command:
+        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths, mirror) for cmd_json in data_json['commands']]
         return cmd.sequence(*commands)
 
     @staticmethod
-    def _parallelGroupFromData(data_json: dict, load_choreo_paths: bool) -> Command:
-        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths) for cmd_json in data_json['commands']]
+    def _parallelGroupFromData(data_json: dict, load_choreo_paths: bool, mirror: bool) -> Command:
+        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths, mirror) for cmd_json in data_json['commands']]
         return cmd.parallel(*commands)
 
     @staticmethod
-    def _raceGroupFromData(data_json: dict, load_choreo_paths: bool) -> Command:
-        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths) for cmd_json in data_json['commands']]
+    def _raceGroupFromData(data_json: dict, load_choreo_paths: bool, mirror: bool) -> Command:
+        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths, mirror) for cmd_json in data_json['commands']]
         return cmd.race(*commands)
 
     @staticmethod
-    def _deadlineGroupFromData(data_json: dict, load_choreo_paths: bool) -> Command:
-        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths) for cmd_json in data_json['commands']]
+    def _deadlineGroupFromData(data_json: dict, load_choreo_paths: bool, mirror: bool) -> Command:
+        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths, mirror) for cmd_json in data_json['commands']]
         return cmd.deadline(*commands)
 
 
@@ -161,11 +161,14 @@ class PathPlannerAuto(Command):
 
     _instances: int = 0
 
-    def __init__(self, auto_name: str):
+    def __init__(self, auto_name: str, mirror: bool=False):
         """
         Constructs a new PathPlannerAuto command.
 
         :param auto_name: the name of the autonomous routine to load and run
+        :param mirror: Mirror all paths to the other side of the current alliance. For example, if a
+            path is on the right of the blue alliance side of the field, it will be mirrored to the
+            left of the blue alliance side of the field.
         """
         super().__init__()
 
@@ -185,7 +188,7 @@ class PathPlannerAuto(Command):
                                    + ".auto'. Actual: '" + version
                                    + "' Expected: '2025.X'")
 
-            self._initFromJson(auto_json)
+            self._initFromJson(auto_json, mirror)
 
         self.addRequirements(*self._autoCommand.getRequirements())
         self.setName(auto_name)
@@ -196,18 +199,21 @@ class PathPlannerAuto(Command):
         PathPlannerAuto._instances += 1
         report(tResourceType.kResourceType_PathPlannerAuto.value, PathPlannerAuto._instances)
 
-    def _initFromJson(self, auto_json: dict):
+    def _initFromJson(self, auto_json: dict, mirror: bool):
         commandJson = auto_json['command']
         choreoAuto = 'choreoAuto' in auto_json and bool(auto_json['choreoAuto'])
-        command = CommandUtil.commandFromJson(commandJson, choreoAuto)
+        command = CommandUtil.commandFromJson(commandJson, choreoAuto, mirror)
         resetOdom = 'resetOdom' in auto_json and bool(auto_json['resetOdom'])
         pathsInAuto = PathPlannerAuto._pathsFromCommandJson(commandJson, choreoAuto)
         if len(pathsInAuto) > 0:
+            path0 = pathsInAuto[0]
+            if mirror:
+                path0 = path0.mirrorPath()
             if AutoBuilder.isHolonomic():
-                self._startingPose = Pose2d(pathsInAuto[0].getPoint(0).position,
-                                            pathsInAuto[0].getIdealStartingState().rotation)
+                self._startingPose = Pose2d(path0.getPoint(0).position,
+                                            path0.getIdealStartingState().rotation)
             else:
-                self._startingPose = pathsInAuto[0].getStartingDifferentialPose()
+                self._startingPose = path0.getStartingDifferentialPose()
         else:
             self._startingPose = Pose2d()
 

@@ -1158,7 +1158,9 @@ class PathPlannerPath:
 
             distance = points[-1].position.distance(position)
             if distance <= 0.01:
-                invalid = False
+                if len(points) < 2:
+                    points.append(PathPoint(position, None, self._constraintsForWaypointPos(pos)))
+                    points[-1].waypointRelativePos = pos
                 break
 
             prevPos = pos - trueIncrement

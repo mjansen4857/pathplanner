@@ -844,7 +844,12 @@ public class PathPlannerPath {
 
       double distance = points.get(points.size() - 1).position.getDistance(position);
       if (distance <= 0.01) {
-        invalid = false;
+        // Make sure we at least have a second point
+        if (points.size() < 2) {
+          points.add(new PathPoint(position, null, constraintsForWaypointPos(pos)));
+          points.get(points.size() - 1).waypointRelativePos = pos;
+        }
+
         break;
       }
 

@@ -496,7 +496,13 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 		units::meter_t distance = points[points.size() - 1].position.Distance(
 				position);
 		if (distance <= 0.01_m) {
-			invalid = false;
+			// Make sure we at least have a second point
+			if (points.size() < 2) {
+				points.emplace_back(position, std::nullopt,
+						constraintsForWaypointPos(pos));
+				points[points.size() - 1].waypointRelativePos = pos;
+			}
+
 			break;
 		}
 

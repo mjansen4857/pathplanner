@@ -264,6 +264,10 @@ public class PathPlannerTrajectory {
         state.heading = states.get(i - 1).heading;
       }
 
+      if (!config.isHolonomic) {
+        state.pose = new Pose2d(state.pose.getTranslation(), state.heading);
+      }
+
       if (i != 0) {
         state.deltaPos =
             state.pose.getTranslation().getDistance(states.get(i - 1).pose.getTranslation());

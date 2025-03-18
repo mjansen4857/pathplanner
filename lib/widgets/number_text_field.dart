@@ -27,7 +27,7 @@ class NumberTextField extends StatelessWidget {
     this.arrowKeyIncrement = 0.01,
     this.minValue,
     this.maxValue,
-    this.precision = 3,
+    this.precision = 4,
     TextEditingController? controller,
   }) {
     _controller = controller ?? TextEditingController();

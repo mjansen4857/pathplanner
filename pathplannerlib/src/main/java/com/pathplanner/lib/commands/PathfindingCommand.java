@@ -298,6 +298,10 @@ public class PathfindingCommand extends Command {
         currentTrajectory =
             new PathPlannerTrajectory(
                 currentPath, currentSpeeds, currentPose.getRotation(), robotConfig);
+        if (!Double.isFinite(currentTrajectory.getTotalTimeSeconds())) {
+          finish = true;
+          return;
+        }
 
         // Find the two closest states in front of and behind robot
         int closestState1Idx = 0;

@@ -109,7 +109,7 @@ class GoalEndState:
 @dataclass(frozen=True)
 class IdealStartingState:
     """
-    Describes the ideal starting state of the robot when finishing a path
+    Describes the ideal starting state of the robot when starting a path
 
     Args:
         velocity (float): The ideal starting velocity (M/S)
@@ -253,7 +253,7 @@ class EventMarker:
         command = None
         if json_dict['command'] is not None:
             from .auto import CommandUtil
-            command = CommandUtil.commandFromJson(json_dict['command'], False)
+            command = CommandUtil.commandFromJson(json_dict['command'], False, False)
         return EventMarker(name, pos, endPos, command)
 
     def __eq__(self, other):
@@ -367,7 +367,7 @@ class PathPlannerPath:
     _eventMarkers: List[EventMarker]
     _globalConstraints: PathConstraints
     _goalEndState: GoalEndState
-    _idealStartingState: IdealStartingState
+    _idealStartingState: Union[IdealStartingState, None]
     _allPoints: List[PathPoint]
     _reversed: bool
 
@@ -595,7 +595,7 @@ class PathPlannerPath:
 
                     if markerJson['event'] is not None:
                         from .auto import CommandUtil
-                        eventCommand = CommandUtil.commandFromJson(markerJson['event'], True)
+                        eventCommand = CommandUtil.commandFromJson(markerJson['event'], True, False)
                         fullEvents.append(ScheduleCommandEvent(fromTimestamp, eventCommand))
             fullEvents.sort(key=lambda e: e.getTimestamp())
 
@@ -846,6 +846,115 @@ class PathPlannerPath:
 
         return path
 
+    @staticmethod
+    def _mirrorTranslation(translation: Translation2d) -> Translation2d:
+        return Translation2d(translation.X(), FlippingUtil.fieldSizeY - translation.Y())
+
+    def mirrorPath(self) -> PathPlannerPath:
+        """
+        Mirror a path to the other side of the current alliance. For example, if this path is on the
+        right of the blue alliance side of the field, it will be mirrored to the left of the blue
+        alliance side of the field.
+        :return: The mirrored path
+        """
+        path = PathPlannerPath([], PathConstraints(0, 0, 0, 0), None, GoalEndState(0, Rotation2d()))
+
+        mirroredTraj = None
+        if self._idealTrajectory is not None:
+            traj = self._idealTrajectory
+            # Flip the ideal trajectory
+            mirroredTraj = PathPlannerTrajectory(None, None, None, None, states=[
+                PathPlannerTrajectoryState(
+                    timeSeconds=s.timeSeconds,
+                    linearVelocity=s.linearVelocity,
+                    pose=Pose2d(self._mirrorTranslation(s.pose.translation()), -s.pose.rotation()),
+                    fieldSpeeds=ChassisSpeeds(s.fieldSpeeds.vx, -s.fieldSpeeds.vy, -s.fieldSpeeds.omega),
+                    feedforwards=DriveFeedforwards(
+                        accelerationsMPS=[
+                            s.feedforwards.accelerationsMPS[1], s.feedforwards.accelerationsMPS[0],
+                            s.feedforwards.accelerationsMPS[3], s.feedforwards.accelerationsMPS[2]
+                        ],
+                        forcesNewtons=[
+                            s.feedforwards.forcesNewtons[1], s.feedforwards.forcesNewtons[0],
+                            s.feedforwards.forcesNewtons[3], s.feedforwards.forcesNewtons[2]
+                        ],
+                        torqueCurrentsAmps=[
+                            s.feedforwards.torqueCurrentsAmps[1], s.feedforwards.torqueCurrentsAmps[0],
+                            s.feedforwards.torqueCurrentsAmps[3], s.feedforwards.torqueCurrentsAmps[2]
+                        ],
+                        robotRelativeForcesXNewtons=[
+                            s.feedforwards.robotRelativeForcesXNewtons[1], s.feedforwards.robotRelativeForcesXNewtons[0],
+                            s.feedforwards.robotRelativeForcesXNewtons[3], s.feedforwards.robotRelativeForcesXNewtons[2]
+                        ],
+                        robotRelativeForcesYNewtons=[
+                            s.feedforwards.robotRelativeForcesYNewtons[1], s.feedforwards.robotRelativeForcesYNewtons[0],
+                            s.feedforwards.robotRelativeForcesYNewtons[3], s.feedforwards.robotRelativeForcesYNewtons[2]
+                        ]
+                    ) if len(s.feedforwards.accelerationsMPS) == 4 else
+                    DriveFeedforwards(
+                        accelerationsMPS=[
+                            s.feedforwards.accelerationsMPS[1], s.feedforwards.accelerationsMPS[0]
+                        ],
+                        forcesNewtons=[
+                            s.feedforwards.forcesNewtons[1], s.feedforwards.forcesNewtons[0]
+                        ],
+                        torqueCurrentsAmps=[
+                            s.feedforwards.torqueCurrentsAmps[1], s.feedforwards.torqueCurrentsAmps[0]
+                        ],
+                        robotRelativeForcesXNewtons=[
+                            s.feedforwards.robotRelativeForcesXNewtons[1], s.feedforwards.robotRelativeForcesXNewtons[0]
+                        ],
+                        robotRelativeForcesYNewtons=[
+                            s.feedforwards.robotRelativeForcesYNewtons[1], s.feedforwards.robotRelativeForcesYNewtons[0]
+                        ]
+                    ) if len(s.feedforwards.accelerationsMPS) == 2 else s.feedforwards,
+                    heading=-s.heading
+                )
+                for s in traj.getStates()
+            ], events=traj.getEvents())
+
+        path._waypoints = [
+            Waypoint(
+                prevControl=self._mirrorTranslation(w.prevControl) if w.prevControl is not None else None,
+                anchor=self._mirrorTranslation(w.anchor),
+                nextControl=self._mirrorTranslation(w.nextControl) if w.nextControl is not None else None
+            ) for w in self._waypoints]
+        path._rotationTargets = [RotationTarget(t.waypointRelativePosition, -t.target) for t in self._rotationTargets]
+        path._pointTowardsZones = [PointTowardsZone(
+            z.name,
+            self._mirrorTranslation(z.targetPosition),
+            z.minWaypointRelativePos,
+            z.maxWaypointRelativePos,
+            z.rotationOffset
+        ) for z in self._pointTowardsZones]
+        path._constraintZones = self._constraintZones
+        path._eventMarkers = self._eventMarkers
+        path._globalConstraints = self._globalConstraints
+        if self._idealStartingState is not None:
+            path._idealStartingState = IdealStartingState(self._idealStartingState.velocity, -self._idealStartingState.rotation)
+        else:
+            path._idealStartingState = None
+        path._goalEndState = GoalEndState(self._goalEndState.velocity, -self._goalEndState.rotation)
+
+        path._allPoints = [
+            PathPoint(self._mirrorTranslation(p.position))
+            for p in self._allPoints
+        ]
+        for i, p in enumerate(self._allPoints):
+            path._allPoints[i].distanceAlongPath = p.distanceAlongPath
+            path._allPoints[i].maxV = p.maxV
+            path._allPoints[i].constraints = p.constraints
+            path._allPoints[i].waypointRelativePos = p.waypointRelativePos
+        if self._rotationTargets is not None:
+            path._rotationTargets = [RotationTarget(t.waypointRelativePosition, -t.target) for t in self._rotationTargets]
+        path._reversed = self._reversed
+        path._isChoreoPath = self._isChoreoPath
+        path._idealTrajectory = mirroredTraj
+        path.preventFlipping = self.preventFlipping
+        path.name = self.name
+
+        return path
+
     def getPathPoses(self) -> List[Pose2d]:
         """
         Get a list of poses representing every point in this path.
@@ -1049,7 +1158,9 @@ class PathPlannerPath:
 
             distance = points[-1].position.distance(position)
             if distance <= 0.01:
-                invalid = False
+                if len(points) < 2:
+                    points.append(PathPoint(position, None, self._constraintsForWaypointPos(pos)))
+                    points[-1].waypointRelativePos = pos
                 break
 
             prevPos = pos - trueIncrement

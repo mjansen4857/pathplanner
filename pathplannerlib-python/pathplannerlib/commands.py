@@ -1,3 +1,4 @@
+import math
 from math import hypot
 
 from .controller import *
@@ -147,7 +148,8 @@ class FollowPathCommand(Command):
         self._eventScheduler.execute(currentTime)
 
     def isFinished(self) -> bool:
-        return self._timer.hasElapsed(self._trajectory.getTotalTimeSeconds())
+        totalTime = self._trajectory.getTotalTimeSeconds()
+        return self._timer.hasElapsed(totalTime) or not math.isfinite(totalTime)
 
     def end(self, interrupted: bool):
         self._timer.stop()
@@ -297,6 +299,9 @@ class PathfindingCommand(Command):
             if self._currentPath is not None:
                 self._currentTrajectory = PathPlannerTrajectory(self._currentPath, currentSpeeds,
                                                                 currentPose.rotation(), self._robotConfig)
+                if not math.isfinite(self._currentTrajectory.getTotalTimeSeconds()):
+                    self._finish = True
+                    return
 
                 # Find the two closest states in front of and behind robot
                 closestState1Idx = 0

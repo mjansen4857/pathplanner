@@ -201,6 +201,11 @@ void PathfindingCommand::Execute() {
 }
 
 bool PathfindingCommand::IsFinished() {
+	if (m_currentTrajectory.getStates().size() > 0
+			&& !std::isfinite(m_currentTrajectory.getTotalTime()())) {
+		return true;
+	}
+
 	if (m_targetPath && !m_targetPath->isChoreoPath()) {
 		frc::Pose2d currentPose = m_poseSupplier();
 		frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();

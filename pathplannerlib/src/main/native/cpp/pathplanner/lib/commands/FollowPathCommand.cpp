@@ -120,7 +120,8 @@ void FollowPathCommand::Execute() {
 }
 
 bool FollowPathCommand::IsFinished() {
-	return m_timer.HasElapsed(m_trajectory.getTotalTime());
+	units::second_t totalTime = m_trajectory.getTotalTime();
+	return m_timer.HasElapsed(totalTime) || !std::isfinite(totalTime());
 }
 
 void FollowPathCommand::End(bool interrupted) {

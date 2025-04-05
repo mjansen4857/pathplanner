@@ -8,14 +8,14 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import org.json.simple.JSONObject;
 
 /**
- * Describes the ideal starting state of the robot when finishing a path
+ * Describes the ideal starting state of the robot when starting a path
  *
  * @param velocityMPS The ideal starting velocity (M/S)
  * @param rotation The ideal starting rotation
  */
 public record IdealStartingState(double velocityMPS, Rotation2d rotation) {
   /**
-   * Describes the ideal starting state of the robot when finishing a path
+   * Describes the ideal starting state of the robot when starting a path
    *
    * @param velocity The ideal starting velocity
    * @param rotation The ideal starting rotation

@@ -176,6 +176,7 @@ public class LocalADStar implements Pathfinder {
       requestRealStartPos = startPosition;
 
       requestMinor = true;
+      newPathAvailable = false;
       requestLock.writeLock().unlock();
     }
   }
@@ -198,6 +199,7 @@ public class LocalADStar implements Pathfinder {
       requestMinor = true;
       requestMajor = true;
       requestReset = true;
+      newPathAvailable = false;
       requestLock.writeLock().unlock();
     }
   }

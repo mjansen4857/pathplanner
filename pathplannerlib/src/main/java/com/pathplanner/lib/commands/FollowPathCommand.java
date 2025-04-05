@@ -178,7 +178,8 @@ public class FollowPathCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    return timer.hasElapsed(trajectory.getTotalTimeSeconds());
+    double totalTime = trajectory.getTotalTimeSeconds();
+    return timer.hasElapsed(totalTime) || !Double.isFinite(totalTime);
   }
 
   @Override

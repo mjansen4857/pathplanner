@@ -203,6 +203,7 @@ void LocalADStar::setStartPosition(const frc::Translation2d &start) {
 		requestRealStartPos = start;
 
 		requestMinor = true;
+		newPathAvailable = false;
 	}
 }
 
@@ -218,6 +219,7 @@ void LocalADStar::setGoalPosition(const frc::Translation2d &goal) {
 		requestMinor = true;
 		requestMajor = true;
 		requestReset = true;
+		newPathAvailable = false;
 	}
 }
 

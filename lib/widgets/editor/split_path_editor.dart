@@ -766,46 +766,57 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       }
 
       if (_simTraj != null) {
-        if (!_paused) {
-          _previewController.duration = Duration(
-              milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
-          _previewController.repeat();
-        } else if (_previewController.duration != null) {
-          double prevTime = _previewController.value *
-              (_previewController.duration!.inMilliseconds / 1000.0);
-          _previewController.duration = Duration(
-              milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
-          double newPos = prevTime / _simTraj!.states.last.timeSeconds;
-          _previewController.forward(from: newPos);
-          _previewController.stop();
+        try {
+          if (!_paused) {
+            _previewController.stop();
+            _previewController.reset();
+            _previewController.duration = Duration(
+                milliseconds:
+                    (_simTraj!.states.last.timeSeconds * 1000).toInt());
+            _previewController.repeat();
+          } else if (_previewController.duration != null) {
+            double prevTime = _previewController.value *
+                (_previewController.duration!.inMilliseconds / 1000.0);
+            _previewController.duration = Duration(
+                milliseconds:
+                    (_simTraj!.states.last.timeSeconds * 1000).toInt());
+            double newPos = prevTime / _simTraj!.states.last.timeSeconds;
+            _previewController.forward(from: newPos);
+            _previewController.stop();
+          }
+        } catch (_) {
+          _showGenerationFailedError();
         }
       } else {
         // Trajectory failed to generate. Notify the user
-        Log.warning(
-            'Failed to generate trajectory for path: ${widget.path.name}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to generate trajectory. This is likely due to bad control point placement. Please adjust your control points to avoid kinks in the path.',
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onErrorContainer),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.errorContainer,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              textColor: Theme.of(context).colorScheme.onErrorContainer,
-              onPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              },
-            ),
-          ),
-        );
+        _showGenerationFailedError();
       }
     }
+  }
+
+  void _showGenerationFailedError() {
+    Log.warning('Failed to generate trajectory for path: ${widget.path.name}');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Failed to generate trajectory. This is likely due to bad control point placement. Please adjust your control points to avoid kinks in the path.',
+          style:
+              TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.errorContainer,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        action: SnackBarAction(
+          label: 'Dismiss',
+          textColor: Theme.of(context).colorScheme.onErrorContainer,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ),
+    );
   }
 
   num _adjustDeletedWaypointRelativePos(num pos, int deletedWaypointIdx) {

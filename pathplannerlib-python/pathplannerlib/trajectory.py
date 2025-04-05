@@ -240,7 +240,7 @@ class PathPlannerTrajectory:
                     v0 = prevState.linearVelocity
                     v = state.linearVelocity
                     sumV = v + v0
-                    if abs(sumV) < 1e-6:
+                    if abs(sumV) < 1e-6 or abs(state.deltaPos) < 1e-6:
                         state.timeSeconds = prevState.timeSeconds
                         if i != 1:
                             prevState.feedforwards = self._states[i - 2].feedforwards
@@ -481,8 +481,7 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
             state.heading = states[i - 1].heading
 
         if not config.isHolonomic:
-            state.pose = Pose2d(state.pose.translation(),
-                                (state.heading + Rotation2d.fromDegrees(180)) if path.isReversed() else state.heading)
+            state.pose = Pose2d(state.pose.translation(), state.heading)
 
         if i != 0:
             state.deltaPos = state.pose.translation().distance(states[i - 1].pose.translation())
@@ -564,7 +563,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
                                                              state.pose.rotation())
         accelStates = config.toSwerveModuleStates(chassisAccel)
         for m in range(config.numModules):
-            moduleAcceleration = accelStates[m].speed
+            moduleAcceleration = abs(accelStates[m].speed)
 
             # Calculate the module velocity at the current state
             # vf^2 = v0^2 + 2ad
@@ -669,7 +668,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
                                                              state.pose.rotation())
         accelStates = config.toSwerveModuleStates(chassisAccel)
         for m in range(config.numModules):
-            moduleAcceleration = accelStates[m].speed
+            moduleAcceleration = abs(accelStates[m].speed)
 
             # Calculate the module velocity at the current state
             # vf^2 = v0^2 + 2ad

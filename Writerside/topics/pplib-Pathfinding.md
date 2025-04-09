@@ -103,14 +103,13 @@ frc::Pose2d targetPose = frc::Pose2d(10_m, 5_m, frc::Rotation2d(180_deg));
 // Create the constraints to use while pathfinding
 PathConstraints constraints = PathConstraints(
     3.0_mps, 4.0_mps_sq, 
-    540_deg_per_s, 720_deg_per_s);
+    540_deg_per_s, 720_deg_per_s_sq);
 
 // Since AutoBuilder is configured, we can use it to build pathfinding commands
 frc2::CommandPtr pathfindingCommand = AutoBuilder::pathfindToPose(
     targetPose,
     constraints,
     0.0_mps, // Goal end velocity in meters/sec
-    0.0_m // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
 );
 ```
 
@@ -138,7 +137,6 @@ pathfindingCommand = AutoBuilder.pathfindToPose(
     targetPose,
     constraints,
     goal_end_vel=0.0, # Goal end velocity in meters/sec
-    rotation_delay_distance=0.0 # Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
 )
 ```
 
@@ -186,13 +184,12 @@ auto path = PathPlannerPath::fromPathFile("Example Human Player Pickup");
 // Create the constraints to use while pathfinding. The constraints defined in the path will only be used for the path.
 PathConstraints constraints = PathConstraints(
     3.0_mps, 4.0_mps_sq, 
-    540_deg_per_s, 720_deg_per_s);
+    540_deg_per_s, 720_deg_per_s_sq);
 
 // Since AutoBuilder is configured, we can use it to build pathfinding commands
 frc2::CommandPtr pathfindingCommand = AutoBuilder::pathfindThenFollowPath(
     path,
     constraints,
-    3.0_m // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
 );
 ```
 
@@ -217,7 +214,6 @@ constraints = PathConstraints(
 pathfindingCommand = AutoBuilder.pathfindThenFollowPath(
     path,
     constraints,
-    rotation_delay_distance=3.0 # Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
 )
 ```
 

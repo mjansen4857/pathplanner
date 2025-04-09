@@ -201,7 +201,7 @@ class PathPlannerTrajectory:
                 _forwardAccelPass(self._states, config)
 
                 # Set the final module velocities
-                endSpeedTrans = Translation2d(path.getGoalEndState().velocity, self._states[-1].heading)
+                endSpeedTrans = Translation2d(distance=path.getGoalEndState().velocity, angle=self._states[-1].heading)
                 endFieldSpeeds = ChassisSpeeds(endSpeedTrans.x, endSpeedTrans.y, 0.0)
                 endStates = config.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(endFieldSpeeds,
                                                                                               self._states[

@@ -97,7 +97,7 @@ public:
 															startSpeeds.vx,
 															startSpeeds.vy),
 													startPose.Rotation()), endState);
-							joinPath.preventFlipping = true;
+							joinPath->preventFlipping = true;
 
 							return FollowPathCommand(joinPath, poseSupplier,
 									currentRobotRelativeSpeeds, output,

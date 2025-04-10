@@ -858,7 +858,7 @@ class PathPlannerPath:
         :return: The mirrored path
         """
         path = PathPlannerPath([], PathConstraints(0, 0, 0, 0), None, GoalEndState(0, Rotation2d()))
-
+    
         mirroredTraj = None
         if self._idealTrajectory is not None:
             traj = self._idealTrajectory
@@ -912,7 +912,7 @@ class PathPlannerPath:
                 )
                 for s in traj.getStates()
             ], events=traj.getEvents())
-
+    
         path._waypoints = [
             Waypoint(
                 prevControl=self._mirrorTranslation(w.prevControl) if w.prevControl is not None else None,
@@ -935,24 +935,28 @@ class PathPlannerPath:
         else:
             path._idealStartingState = None
         path._goalEndState = GoalEndState(self._goalEndState.velocity, -self._goalEndState.rotation)
-
+    
         path._allPoints = [
             PathPoint(self._mirrorTranslation(p.position))
             for p in self._allPoints
         ]
         for i, p in enumerate(self._allPoints):
-            path._allPoints[i].distanceAlongPath = p.distanceAlongPath
-            path._allPoints[i].maxV = p.maxV
-            path._allPoints[i].constraints = p.constraints
-            path._allPoints[i].waypointRelativePos = p.waypointRelativePos
-        if self._rotationTargets is not None:
-            path._rotationTargets = [RotationTarget(t.waypointRelativePosition, -t.target) for t in self._rotationTargets]
+            new_point = path._allPoints[i]
+            new_point.distanceAlongPath = p.distanceAlongPath
+            new_point.maxV = p.maxV
+            if p.rotationTarget is not None:
+                new_point.rotationTarget = RotationTarget(
+                    p.rotationTarget.waypointRelativePosition,
+                    -p.rotationTarget.target
+                )
+            new_point.constraints = p.constraints
+            new_point.waypointRelativePos = p.waypointRelativePos
         path._reversed = self._reversed
         path._isChoreoPath = self._isChoreoPath
         path._idealTrajectory = mirroredTraj
         path.preventFlipping = self.preventFlipping
         path.name = self.name
-
+    
         return path
 
     def getPathPoses(self) -> List[Pose2d]:

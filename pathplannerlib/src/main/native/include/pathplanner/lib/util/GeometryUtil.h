@@ -70,7 +70,7 @@ units::meter_t calculateRadius(const frc::Translation2d a,
 template<class UnitType, class = std::enable_if_t<
 		units::traits::is_unit_t<UnitType>::value>>
 inline UnitType modulo(UnitType const a, UnitType const b) {
-	return a - (b * units::math::floor(a / b));
+	return a - (b * units::math::floor(a / b))PathPlannerPath::samplePath(;
 }
 
 template<class UnitType, class = std::enable_if_t<

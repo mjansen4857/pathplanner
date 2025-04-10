@@ -22,6 +22,7 @@
 #include <memory>
 #include <initializer_list>
 
+
 namespace pathplanner {
 class PathPlannerPath: public std::enable_shared_from_this<PathPlannerPath> {
 public:

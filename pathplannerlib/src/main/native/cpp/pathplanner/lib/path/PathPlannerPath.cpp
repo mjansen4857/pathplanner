@@ -924,10 +924,24 @@ frc::Translation2d PathPlannerPath::samplePath(
 
 	double t = pos - i;
 
-	auto p1 = m_waypoints[i].anchor;
-	auto p2 = m_waypoints[i].nextControl.value();
-	auto p3 = m_waypoints[i + 1].prevControl.value();
-	auto p4 = m_waypoints[i + 1].anchor;
+	if (!m_waypoints.at(i).nextControl) {
+		throw std::runtime_error(
+				"PathPlannerPath::samplePath: Waypoint " + std::to_string(i)+ " .nextControl is null");
+	}
+
+	if (!m_waypoints.at(i+1).nextControl) {
+		throw std::runtime_error(
+				"PathPlannerPath::samplePath: Waypoint " + std::to_string(i+1)+ " .nextControl is null");
+	}
+	if (!m_waypoints.at(i+1).prevControl) {
+		throw std::runtime_error(
+				"PathPlannerPath::samplePath: Waypoint " + std::to_string(i+1)+ " .prevControl is null");
+	}
+
+	auto p1 = m_waypoints.at(i).anchor;
+	auto p2 = m_waypoints.at(i).nextControl.value();
+	auto p3 = m_waypoints.at(i + 1).prevControl.value();
+	auto p4 = m_waypoints.at(i + 1).anchor;
 	return GeometryUtil::cubicLerp(p1, p2, p3, p4, t);
 }
 

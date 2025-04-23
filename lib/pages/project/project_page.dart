@@ -919,11 +919,26 @@ class _ProjectPageState extends State<ProjectPage> {
         for (PathPlannerPath path in _paths) {
           pathNames.add(path.name);
         }
-        String pathName = 'Copy of ${_paths[i].name}';
-        while (pathNames.contains(pathName)) {
-          pathName = 'Copy of $pathName';
+        String pathName = _paths[i].name;
+        RegExp exp = RegExp(r'\(\d+\)');
+        String source = pathName.substring(pathName.length - 3);
+        String originalPathName = pathName;
+        while (pathNames.contains(pathName) ||
+            pathName == '$originalPathName (0)') {
+          source = pathName.substring(pathName.length - 3);
+          if (exp.hasMatch(source)) {
+            RegExpMatch? match = exp.firstMatch(source);
+            int index = int.parse(match![0]!.substring(1, 2));
+            while (pathNames.contains(pathName) ||
+                pathName.substring(pathName.length - 3) == '(0)') {
+              index++;
+              pathName =
+                  '${pathName.substring(0, pathName.length - 3)}($index)';
+            }
+          } else {
+            pathName = '$pathName (0)';
+          }
         }
-
         setState(() {
           _paths.add(_paths[i].duplicate(pathName));
           _sortPaths(_pathSortValue);
@@ -1466,11 +1481,35 @@ class _ProjectPageState extends State<ProjectPage> {
         for (PathPlannerAuto auto in _autos) {
           autoNames.add(auto.name);
         }
-        String autoName = 'Copy of ${_autos[i].name}';
-        while (autoNames.contains(autoName)) {
-          autoName = 'Copy of $autoName';
+        String autoName = _autos[i].name;
+        RegExp exp = RegExp(r'\(\d+\)');
+        String source = autoName.substring(autoName.length - 3);
+        String originalAutoName = autoName;
+        while (autoNames.contains(autoName) ||
+            autoName == '$originalAutoName (0)') {
+          source = autoName.substring(autoName.length - 3);
+          if (exp.hasMatch(source)) {
+            RegExpMatch? match = exp.firstMatch(source);
+            int index = int.parse(match![0]!.substring(1, 2));
+            while (autoNames.contains(autoName) ||
+                autoName.substring(autoName.length - 3) == '(0)') {
+              index++;
+              autoName =
+                  '${autoName.substring(0, autoName.length - 3)}($index)';
+            }
+          } else {
+            autoName = '$autoName (0)';
+          }
         }
-
+        while (autoNames.contains(autoName)) {
+          if (exp.hasMatch(source)) {
+            RegExpMatch? match = exp.firstMatch(source);
+            int index = int.parse(match![0]!.substring(1, 2)) + 1;
+            autoName = '${autoName.substring(0, autoName.length - 3)}($index)';
+          } else {
+            autoName = '$autoName (1)';
+          }
+        }
         setState(() {
           _autos.add(_autos[i].duplicate(autoName));
           _sortAutos(_autoSortValue);

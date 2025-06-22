@@ -326,7 +326,7 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 	frc::ChassisSpeeds retSpeeds = { prevSetpoint.robotRelativeSpeeds.vx
 			+ min_s * dx, prevSetpoint.robotRelativeSpeeds.vy + min_s * dy,
 			prevSetpoint.robotRelativeSpeeds.omega + min_s * dtheta };
-	retSpeeds = frc::ChassisSpeeds::Discretize(retSpeeds, dt);
+	retSpeeds = retSpeeds.Discretize(dt);
 
 	units::meters_per_second_t prevVelX = prevSetpoint.robotRelativeSpeeds.vx;
 	units::meters_per_second_t prevVelY = prevSetpoint.robotRelativeSpeeds.vy;

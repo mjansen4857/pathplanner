@@ -72,14 +72,8 @@ public class FlippingUtil {
    */
   public static ChassisSpeeds flipFieldSpeeds(ChassisSpeeds fieldSpeeds) {
     return switch (symmetryType) {
-      case kMirrored -> new ChassisSpeeds(
-          -fieldSpeeds.vxMetersPerSecond,
-          fieldSpeeds.vyMetersPerSecond,
-          -fieldSpeeds.omegaRadiansPerSecond);
-      case kRotational -> new ChassisSpeeds(
-          -fieldSpeeds.vxMetersPerSecond,
-          -fieldSpeeds.vyMetersPerSecond,
-          fieldSpeeds.omegaRadiansPerSecond);
+      case kMirrored -> new ChassisSpeeds(-fieldSpeeds.vx, fieldSpeeds.vy, -fieldSpeeds.omega);
+      case kRotational -> new ChassisSpeeds(-fieldSpeeds.vx, -fieldSpeeds.vy, fieldSpeeds.omega);
     };
   }
 

@@ -8,10 +8,11 @@ plugins {
     id 'edu.wpi.first.GradleVsCode' version '2.1.0'
     id 'com.diffplug.spotless' version '6.11.0'
     id 'jacoco'
+    id "edu.wpi.first.GradleRIO2027" version "2027.0.0-alpha-1"
 }
 
 // WPILib Version
-ext.wpilibVersion = "2025.+"
+ext.wpilibVersion = "2027.0.0-alpha-1"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -21,6 +22,7 @@ java {
 repositories {
     mavenCentral()
 }
+wpilibRepositories.use2027Repos()
 if (project.hasProperty('releaseMode')) {
     wpilibRepositories.addAllReleaseRepositories(project)
 } else {

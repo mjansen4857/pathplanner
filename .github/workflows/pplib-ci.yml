@@ -117,9 +117,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: wpilib/roborio-cross-ubuntu:2025-22.04
-            artifact-name: PPLib-Athena
-            build-options: "-Ponlylinuxathena"
           - container: wpilib/ubuntu-base:22.04
             artifact-name: PPLib-Linux
             build-options: "-Ponlylinuxx86-64"
@@ -197,6 +194,10 @@ jobs:
       
       - name: Ensure spotless is applied
         run: ./gradlew spotlessApply
+        working-directory: ./pathplannerlib
+
+      - name: Install SystemCore Toolchain
+        run: ./gradlew installSystemCoreToolchain
         working-directory: ./pathplannerlib
       
       - name: Build

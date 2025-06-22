@@ -22,7 +22,7 @@ public class OneShotTriggerEvent extends Event {
     super(timestamp);
     this.name = name;
     this.resetCommand =
-        Commands.waitSeconds(0)
+        Commands.wait(0.0)
             .andThen(Commands.runOnce(() -> EventTrigger.setCondition(name, false)))
             .ignoringDisable(true);
   }

@@ -11,7 +11,6 @@ import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.util.*;
-import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -113,7 +112,7 @@ public class PathfindingCommand extends Command {
     this.shouldFlipPath = shouldFlipPath;
 
     instances++;
-    HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
+    HAL.reportUsage("PathPlanner/PathFindingCommand", instances, "");
   }
 
   /**
@@ -162,7 +161,7 @@ public class PathfindingCommand extends Command {
     this.shouldFlipPath = () -> false;
 
     instances++;
-    HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
+    HAL.reportUsage("PathPlanner/PathFindingCommand", instances, "");
   }
 
   /**
@@ -344,8 +343,7 @@ public class PathfindingCommand extends Command {
         // loop
         // This can prevent an issue where the robot will remain stationary if new paths come in
         // every loop
-        if (timeOffset <= 0.02
-            && Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 0.1) {
+        if (timeOffset <= 0.02 && Math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 0.1) {
           timeOffset = 0.02;
         }
 
@@ -363,8 +361,7 @@ public class PathfindingCommand extends Command {
       ChassisSpeeds targetSpeeds =
           controller.calculateRobotRelativeSpeeds(currentPose, targetState);
 
-      double currentVel =
-          Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
+      double currentVel = Math.hypot(currentSpeeds.vx, currentSpeeds.vy);
 
       PPLibTelemetry.setCurrentPose(currentPose);
       PathPlannerLogging.logCurrentPose(currentPose);
@@ -373,10 +370,7 @@ public class PathfindingCommand extends Command {
       PathPlannerLogging.logTargetPose(targetState.pose);
 
       PPLibTelemetry.setVelocities(
-          currentVel,
-          targetState.linearVelocity,
-          currentSpeeds.omegaRadiansPerSecond,
-          targetSpeeds.omegaRadiansPerSecond);
+          currentVel, targetState.linearVelocity, currentSpeeds.omega, targetSpeeds.omega);
 
       output.accept(targetSpeeds, targetState.feedforwards);
     }
@@ -392,8 +386,7 @@ public class PathfindingCommand extends Command {
       Pose2d currentPose = poseSupplier.get();
       ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-      double currentVel =
-          Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
+      double currentVel = Math.hypot(currentSpeeds.vx, currentSpeeds.vy);
       double stoppingDistance = Math.pow(currentVel, 2) / (2 * constraints.maxAccelerationMPSSq());
 
       return currentPose.getTranslation().getDistance(targetPose.getTranslation())

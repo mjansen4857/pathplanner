@@ -8,7 +8,6 @@ import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.*;
-import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -100,7 +99,7 @@ public class PathPlannerPath {
     precalcValues();
 
     instances++;
-    HAL.report(tResourceType.kResourceType_PathPlannerPath, instances);
+    HAL.reportUsage("PathPlanner/PathPlannerPath", instances, "");
   }
 
   /**
@@ -165,7 +164,7 @@ public class PathPlannerPath {
     this.allPoints = new ArrayList<>();
 
     instances++;
-    HAL.report(tResourceType.kResourceType_PathPlannerPath, instances);
+    HAL.reportUsage("PathPlanner/PathPlannerPath", instances, "");
   }
 
   /**
@@ -387,9 +386,7 @@ public class PathPlannerPath {
         state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
         state.fieldSpeeds = new ChassisSpeeds(xVel, yVel, angularVelRps);
         if (Math.abs(state.linearVelocity) > 1e-6) {
-          state.heading =
-              new Rotation2d(
-                  state.fieldSpeeds.vxMetersPerSecond, state.fieldSpeeds.vyMetersPerSecond);
+          state.heading = new Rotation2d(state.fieldSpeeds.vx, state.fieldSpeeds.vy);
         }
 
         // The module forces are field relative, rotate them to be robot relative
@@ -441,8 +438,7 @@ public class PathPlannerPath {
       fullPath.idealStartingState =
           new IdealStartingState(
               Math.hypot(
-                  fullTrajStates.get(0).fieldSpeeds.vxMetersPerSecond,
-                  fullTrajStates.get(0).fieldSpeeds.vyMetersPerSecond),
+                  fullTrajStates.get(0).fieldSpeeds.vx, fullTrajStates.get(0).fieldSpeeds.vy),
               fullTrajStates.get(0).pose.getRotation());
       fullPath.goalEndState =
           new GoalEndState(
@@ -501,9 +497,7 @@ public class PathPlannerPath {
         path.globalConstraints = PathConstraints.unlimitedConstraints(12.0);
         path.idealStartingState =
             new IdealStartingState(
-                Math.hypot(
-                    states.get(0).fieldSpeeds.vxMetersPerSecond,
-                    states.get(0).fieldSpeeds.vyMetersPerSecond),
+                Math.hypot(states.get(0).fieldSpeeds.vx, states.get(0).fieldSpeeds.vy),
                 states.get(0).pose.getRotation());
         path.goalEndState =
             new GoalEndState(
@@ -658,8 +652,8 @@ public class PathPlannerPath {
       Rotation2d heading = getInitialHeading();
       Translation2d fieldSpeeds = new Translation2d(idealStartingState.velocityMPS(), heading);
       ChassisSpeeds startingSpeeds =
-          ChassisSpeeds.fromFieldRelativeSpeeds(
-              fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0, idealStartingState.rotation());
+          new ChassisSpeeds(fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0)
+              .toRobotRelative(idealStartingState.rotation());
       idealTrajectory =
           Optional.of(
               generateTrajectory(startingSpeeds, idealStartingState.rotation(), robotConfig));
@@ -1227,9 +1221,7 @@ public class PathPlannerPath {
                                     s.pose.getRotation().unaryMinus());
                             state.fieldSpeeds =
                                 new ChassisSpeeds(
-                                    s.fieldSpeeds.vxMetersPerSecond,
-                                    -s.fieldSpeeds.vyMetersPerSecond,
-                                    -s.fieldSpeeds.omegaRadiansPerSecond);
+                                    s.fieldSpeeds.vx, -s.fieldSpeeds.vy, -s.fieldSpeeds.omega);
                             DriveFeedforwards ff = s.feedforwards;
                             if (ff.accelerationsMPSSq().length == 4) {
                               state.feedforwards =

@@ -70,11 +70,8 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
 
               Pose2d startPose = poseSupplier.get();
               ChassisSpeeds startSpeeds = currentRobotRelativeSpeeds.get();
-              ChassisSpeeds startFieldSpeeds =
-                  ChassisSpeeds.fromRobotRelativeSpeeds(startSpeeds, startPose.getRotation());
-              Rotation2d startHeading =
-                  new Rotation2d(
-                      startFieldSpeeds.vxMetersPerSecond, startFieldSpeeds.vyMetersPerSecond);
+              ChassisSpeeds startFieldSpeeds = startSpeeds.toFieldRelative(startPose.getRotation());
+              Rotation2d startHeading = new Rotation2d(startFieldSpeeds.vx, startFieldSpeeds.vy);
 
               Pose2d endWaypoint =
                   new Pose2d(goalPath.getPoint(0).position, goalPath.getInitialHeading());
@@ -102,8 +99,7 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
                           new Pose2d(startPose.getTranslation(), startHeading), endWaypoint),
                       pathfindingConstraints,
                       new IdealStartingState(
-                          Math.hypot(startSpeeds.vxMetersPerSecond, startSpeeds.vyMetersPerSecond),
-                          startPose.getRotation()),
+                          Math.hypot(startSpeeds.vx, startSpeeds.vy), startPose.getRotation()),
                       endState);
               joinPath.preventFlipping = true;
 

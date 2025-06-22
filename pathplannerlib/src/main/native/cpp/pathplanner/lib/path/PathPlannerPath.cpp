@@ -11,7 +11,7 @@
 #include <wpi/MemoryBuffer.h>
 #include <optional>
 #include <utility>
-#include <hal/FRCUsageReporting.h>
+#include <hal/UsageReporting.h>
 
 using namespace pathplanner;
 
@@ -44,7 +44,7 @@ PathPlannerPath::PathPlannerPath(std::vector<Waypoint> waypoints,
 	precalcValues();
 
 	m_instances++;
-	HAL_Report(HALUsageReporting::kResourceType_PathPlannerPath, m_instances);
+	HAL_ReportUsage("PathPlanner/PathPlannerPath", m_instances, "");
 }
 
 PathPlannerPath::PathPlannerPath(PathConstraints constraints,
@@ -52,7 +52,7 @@ PathPlannerPath::PathPlannerPath(PathConstraints constraints,
 		constraints), m_idealStartingState(std::nullopt), m_goalEndState(
 		goalEndState), m_reversed(false), m_isChoreoPath(false) {
 	m_instances++;
-	HAL_Report(HALUsageReporting::kResourceType_PathPlannerPath, m_instances);
+	HAL_ReportUsage("PathPlanner/PathPlannerPath", m_instances, "");
 }
 
 void PathPlannerPath::hotReload(const wpi::json &json) {
@@ -657,10 +657,9 @@ std::optional<PathPlannerTrajectory> PathPlannerPath::getIdealTrajectory(
 				units::meter_t { m_idealStartingState.value().getVelocity()() },
 				heading);
 		frc::ChassisSpeeds startingSpeeds =
-				frc::ChassisSpeeds::FromFieldRelativeSpeeds(frc::ChassisSpeeds {
-						units::meters_per_second_t { fieldSpeeds.X()() },
-						units::meters_per_second_t { fieldSpeeds.Y()() },
-						0.0_rad_per_s },
+				frc::ChassisSpeeds { units::meters_per_second_t {
+						fieldSpeeds.X()() }, units::meters_per_second_t {
+						fieldSpeeds.Y()() }, 0.0_rad_per_s }.ToRobotRelative(
 						m_idealStartingState.value().getRotation());
 		m_idealTrajectory = generateTrajectory(startingSpeeds,
 				m_idealStartingState.value().getRotation(), robotConfig);

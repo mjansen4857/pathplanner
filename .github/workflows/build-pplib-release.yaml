@@ -38,6 +38,9 @@ jobs:
         run: sed -i "s/0.0.0/${{ github.event.inputs.version }}/g" publish.gradle
         working-directory: ./pathplannerlib
       
+      - name: Install SystemCore Toolchain
+        run: ./gradlew installSystemCoreToolchain
+      
       - name: Ensure spotless is applied
         run: ./gradlew spotlessApply
         working-directory: ./pathplannerlib
@@ -86,13 +89,13 @@ jobs:
         if: ${{ matrix.os-name == 'macos' }}
         run: sed -i '' "s/0.0.0/${{ github.event.inputs.version }}/g" publish.gradle
         working-directory: ./pathplannerlib
+
+      - name: Install SystemCore Toolchain
+        run: ./gradlew installSystemCoreToolchain
       
       - name: Ensure spotless is applied
         run: ./gradlew spotlessApply
         working-directory: ./pathplannerlib
-      
-      - name: Install SystemCore Toolchain
-        run: ./gradlew installSystemCoreToolchain
       
       - name: Build
         run: ./gradlew build -Pbuildalldesktop -PreleaseMode

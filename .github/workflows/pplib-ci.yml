@@ -25,6 +25,9 @@ jobs:
         run: chmod +x gradlew
         working-directory: ./pathplannerlib
       
+      - name: Install SystemCore Toolchain
+        run: ./gradlew installSystemCoreToolchain
+      
       - name: Check formatting
         run: ./gradlew spotlessCheck
         working-directory: ./pathplannerlib
@@ -41,6 +44,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         working-directory: ./pathplannerlib
+      
+      - name: Install SystemCore Toolchain
+        run: ./gradlew installSystemCoreToolchain
       
       - name: Build & Test
         run: ./gradlew build
@@ -142,6 +148,9 @@ jobs:
         run: sed -i "s/0.0.0/${{ env.VERSION_NAME }}/g" publish.gradle
         working-directory: ./pathplannerlib
       
+      - name: Install SystemCore Toolchain
+        run: ./gradlew installSystemCoreToolchain
+      
       - name: Ensure spotless is applied
         run: ./gradlew spotlessApply
         working-directory: ./pathplannerlib
@@ -191,13 +200,13 @@ jobs:
         if: ${{ matrix.os-name == 'macos' }}
         run: sed -i '' "s/0.0.0/${{ env.VERSION_NAME }}/g" publish.gradle
         working-directory: ./pathplannerlib
-      
-      - name: Ensure spotless is applied
-        run: ./gradlew spotlessApply
-        working-directory: ./pathplannerlib
 
       - name: Install SystemCore Toolchain
         run: ./gradlew installSystemCoreToolchain
+        working-directory: ./pathplannerlib
+      
+      - name: Ensure spotless is applied
+        run: ./gradlew spotlessApply
         working-directory: ./pathplannerlib
       
       - name: Build

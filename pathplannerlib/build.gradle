@@ -104,6 +104,7 @@ model {
                 }
             }
             nativeUtils.useRequiredLibrary(it, 'wpilib_shared')
+            nativeUtils.useRequiredLibrary(it, "datalog_shared")
         }
     }
     testSuites {
@@ -115,6 +116,7 @@ model {
                 }
             }
 
+            nativeUtils.useRequiredLibrary(it, "datalog_shared")
             nativeUtils.useRequiredLibrary(it, "wpilib_executable_shared", "googletest_static")
         }
     }

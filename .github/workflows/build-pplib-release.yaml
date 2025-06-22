@@ -14,17 +14,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: wpilib/ubuntu-base:22.04
+          - container: wpilib/ubuntu-base:24.04
             artifact-name: PPLib-Linux
             build-options: "-Ponlylinuxx86-64"
-          - container: wpilib/raspbian-cross-ubuntu:bookworm-22.04
+          - container: wpilib/raspbian-cross-ubuntu:bookworm-24.04
             artifact-name: PPLib-Arm32
             build-options: "-Ponlylinuxarm32"
-          - container: wpilib/aarch64-cross-ubuntu:bookworm-22.04
+          - container: wpilib/aarch64-cross-ubuntu:bookworm-24.04
             artifact-name: PPLib-Arm64
             build-options: "-Ponlylinuxarm64"
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     container: ${{ matrix.container }}
     steps:
       - name: Checkout repo
@@ -112,7 +112,7 @@ jobs:
   combine:
     name: "[PPLib] Combine"
     needs: [build-docker, build-host]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout build-tools
         uses: actions/checkout@v4

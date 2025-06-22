@@ -150,6 +150,7 @@ jobs:
       
       - name: Install SystemCore Toolchain
         run: ./gradlew installSystemCoreToolchain
+        working-directory: ./pathplannerlib
       
       - name: Ensure spotless is applied
         run: ./gradlew spotlessApply

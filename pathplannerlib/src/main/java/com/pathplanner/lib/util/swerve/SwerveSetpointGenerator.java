@@ -43,7 +43,9 @@ public class SwerveSetpointGenerator {
   public SwerveSetpointGenerator(RobotConfig config, double maxSteerVelocityRadsPerSec) {
     this.config = config;
     this.maxSteerVelocityRadsPerSec = maxSteerVelocityRadsPerSec;
-    this.brownoutVoltage = RobotController.getBrownoutVoltage();
+    //    this.brownoutVoltage = RobotController.getBrownoutVoltage();
+    this.brownoutVoltage =
+        6.75; // TODO: update when RobotController call doesn't crash or has a replacement
   }
 
   /**

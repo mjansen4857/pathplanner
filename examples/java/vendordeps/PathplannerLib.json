@@ -28,9 +28,9 @@
             "binaryPlatforms": [
                 "windowsx86-64",
                 "linuxx86-64",
-                "linuxathena",
                 "linuxarm32",
-                "linuxarm64"
+                "linuxarm64",
+                "systemcore"
             ]
         }
     ]

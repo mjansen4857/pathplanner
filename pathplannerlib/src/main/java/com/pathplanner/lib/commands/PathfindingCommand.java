@@ -292,7 +292,7 @@ public class PathfindingCommand extends Command {
             && currentPose
                     .getTranslation()
                     .getDistance(currentTrajectory.getEndState().pose.getTranslation())
-                < 2.0;
+                < (Pathfinding.getNavgridSize()*4);
 
     if (!skipUpdates && Pathfinding.isNewPathAvailable()) {
       currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);

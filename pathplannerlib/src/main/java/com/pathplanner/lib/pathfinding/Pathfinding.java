@@ -28,7 +28,11 @@ public class Pathfinding {
   public static void setPathfinder(Pathfinder pathfinder) {
     Pathfinding.pathfinder = pathfinder;
   }
-
+   /**
+   * Get the current navgrid size from the navgrid.json file in deploy
+   *
+   * @return Navgrid size (double)
+   */
   public static double getNavgridSize() {
     File navGridFile = new File(Filesystem.getDeployDirectory(), "pathplanner/navgrid.json");
     if (navGridFile.exists()) {

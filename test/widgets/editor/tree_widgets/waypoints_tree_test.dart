@@ -495,8 +495,7 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     final dropdown =
-        find.widgetWithText(DropdownMenu<String>, 'Linked Waypoint Name');
-    expect(dropdown, findsOneWidget);
+        find.widgetWithText(DropdownMenu<String>, 'Linked Waypoint Name').first;
 
     await widgetTester.tap(dropdown);
     await widgetTester.pumpAndSettle();

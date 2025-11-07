@@ -38,7 +38,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
   List<RotationTarget> get rotations => widget.path.rotationTargets;
   List<Waypoint> get waypoints => widget.path.waypoints;
 
-  late List<ExpansionTileController> _controllers;
+  late List<ExpansibleController> _controllers;
   int? _selectedTarget;
 
   double _sliderChangeStart = 0;
@@ -50,7 +50,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
     _selectedTarget = widget.initiallySelectedTarget;
 
     _controllers =
-        List.generate(rotations.length, (index) => ExpansionTileController());
+        List.generate(rotations.length, (index) => ExpansibleController());
   }
 
   @override

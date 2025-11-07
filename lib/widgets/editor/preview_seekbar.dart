@@ -80,7 +80,7 @@ class _PreviewSeekbarState extends State<PreviewSeekbar> {
                       return Theme(
                         data: Theme.of(context).copyWith(
                           sliderTheme: const SliderThemeData(
-                            showValueIndicator: ShowValueIndicator.always,
+                            showValueIndicator: ShowValueIndicator.onDrag,
                             thumbShape: RoundSliderThumbShape(
                               enabledThumbRadius: 8,
                             ),

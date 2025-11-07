@@ -100,7 +100,7 @@ class FieldImage {
       fit: BoxFit.contain,
     );
 
-    final imageSize = ImageSizeGetter.getSize(FileInput(imageFile));
+    final imageSize = ImageSizeGetter.getSizeResult(FileInput(imageFile)).size;
     if (imageSize.needRotate) {
       defaultSize =
           ui.Size(imageSize.height.toDouble(), imageSize.width.toDouble());

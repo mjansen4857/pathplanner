@@ -42,12 +42,11 @@ class WaypointsTree extends StatefulWidget {
 class _WaypointsTreeState extends State<WaypointsTree> {
   List<Waypoint> get waypoints => widget.path.waypoints;
 
-  late List<ExpansionTileController> _controllers;
+  late List<ExpansibleController> _controllers;
   int? _selectedWaypoint;
   late WaypointsTreeController _treeController;
   bool _ignoreExpansionFromTile = false;
-  final ExpansionTileController _expansionController =
-      ExpansionTileController();
+  final ExpansibleController _expansionController = ExpansibleController();
 
   @override
   void initState() {
@@ -56,7 +55,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
     _selectedWaypoint = widget.initialSelectedWaypoint;
 
     _controllers =
-        List.generate(waypoints.length, (index) => ExpansionTileController());
+        List.generate(waypoints.length, (index) => ExpansibleController());
 
     _treeController = widget.controller ?? WaypointsTreeController();
     _treeController._state = this;

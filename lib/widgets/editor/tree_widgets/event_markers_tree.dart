@@ -46,7 +46,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
   List<EventMarker> get markers => widget.path.eventMarkers;
   List<Waypoint> get waypoints => widget.path.waypoints;
 
-  late List<ExpansionTileController> _controllers;
+  late List<ExpansibleController> _controllers;
   int? _selectedMarker;
 
   double _sliderChangeStart = 0;
@@ -58,7 +58,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
     _selectedMarker = widget.initiallySelectedMarker;
 
     _controllers =
-        List.generate(markers.length, (index) => ExpansionTileController());
+        List.generate(markers.length, (index) => ExpansibleController());
   }
 
   @override

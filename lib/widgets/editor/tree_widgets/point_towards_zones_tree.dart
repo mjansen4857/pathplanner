@@ -38,7 +38,7 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
   List<PointTowardsZone> get zones => widget.path.pointTowardsZones;
   List<Waypoint> get waypoints => widget.path.waypoints;
 
-  late List<ExpansionTileController> _controllers;
+  late List<ExpansibleController> _controllers;
   int? _selectedZone;
 
   double _sliderChangeStart = 0;
@@ -50,7 +50,7 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
     _selectedZone = widget.initiallySelectedZone;
 
     _controllers =
-        List.generate(zones.length, (index) => ExpansionTileController());
+        List.generate(zones.length, (index) => ExpansibleController());
   }
 
   @override

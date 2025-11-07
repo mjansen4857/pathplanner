@@ -9,7 +9,7 @@ class TreeCardNode extends StatelessWidget {
   final VoidCallback? onHoverEnd;
   final double indent;
   final bool initiallyExpanded;
-  final ExpansionTileController? controller;
+  final ExpansibleController? controller;
   final ValueChanged<bool?>? onExpansionChanged;
   final Widget? trailing;
 

@@ -37,7 +37,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
   List<ConstraintsZone> get constraintZones => widget.path.constraintZones;
   List<Waypoint> get waypoints => widget.path.waypoints;
 
-  late List<ExpansionTileController> _controllers;
+  late List<ExpansibleController> _controllers;
   int? _selectedZone;
 
   double _sliderChangeStart = 0;
@@ -49,7 +49,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
     _selectedZone = widget.initiallySelectedZone;
 
     _controllers = List.generate(
-        constraintZones.length, (index) => ExpansionTileController());
+        constraintZones.length, (index) => ExpansibleController());
   }
 
   @override

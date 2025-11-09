@@ -4,13 +4,11 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import com.pathplanner.lib.commands.*;
 import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.FlippingUtil;
-import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -144,8 +142,8 @@ public class AutoBuilder {
   /**
    * Holder for all global variables directly referenced by AutoBuilder.
    *
-   * <p>This class exists to ensure that {@link #resetForTesting()} resets all static state
-   * in AutoBuilder.
+   * <p>This class exists to ensure that {@link #resetForTesting()} resets all static state in
+   * AutoBuilder.
    */
   private static class Globals {
     boolean configured = false;
@@ -234,17 +232,12 @@ public class AutoBuilder {
   }
 
   /**
-   * Resets static state to the values set at class initialization time.
+   * Resets {@code AutoBuilder} static state to the values set at class initialization time.
    *
-   * <p>This method should not be called during a competition. It makes a best-effort attempt to
-   * reset the state, and may not update all static state.
+   * <p>This method should not be called during a competition.
    */
   public static void resetForTesting() {
-    PathPlannerAuto.setCurrentTrajectory(null);
     globals = new Globals();
-    NamedCommands.clearAll();
-    PathPlannerLogging.clearLoggingCallbacks();
-    PPHolonomicDriveController.clearFeedbackOverrides();
   }
 
   /**

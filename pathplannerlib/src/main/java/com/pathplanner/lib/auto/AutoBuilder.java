@@ -243,7 +243,7 @@ public class AutoBuilder {
     PathPlannerAuto.setCurrentTrajectory(null);
     globals = new Globals();
     NamedCommands.clearAll();
-    PathPlannerLogging.clearLogCallbacks();
+    PathPlannerLogging.clearLoggingCallbacks();
     PPHolonomicDriveController.clearFeedbackOverrides();
   }
 

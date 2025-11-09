@@ -43,7 +43,7 @@ public class PathPlannerLogging {
   }
 
   /** Disables all logging callbacks registered by this class. */
-  public static void clearLogCallbacks() {
+  public static void clearLoggingCallbacks() {
     PathPlannerLogging.setLogCurrentPoseCallback(null);
     PathPlannerLogging.setLogTargetPoseCallback(null);
     PathPlannerLogging.setLogActivePathCallback(null);

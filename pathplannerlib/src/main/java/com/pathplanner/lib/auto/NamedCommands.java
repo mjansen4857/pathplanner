@@ -70,4 +70,9 @@ public class NamedCommands {
       return Commands.none();
     }
   }
+
+  /** Removes all registered named commands. */
+  public static void clearAll() {
+    namedCommands.clear();
+  }
 }

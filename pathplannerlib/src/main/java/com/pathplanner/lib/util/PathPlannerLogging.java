@@ -42,6 +42,13 @@ public class PathPlannerLogging {
     PathPlannerLogging.logActivePath = logActivePath;
   }
 
+  /** Disables all logging callbacks registered by this class. */
+  public static void clearLoggingCallbacks() {
+    PathPlannerLogging.setLogCurrentPoseCallback(null);
+    PathPlannerLogging.setLogTargetPoseCallback(null);
+    PathPlannerLogging.setLogActivePathCallback(null);
+  }
+
   /**
    * Log the current robot pose. This is used internally.
    *

@@ -6,7 +6,7 @@ plugins {
     id 'edu.wpi.first.NativeUtils' version '2026.0.0'
     id 'edu.wpi.first.GradleJni' version '1.1.0'
     id 'edu.wpi.first.GradleVsCode' version '2.1.0'
-    id 'com.diffplug.spotless' version '6.11.0'
+    id 'com.diffplug.spotless' version '6.23.3'
     id 'jacoco'
 }
 
@@ -125,7 +125,7 @@ spotless {
             exclude '**/build/**', '**/build-*/**'
         }
         toggleOffOn()
-        googleJavaFormat()
+        googleJavaFormat('1.10.0')
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()

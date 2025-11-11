@@ -149,7 +149,6 @@ ext.createAllCombined = { list, name, base, type, project ->
     }
 
     return task
-
 }
 
 ext.includeStandardZipFormat = { task, value ->

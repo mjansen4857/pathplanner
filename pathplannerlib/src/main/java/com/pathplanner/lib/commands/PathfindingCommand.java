@@ -262,7 +262,10 @@ public class PathfindingCommand extends Command {
       }
     }
 
-    if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.5) {
+    if (currentPose.getTranslation().getDistance(targetPose.getTranslation())
+        < (Pathfinding.getNavgridSize() * Math.sqrt(2))) {
+      // This finds the max distance in your current navgrid and makes sure that it cannot pathfind
+      // to itself.
       output.accept(new ChassisSpeeds(), DriveFeedforwards.zeros(robotConfig.numModules));
       finish = true;
     } else {
@@ -289,7 +292,7 @@ public class PathfindingCommand extends Command {
             && currentPose
                     .getTranslation()
                     .getDistance(currentTrajectory.getEndState().pose.getTranslation())
-                < 2.0;
+                < (Pathfinding.getNavgridSize()*4);
 
     if (!skipUpdates && Pathfinding.isNewPathAvailable()) {
       currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);

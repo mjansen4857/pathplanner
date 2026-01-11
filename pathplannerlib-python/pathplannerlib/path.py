@@ -528,10 +528,10 @@ class PathPlannerPath:
                 # Assume version 0
                 pass
 
-            if version > 1:
+            if version > 3:
                 raise RuntimeError("Incompatible file version for '" + trajectory_name
                                    + ".traj'. Actual: '" + str(version)
-                                   + "' Expected: <= 1")
+                                   + "' Expected: <= 3")
 
             trajJson = fJson['trajectory']
 

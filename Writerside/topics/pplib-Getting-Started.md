@@ -25,6 +25,13 @@ compatibility with old robot code projects.
 
 <br/>
 
+<u>2025:</u>
+```text
+https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib2025.json
+```
+
+<br/>
+
 <u>2024:</u>
 ```text
 https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib2024.json

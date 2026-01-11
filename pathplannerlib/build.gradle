@@ -3,10 +3,10 @@ plugins {
     id 'java'
     id 'google-test'
     id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2025.0'
-    id 'edu.wpi.first.NativeUtils' version '2026.0.1'
+    id 'edu.wpi.first.NativeUtils' version '2026.+'
     id 'edu.wpi.first.GradleJni' version '1.1.0'
     id 'edu.wpi.first.GradleVsCode' version '2.1.0'
-    id 'com.diffplug.spotless' version '6.23.3'
+    id 'com.diffplug.spotless' version '8.0.0'
     id 'jacoco'
 }
 
@@ -48,8 +48,8 @@ dependencies {
     implementation 'edu.wpi.first.thirdparty.frc2025.opencv:opencv-java:4.10.0-2'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.13.4'
-    //    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.0'
-    //    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.13.4'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.13.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testRuntimeOnly "us.hebi.quickbuf:quickbuf-runtime:1.4"
 }
@@ -144,7 +144,7 @@ spotless {
             exclude '**/build/**', '**/build-*/**'
         }
         greclipse()
-        indentWithSpaces(4)
+        leadingTabsToSpaces(4)
         trimTrailingWhitespace()
         endWithNewline()
     }
@@ -154,7 +154,7 @@ spotless {
             exclude '**/build/**', '**/build-*/**'
         }
         trimTrailingWhitespace()
-        indentWithSpaces(4)
+        leadingTabsToSpaces(4)
         endWithNewline()
     }
 }
@@ -169,7 +169,7 @@ javadoc {
 apply from: 'publish.gradle'
 
 wrapper {
-    gradleVersion '8.14.3'
+    gradleVersion = '8.14.3'
 }
 
 jacocoTestReport {

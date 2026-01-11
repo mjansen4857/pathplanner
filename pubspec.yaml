@@ -58,6 +58,7 @@ dependencies:
   isolate_manager: ^5.4.0
   widgets_to_image: ^1.0.0
   image: ^4.3.0
+  flutter_svg: ^2.2.3
 
 dev_dependencies:
   flutter_test:

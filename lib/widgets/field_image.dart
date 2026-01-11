@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 
@@ -10,13 +11,16 @@ enum OfficialField {
   chargedUp,
   crescendo,
   reefscape,
-  reefscapeAnnotated
+  reefscapeAnnotated,
+  rebuilt
 }
 
 class FieldImage {
-  late final Image image;
+  late final Image? image;
+  late final SvgPicture? svgImage;
   late final ui.Size defaultSize;
   late num pixelsPerMeter;
+  late final num marginMeters;
   late String name;
   late final bool isCustom;
   late final String extension;
@@ -24,7 +28,7 @@ class FieldImage {
   static List<FieldImage>? _officialFields;
 
   static final FieldImage defaultField =
-      FieldImage.official(OfficialField.reefscape);
+      FieldImage.official(OfficialField.rebuilt);
 
   static List<FieldImage> offialFields() {
     _officialFields ??= [
@@ -33,6 +37,7 @@ class FieldImage {
       FieldImage.official(OfficialField.crescendo),
       FieldImage.official(OfficialField.reefscape),
       FieldImage.official(OfficialField.reefscapeAnnotated),
+      FieldImage.official(OfficialField.rebuilt)
     ];
     return _officialFields!;
   }
@@ -40,6 +45,7 @@ class FieldImage {
   FieldImage.official(OfficialField field) {
     switch (field) {
       case OfficialField.rapidReact:
+        svgImage = null;
         image = Image.asset(
           'images/field22.png',
           fit: BoxFit.contain,
@@ -48,8 +54,10 @@ class FieldImage {
         defaultSize = const ui.Size(3240, 1620);
         pixelsPerMeter = 196.85;
         name = 'Rapid React';
+        marginMeters = 0.0;
         break;
       case OfficialField.chargedUp:
+        svgImage = null;
         image = Image.asset(
           'images/field23.png',
           fit: BoxFit.contain,
@@ -58,8 +66,10 @@ class FieldImage {
         defaultSize = const ui.Size(3256, 1578);
         pixelsPerMeter = 196.85;
         name = 'Charged Up';
+        marginMeters = 0.0;
         break;
       case OfficialField.crescendo:
+        svgImage = null;
         image = Image.asset(
           'images/field24.png',
           fit: BoxFit.contain,
@@ -68,8 +78,10 @@ class FieldImage {
         defaultSize = const ui.Size(3256, 1616);
         pixelsPerMeter = 196.85;
         name = 'Crescendo';
+        marginMeters = 0.0;
         break;
       case OfficialField.reefscape:
+        svgImage = null;
         image = Image.asset(
           'images/field25.png',
           fit: BoxFit.contain,
@@ -78,8 +90,10 @@ class FieldImage {
         defaultSize = const ui.Size(3510, 1610);
         pixelsPerMeter = 200.0;
         name = 'Reefscape';
+        marginMeters = 0.0;
         break;
       case OfficialField.reefscapeAnnotated:
+        svgImage = null;
         image = Image.asset(
           'images/field25-annotated.png',
           fit: BoxFit.contain,
@@ -88,6 +102,19 @@ class FieldImage {
         defaultSize = const ui.Size(3510, 1610);
         pixelsPerMeter = 200.0;
         name = 'Reefscape (Annotated)';
+        marginMeters = 0.0;
+        break;
+      case OfficialField.rebuilt:
+        image = null;
+        svgImage = SvgPicture.asset(
+          'images/field26.svg',
+          height: 1614,
+          width: 3308,
+        );
+        defaultSize = const ui.Size(3308, 1614);
+        pixelsPerMeter = 200.0;
+        name = 'Rebuilt';
+        marginMeters = 0.5;
         break;
     }
     isCustom = false;
@@ -95,6 +122,7 @@ class FieldImage {
   }
 
   FieldImage.custom(File imageFile) {
+    svgImage = null;
     image = Image.file(
       imageFile,
       fit: BoxFit.contain,
@@ -117,10 +145,13 @@ class FieldImage {
     name = fileName.substring(0, fileName.lastIndexOf('_'));
     extension = fileName.substring(fileName.lastIndexOf('.') + 1);
     isCustom = true;
+    marginMeters = 0.0;
   }
 
   ui.Size getFieldSizeMeters() {
-    return defaultSize / pixelsPerMeter.toDouble();
+    return (defaultSize / pixelsPerMeter.toDouble()) -
+            ui.Size(2 * marginMeters.toDouble(), 2 * marginMeters.toDouble())
+        as ui.Size;
   }
 
   @override
@@ -135,15 +166,28 @@ class FieldImage {
   }
 
   @override
-  int get hashCode => Object.hash(image.hashCode, defaultSize.hashCode,
+  int get hashCode => Object.hash(image?.hashCode, defaultSize.hashCode,
       pixelsPerMeter.hashCode, name.hashCode);
 
   Widget getWidget() {
-    return AspectRatio(
-      aspectRatio: defaultSize.width / defaultSize.height,
-      child: SizedBox.expand(
-        child: image,
-      ),
-    );
+    if (svgImage != null) {
+      return AspectRatio(
+        aspectRatio: defaultSize.width / defaultSize.height,
+        child: SizedBox.expand(
+          child: svgImage,
+        ),
+      );
+    }
+
+    if (image != null) {
+      return AspectRatio(
+        aspectRatio: defaultSize.width / defaultSize.height,
+        child: SizedBox.expand(
+          child: image,
+        ),
+      );
+    }
+
+    return Container();
   }
 }

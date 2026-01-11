@@ -1,14 +1,22 @@
+import edu.wpi.first.toolchain.*
+
 plugins {
     id 'cpp'
     id 'java'
     id 'google-test'
     id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2025.0'
-    id 'edu.wpi.first.NativeUtils' version '2026.+'
+    id 'edu.wpi.first.NativeUtils' version '2026.0.1'
     id 'edu.wpi.first.GradleJni' version '1.1.0'
     id 'edu.wpi.first.GradleVsCode' version '2.1.0'
     id 'com.diffplug.spotless' version '8.0.0'
     id 'jacoco'
 }
+
+ext.getCurrentArch = {
+    return NativePlatforms.desktop
+}
+
+def systemArch = getCurrentArch()
 
 // WPILib Version
 ext.wpilibVersion = "2026.+"
@@ -115,6 +123,17 @@ model {
             }
 
             nativeUtils.useRequiredLibrary(it, "wpilib_executable_shared", "googletest_static")
+
+            binaries.all {
+                def arch = it.targetPlatform.name
+                if (systemArch == arch && it.buildType.name == 'debug') {
+                    def filePath = it.tasks.install.installDirectory.get().toString() + File.separatorChar + 'lib'
+                    test.dependsOn it.tasks.install
+                    test.systemProperty 'java.library.path', filePath
+                    test.environment 'LD_LIBRARY_PATH', filePath
+                    test.workingDir filePath
+                }
+            }
         }
     }
 }
@@ -172,14 +191,15 @@ wrapper {
     gradleVersion = '8.14.3'
 }
 
-jacocoTestReport {
-    reports {
-        xml.required.set(true)
+test {
+    useJUnitPlatform()
+    systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+    testLogging {
+        events "failed"
+        exceptionFormat = "full"
     }
 }
 
-test {
-    useJUnitPlatform()
-
-    finalizedBy jacocoTestReport
+if (project.hasProperty('onlylinuxathena') || project.hasProperty('onlylinuxarm32') || project.hasProperty('onlylinuxarm64') || project.hasProperty('onlywindowsarm64')) {
+    test.enabled = false
 }

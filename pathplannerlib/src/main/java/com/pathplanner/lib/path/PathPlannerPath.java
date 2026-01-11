@@ -354,8 +354,8 @@ public class PathPlannerPath {
         // Assume version 0
       }
 
-      if (version > 1) {
-        throw new FileVersionException(Integer.toString(version), "<= 1", trajectoryName + ".traj");
+      if (version > 3) {
+        throw new FileVersionException(Integer.toString(version), "<= 3", trajectoryName + ".traj");
       }
 
       JSONObject trajJson = (JSONObject) json.get("trajectory");

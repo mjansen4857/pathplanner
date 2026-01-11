@@ -160,11 +160,11 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 		version = json.at("version").get<int>();
 	}
 
-	if (version > 1) {
+	if (version > 3) {
 		throw std::runtime_error(
 				"Incompatible file version for '" + trajectoryName
 						+ ".traj'. Actual: '" + std::to_string(version)
-						+ "' Expected: <= 1");
+						+ "' Expected: <= 3");
 	}
 
 	auto trajJson = json.at("trajectory");

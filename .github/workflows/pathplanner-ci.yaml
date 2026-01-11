@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
           
       - name: Setup flutter
         uses: subosito/flutter-action@v2
@@ -50,7 +50,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup flutter
         uses: subosito/flutter-action@v2
@@ -100,7 +100,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Install flutter deps
         if: ${{ matrix.build-option == 'linux' }}
@@ -156,7 +156,7 @@ jobs:
           zip -r PathPlanner-macOS.zip PathPlanner.app --symlinks
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}
@@ -170,7 +170,7 @@ jobs:
       
       - name: Upload macOS DMG artifact
         if: ${{ matrix.build-option == 'macos' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-dmg
           path: build/macos/Build/Products/Release/${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}.dmg
@@ -184,7 +184,7 @@ jobs:
       
       - name: Upload windows installer artifact
         if: ${{ matrix.build-option == 'windows' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-setup
           path: build/windows/x64/installer/${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-setup.exe
@@ -195,7 +195,7 @@ jobs:
       
       - name: Upload MSIX artifact
         if: ${{ matrix.build-option == 'windows' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-msix
           path: ${{ matrix.artifact-path }}/pathplanner.msix

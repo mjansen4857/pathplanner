@@ -23,7 +23,7 @@ jobs:
             });
       
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.COMMENT_COMMAND_PAT }}
       
@@ -41,7 +41,7 @@ jobs:
           cache-path: ${{ runner.tool_cache }}/flutter/linux
       
       - name: Setup java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'zulu'

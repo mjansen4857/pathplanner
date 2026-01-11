@@ -11,9 +11,9 @@ public class FlippingUtil {
   /** The type of symmetry for the current field */
   public static FieldSymmetry symmetryType = FieldSymmetry.kRotational;
   /** The X size or length of the current field in meters */
-  public static double fieldSizeX = Units.feetToMeters(57.573);
+  public static double fieldSizeX = 16.54;
   /** The Y size or width of the current field in meters */
-  public static double fieldSizeY = Units.feetToMeters(26.417);
+  public static double fieldSizeY = 8.07;
 
   /** Enum representing the different types of field symmetry */
   public enum FieldSymmetry {

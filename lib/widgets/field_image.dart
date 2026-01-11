@@ -10,13 +10,15 @@ enum OfficialField {
   chargedUp,
   crescendo,
   reefscape,
-  reefscapeAnnotated
+  reefscapeAnnotated,
+  rebuilt
 }
 
 class FieldImage {
   late final Image image;
   late final ui.Size defaultSize;
   late num pixelsPerMeter;
+  late final num marginMeters;
   late String name;
   late final bool isCustom;
   late final String extension;
@@ -24,7 +26,7 @@ class FieldImage {
   static List<FieldImage>? _officialFields;
 
   static final FieldImage defaultField =
-      FieldImage.official(OfficialField.reefscape);
+      FieldImage.official(OfficialField.rebuilt);
 
   static List<FieldImage> offialFields() {
     _officialFields ??= [
@@ -33,6 +35,7 @@ class FieldImage {
       FieldImage.official(OfficialField.crescendo),
       FieldImage.official(OfficialField.reefscape),
       FieldImage.official(OfficialField.reefscapeAnnotated),
+      FieldImage.official(OfficialField.rebuilt)
     ];
     return _officialFields!;
   }
@@ -48,6 +51,7 @@ class FieldImage {
         defaultSize = const ui.Size(3240, 1620);
         pixelsPerMeter = 196.85;
         name = 'Rapid React';
+        marginMeters = 0.0;
         break;
       case OfficialField.chargedUp:
         image = Image.asset(
@@ -58,6 +62,7 @@ class FieldImage {
         defaultSize = const ui.Size(3256, 1578);
         pixelsPerMeter = 196.85;
         name = 'Charged Up';
+        marginMeters = 0.0;
         break;
       case OfficialField.crescendo:
         image = Image.asset(
@@ -68,6 +73,7 @@ class FieldImage {
         defaultSize = const ui.Size(3256, 1616);
         pixelsPerMeter = 196.85;
         name = 'Crescendo';
+        marginMeters = 0.0;
         break;
       case OfficialField.reefscape:
         image = Image.asset(
@@ -78,6 +84,7 @@ class FieldImage {
         defaultSize = const ui.Size(3510, 1610);
         pixelsPerMeter = 200.0;
         name = 'Reefscape';
+        marginMeters = 0.0;
         break;
       case OfficialField.reefscapeAnnotated:
         image = Image.asset(
@@ -88,6 +95,18 @@ class FieldImage {
         defaultSize = const ui.Size(3510, 1610);
         pixelsPerMeter = 200.0;
         name = 'Reefscape (Annotated)';
+        marginMeters = 0.0;
+        break;
+      case OfficialField.rebuilt:
+        image = Image.asset(
+          'images/field26.png',
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.medium,
+        );
+        defaultSize = const ui.Size(3508, 1814);
+        pixelsPerMeter = 200.0;
+        name = 'Rebuilt';
+        marginMeters = 0.5;
         break;
     }
     isCustom = false;
@@ -117,10 +136,14 @@ class FieldImage {
     name = fileName.substring(0, fileName.lastIndexOf('_'));
     extension = fileName.substring(fileName.lastIndexOf('.') + 1);
     isCustom = true;
+    marginMeters = 0.0;
   }
 
   ui.Size getFieldSizeMeters() {
-    return defaultSize / pixelsPerMeter.toDouble();
+    ui.Offset temp = ((defaultSize / pixelsPerMeter.toDouble()) -
+            ui.Size(2 * marginMeters.toDouble(), 2 * marginMeters.toDouble()))
+        as Offset;
+    return ui.Size(temp.dx, temp.dy);
   }
 
   @override

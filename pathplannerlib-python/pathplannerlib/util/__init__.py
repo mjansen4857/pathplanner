@@ -87,8 +87,8 @@ class DriveFeedforwards:
 
 class FlippingUtil:
     symmetryType: FieldSymmetry = FieldSymmetry.kRotational
-    fieldSizeX: float = 57.573 * 0.3048 # Feet to meters
-    fieldSizeY: float = 26.417 * 0.3048 # Feet to meters
+    fieldSizeX: float = 16.54
+    fieldSizeY: float = 8.07 # Feet to meters
 
     @staticmethod
     def flipFieldPosition(pos: Translation2d) -> Translation2d:

@@ -145,9 +145,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       _animController.forward();
 
-      if (!(widget.prefs.getBool(PrefsKeys.seen2025ResetPopup) ?? false) &&
-          (_fieldImage?.name != 'Reefscape' &&
-              _fieldImage?.name != 'Reefscape (Annotated)') &&
+      if (!(widget.prefs.getBool(PrefsKeys.seen2026ResetPopup) ?? false) &&
+          (_fieldImage?.name != 'Rebuilt') &&
           mounted) {
         showDialog(
           context: this.context,
@@ -165,7 +164,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                        'The 2025 field image is now available. Would you like to set your field image to the 2025 field and reset the navgrid to the new default?'),
+                        'The 2026 field image is now available. Would you like to set your field image to the 2026 field and reset the navgrid to the new default?'),
                   ],
                 ),
               ),
@@ -173,14 +172,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    widget.prefs.setBool(PrefsKeys.seen2025ResetPopup, true);
+                    widget.prefs.setBool(PrefsKeys.seen2026ResetPopup, true);
                   },
                   child: const Text('No'),
                 ),
                 TextButton(
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    widget.prefs.setBool(PrefsKeys.seen2025ResetPopup, true);
+                    widget.prefs.setBool(PrefsKeys.seen2026ResetPopup, true);
                     setState(() {
                       _fieldImage = FieldImage.defaultField;
                       widget.prefs

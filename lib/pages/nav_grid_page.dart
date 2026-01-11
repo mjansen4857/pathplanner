@@ -253,14 +253,16 @@ class _NavGridPageState extends State<NavGridPage> {
   }
 
   double _xPixelsToMeters(double pixels) {
-    return ((pixels - 48) / _NavigationPainter.scale) /
-        widget.fieldImage.pixelsPerMeter;
+    return (((pixels - 48) / _NavigationPainter.scale) /
+            widget.fieldImage.pixelsPerMeter) -
+        widget.fieldImage.marginMeters;
   }
 
   double _yPixelsToMeters(double pixels) {
-    return (widget.fieldImage.defaultSize.height -
-            ((pixels - 48) / _NavigationPainter.scale)) /
-        widget.fieldImage.pixelsPerMeter;
+    return ((widget.fieldImage.defaultSize.height -
+                ((pixels - 48) / _NavigationPainter.scale)) /
+            widget.fieldImage.pixelsPerMeter) -
+        widget.fieldImage.marginMeters;
   }
 
   void _saveNavGrid() {

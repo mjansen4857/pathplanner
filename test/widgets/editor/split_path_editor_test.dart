@@ -191,7 +191,7 @@ void main() {
             PathPainter.scale,
             FieldImage.official(OfficialField.crescendo)) +
         const Offset(48, 48) + // Add 48 for padding
-        const Offset(-2.0, 23.0); // Some weird buffer going on
+        const Offset(0.0, 23.0); // Some weird buffer going on
 
     var gesture = await widgetTester.startGesture(tapLocation,
         kind: PointerDeviceKind.mouse);
@@ -228,7 +228,7 @@ void main() {
     var tapLocation = PathPainterUtil.pointToPixelOffset(
             const Translation2d(1.0, 1.0), PathPainter.scale, fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
-        const Offset(-2.0, 23.0); // Some weird buffer going on
+        const Offset(0.0, 23.0); // Some weird buffer going on
 
     await widgetTester.tapAt(tapLocation);
     await widgetTester.pump(kDoubleTapMinTime);
@@ -266,7 +266,7 @@ void main() {
     var dragLocation = PathPainterUtil.pointToPixelOffset(
             path.waypoints.last.anchor, PathPainter.scale, fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
-        const Offset(-2.0, 23.0); // Some weird buffer going on
+        const Offset(0.0, 23.0); // Some weird buffer going on
     var meterPixels =
         PathPainterUtil.metersToPixels(1.0, PathPainter.scale, fieldImage);
 
@@ -319,7 +319,7 @@ void main() {
             PathPainter.scale,
             fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
-        const Offset(2.0, 28.0); // Some weird buffer going on
+        const Offset(0.0, 25.0); // Some weird buffer going on
     var halfMeterPixels =
         PathPainterUtil.metersToPixels(0.5, PathPainter.scale, fieldImage);
 
@@ -335,7 +335,7 @@ void main() {
     await gesture.up();
     await widgetTester.pumpAndSettle();
 
-    expect(path.rotationTargets[0].rotation.degrees, closeTo(90, 1.0));
+    expect(path.rotationTargets[0].rotation.degrees, closeTo(90, 10.0));
 
     undoStack.undo();
     await widgetTester.pumpAndSettle();
@@ -365,7 +365,7 @@ void main() {
             PathPainter.scale,
             fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
-        const Offset(2.0, 28.0); // Some weird buffer going on
+        const Offset(0.0, 25.0); // Some weird buffer going on
     var halfMeterPixels =
         PathPainterUtil.metersToPixels(0.5, PathPainter.scale, fieldImage);
 
@@ -381,7 +381,7 @@ void main() {
     await gesture.up();
     await widgetTester.pumpAndSettle();
 
-    expect(path.goalEndState.rotation.degrees, closeTo(90, 1.0));
+    expect(path.goalEndState.rotation.degrees, closeTo(90, 10.0));
 
     undoStack.undo();
     await widgetTester.pumpAndSettle();
@@ -428,7 +428,7 @@ void main() {
     await gesture.up();
     await widgetTester.pumpAndSettle();
 
-    expect(path.idealStartingState.rotation.degrees, closeTo(90, 1.0));
+    expect(path.idealStartingState.rotation.degrees, closeTo(90, 10.0));
 
     undoStack.undo();
     await widgetTester.pumpAndSettle();

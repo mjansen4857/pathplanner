@@ -5,7 +5,13 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.Filesystem;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.List;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 /**
  * Static class for interacting with the chosen pathfinding implementation from the pathfinding
@@ -21,6 +27,32 @@ public class Pathfinding {
    */
   public static void setPathfinder(Pathfinder pathfinder) {
     Pathfinding.pathfinder = pathfinder;
+  }
+   /**
+   * Get the current navgrid size from the navgrid.json file in deploy
+   *
+   * @return Navgrid size (double)
+   */
+  public static double getNavgridSize() {
+    File navGridFile = new File(Filesystem.getDeployDirectory(), "pathplanner/navgrid.json");
+    if (navGridFile.exists()) {
+      try (BufferedReader br = new BufferedReader(new FileReader(navGridFile))) {
+        StringBuilder fileContentBuilder = new StringBuilder();
+        String line;
+        while ((line = br.readLine()) != null) {
+          fileContentBuilder.append(line);
+        }
+
+        String fileContent = fileContentBuilder.toString();
+        JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+
+        return ((Number) json.get("nodeSizeMeters")).doubleValue();
+
+      } catch (Exception e) {
+        return 0.3;
+      }
+    }
+    return 0.3;
   }
 
   /** Ensure that a pathfinding implementation has been chosen. If not, set it to the default. */

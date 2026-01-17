@@ -27,7 +27,7 @@ import org.json.simple.parser.ParseException;
 
 /** A PathPlanner path. NOTE: This is not a trajectory and isn't directly followed. */
 public class PathPlannerPath {
-  private static final double targetIncrement = 0.05;
+  private static final double targetIncrement = 0.1;
   private static final double targetSpacing = 0.2;
 
   private static int instances = 0;

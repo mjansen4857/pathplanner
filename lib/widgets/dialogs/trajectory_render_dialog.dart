@@ -234,7 +234,7 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
     }
 
     final imageBytes = await _controller.capture(pixelRatio: 1);
-    _gifImagesBytes.add(imageBytes!);
+    _gifImagesBytes.add(Uint8List.fromList(imageBytes!));
 
     if (!mounted) {
       return;
@@ -308,7 +308,14 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
       );
 
       for (int i = 0; i < message.length; i++) {
-        encoder.addFrame(decoder.decode(message[i])!, duration: 4);
+        try {
+          final frame = decoder.decode(message[i]);
+          if (frame != null) {
+            encoder.addFrame(frame, duration: 4);
+          }
+        } catch (_) {
+          // Skip corrupted frames so one bad frame doesn't crash app
+        }
         controller.sendResult((
           progress: (i / (message.length - 1)),
           bytes: null, // Only bother sending the bytes for the final result

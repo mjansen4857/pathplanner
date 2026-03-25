@@ -11,17 +11,22 @@ import edu.wpi.first.units.measure.LinearVelocity;
 public class ModuleConfig {
   /** Wheel radius in meters */
   public final double wheelRadiusMeters;
+
   /** The max RPM that the drive motor can reach while actually driving the robot at full output. */
   public final double maxDriveVelocityMPS;
+
   /** The coefficient of friction between the drive wheel and the carpet. */
   public final double wheelCOF;
+
   /** The DCMotor representing the drive gearbox, including gear reduction */
   public final DCMotor driveMotor;
+
   /** The current limit of the drive motor, in Amps */
   public final double driveCurrentLimit;
 
   /** Max drive motor velocity in MPS */
   public final double maxDriveVelocityRadPerSec;
+
   /**
    * The amount of motor torque lost while driving. Calculated by getting the torque of the motor at
    * the motor's max speed under load.

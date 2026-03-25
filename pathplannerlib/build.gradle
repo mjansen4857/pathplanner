@@ -6,17 +6,17 @@ plugins {
     id 'edu.wpi.first.NativeUtils' version '2025.9.0'
     id 'edu.wpi.first.GradleJni' version '1.1.0'
     id 'edu.wpi.first.GradleVsCode' version '2.1.0'
-    id 'com.diffplug.spotless' version '6.11.0'
+    id 'com.diffplug.spotless' version '8.4.0'
     id 'jacoco'
-    id "edu.wpi.first.GradleRIO2027" version "2027.0.0-alpha-1"
+    id "edu.wpi.first.GradleRIO2027" version "2027.0.0-alpha-2"
 }
 
 // WPILib Version
-ext.wpilibVersion = "2027.0.0-alpha-1"
+ext.wpilibVersion = "2027.0.0-alpha-2"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {

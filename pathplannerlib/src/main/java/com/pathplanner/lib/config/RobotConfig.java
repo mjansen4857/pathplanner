@@ -25,13 +25,16 @@ import org.json.simple.parser.ParseException;
 public class RobotConfig {
   /** The mass of the robot, including bumpers and battery, in KG */
   public final double massKG;
+
   /** The moment of inertia of the robot, in KG*M^2 */
   public final double MOI;
+
   /** The drive module config */
   public final ModuleConfig moduleConfig;
 
   /** Robot-relative locations of each drive module in meters */
   public final Translation2d[] moduleLocations;
+
   /** Is the robot holonomic? */
   public final boolean isHolonomic;
 
@@ -42,10 +45,13 @@ public class RobotConfig {
   // Pre-calculated values that can be reused for every trajectory generation
   /** Number of drive modules */
   public final int numModules;
+
   /** The distance from the robot center to each module in meters */
   public final double[] modulePivotDistance;
+
   /** The force of static friction between the robot's drive wheels and the carpet, in Newtons */
   public final double wheelFrictionForce;
+
   /** The maximum torque a drive module can apply without slipping the wheels */
   public final double maxTorqueFriction;
 

@@ -14,12 +14,16 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTrajectoryState> {
   /** The time at this state in seconds */
   public double timeSeconds = 0.0;
+
   /** Field-relative chassis speeds at this state */
   public ChassisSpeeds fieldSpeeds = new ChassisSpeeds();
+
   /** Field-relative robot pose at this state */
   public Pose2d pose = Pose2d.kZero;
+
   /** The linear velocity at this state in m/s */
   public double linearVelocity = 0.0;
+
   /** The field-relative heading, or direction of travel, at this state */
   public Rotation2d heading = Rotation2d.kZero;
 
@@ -29,14 +33,18 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
   // Values used only during generation, these will not be interpolated
   /** The distance between this state and the previous state */
   protected double deltaPos = 0.0;
+
   /** The difference in rotation between this state and the previous state */
   protected Rotation2d deltaRot = Rotation2d.kZero;
+
   /**
    * The {@link com.pathplanner.lib.trajectory.SwerveModuleTrajectoryState} states for this state
    */
   protected SwerveModuleTrajectoryState[] moduleStates;
+
   /** The {@link com.pathplanner.lib.path.PathConstraints} for this state */
   protected PathConstraints constraints;
+
   /** The waypoint relative position of this state. Used to determine proper event marker timing */
   protected double waypointRelativePos = 0.0;
 

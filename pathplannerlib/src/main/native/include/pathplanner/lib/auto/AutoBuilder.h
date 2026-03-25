@@ -153,7 +153,7 @@ public:
 
 	/**
 	 * Create a command to reset the robot's odometry to a given blue alliance pose
-	 * 
+	 *
 	 * @param bluePose The pose to reset to, relative to blue alliance origin
 	 * @return Command to reset the robot's odometry
 	 */
@@ -206,7 +206,7 @@ public:
 
 	/**
 	 * Modifies the existing references that buildAutoChooser returns in SendableChooser to the most recent in the pathplanner/auto deploy directory
-	 * 
+	 *
 	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on every call
 	 * Adds new auto paths from the pathplanner/auto deploy directory however doesn't remove autos already previously loaded
 	 */
@@ -230,8 +230,8 @@ public:
 	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
 	 * Filters certain PathPlannerAuto bases on their properties
 	 *
-	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
-	 * 		while returning false prevents it from being added. 
+	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser
+	 * 		while returning false prevents it from being added.
 	 * 		autoCommand, const reference to PathPlannerAuto command which was generated
 	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
 	 *     empty string, or if an auto with the given name does not exist, the default option will be
@@ -247,8 +247,8 @@ public:
 	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
 	 * Filters certain PathPlannerAuto bases on their properties and their filepath
 	 *
-	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
-	 * 		while returning false prevents it from being added. 
+	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser
+	 * 		while returning false prevents it from being added.
 	 * 		autoCommand, const reference to PathPlannerAuto command which was generated
 	 * 		autoPath, path to the autoCommand relative to pathplanner/auto deploy directory with extension ".auto"
 	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
@@ -269,7 +269,7 @@ public:
 
 	/**
 	 * Get a vector of all auto paths in the pathplanner/auto deploy directory (recursively)
-	 * 
+	 *
 	 * @return Vector of paths relative to autos deploy directory
 	 */
 	static std::vector<std::filesystem::path> getAllAutoPaths();

@@ -22,6 +22,7 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
   bool _showStates = Defaults.showStates;
   bool _showRobotDetails = Defaults.showRobotDetails;
   bool _showGrid = Defaults.showGrid;
+  bool _showCurvatureCombs = Defaults.showCurvatureCombs;
 
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
         _showRobotDetails = _prefs.getBool(PrefsKeys.showRobotDetails) ??
             Defaults.showRobotDetails;
         _showGrid = _prefs.getBool(PrefsKeys.showGrid) ?? Defaults.showGrid;
+        _showCurvatureCombs = _prefs.getBool(PrefsKeys.showCurvatureCombs) ?? Defaults.showCurvatureCombs;
       });
     });
   }
@@ -80,6 +82,12 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
           _showGrid,
           _updateShowGrid,
           'Toggle the visibility of the grid on the field. Each cell is 0.5M x 0.5M.',
+        ),
+        _buildCheckboxRow(
+          'Show Curvature Combs',
+          _showCurvatureCombs,
+          _updateShowCombs,
+          'Toggle a line showing the smoothness of the paths',
         ),
       ],
     );
@@ -143,5 +151,12 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
       _showGrid = value;
     });
     _prefs.setBool(PrefsKeys.showGrid, _showGrid);
+  }
+
+  void _updateShowCombs(bool value) {
+    setState(() {
+      _showCurvatureCombs = value;
+    });
+    _prefs.setBool(PrefsKeys.showCurvatureCombs, _showCurvatureCombs);
   }
 }

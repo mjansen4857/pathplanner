@@ -11,6 +11,7 @@ import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/bezier_utils.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -71,8 +72,8 @@ class PathPainter extends CustomPainter {
   }) : super(repaint: animation) {
     robotConfig = RobotConfig.fromPrefs(prefs);
     robotRadius = sqrt((robotConfig.bumperSize.width *
-                robotConfig.bumperSize.width) +
-            (robotConfig.bumperSize.height * robotConfig.bumperSize.height)) /
+        robotConfig.bumperSize.width) +
+        (robotConfig.bumperSize.height * robotConfig.bumperSize.height)) /
         2.0;
 
     for (String featureJson in prefs.getStringList(PrefsKeys.robotFeatures) ??
@@ -115,6 +116,13 @@ class PathPainter extends CustomPainter {
           (hoveredPath == paths[i].name)
               ? Colors.orange
               : colorScheme.secondary);
+
+      bool showCombs = prefs.getBool(PrefsKeys.showCurvatureCombs) ??
+          Defaults.showCurvatureCombs;
+
+      if(showCombs) {
+        _paintCurvatureCombs(paths[i], canvas);
+      }
 
       if (robotConfig.holonomic) {
         _paintRotations(paths[i], canvas, scale);
@@ -260,7 +268,7 @@ class PathPainter extends CustomPainter {
       if (normalizedVel <= 0.33) {
         // Lerp between red and orange
         paint.color =
-            Color.lerp(Colors.red, Colors.orange, normalizedVel / 0.33)!;
+        Color.lerp(Colors.red, Colors.orange, normalizedVel / 0.33)!;
       } else if (normalizedVel <= 0.67) {
         // Lerp between orange and yellow
         paint.color = Color.lerp(
@@ -297,6 +305,78 @@ class PathPainter extends CustomPainter {
     }
 
     canvas.drawPath(p, paint);
+  }
+
+  void _paintCurvatureCombs(PathPlannerPath path, Canvas canvas){
+    Path comb = Path();
+    double combScale(double scale) => 0.25 * scale;
+    const double combFrequency = 100;
+    const double lineFrequency = combFrequency / 10.0;
+
+    var combPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = Colors.blueAccent
+      ..strokeWidth = 1;
+
+    var combTipsPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = Colors.cyan.withValues(alpha: 0.8)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    if (path.waypoints.length >= 2) {
+      for (int i = 0; i < path.waypoints.length - 1; i++) {
+        if(hoveredWaypoint != null && (hoveredWaypoint! < i || hoveredWaypoint! > i + 1)){
+          continue;
+        }
+
+        if(hoveredWaypoint == null && selectedWaypoint != null && (selectedWaypoint! < i || selectedWaypoint! > i + 1)){
+          continue;
+        }
+
+        var firstWaypoint = path.waypoints[i];
+        var secondWaypoint = path.waypoints[i + 1];
+
+        Path combTips = Path();
+        bool firstTip = true;
+
+        for (int j = 0; j <= combFrequency.toInt(); j++) {
+          double t = j / combFrequency;
+
+          var curvePoint = BezierUtils.getCubicBezierPointTranslation(
+              t, firstWaypoint, secondWaypoint);
+          Offset combStart = PathPainterUtil.pointToPixelOffset(
+              curvePoint, scale, fieldImage);
+
+          var normalVec = BezierUtils.getCubicBezierNormal(
+              t, firstWaypoint, secondWaypoint);
+          var curvature = BezierUtils.getCubicBezierCurvature(
+              t, firstWaypoint, secondWaypoint);
+
+          var tipPoint = Translation2d(
+            curvePoint.x + normalVec.x * combScale(curvature),
+            curvePoint.y + normalVec.y * combScale(curvature),
+          );
+          Offset combTip = PathPainterUtil.pointToPixelOffset(
+              tipPoint, scale, fieldImage);
+
+          if (j % lineFrequency == 0) {
+            comb.moveTo(combStart.dx, combStart.dy);
+            comb.lineTo(combTip.dx, combTip.dy);
+          }
+
+          if (firstTip) {
+            combTips.moveTo(combTip.dx, combTip.dy);
+            firstTip = false;
+          } else {
+            combTips.lineTo(combTip.dx, combTip.dy);
+          }
+        }
+
+        canvas.drawPath(combTips, combTipsPaint);
+      }
+    }
+    canvas.drawPath(comb, combPaint);
   }
 
   void _paintChoreoWaypoint(
@@ -528,7 +608,7 @@ class PathPainter extends CustomPainter {
       }
 
       Offset markerPos =
-          PathPainterUtil.pointToPixelOffset(position, scale, fieldImage);
+      PathPainterUtil.pointToPixelOffset(position, scale, fieldImage);
 
       PathPainterUtil.paintMarker(
           canvas, markerPos, markerColor, markerStrokeColor);
@@ -644,7 +724,7 @@ class PathPainter extends CustomPainter {
       ..strokeWidth = 3;
 
     final p1 =
-        PathPainterUtil.pointToPixelOffset(prevPathEnd, scale, fieldImage);
+    PathPainterUtil.pointToPixelOffset(prevPathEnd, scale, fieldImage);
     final p2 = PathPainterUtil.pointToPixelOffset(pathStart, scale, fieldImage);
     final distance = (p2 - p1).distance;
     final normalizedPattern = [7, 5].map((width) => width / distance).toList();

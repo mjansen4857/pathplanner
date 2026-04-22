@@ -37,6 +37,7 @@ class PrefsKeys {
   static const String showStates = 'showStates';
   static const String showRobotDetails = 'showRobotDetails';
   static const String showGrid = 'showGrid';
+  static const String showCurvatureCombs = 'showCurvatureCombs';
   static const String telemetryUseSim = 'telemetryUseSim';
   static const String flModuleX = 'flModuleX';
   static const String flModuleY = 'flModuleY';
@@ -66,9 +67,9 @@ class Defaults {
   static const bool autosCompactView = false;
   static const bool hotReloadEnabled = false;
   static List<String> pathFolders =
-      []; // Can't be const or user wont be able to add new folders
+  []; // Can't be const or user wont be able to add new folders
   static List<String> autoFolders =
-      []; // Can't be const or user wont be able to add new folders
+  []; // Can't be const or user wont be able to add new folders
   static const bool snapToGuidelines = true;
   static const bool hidePathsOnHover = true;
   static const double defaultMaxVel = 3.0;
@@ -88,6 +89,7 @@ class Defaults {
   static const bool showStates = false;
   static const bool showRobotDetails = false;
   static const bool showGrid = false;
+  static const bool showCurvatureCombs = true;
   static const bool telemetryUseSim = true;
   static const double flModuleX = 0.273;
   static const double flModuleY = 0.273;

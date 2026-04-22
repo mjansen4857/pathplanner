@@ -558,6 +558,14 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 					points[i].waypointRelativePos, rotation);
 		}
 
+        units::meter_t curveLen =
+            points[i - 1].position.Distance(points[i + 1].position);
+
+        if (curveLen < 0.05_m) {
+            // Prevent oversampling points that are very close together
+            continue;
+        }
+
 		units::meter_t curveRadius = GeometryUtil::calculateRadius(
 				points[i - 1].position, points[i].position,
 				points[i + 1].position);

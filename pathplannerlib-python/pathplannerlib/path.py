@@ -1206,6 +1206,12 @@ class PathPlannerPath:
                 rotation = angleToTarget + pointZone.rotationOffset
                 points[i].rotationTarget = RotationTarget(points[i].waypointRelativePos, rotation)
 
+            curveLen = points[i - 1].position.distance(points[i + 1].position)
+
+            if curveLen < 0.05:
+                # Prevent oversampling points that are very close together
+                continue
+
             curveRadius = calculateRadius(points[i - 1].position, points[i].position, points[i + 1].position)
 
             if not math.isfinite(curveRadius):

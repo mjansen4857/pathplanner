@@ -901,6 +901,14 @@ public class PathPlannerPath {
             new RotationTarget(points.get(i).waypointRelativePos, rotation);
       }
 
+      double curveLen =
+          points.get(i - 1).position.getDistance(points.get(i + 1).position);
+
+      if (curveLen < 0.05) {
+          // Prevent oversampling points that are very close together
+          continue;
+      }
+
       double curveRadius =
           GeometryUtil.calculateRadius(
               points.get(i - 1).position, points.get(i).position, points.get(i + 1).position);

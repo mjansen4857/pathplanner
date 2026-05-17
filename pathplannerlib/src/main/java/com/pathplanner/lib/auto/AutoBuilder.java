@@ -140,6 +140,175 @@ public class AutoBuilder {
   }
 
   /**
+   * Configures the AutoBuilder to follow paths by projected arc length instead of elapsed time. The
+   * robot's pose is projected onto the path each cycle, and the controller targets the state at
+   * that arc length. Useful when disturbances (obstacles, contact, momentary slippage) would cause
+   * a time-based reference to race ahead of the actual robot progress.
+   *
+   * <p>Pathfinding is <strong>not</strong> configured by this method — distance-based mode supports
+   * direct path following only. For pathfinding workflows, use the time-based {@link
+   * #configure(Supplier, Consumer, Supplier, BiConsumer, PathFollowingController, RobotConfig,
+   * BooleanSupplier, Subsystem...)} method.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
+   *     speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor.
+   * @param controller Path following controller (typically {@link
+   *     com.pathplanner.lib.controllers.PPCrossTrackHolonomicController})
+   * @param robotConfig The robot configuration
+   * @param endConditions End-of-path tolerances. Use {@link
+   *     FollowPathDistanceCommand.EndConditions#defaults()} for sane defaults.
+   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
+   *     the field. This will maintain a global blue alliance origin.
+   * @param driveRequirements the subsystem requirements for the robot's drive train
+   */
+  public static void configureDistanceBased(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
+      BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      FollowPathDistanceCommand.EndConditions endConditions,
+      BooleanSupplier shouldFlipPath,
+      Subsystem... driveRequirements) {
+    if (globals.configured) {
+      DriverStation.reportError(
+          "Auto builder has already been configured. This is likely in error.", true);
+    }
+
+    globals.pathFollowingCommandBuilder =
+        (path) ->
+            new FollowPathDistanceCommand(
+                path,
+                poseSupplier,
+                robotRelativeSpeedsSupplier,
+                output,
+                controller,
+                robotConfig,
+                shouldFlipPath,
+                endConditions,
+                driveRequirements);
+    globals.poseSupplier = poseSupplier;
+    globals.resetPose = resetPose;
+    globals.configured = true;
+    globals.shouldFlipPath = shouldFlipPath;
+    globals.isHolonomic = robotConfig.isHolonomic;
+    // Pathfinding is not configured for distance-based mode -- PathfindingCommand is
+    // intrinsically time-based and integrating distance-based pathfinding is a separate concern.
+    globals.pathfindingConfigured = false;
+  }
+
+  /**
+   * Configures the AutoBuilder for distance-based path following using {@link
+   * FollowPathDistanceCommand.EndConditions#defaults()}.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
+   *     speeds
+   * @param output Output function for robot-relative ChassisSpeeds and per-module feedforwards.
+   * @param controller Path following controller
+   * @param robotConfig The robot configuration
+   * @param shouldFlipPath Supplier that determines if paths should be flipped
+   * @param driveRequirements the subsystem requirements for the robot's drive train
+   */
+  public static void configureDistanceBased(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
+      BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      BooleanSupplier shouldFlipPath,
+      Subsystem... driveRequirements) {
+    configureDistanceBased(
+        poseSupplier,
+        resetPose,
+        robotRelativeSpeedsSupplier,
+        output,
+        controller,
+        robotConfig,
+        FollowPathDistanceCommand.EndConditions.defaults(),
+        shouldFlipPath,
+        driveRequirements);
+  }
+
+  /**
+   * Configures the AutoBuilder for distance-based path following without per-module feedforwards.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
+   *     speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds.
+   * @param controller Path following controller
+   * @param robotConfig The robot configuration
+   * @param endConditions End-of-path tolerances
+   * @param shouldFlipPath Supplier that determines if paths should be flipped
+   * @param driveRequirements the subsystem requirements for the robot's drive train
+   */
+  public static void configureDistanceBased(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
+      Consumer<ChassisSpeeds> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      FollowPathDistanceCommand.EndConditions endConditions,
+      BooleanSupplier shouldFlipPath,
+      Subsystem... driveRequirements) {
+    configureDistanceBased(
+        poseSupplier,
+        resetPose,
+        robotRelativeSpeedsSupplier,
+        (speeds, feedforwards) -> output.accept(speeds),
+        controller,
+        robotConfig,
+        endConditions,
+        shouldFlipPath,
+        driveRequirements);
+  }
+
+  /**
+   * Configures the AutoBuilder for distance-based path following with default end conditions and
+   * without per-module feedforwards.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
+   *     speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds.
+   * @param controller Path following controller
+   * @param robotConfig The robot configuration
+   * @param shouldFlipPath Supplier that determines if paths should be flipped
+   * @param driveRequirements the subsystem requirements for the robot's drive train
+   */
+  public static void configureDistanceBased(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
+      Consumer<ChassisSpeeds> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      BooleanSupplier shouldFlipPath,
+      Subsystem... driveRequirements) {
+    configureDistanceBased(
+        poseSupplier,
+        resetPose,
+        robotRelativeSpeedsSupplier,
+        output,
+        controller,
+        robotConfig,
+        FollowPathDistanceCommand.EndConditions.defaults(),
+        shouldFlipPath,
+        driveRequirements);
+  }
+
+  /**
    * Holder for all global variables directly referenced by AutoBuilder.
    *
    * <p>This class exists to ensure that {@link #resetForTesting()} resets all static state in

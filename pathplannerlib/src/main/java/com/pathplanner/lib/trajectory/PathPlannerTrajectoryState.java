@@ -22,6 +22,8 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
   public double linearVelocity = 0.0;
   /** The field-relative heading, or direction of travel, at this state */
   public Rotation2d heading = Rotation2d.kZero;
+  /** The cumulative arc length traveled along the path to reach this state, in meters */
+  public double distanceAlongPath = 0.0;
 
   /** The feedforwards for each module */
   public DriveFeedforwards feedforwards;
@@ -68,6 +70,8 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
 
     lerpedState.heading = heading;
     lerpedState.linearVelocity = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, t);
+    lerpedState.distanceAlongPath =
+        MathUtil.interpolate(distanceAlongPath, endVal.distanceAlongPath, t);
 
     // Integrate the field speeds to get the pose for this interpolated state, since linearly
     // interpolating the pose gives an inaccurate result if the speeds are changing between states
@@ -120,6 +124,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     reversed.linearVelocity = -linearVelocity;
     reversed.feedforwards = feedforwards.reverse();
     reversed.heading = heading.plus(Rotation2d.k180deg);
+    reversed.distanceAlongPath = distanceAlongPath;
 
     return reversed;
   }
@@ -138,6 +143,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     flipped.fieldSpeeds = FlippingUtil.flipFieldSpeeds(fieldSpeeds);
     flipped.feedforwards = feedforwards.flip();
     flipped.heading = FlippingUtil.flipFieldRotation(heading);
+    flipped.distanceAlongPath = distanceAlongPath;
 
     return flipped;
   }
@@ -156,6 +162,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     copy.linearVelocity = linearVelocity;
     copy.feedforwards = feedforwards;
     copy.heading = heading;
+    copy.distanceAlongPath = distanceAlongPath;
     copy.deltaPos = deltaPos;
     copy.deltaRot = deltaRot;
     copy.moduleStates = moduleStates;

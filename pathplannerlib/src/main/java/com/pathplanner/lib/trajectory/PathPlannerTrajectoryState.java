@@ -24,6 +24,11 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
   public Rotation2d heading = Rotation2d.kZero;
   /** The cumulative arc length traveled along the path to reach this state, in meters */
   public double distanceAlongPath = 0.0;
+  /**
+   * The signed path curvature at this state in radians per meter (1/m). Positive curves left,
+   * negative curves right. Used by curvature-feedforward path-following controllers.
+   */
+  public double curvatureRadPerMeter = 0.0;
 
   /** The feedforwards for each module */
   public DriveFeedforwards feedforwards;
@@ -68,34 +73,48 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
             MathUtil.interpolate(
                 fieldSpeeds.omegaRadiansPerSecond, endVal.fieldSpeeds.omegaRadiansPerSecond, t));
 
+    // heading is the chord direction (state[k] -> state[k+1]) and is constant along a segment.
+    // Integration below uses this start-state heading throughout, which keeps the integrated
+    // position on the chord rather than drifting toward the underlying curve. Callers reading
+    // targetState.heading see the current-segment chord direction, which is the correct
+    // tangent for perpendicular cross-track measurement.
     lerpedState.heading = heading;
     lerpedState.linearVelocity = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, t);
     lerpedState.distanceAlongPath =
         MathUtil.interpolate(distanceAlongPath, endVal.distanceAlongPath, t);
+    lerpedState.curvatureRadPerMeter =
+        MathUtil.interpolate(curvatureRadPerMeter, endVal.curvatureRadPerMeter, t);
 
     // Integrate the field speeds to get the pose for this interpolated state, since linearly
-    // interpolating the pose gives an inaccurate result if the speeds are changing between states
+    // interpolating the pose gives an inaccurate result if the speeds are changing between
+    // states. Forward Euler with 10 ms steps, plus a remainder step for the last partial
+    // interval. Linear velocity is lerped per step; heading stays constant (the chord
+    // direction).
     double lerpedXPos = pose.getX();
     double lerpedYPos = pose.getY();
-    double intTime = timeSeconds + 0.01;
-    while (true) {
-      double intT = (intTime - timeSeconds) / (lerpedState.timeSeconds - timeSeconds);
-      double intLinearVel = MathUtil.interpolate(linearVelocity, lerpedState.linearVelocity, intT);
-      double intVX = intLinearVel * lerpedState.heading.getCos();
-      double intVY = intLinearVel * lerpedState.heading.getSin();
+    if (deltaT > 0) {
+      double cosH = heading.getCos();
+      double sinH = heading.getSin();
+      double intTime = timeSeconds;
+      while (true) {
+        double intT = (intTime - timeSeconds) / deltaT;
+        double intLinearVel = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, intT);
+        double intVX = intLinearVel * cosH;
+        double intVY = intLinearVel * sinH;
 
-      if (intTime >= lerpedState.timeSeconds - 0.01) {
-        double dt = lerpedState.timeSeconds - intTime;
-        lerpedXPos += intVX * dt;
-        lerpedYPos += intVY * dt;
-        break;
+        double remainingTime = lerpedState.timeSeconds - intTime;
+        if (remainingTime <= 0.01) {
+          lerpedXPos += intVX * remainingTime;
+          lerpedYPos += intVY * remainingTime;
+          break;
+        }
+
+        lerpedXPos += intVX * 0.01;
+        lerpedYPos += intVY * 0.01;
+        intTime += 0.01;
       }
-
-      lerpedXPos += intVX * 0.01;
-      lerpedYPos += intVY * 0.01;
-
-      intTime += 0.01;
     }
+    // If deltaT == 0, pose stays at this.pose -- no integration needed, no divide-by-zero.
 
     lerpedState.pose =
         new Pose2d(
@@ -125,6 +144,8 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     reversed.feedforwards = feedforwards.reverse();
     reversed.heading = heading.plus(Rotation2d.k180deg);
     reversed.distanceAlongPath = distanceAlongPath;
+    // Reversing direction of travel flips the sign of curvature (left becomes right).
+    reversed.curvatureRadPerMeter = -curvatureRadPerMeter;
 
     return reversed;
   }
@@ -144,6 +165,13 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     flipped.feedforwards = feedforwards.flip();
     flipped.heading = FlippingUtil.flipFieldRotation(heading);
     flipped.distanceAlongPath = distanceAlongPath;
+    // Sign of signed curvature is preserved under 180-deg rotation (chirality preserved) but
+    // inverted under mirror reflection (chirality flipped).
+    flipped.curvatureRadPerMeter =
+        switch (FlippingUtil.symmetryType) {
+          case kMirrored -> -curvatureRadPerMeter;
+          case kRotational -> curvatureRadPerMeter;
+        };
 
     return flipped;
   }
@@ -163,6 +191,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     copy.feedforwards = feedforwards;
     copy.heading = heading;
     copy.distanceAlongPath = distanceAlongPath;
+    copy.curvatureRadPerMeter = curvatureRadPerMeter;
     copy.deltaPos = deltaPos;
     copy.deltaRot = deltaRot;
     copy.moduleStates = moduleStates;

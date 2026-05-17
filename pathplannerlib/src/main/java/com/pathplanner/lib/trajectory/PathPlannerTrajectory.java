@@ -34,6 +34,7 @@ public class PathPlannerTrajectory {
     this.states = states;
     this.events = events;
     populateDistanceAlongPath(this.states);
+    populateCurvature(this.states);
   }
 
   /**
@@ -49,6 +50,35 @@ public class PathPlannerTrajectory {
       double segment =
           states.get(i).pose.getTranslation().getDistance(states.get(i - 1).pose.getTranslation());
       states.get(i).distanceAlongPath = states.get(i - 1).distanceAlongPath + segment;
+    }
+  }
+
+  /**
+   * Walk the state list and assign each state's signed path curvature in radians per meter (1/m),
+   * computed geometrically from the three adjacent state positions. Endpoints get zero. Sign
+   * convention matches {@link com.pathplanner.lib.util.GeometryUtil#calculateRadius}: positive
+   * curvature corresponds to a left turn. Works for any construction path, including Choreo
+   * trajectories.
+   */
+  private static void populateCurvature(List<PathPlannerTrajectoryState> states) {
+    int n = states.size();
+    if (n < 3) {
+      for (var s : states) s.curvatureRadPerMeter = 0.0;
+      return;
+    }
+    states.get(0).curvatureRadPerMeter = 0.0;
+    states.get(n - 1).curvatureRadPerMeter = 0.0;
+    for (int i = 1; i < n - 1; i++) {
+      double signedRadius =
+          GeometryUtil.calculateRadius(
+              states.get(i - 1).pose.getTranslation(),
+              states.get(i).pose.getTranslation(),
+              states.get(i + 1).pose.getTranslation());
+      if (!Double.isFinite(signedRadius) || Math.abs(signedRadius) < 1e-9) {
+        states.get(i).curvatureRadPerMeter = 0.0;
+      } else {
+        states.get(i).curvatureRadPerMeter = 1.0 / signedRadius;
+      }
     }
   }
 
@@ -233,6 +263,7 @@ public class PathPlannerTrajectory {
     // Populate cumulative arc length from pose positions. Works for both the Choreo branch
     // (states come from the ideal-trajectory cache) and the generated branch.
     populateDistanceAlongPath(this.states);
+    populateCurvature(this.states);
   }
 
   private static void generateStates(

@@ -114,16 +114,98 @@ public class PathPlannerTrajectoryTest {
 
   @Test
   public void sampleByDistanceReturnsDistanceAlongPathExactly() {
-    // The interpolated distanceAlongPath field is a pure lerp of the bracket values, so it
-    // can be asserted exactly. (Pose values go through PathPlannerTrajectoryState.interpolate
-    // which Euler-integrates and inherits an existing upstream quirk where the loop starts
-    // at timeSeconds + 0.01; that's tested via the agreement-with-sample(time) tests below
-    // rather than absolute pose round-tripping.)
+    // distanceAlongPath is a pure lerp of the bracket values.
     var traj = quarterArc(1.0, 1.0);
     for (var state : traj.getStates()) {
       var sampled = traj.sampleByDistance(state.distanceAlongPath);
       assertEquals(state.distanceAlongPath, sampled.distanceAlongPath, 1e-9);
     }
+  }
+
+  @Test
+  public void interpolateAtT1ReturnsEndPose() {
+    // Regression: pre-fix interpolate's loop started at timeSeconds + 0.01 and used the start
+    // state's heading throughout, so even at t=1 the pose was 1 0.01 s step short of endVal.
+    // With the fix, interpolate(s0, s1, 1.0) should reproduce s1.pose to sub-mm.
+    var traj = straightLine(2.0, 1.0);
+    var states = traj.getStates();
+    var a = states.get(10);
+    var b = states.get(11);
+    var lerped = a.interpolate(b, 1.0);
+    assertEquals(b.pose.getX(), lerped.pose.getX(), 1e-9);
+    assertEquals(b.pose.getY(), lerped.pose.getY(), 1e-9);
+  }
+
+  @Test
+  public void interpolateAtT0ReturnsStartPose() {
+    var traj = straightLine(2.0, 1.0);
+    var states = traj.getStates();
+    var a = states.get(10);
+    var b = states.get(11);
+    var lerped = a.interpolate(b, 0.0);
+    assertEquals(a.pose.getX(), lerped.pose.getX(), 1e-9);
+    assertEquals(a.pose.getY(), lerped.pose.getY(), 1e-9);
+  }
+
+  @Test
+  public void interpolateAtMidpointGivesGeometricMidpointOnStraightLine() {
+    var traj = straightLine(2.0, 1.0);
+    var states = traj.getStates();
+    var a = states.get(10); // x = 0.5
+    var b = states.get(11); // x = 0.55
+    var mid = a.interpolate(b, 0.5);
+    assertEquals(0.525, mid.pose.getX(), 1e-9);
+    assertEquals(0.0, mid.pose.getY(), 1e-9);
+  }
+
+  @Test
+  public void interpolateWithZeroDeltaTReturnsCopyOfStart() {
+    // Regression: pre-fix code divided by zero in intT = (intTime - timeSeconds) / deltaT,
+    // producing NaN pose. With the fix the integration is skipped when deltaT == 0.
+    var s0 = new PathPlannerTrajectoryState();
+    s0.timeSeconds = 1.0;
+    s0.pose = new Pose2d(new Translation2d(3.0, 4.0), Rotation2d.kZero);
+    s0.heading = Rotation2d.kZero;
+    s0.linearVelocity = 2.0;
+    s0.fieldSpeeds = new ChassisSpeeds(2.0, 0, 0);
+    s0.feedforwards = DriveFeedforwards.zeros(4);
+    var s1 = new PathPlannerTrajectoryState();
+    s1.timeSeconds = 1.0; // same time as s0
+    s1.pose = new Pose2d(new Translation2d(3.5, 4.0), Rotation2d.kZero);
+    s1.heading = Rotation2d.kZero;
+    s1.linearVelocity = 2.0;
+    s1.fieldSpeeds = new ChassisSpeeds(2.0, 0, 0);
+    s1.feedforwards = DriveFeedforwards.zeros(4);
+    var lerped = s0.interpolate(s1, 0.5);
+    assertTrue(Double.isFinite(lerped.pose.getX()), "deltaT=0 must not produce NaN");
+    assertTrue(Double.isFinite(lerped.pose.getY()), "deltaT=0 must not produce NaN");
+    assertEquals(s0.pose.getX(), lerped.pose.getX(), 1e-9);
+    assertEquals(s0.pose.getY(), lerped.pose.getY(), 1e-9);
+  }
+
+  @Test
+  public void interpolateWithSmallDeltaTIntegratesForward() {
+    // Regression: pre-fix code with deltaT < 0.01 entered the break case immediately with
+    // dt = lerpedState.timeSeconds - intTime = NEGATIVE, integrating BACKWARDS. With the fix,
+    // deltaT = 0.005 integrates v * 0.005 = 0.005 of forward motion.
+    var s0 = new PathPlannerTrajectoryState();
+    s0.timeSeconds = 0.0;
+    s0.pose = new Pose2d(new Translation2d(0.0, 0.0), Rotation2d.kZero);
+    s0.heading = Rotation2d.kZero;
+    s0.linearVelocity = 1.0;
+    s0.fieldSpeeds = new ChassisSpeeds(1.0, 0, 0);
+    s0.feedforwards = DriveFeedforwards.zeros(4);
+    var s1 = new PathPlannerTrajectoryState();
+    s1.timeSeconds = 0.005;
+    s1.pose = new Pose2d(new Translation2d(0.005, 0.0), Rotation2d.kZero);
+    s1.heading = Rotation2d.kZero;
+    s1.linearVelocity = 1.0;
+    s1.fieldSpeeds = new ChassisSpeeds(1.0, 0, 0);
+    s1.feedforwards = DriveFeedforwards.zeros(4);
+    var lerped = s0.interpolate(s1, 1.0);
+    // Forward motion expected: 1.0 m/s * 0.005 s = 0.005 m
+    assertEquals(0.005, lerped.pose.getX(), 1e-9);
+    assertEquals(0.0, lerped.pose.getY(), 1e-9);
   }
 
   @Test
@@ -194,6 +276,62 @@ public class PathPlannerTrajectoryTest {
     var copy = state.copyWithTime(42.0);
     assertEquals(state.distanceAlongPath, copy.distanceAlongPath, DELTA);
     assertEquals(42.0, copy.timeSeconds, DELTA);
+  }
+
+  @Test
+  public void curvaturePopulatedOnStraightLineIsZero() {
+    var traj = straightLine(2.0, 1.0);
+    for (var state : traj.getStates()) {
+      assertEquals(0.0, state.curvatureRadPerMeter, 1e-9);
+    }
+  }
+
+  @Test
+  public void curvaturePopulatedOnQuarterArcMatchesReciprocalRadius() {
+    // Unit circle -> kappa = 1.0 (1/m). Positive sign because the arc goes CCW (left turn).
+    var traj = quarterArc(1.0, 1.0);
+    // Interior states (skip endpoints which get 0).
+    var states = traj.getStates();
+    for (int i = 1; i < states.size() - 1; i++) {
+      // Allow some tolerance because three-point circle fit on a sampled arc has small error.
+      assertEquals(
+          1.0, states.get(i).curvatureRadPerMeter, 0.05, "expected curvature ~1.0 at state " + i);
+      assertTrue(
+          states.get(i).curvatureRadPerMeter > 0,
+          "left-turning arc should have positive curvature at state " + i);
+    }
+  }
+
+  @Test
+  public void curvatureEndpointsAreZero() {
+    var traj = quarterArc(1.0, 1.0);
+    var states = traj.getStates();
+    assertEquals(0.0, states.get(0).curvatureRadPerMeter, 1e-9);
+    assertEquals(0.0, states.get(states.size() - 1).curvatureRadPerMeter, 1e-9);
+  }
+
+  @Test
+  public void interpolatePreservesCurvatureLinearly() {
+    var s0 = new PathPlannerTrajectoryState();
+    s0.timeSeconds = 0;
+    s0.pose = Pose2d.kZero;
+    s0.heading = Rotation2d.kZero;
+    s0.linearVelocity = 1.0;
+    s0.fieldSpeeds = new ChassisSpeeds(1.0, 0, 0);
+    s0.feedforwards = DriveFeedforwards.zeros(4);
+    s0.curvatureRadPerMeter = 0.0;
+
+    var s1 = new PathPlannerTrajectoryState();
+    s1.timeSeconds = 1.0;
+    s1.pose = new Pose2d(new Translation2d(1.0, 0), Rotation2d.kZero);
+    s1.heading = Rotation2d.kZero;
+    s1.linearVelocity = 1.0;
+    s1.fieldSpeeds = new ChassisSpeeds(1.0, 0, 0);
+    s1.feedforwards = DriveFeedforwards.zeros(4);
+    s1.curvatureRadPerMeter = 2.0;
+
+    var mid = s0.interpolate(s1, 0.5);
+    assertEquals(1.0, mid.curvatureRadPerMeter, DELTA);
   }
 
   @Test

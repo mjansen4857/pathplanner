@@ -145,6 +145,79 @@ public class PPCrossTrackHolonomicControllerTest {
   }
 
   @Test
+  public void alongTrackErrorProducesTangentDirectionCorrection() {
+    // With alongTrackKp > 0, robot BEHIND target along the tangent should get extra positive
+    // tangent-direction velocity to catch up.
+    var controller =
+        new PPCrossTrackHolonomicController(
+            new PIDConstants(0.0, 0.0, 0.0), 2.0, new PIDConstants(0.0, 0.0, 0.0), 0.0);
+    // Path going +X, target at (0.5, 0), robot at (0, 0). Robot is 0.5m behind along tangent.
+    var target = targetAt(0.5, 0.0, 0.0);
+    var pose = new Pose2d(new Translation2d(0.0, 0.0), Rotation2d.kZero);
+    var speeds = controller.calculateRobotRelativeSpeeds(pose, target);
+    // alongTrackError = (0 - 0.5) * 1 + 0 * 0 = -0.5  (robot behind = negative delta on +tangent)
+    // alongTrackCorrection = -2.0 * -0.5 = +1.0 m/s extra tangent velocity
+    // Tangent FF = 2.0 m/s. Total vx_field = 2.0 + 1.0 = 3.0.
+    assertEquals(3.0, speeds.vxMetersPerSecond, DELTA);
+    assertEquals(0.0, speeds.vyMetersPerSecond, DELTA);
+  }
+
+  @Test
+  public void alongTrackErrorAheadProducesNegativeCorrection() {
+    var controller =
+        new PPCrossTrackHolonomicController(
+            new PIDConstants(0.0, 0.0, 0.0), 2.0, new PIDConstants(0.0, 0.0, 0.0), 0.0);
+    // Robot 0.5m AHEAD along tangent. Should brake (negative correction).
+    var target = targetAt(0.0, 0.0, 0.0);
+    var pose = new Pose2d(new Translation2d(0.5, 0.0), Rotation2d.kZero);
+    var speeds = controller.calculateRobotRelativeSpeeds(pose, target);
+    // alongTrackError = +0.5, correction = -1.0. Tangent FF = 2.0. Total = 2.0 - 1.0 = 1.0.
+    assertEquals(1.0, speeds.vxMetersPerSecond, DELTA);
+  }
+
+  @Test
+  public void tangentFlipSuppressesDTermAndCurvatureFf() {
+    // Pure D + curvature FF, no P. If the controller weren't aware of tangent discontinuities,
+    // a 180-deg flip of targetState.heading between ticks would flip cross-track sign and
+    // produce a huge D-term spike. Verify the flip is detected and the spike suppressed.
+    var controller =
+        new PPCrossTrackHolonomicController(
+            new PIDConstants(0.0, 0.0, 1.0), new PIDConstants(0.0, 0.0, 0.0), 0.1);
+
+    // Tick 1: tangent points +X, robot 0.5m left of target. Establishes lastTangentHeading.
+    var target1 = targetAt(0.0, 0.0, 0.0);
+    target1.curvatureRadPerMeter = 10.0;
+    controller.calculateRobotRelativeSpeeds(
+        new Pose2d(new Translation2d(0, 0.5), Rotation2d.kZero), target1);
+
+    // Tick 2: same tangent, robot still off-path. D-term sees no rate change, output should be
+    // close to zero (just the small curvatureFf since target has nonzero kappa and v).
+    var t2Out =
+        controller.calculateRobotRelativeSpeeds(
+            new Pose2d(new Translation2d(0, 0.5), Rotation2d.kZero), target1);
+    double t2Mag = Math.hypot(t2Out.vxMetersPerSecond - 2.0, t2Out.vyMetersPerSecond);
+
+    // Tick 3: tangent flips 180 deg (cusp). curvature still high. If the controller doesn't
+    // suppress, D-term sees a huge sign flip and curvature FF produces a big perpendicular
+    // velocity, so the output magnitude jumps. With suppression, the output should stay
+    // similar to tick 2's magnitude (no kick).
+    var target2 = targetAt(0.0, 0.0, Math.PI);
+    target2.curvatureRadPerMeter = 10.0;
+    var t3Out =
+        controller.calculateRobotRelativeSpeeds(
+            new Pose2d(new Translation2d(0, 0.5), Rotation2d.kZero), target2);
+    double t3Mag = Math.hypot(t3Out.vxMetersPerSecond + 2.0, t3Out.vyMetersPerSecond);
+
+    // Without suppression, t3 would have a huge spike (10+ m/s perpendicular). With suppression,
+    // it should be near zero (no D-term, no curvature FF).
+    assertTrue(
+        t3Mag < 0.1,
+        "tangent-flip suppression failed: D+curvature kick should be suppressed (got "
+            + t3Mag
+            + ")");
+  }
+
+  @Test
   public void resetClearsCrossTrackDerivativeState() {
     // Pure D, period 0.02s: D output = (e_n - e_{n-1}) / 0.02, applied with sign such that vy
     // pushes back toward path (i.e. for rising +y error, vy goes -y).

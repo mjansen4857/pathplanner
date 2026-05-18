@@ -267,11 +267,14 @@ public class FollowPathDistanceCommand extends Command {
     if (!isStoppingPath()) return true;
 
     PathPlannerTrajectoryState endState = trajectory.getEndState();
-    double tx = endState.heading.getCos();
-    double ty = endState.heading.getSin();
     ChassisSpeeds fieldSpeeds = speedsToFieldFrame();
-    double alongTangent = fieldSpeeds.vxMetersPerSecond * tx + fieldSpeeds.vyMetersPerSecond * ty;
-    boolean velocityOk = Math.abs(alongTangent) < endConditions.velocityToleranceMPS();
+    // Gate on TOTAL field-speed magnitude rather than just the tangent component. Using the
+    // tangent projection alone allows isFinished to fire while the cross-track PD is still
+    // closing perpendicular error -- the robot stops with residual lateral offset because the
+    // command exits before cross-track motion completes. Total-magnitude gate ensures the robot
+    // has settled in BOTH directions before declaring finished.
+    double totalSpeed = Math.hypot(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
+    boolean velocityOk = totalSpeed < endConditions.velocityToleranceMPS();
 
     double headingErr =
         Math.abs(poseSupplier.get().getRotation().minus(endState.pose.getRotation()).getRadians());

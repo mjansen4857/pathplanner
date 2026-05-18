@@ -33,6 +33,53 @@ public class PathPlannerTrajectory {
   public PathPlannerTrajectory(List<PathPlannerTrajectoryState> states, List<Event> events) {
     this.states = states;
     this.events = events;
+    populateDistanceAlongPath(this.states);
+    populateCurvature(this.states);
+  }
+
+  /**
+   * Walk the state list and assign each state's cumulative arc length from the trajectory start by
+   * summing pose-to-pose distances. Always recomputes from poses, so calling twice on the same
+   * state list yields the same result. Used so that {@link #sampleByDistance(double)} works for any
+   * construction path, including Choreo trajectories that don't go through {@link #generateStates}.
+   */
+  private static void populateDistanceAlongPath(List<PathPlannerTrajectoryState> states) {
+    if (states.isEmpty()) return;
+    states.get(0).distanceAlongPath = 0.0;
+    for (int i = 1; i < states.size(); i++) {
+      double segment =
+          states.get(i).pose.getTranslation().getDistance(states.get(i - 1).pose.getTranslation());
+      states.get(i).distanceAlongPath = states.get(i - 1).distanceAlongPath + segment;
+    }
+  }
+
+  /**
+   * Walk the state list and assign each state's signed path curvature in radians per meter (1/m),
+   * computed geometrically from the three adjacent state positions. Endpoints get zero. Sign
+   * convention matches {@link com.pathplanner.lib.util.GeometryUtil#calculateRadius}: positive
+   * curvature corresponds to a left turn. Works for any construction path, including Choreo
+   * trajectories.
+   */
+  private static void populateCurvature(List<PathPlannerTrajectoryState> states) {
+    int n = states.size();
+    if (n < 3) {
+      for (var s : states) s.curvatureRadPerMeter = 0.0;
+      return;
+    }
+    states.get(0).curvatureRadPerMeter = 0.0;
+    states.get(n - 1).curvatureRadPerMeter = 0.0;
+    for (int i = 1; i < n - 1; i++) {
+      double signedRadius =
+          GeometryUtil.calculateRadius(
+              states.get(i - 1).pose.getTranslation(),
+              states.get(i).pose.getTranslation(),
+              states.get(i + 1).pose.getTranslation());
+      if (!Double.isFinite(signedRadius) || Math.abs(signedRadius) < 1e-9) {
+        states.get(i).curvatureRadPerMeter = 0.0;
+      } else {
+        states.get(i).curvatureRadPerMeter = 1.0 / signedRadius;
+      }
+    }
   }
 
   /**
@@ -212,6 +259,11 @@ public class PathPlannerTrajectory {
       // Create feedforwards for the end state
       states.get(states.size() - 1).feedforwards = DriveFeedforwards.zeros(config.numModules);
     }
+
+    // Populate cumulative arc length from pose positions. Works for both the Choreo branch
+    // (states come from the ideal-trajectory cache) and the generated branch.
+    populateDistanceAlongPath(this.states);
+    populateCurvature(this.states);
   }
 
   private static void generateStates(
@@ -712,6 +764,51 @@ public class PathPlannerTrajectory {
    */
   public PathPlannerTrajectoryState sample(Time time) {
     return sample(time.in(Seconds));
+  }
+
+  /**
+   * Get the total arc length of the trajectory in meters.
+   *
+   * @return Cumulative distance along the path from start to end
+   */
+  public double getTotalArcLength() {
+    return getEndState().distanceAlongPath;
+  }
+
+  /**
+   * Get the target state at the given arc length along the trajectory. Unlike {@link
+   * #sample(double)}, this samples by distance traveled rather than elapsed time, which is the
+   * natural parameterization for projection-based path following.
+   *
+   * @param distanceMeters Distance along the path to sample at, clamped to [0, totalArcLength]
+   * @return The target state
+   */
+  public PathPlannerTrajectoryState sampleByDistance(double distanceMeters) {
+    if (distanceMeters <= getInitialState().distanceAlongPath) return getInitialState();
+    if (distanceMeters >= getTotalArcLength()) return getEndState();
+
+    int low = 1;
+    int high = states.size() - 1;
+
+    while (low != high) {
+      int mid = (low + high) / 2;
+      if (getState(mid).distanceAlongPath < distanceMeters) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+
+    var sample = getState(low);
+    var prevSample = getState(low - 1);
+
+    double segmentLength = sample.distanceAlongPath - prevSample.distanceAlongPath;
+    if (segmentLength < 1e-6) {
+      return sample;
+    }
+
+    return prevSample.interpolate(
+        sample, (distanceMeters - prevSample.distanceAlongPath) / segmentLength);
   }
 
   /**

@@ -67,16 +67,25 @@ public class FollowPathDistanceCommand extends Command {
     }
   }
 
-  // Projection: lookahead window in number of state-array segments. PathPlanner state spacing is
-  // roughly 5 cm, so 6 segments = ~30 cm. Tight enough to reject odometry glitches, wide enough to
-  // not lose the path during fast moves at 50 Hz.
+  // Closest-point projection window, in state segments (~5 cm each). Wide enough for 50 Hz moves.
   private static final int LOOKAHEAD_SEGMENTS = 6;
-  // Big-gap fallback: if the best closest-point distance in the lookahead window exceeds this,
-  // run a full-path scan to recover (e.g. after odometry reset or large disturbance).
+  // If the best closest-point distance in the window exceeds this, fall back to a full-path scan.
   private static final double BIG_GAP_THRESHOLD_M = 0.5;
-  // Maximum advance in arc length per execute() tick. Caps single-frame projection jumps that
-  // would otherwise let odometry spikes race the target state ahead.
+  // Max projection advance per execute(); caps single-frame jumps from odometry spikes.
   private static final double MAX_DELTA_S_PER_TICK = 0.3;
+
+  // Velocity-FF override at planner-stopping samples. At v=0 samples the planned FF, position
+  // errors, and curvature FF are all zero, so the controller outputs nothing and the chassis
+  // can't leave the sample. When local planned v is below threshold and lookahead v is above,
+  // override targetState's velocity FF (linearVelocity + fieldSpeeds) with a blended peek
+  // value; pose/heading/curvature stay at the actual projection so position errors remain
+  // honest. The dual-check correctly stays off at the true path end (both local and lookahead
+  // are low) so the robot is allowed to stop.
+  private static final double BOOTSTRAP_LOOKAHEAD_M = 0.30;
+  // Threshold below which we override. Derived as sqrt(2 * a * lookahead/N): the velocity at
+  // which the post-stop ramp has covered ~lookahead/N meters. N=6 reproduces ~1.0 m/s on a
+  // 10 m/s² ramp (the empirically-tuned default) and adapts to higher/lower accel paths.
+  private static final double BOOTSTRAP_THRESHOLD_RAMP_DIVISOR = 6.0;
 
   private final PathPlannerPath originalPath;
   private final Supplier<Pose2d> poseSupplier;
@@ -92,6 +101,7 @@ public class FollowPathDistanceCommand extends Command {
   private PathPlannerTrajectory trajectory;
   private double lastProjectedS;
   private int lastProjectedIdx;
+  private double bootstrapVelocityThresholdMps;
 
   /**
    * Construct a distance-based path-following command.
@@ -217,6 +227,13 @@ public class FollowPathDistanceCommand extends Command {
     lastProjectedIdx = initialProjection.segmentIndex;
     lastProjectedS = initialProjection.arcLength;
 
+    // Derive the bootstrap velocity threshold from this path's max accel. Clamped so an
+    // unlimited-constraint or zero-accel path doesn't produce absurd values.
+    double maxAccel = path.getGlobalConstraints().maxAccelerationMPSSq();
+    if (!Double.isFinite(maxAccel) || maxAccel <= 0.0) maxAccel = 10.0;
+    bootstrapVelocityThresholdMps =
+        Math.sqrt(2.0 * maxAccel * BOOTSTRAP_LOOKAHEAD_M / BOOTSTRAP_THRESHOLD_RAMP_DIVISOR);
+
     eventScheduler.initialize(trajectory);
   }
 
@@ -232,12 +249,33 @@ public class FollowPathDistanceCommand extends Command {
     lastProjectedS = advancedS;
     lastProjectedIdx = p.segmentIndex;
 
-    PathPlannerTrajectoryState targetState = trajectory.sampleByDistance(lastProjectedS);
-
-    ChassisSpeeds targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
-
     double currentVel =
         Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
+
+    // See BOOTSTRAP_LOOKAHEAD_M for the override rationale.
+    PathPlannerTrajectoryState targetState = trajectory.sampleByDistance(lastProjectedS);
+    double localV = targetState.linearVelocity;
+    if (localV < bootstrapVelocityThresholdMps) {
+      double peekS =
+          Math.min(lastProjectedS + BOOTSTRAP_LOOKAHEAD_M, trajectory.getTotalArcLength());
+      double peekV = trajectory.sampleByDistance(peekS).linearVelocity;
+      if (peekV >= bootstrapVelocityThresholdMps) {
+        // Blend on localV (not currentVel) so the override tapers with the planned profile
+        // and doesn't chase the chassis as it picks up speed against an at-rest plan.
+        double blend = 1.0 - localV / bootstrapVelocityThresholdMps;
+        double blendedV = localV + (peekV - localV) * blend;
+        // Copy before mutating: sampleByDistance can return cached endpoint references.
+        targetState = targetState.copyWithTime(targetState.timeSeconds);
+        targetState.linearVelocity = blendedV;
+        double cosH = targetState.heading.getCos();
+        double sinH = targetState.heading.getSin();
+        targetState.fieldSpeeds =
+            new ChassisSpeeds(
+                blendedV * cosH, blendedV * sinH, targetState.fieldSpeeds.omegaRadiansPerSecond);
+      }
+    }
+
+    ChassisSpeeds targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
 
     PPLibTelemetry.setCurrentPose(currentPose);
     PathPlannerLogging.logCurrentPose(currentPose);
@@ -261,18 +299,13 @@ public class FollowPathDistanceCommand extends Command {
     boolean nearEnd = lastProjectedS >= totalArc - endConditions.distanceToleranceMeters();
     if (!nearEnd) return false;
 
-    // If the path is a handoff (non-zero end velocity), only the distance gate applies -- we
-    // don't want to wait for the robot to come to a stop. Threshold matches end()'s "is this a
-    // stopping path?" check.
+    // Handoff path (non-zero end velocity): distance gate only, don't wait for full stop.
     if (!isStoppingPath()) return true;
 
     PathPlannerTrajectoryState endState = trajectory.getEndState();
     ChassisSpeeds fieldSpeeds = speedsToFieldFrame();
-    // Gate on TOTAL field-speed magnitude rather than just the tangent component. Using the
-    // tangent projection alone allows isFinished to fire while the cross-track PD is still
-    // closing perpendicular error -- the robot stops with residual lateral offset because the
-    // command exits before cross-track motion completes. Total-magnitude gate ensures the robot
-    // has settled in BOTH directions before declaring finished.
+    // Total-magnitude gate (not tangent component) so we don't fire while cross-track PD is
+    // still closing perpendicular error.
     double totalSpeed = Math.hypot(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
     boolean velocityOk = totalSpeed < endConditions.velocityToleranceMPS();
 
@@ -314,19 +347,16 @@ public class FollowPathDistanceCommand extends Command {
     int windowEnd = Math.min(n - 2, lastProjectedIdx + LOOKAHEAD_SEGMENTS);
     Projection best = scanWindow(robotPos, states, windowStart, windowEnd);
 
-    // If the best projection saturated to the forward edge of the window, scan one more window
-    // forward to handle fast moves that crossed multiple states in one tick.
+    // Saturated at the forward edge: extend one window to catch fast multi-state moves.
     if (best.segmentIndex == windowEnd && best.segmentU >= 0.99 && windowEnd < n - 2) {
       int extEnd = Math.min(n - 2, windowEnd + LOOKAHEAD_SEGMENTS);
       Projection extended = scanWindow(robotPos, states, windowEnd, extEnd);
       if (extended.distance < best.distance) best = extended;
     }
 
-    // Big-gap fallback: distance unreasonable, fall back to full scan.
+    // Window match too far: full scan, but only accept it if it's both closer and not backward.
     if (best.distance > BIG_GAP_THRESHOLD_M) {
       Projection fullScan = fullScan(robotPos);
-      // Only accept the full-scan result if it's strictly better and meaningfully forward of the
-      // window result (avoid jumping backward to a closer segment behind us).
       if (fullScan.distance < best.distance && fullScan.arcLength >= lastProjectedS) {
         best = fullScan;
       }
@@ -340,12 +370,7 @@ public class FollowPathDistanceCommand extends Command {
     return scanWindow(robotPos, states, 0, states.size() - 2);
   }
 
-  /**
-   * Closest-point-on-polyline over a segment range [startIdx, endIdx] (inclusive). For each segment
-   * (states[i], states[i+1]), compute the closest point on that line segment to robotPos via
-   * closed-form projection clamped to [0, 1]. Return the best (segmentIndex, segmentU, arcLength,
-   * distance). Package-private static so tests can exercise the real implementation.
-   */
+  /** Closest-point-on-polyline over a segment range. Package-private static for testing. */
   static Projection scanWindow(
       Translation2d robotPos, List<PathPlannerTrajectoryState> states, int startIdx, int endIdx) {
     int bestIdx = startIdx;

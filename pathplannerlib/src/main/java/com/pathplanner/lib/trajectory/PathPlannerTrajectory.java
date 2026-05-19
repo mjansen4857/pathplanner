@@ -289,12 +289,12 @@ public class PathPlannerTrajectory {
 
       // Holonomic rotation is interpolated. We use the distance along the path
       // to calculate how much to interpolate since the distribution of path points
-      // is not the same along the whole segment
-      double t =
-          (path.getPoint(i).distanceAlongPath
-                  - path.getPoint(prevRotationTargetIdx).distanceAlongPath)
-              / (path.getPoint(nextRotationTargetIdx).distanceAlongPath
-                  - path.getPoint(prevRotationTargetIdx).distanceAlongPath);
+      // is not the same along the whole segment. Guard the zero-length case (duplicate
+      // endpoints) to avoid a NaN rotation at the trajectory tail.
+      double prevDist = path.getPoint(prevRotationTargetIdx).distanceAlongPath;
+      double nextDist = path.getPoint(nextRotationTargetIdx).distanceAlongPath;
+      double denom = nextDist - prevDist;
+      double t = (denom > 1.0e-9) ? (path.getPoint(i).distanceAlongPath - prevDist) / denom : 1.0;
       Rotation2d holonomicRot = cosineInterpolate(prevRotationTargetRot, nextRotationTargetRot, t);
 
       Pose2d robotPose = new Pose2d(p.position, holonomicRot);

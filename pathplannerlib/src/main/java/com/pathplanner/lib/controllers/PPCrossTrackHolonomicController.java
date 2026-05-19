@@ -34,15 +34,9 @@ public class PPCrossTrackHolonomicController implements PathFollowingController 
   private final double curvatureFfGain;
   private final double period;
 
-  /**
-   * Tangent-direction rotation rate above which we treat the path's perpendicular frame as unstable
-   * and suppress the D-term and curvature feedforward for that cycle. The cross-track frame rotates
-   * with the tangent; when the rotation rate is high (cusps, U-turns, sharp corners), the D-term
-   * finite-difference picks up apparent error change driven purely by the rotating frame rather
-   * than real robot motion, and the curvature FF formula breaks down for the same reason. 5 rad/s
-   * is well above smooth-path tangent rates at typical FRC speeds (e.g. v=4 m/s on a 1 m radius
-   * curve gives 4 rad/s) but below path discontinuities (10+ rad/s).
-   */
+  // Above this tangent-rotation rate, suppress the cross-track D-term and curvature FF -- both
+  // would sense frame rotation as robot motion. Above smooth FRC paths (~4 rad/s at v=4 m/s on
+  // a 1 m radius), below cusp/discontinuity rates (10+ rad/s).
   private static final double TANGENT_RATE_THRESHOLD_RAD_PER_SEC = 5.0;
 
   private double lastCrossTrackError = 0.0;
@@ -133,7 +127,6 @@ public class PPCrossTrackHolonomicController implements PathFollowingController 
   @Override
   public ChassisSpeeds calculateRobotRelativeSpeeds(
       Pose2d currentPose, PathPlannerTrajectoryState targetState) {
-    // Tangent direction of travel along the path at the target sample.
     Rotation2d tangent = targetState.heading;
     double tx = tangent.getCos();
     double ty = tangent.getSin();
@@ -141,31 +134,23 @@ public class PPCrossTrackHolonomicController implements PathFollowingController 
     double nx = -ty;
     double ny = tx;
 
-    // Detect rapid tangent-direction rotation (cusps, U-turns, sharp corners). The cross-track
-    // measurement frame rotates with the tangent; at high rotation rates the perpendicular
-    // direction changes faster than the robot's actual motion, making the D-term sense apparent
-    // error change driven by the frame rather than by robot motion, and breaking the smooth-
-    // curve assumption of the curvature FF. Suppress both for any tick where the rate exceeds
-    // the threshold; resume next tick once the rate drops.
+    // Suppress D-term and curvature FF when the tangent frame rotates faster than the robot
+    // (cusps, U-turns, sharp corners) -- both would sense frame motion as robot motion.
     boolean tangentFlipped = false;
     if (lastTangentHeading != null) {
       double headingDelta =
           MathUtil.angleModulus(tangent.getRadians() - lastTangentHeading.getRadians());
-      double rateRadPerSec = headingDelta / period;
-      tangentFlipped = Math.abs(rateRadPerSec) > TANGENT_RATE_THRESHOLD_RAD_PER_SEC;
+      tangentFlipped = Math.abs(headingDelta / period) > TANGENT_RATE_THRESHOLD_RAD_PER_SEC;
     }
     lastTangentHeading = tangent;
 
-    // Decompose error vector (robot - target) into along-track and cross-track components.
-    // Along-track: positive if robot is AHEAD of target along the tangent. Cross-track: positive
-    // if robot is LEFT of the path tangent (in normal direction).
+    // Decompose (robot - target) into along-track (+ = ahead) and cross-track (+ = left of
+    // tangent).
     Translation2d delta = currentPose.getTranslation().minus(targetState.pose.getTranslation());
     double alongTrackError = delta.getX() * tx + delta.getY() * ty;
     double crossTrackError = delta.getX() * nx + delta.getY() * ny;
 
-    // Finite-difference rate for cross-track. Initialized to 0 on the first sample, and zeroed
-    // across a tangent discontinuity to avoid a spurious kick when the perpendicular frame
-    // rotates.
+    // Cross-track rate: finite-difference, zeroed on first sample and across tangent flips.
     double crossTrackRate;
     if (hasLastError && !tangentFlipped) {
       crossTrackRate = (crossTrackError - lastCrossTrackError) / period;
@@ -175,35 +160,25 @@ public class PPCrossTrackHolonomicController implements PathFollowingController 
     lastCrossTrackError = crossTrackError;
     hasLastError = true;
 
-    // Cross-track correction pulls the robot back toward the path (negate sign of error).
+    // Negate: pulls robot toward path.
     double crossTrackCorrection = -(crossTrackKp * crossTrackError + crossTrackKd * crossTrackRate);
 
-    // Along-track correction adds extra tangent-direction velocity when the robot lags the
-    // target sample. Without this, when the planned velocity profile decelerates faster than the
-    // robot can physically achieve (or the robot otherwise falls behind on the path), the
-    // velocity FF alone has no recovery mechanism -- target.fieldSpeeds points along the
-    // planned tangent direction at the planned magnitude, with no awareness of where the robot
-    // is. Adding -alongTrackKp * alongTrackError gives positive tangent velocity when robot is
-    // behind, negative when ahead.
+    // Along-track P gives a recovery term when the planned-v FF alone leaves the robot lagging.
     double alongTrackCorrection = -alongTrackKp * alongTrackError;
 
-    // Curvature FF anticipates centripetal drift: extra perpendicular velocity = gain * v^2 * kappa
-    // Suppressed across a tangent discontinuity since the curvature value there reflects the
-    // chord-discretization spike, not a continuous local curve.
+    // Centripetal FF: gain * v^2 * kappa. Suppressed across tangent discontinuities.
     double v = targetState.linearVelocity;
     double curvatureFf =
         tangentFlipped ? 0.0 : (curvatureFfGain * v * v * targetState.curvatureRadPerMeter);
 
     double perpVelocity = crossTrackCorrection + curvatureFf;
 
-    // Sum: planned velocity FF + along-track correction (along tangent) + perpendicular
-    // correction (along normal). All in field frame.
+    // Sum in field frame: planned FF + along-track (tangent) + perp (normal).
     double vxField =
         targetState.fieldSpeeds.vxMetersPerSecond + alongTrackCorrection * tx + perpVelocity * nx;
     double vyField =
         targetState.fieldSpeeds.vyMetersPerSecond + alongTrackCorrection * ty + perpVelocity * ny;
 
-    // Heading PID against target holonomic rotation, plus rotational FF from planned omega.
     double rotationFeedback =
         rotationController.calculate(
             currentPose.getRotation().getRadians(), targetState.pose.getRotation().getRadians());

@@ -7,8 +7,7 @@ plugins {
     id "org.wpilib.WPILibRepositoriesPlugin" version '2027.0.0'
     id 'org.wpilib.NativeUtils' version '2027.7.1'
     id 'org.wpilib.GradleJni' version '2027.0.0'
-    id 'com.diffplug.spotless' version '8.0.0'
-    id 'jacoco'
+    id 'com.diffplug.spotless' version '8.6.0'
 }
 
 ext.getCurrentArch = {
@@ -151,7 +150,7 @@ spotless {
             exclude '**/build/**', '**/build-*/**'
         }
         toggleOffOn()
-        googleJavaFormat('1.10.0')
+        googleJavaFormat()
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()

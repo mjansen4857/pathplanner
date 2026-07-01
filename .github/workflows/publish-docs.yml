@@ -74,7 +74,7 @@ jobs:
       - name: Setup java
         uses: actions/setup-java@v5
         with:
-          java-version: '17'
+          java-version: '25'
           distribution: 'zulu'
 
       - name: Build PathPlannerLib

@@ -105,9 +105,9 @@ jobs:
       - name: Install python dependencies
         working-directory: ./pathplannerlib-python
         run: |
-          python -m pip install --upgrade pip
-          pip install build handsdown mkdocs mkdocs-material
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install --upgrade pip --break-system-packages
+          pip install build handsdown mkdocs mkdocs-material --break-system-packages
+          if [ -f requirements.txt ]; then pip install -r requirements.txt --break-system-packages; fi
 
       - name: Generate python docs
         working-directory: ./pathplannerlib-python

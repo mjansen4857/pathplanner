@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: wpilib/ubuntu-base:24.04
+          - container: wpilib/systemcore-cross-ubuntu:24.04
             artifact-name: PPLib-Linux
             build-options: "-Ponlylinuxx86-64"
           - container: wpilib/raspbian-cross-ubuntu:2027-bookworm-24.04

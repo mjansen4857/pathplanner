@@ -25,9 +25,6 @@ jobs:
         run: chmod +x gradlew
         working-directory: ./pathplannerlib
       
-      - name: Install SystemCore Toolchain
-        run: ./gradlew installSystemCoreToolchain
-      
       - name: Check formatting
         run: ./gradlew spotlessCheck
         working-directory: ./pathplannerlib
@@ -44,9 +41,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         working-directory: ./pathplannerlib
-      
-      - name: Install SystemCore Toolchain
-        run: ./gradlew installSystemCoreToolchain
       
       - name: Build & Test
         run: ./gradlew build
@@ -132,6 +126,9 @@ jobs:
           - container: wpilib/aarch64-cross-ubuntu:bookworm-24.04
             artifact-name: PPLib-Arm64
             build-options: "-Ponlylinuxarm64"
+          - container: wpilib/systemcore-cross-ubuntu:2027-24.04
+            artifact-name: PPLib-SystemCore
+            build-options: "-Ponlylinuxsystemcore"
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
     needs: [formatting, test]
     runs-on: ubuntu-24.04
@@ -146,10 +143,6 @@ jobs:
       
       - name: Set version
         run: sed -i "s/0.0.0/${{ env.VERSION_NAME }}/g" publish.gradle
-        working-directory: ./pathplannerlib
-      
-      - name: Install SystemCore Toolchain
-        run: ./gradlew installSystemCoreToolchain
         working-directory: ./pathplannerlib
       
       - name: Ensure spotless is applied

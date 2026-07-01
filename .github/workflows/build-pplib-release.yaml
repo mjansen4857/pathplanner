@@ -23,6 +23,9 @@ jobs:
           - container: wpilib/aarch64-cross-ubuntu:2027-bookworm-24.04
             artifact-name: PPLib-Arm64
             build-options: "-Ponlylinuxarm64"
+          - container: wpilib/systemcore-cross-ubuntu:2027-24.04
+            artifact-name: PPLib-SystemCore
+            build-options: "-Ponlylinuxsystemcore"
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
     runs-on: ubuntu-24.04
     container: ${{ matrix.container }}
@@ -36,10 +39,6 @@ jobs:
       
       - name: Set version
         run: sed -i "s/0.0.0/${{ github.event.inputs.version }}/g" publish.gradle
-        working-directory: ./pathplannerlib
-      
-      - name: Install SystemCore Toolchain
-        run: ./gradlew installSystemCoreToolchain
         working-directory: ./pathplannerlib
       
       - name: Ensure spotless is applied

@@ -1,15 +1,13 @@
 import org.gradle.internal.os.OperatingSystem
 
 nativeUtils.addWpiNativeUtils()
-nativeUtils.withCrossRoboRIO()
-nativeUtils.withCrossLinuxArm32()
+nativeUtils.withCrossSystemCore()
 nativeUtils.withCrossLinuxArm64()
 
 nativeUtils {
     wpi {
         configureDependencies {
             wpiVersion = "2026.1.1"
-            niLibVersion = "2026.1.0"
         }
     }
 }

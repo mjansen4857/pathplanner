@@ -19,7 +19,7 @@ env:
 jobs:
   build-docs:
     name: "[Docs] Build Writerside"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -49,7 +49,7 @@ jobs:
 
   test-docs:
     name: "[Docs] Test Writerside"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-docs
     steps:
       - name: Download artifacts
@@ -65,7 +65,8 @@ jobs:
 
   build-api:
     name: "[Docs] Build API Docs"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    container: wpilib/systemcore-cross-ubuntu:2027-24.04
     needs: test-docs
     steps:
       - name: Checkout repo
@@ -140,7 +141,7 @@ jobs:
 
   deploy-pages:
     name: "[Docs] Deploy GitHub Pages"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: ${{ github.event_name != 'pull_request' }}
     needs: build-api
 
@@ -159,7 +160,7 @@ jobs:
 
   publish-indexes:
     name: "[Docs] Publish Search Indexes"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: ${{ github.event_name != 'pull_request' }}
     needs: test-docs
     container:

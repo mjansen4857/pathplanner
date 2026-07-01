@@ -29,6 +29,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.wpilib.driverstation.DriverStation;
 import org.wpilib.driverstation.DriverStationErrors;
 
 /**
@@ -72,71 +73,90 @@ public class PathPlannerAuto extends Command {
         this(autoName, false);
     }
 
-    /**
-     * Constructs a new PathPlannerAuto command.
-     *
-     * @param autoName the name of the autonomous routine to load and run
-     * @param mirror Mirror all paths to the other side of the current alliance. For example, if a
-     *     path is on the right of the blue alliance side of the field, it will be mirrored to the
-     *     left of the blue alliance side of the field.
-     * @throws AutoBuilderException if AutoBuilder is not configured before attempting to load the
-     *     autonomous routine
-     */
-    public PathPlannerAuto(String autoName, boolean mirror) {
-        if (!AutoBuilder.isConfigured()) {
-            throw new AutoBuilderException("AutoBuilder was not configured before attempting to load a PathPlannerAuto from file");
-        }
-        try (BufferedReader br = new BufferedReader(new FileReader(new File(Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
-            StringBuilder fileContentBuilder = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                fileContentBuilder.append(line);
-            }
-            String fileContent = fileContentBuilder.toString();
-            JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
-            String version = json.get("version").toString();
-            String[] versions = version.split("\\.");
-            if (!versions[0].equals("2025")) {
-                throw new FileVersionException(version, "2025.X", autoName + ".auto");
-            }
-            initFromJson(json, mirror);
-        } catch (FileNotFoundException e) {
-            DriverStationErrors.reportError(e.getMessage(), e.getStackTrace());
-            autoCommand = Commands.none();
-        } catch (IOException e) {
-            DriverStationErrors.reportError("Failed to read file required by auto: " + autoName, e.getStackTrace());
-            autoCommand = Commands.none();
-        } catch (ParseException e) {
-            DriverStationErrors.reportError("Failed to parse JSON in file required by auto: " + autoName, e.getStackTrace());
-            autoCommand = Commands.none();
-        } catch (FileVersionException e) {
-            DriverStationErrors.reportError("Failed to load auto: " + autoName + ". " + e.getMessage(), e.getStackTrace());
-            autoCommand = Commands.none();
-        }
-        addRequirements(autoCommand.getRequirements());
-        setName(autoName);
-        PPLibTelemetry.registerHotReloadAuto(autoName, this);
-        this.autoLoop = new EventLoop();
-        this.autoTimer = new Timer();
-        instances++;
-        HAL.reportUsage("PathPlannerAuto", instances, "");
+  /**
+   * Constructs a new PathPlannerAuto command.
+   *
+   * @param autoName the name of the autonomous routine to load and run
+   * @param mirror Mirror all paths to the other side of the current alliance. For example, if a
+   *     path is on the right of the blue alliance side of the field, it will be mirrored to the
+   *     left of the blue alliance side of the field.
+   * @throws AutoBuilderException if AutoBuilder is not configured before attempting to load the
+   *     autonomous routine
+   */
+  public PathPlannerAuto(String autoName, boolean mirror) {
+    if (!AutoBuilder.isConfigured()) {
+      throw new AutoBuilderException(
+          "AutoBuilder was not configured before attempting to load a PathPlannerAuto from file");
     }
 
-    /**
-     * Create a PathPlannerAuto from a custom command
-     *
-     * @param autoCommand The command this auto should run
-     * @param startingPose The starting pose of the auto. Only used for the getStartingPose method
-     */
-    public PathPlannerAuto(Command autoCommand, Pose2d startingPose) {
-        this.autoCommand = autoCommand;
-        this.startingPose = startingPose;
-        addRequirements(autoCommand.getRequirements());
-        this.autoLoop = new EventLoop();
-        this.autoTimer = new Timer();
-        instances++;
-        HAL.reportUsage("PathPlannerAuto", instances, "");
+    try (BufferedReader br =
+        new BufferedReader(
+            new FileReader(
+                new File(
+                    Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
+      StringBuilder fileContentBuilder = new StringBuilder();
+      String line;
+      while ((line = br.readLine()) != null) {
+        fileContentBuilder.append(line);
+      }
+
+      String fileContent = fileContentBuilder.toString();
+      JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+
+      String version = json.get("version").toString();
+      String[] versions = version.split("\\.");
+
+      if (!versions[0].equals("2025")) {
+        throw new FileVersionException(version, "2025.X", autoName + ".auto");
+      }
+
+      initFromJson(json, mirror);
+    } catch (FileNotFoundException e) {
+      DriverStationErrors.reportError(e.getMessage(), e.getStackTrace());
+      autoCommand = Commands.none();
+    } catch (IOException e) {
+      DriverStationErrors.reportError(
+          "Failed to read file required by auto: " + autoName, e.getStackTrace());
+      autoCommand = Commands.none();
+    } catch (ParseException e) {
+      DriverStationErrors.reportError(
+          "Failed to parse JSON in file required by auto: " + autoName, e.getStackTrace());
+      autoCommand = Commands.none();
+    } catch (FileVersionException e) {
+      DriverStationErrors.reportError(
+          "Failed to load auto: " + autoName + ". " + e.getMessage(), e.getStackTrace());
+      autoCommand = Commands.none();
     }
+
+    addRequirements(autoCommand.getRequirements());
+    setName(autoName);
+    PPLibTelemetry.registerHotReloadAuto(autoName, this);
+
+    this.autoLoop = new EventLoop();
+    this.autoTimer = new Timer();
+
+    instances++;
+    HAL.reportUsage("PathPlanner/PathPlannerAuto", instances, "");
+  }
+
+  /**
+   * Create a PathPlannerAuto from a custom command
+   *
+   * @param autoCommand The command this auto should run
+   * @param startingPose The starting pose of the auto. Only used for the getStartingPose method
+   */
+  public PathPlannerAuto(Command autoCommand, Pose2d startingPose) {
+    this.autoCommand = autoCommand;
+    this.startingPose = startingPose;
+
+    addRequirements(autoCommand.getRequirements());
+
+    this.autoLoop = new EventLoop();
+    this.autoTimer = new Timer();
+
+    instances++;
+    HAL.reportUsage("PathPlanner/PathPlannerAuto", instances, "");
+  }
 
     /**
      * Create a PathPlannerAuto from a custom command

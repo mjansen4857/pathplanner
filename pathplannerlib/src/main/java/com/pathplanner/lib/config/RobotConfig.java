@@ -192,58 +192,65 @@ public class RobotConfig {
         this(mass.in(Kilograms), MOI.in(KilogramSquareMeters), moduleConfig, trackwidthMeters.in(Meters));
     }
 
-    /**
-     * Convert robot-relative chassis speeds to an array of swerve module states. This will use
-     * differential kinematics for diff drive robots, then convert the wheel speeds to module states.
-     *
-     * @param speeds Robot-relative chassis speeds
-     * @return Array of swerve module states
-     */
-    public SwerveModuleVelocity[] toSwerveModuleStates(ChassisVelocities speeds) {
-        if (isHolonomic) {
-            return swerveKinematics.toSwerveModuleVelocities(speeds);
-        } else {
-            var wheelSpeeds = diffKinematics.toWheelVelocities(speeds);
-            return new SwerveModuleVelocity[] { new SwerveModuleVelocity(wheelSpeeds.left, new Rotation2d()), new SwerveModuleVelocity(wheelSpeeds.right, new Rotation2d()) };
-        }
+  /**
+   * Convert robot-relative chassis speeds to an array of swerve module states. This will use
+   * differential kinematics for diff drive robots, then convert the wheel speeds to module states.
+   *
+   * @param speeds Robot-relative chassis speeds
+   * @return Array of swerve module states
+   */
+  public SwerveModuleVelocity[] toSwerveModuleStates(ChassisVelocities speeds) {
+    if (isHolonomic) {
+      return swerveKinematics.toSwerveModuleVelocities(speeds);
+    } else {
+      var wheelSpeeds = diffKinematics.toWheelVelocities(speeds);
+      return new SwerveModuleVelocity[] {
+        new SwerveModuleVelocity(wheelSpeeds.left, new Rotation2d()),
+        new SwerveModuleVelocity(wheelSpeeds.right, new Rotation2d())
+      };
+    }
+  }
+
+  /**
+   * Convert an array of swerve module states to robot-relative chassis speeds. This will use
+   * differential kinematics for diff drive robots.
+   *
+   * @param states Array of swerve module states
+   * @return Robot-relative chassis speeds
+   */
+  public ChassisVelocities toChassisSpeeds(SwerveModuleVelocity[] states) {
+    if (isHolonomic) {
+      return swerveKinematics.toChassisVelocities(states);
+    } else {
+      var wheelSpeeds = new DifferentialDriveWheelVelocities(states[0].velocity, states[1].velocity);
+      return diffKinematics.toChassisVelocities(wheelSpeeds);
+    }
+  }
+
+  /**
+   * Convert chassis forces (passed as ChassisSpeeds) to individual wheel force vectors
+   *
+   * @param chassisForces The linear X/Y force and torque acting on the whole robot
+   * @return Array of individual wheel force vectors
+   */
+  public Translation2d[] chassisForcesToWheelForceVectors(ChassisVelocities chassisForces) {
+    var chassisForceVector = new SimpleMatrix(3, 1);
+    chassisForceVector.setColumn(0, 0, chassisForces.vx, chassisForces.vy, chassisForces.omega);
+
+    // Divide the chassis force vector by numModules since force is additive. All module forces will
+    // add up to the chassis force
+    var moduleForceMatrix = forceKinematics.mult(chassisForceVector.divide(numModules));
+
+    Translation2d[] forceVectors = new Translation2d[numModules];
+    for (int m = 0; m < numModules; m++) {
+      double x = moduleForceMatrix.get(m * 2, 0);
+      double y = moduleForceMatrix.get(m * 2 + 1, 0);
+
+      forceVectors[m] = new Translation2d(x, y);
     }
 
-    /**
-     * Convert an array of swerve module states to robot-relative chassis speeds. This will use
-     * differential kinematics for diff drive robots.
-     *
-     * @param states Array of swerve module states
-     * @return Robot-relative chassis speeds
-     */
-    public ChassisVelocities toChassisSpeeds(SwerveModuleVelocity[] states) {
-        if (isHolonomic) {
-            return swerveKinematics.toChassisVelocities(states);
-        } else {
-            var wheelSpeeds = new DifferentialDriveWheelVelocities(states[0].velocity, states[1].velocity);
-            return diffKinematics.toChassisVelocities(wheelSpeeds);
-        }
-    }
-
-    /**
-     * Convert chassis forces (passed as ChassisSpeeds) to individual wheel force vectors
-     *
-     * @param chassisForces The linear X/Y force and torque acting on the whole robot
-     * @return Array of individual wheel force vectors
-     */
-    public Translation2d[] chassisForcesToWheelForceVectors(ChassisVelocities chassisForces) {
-        var chassisForceVector = new SimpleMatrix(3, 1);
-        chassisForceVector.setColumn(0, 0, chassisForces.vx, chassisForces.vy, chassisForces.omega);
-        // Divide the chassis force vector by numModules since force is additive. All module forces will
-        // add up to the chassis force
-        var moduleForceMatrix = forceKinematics.mult(chassisForceVector.divide(numModules));
-        Translation2d[] forceVectors = new Translation2d[numModules];
-        for (int m = 0; m < numModules; m++) {
-            double x = moduleForceMatrix.get(m * 2, 0);
-            double y = moduleForceMatrix.get(m * 2 + 1, 0);
-            forceVectors[m] = new Translation2d(x, y);
-        }
-        return forceVectors;
-    }
+    return forceVectors;
+  }
 
     /**
      * Load the robot config from the shared settings file created by the GUI

@@ -104,8 +104,16 @@ public class FollowPathCommand extends Command {
         double linearVel = Math.hypot(currentSpeeds.vx, currentSpeeds.vy);
         if (path.getIdealStartingState() != null) {
             // Check if we match the ideal starting state
-            boolean idealVelocity = Math.abs(linearVel - path.getIdealStartingState().velocityMPS()) <= 0.25;
-            boolean idealRotation = !robotConfig.isHolonomic || Math.abs(currentPose.getRotation().minus(path.getIdealStartingState().rotation()).getDegrees()) <= 30.0;
+            boolean idealVelocity = 
+                Math.abs(linearVel - path.getIdealStartingState().velocityMPS()) <= 0.25;
+            boolean idealRotation = 
+                !robotConfig.isHolonomic 
+                    || Math.abs(
+                        currentPose
+                            .getRotation()
+                            .minus(path.getIdealStartingState().rotation())
+                            .getDegrees()) 
+                            <= 30.0;
             if (idealVelocity && idealRotation) {
                 // We can use the ideal trajectory
                 trajectory = path.getIdealTrajectory(robotConfig).orElseThrow();

@@ -9,7 +9,9 @@ plugins {
     id "org.wpilib.Toolchain" version '2027.10.0'
     id 'org.wpilib.GradleJni' version '2027.0.0'
     id 'com.diffplug.spotless' version '8.0.0'
+    id "edu.wpi.first.GradleRIO2027" version "2027.0.0-alpha-1"
     id 'jacoco'
+
 }
 
 ext.getCurrentArch = {
@@ -30,7 +32,6 @@ repositories {
     mavenCentral()
 }
 wpilibRepositories.use2027Repos()
-
 if (project.hasProperty('releaseMode')) {
     wpilibRepositories.addAllReleaseRepositories(project)
 } else {
@@ -113,6 +114,7 @@ model {
                 }
             }
             nativeUtils.useRequiredLibrary(it, 'wpilib_shared')
+            nativeUtils.useRequiredLibrary(it, "datalog_shared")
         }
     }
     testSuites {
@@ -136,6 +138,7 @@ model {
                     test.workingDir filePath
                 }
             }
+            nativeUtils.useRequiredLibrary(it, "datalog_shared")
         }
     }
 }

@@ -81,21 +81,19 @@ public class FlippingUtil {
         return new Pose2d(flipFieldPosition(pose.getTranslation()), flipFieldRotation(pose.getRotation()));
     }
 
-    /**
-     * Flip field relative chassis speeds for the other side of the field, maintaining a blue alliance
-     * origin
-     *
-     * @param fieldSpeeds Field relative chassis speeds
-     * @return Flipped speeds
-     */
-    public static ChassisVelocities flipFieldSpeeds(ChassisVelocities fieldSpeeds) {
-        return switch(symmetryType) {
-            case kMirrored ->
-                new ChassisVelocities(-fieldSpeeds.vx, fieldSpeeds.vy, -fieldSpeeds.omega);
-            case kRotational ->
-                new ChassisVelocities(-fieldSpeeds.vx, -fieldSpeeds.vy, fieldSpeeds.omega);
-        };
-    }
+  /**
+   * Flip field relative chassis speeds for the other side of the field, maintaining a blue alliance
+   * origin
+   *
+   * @param fieldSpeeds Field relative chassis speeds
+   * @return Flipped speeds
+   */
+  public static ChassisVelocities flipFieldSpeeds(ChassisVelocities fieldSpeeds) {
+    return switch (symmetryType) {
+      case kMirrored -> new ChassisVelocities(-fieldSpeeds.vx, fieldSpeeds.vy, -fieldSpeeds.omega);
+      case kRotational -> new ChassisVelocities(-fieldSpeeds.vx, -fieldSpeeds.vy, fieldSpeeds.omega);
+    };
+  }
 
     /**
      * Flip an array of drive feedforwards for the other side of the field. Only does anything if

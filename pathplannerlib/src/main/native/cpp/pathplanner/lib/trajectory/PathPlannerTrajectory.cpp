@@ -24,9 +24,8 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		generateStates(m_states, path, startingRotation, config);
 
 		// Set the initial module velocities
-		frc::ChassisSpeeds fieldStartingSpeeds =
-				frc::ChassisSpeeds::FromRobotRelativeSpeeds(startingSpeeds,
-						m_states[0].pose.Rotation());
+		frc::ChassisSpeeds fieldStartingSpeeds = startingSpeeds.ToFieldRelative(
+				m_states[0].pose.Rotation());
 		auto initialStates = config.toSwerveModuleStates(fieldStartingSpeeds);
 		for (size_t m = 0; m < config.numModules; m++) {
 			m_states[0].moduleStates[m].speed = initialStates[m].speed;
@@ -47,7 +46,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 				endSpeedTrans.X()() }, units::meters_per_second_t {
 				endSpeedTrans.Y()() }, 0_rad_per_s };
 		auto endStates = config.toSwerveModuleStates(
-				frc::ChassisSpeeds::FromFieldRelativeSpeeds(endFieldSpeeds,
+				endFieldSpeeds.ToRobotRelative(
 						m_states[m_states.size() - 1].pose.Rotation()));
 		for (size_t m = 0; m < config.numModules; m++) {
 			m_states[m_states.size() - 1].moduleStates[m].speed =
@@ -124,12 +123,11 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 				state.time = prevState.time + dt;
 
 				frc::ChassisSpeeds prevRobotSpeeds =
-						frc::ChassisSpeeds::FromFieldRelativeSpeeds(
-								prevState.fieldSpeeds,
+						prevState.fieldSpeeds.ToRobotRelative(
 								prevState.pose.Rotation());
 				frc::ChassisSpeeds robotSpeeds =
-						frc::ChassisSpeeds::FromFieldRelativeSpeeds(
-								state.fieldSpeeds, state.pose.Rotation());
+						state.fieldSpeeds.ToRobotRelative(
+								state.pose.Rotation());
 
 				auto chassisAccelX = (robotSpeeds.vx - prevRobotSpeeds.vx) / dt;
 				auto chassisAccelY = (robotSpeeds.vy - prevRobotSpeeds.vy) / dt;
@@ -409,10 +407,10 @@ void PathPlannerTrajectory::forwardAccelPass(
 		}
 
 		frc::ChassisSpeeds chassisAccel =
-				frc::ChassisSpeeds::FromFieldRelativeSpeeds(
+				frc::ChassisSpeeds {
 						units::meters_per_second_t { accelVec.X()() },
 						units::meters_per_second_t { accelVec.Y()() },
-						units::radians_per_second_t { angularAccel() },
+						units::radians_per_second_t { angularAccel() } }.ToRobotRelative(
 						state.pose.Rotation());
 		auto accelStates = config.toSwerveModuleStates(chassisAccel);
 		for (size_t m = 0; m < config.numModules; m++) {
@@ -495,9 +493,9 @@ void PathPlannerTrajectory::forwardAccelPass(
 				config.moduleConfig.maxDriveVelocityMPS, maxChassisVel,
 				maxChassisAngVel);
 
-		state.fieldSpeeds = frc::ChassisSpeeds::FromRobotRelativeSpeeds(
-				config.toChassisSpeeds(state.moduleStates),
-				state.pose.Rotation());
+		state.fieldSpeeds =
+				config.toChassisSpeeds(state.moduleStates).ToFieldRelative(
+						state.pose.Rotation());
 		state.linearVelocity = units::math::hypot(state.fieldSpeeds.vx,
 				state.fieldSpeeds.vy);
 	}
@@ -569,10 +567,10 @@ void PathPlannerTrajectory::reverseAccelPass(
 		}
 
 		frc::ChassisSpeeds chassisAccel =
-				frc::ChassisSpeeds::FromFieldRelativeSpeeds(
+				frc::ChassisSpeeds {
 						units::meters_per_second_t { accelVec.X()() },
 						units::meters_per_second_t { accelVec.Y()() },
-						units::radians_per_second_t { angularAccel() },
+						units::radians_per_second_t { angularAccel() } }.ToRobotRelative(
 						state.pose.Rotation());
 		auto accelStates = config.toSwerveModuleStates(chassisAccel);
 		for (size_t m = 0; m < config.numModules; m++) {
@@ -646,9 +644,9 @@ void PathPlannerTrajectory::reverseAccelPass(
 				config.moduleConfig.maxDriveVelocityMPS, maxChassisVel,
 				maxChassisAngVel);
 
-		state.fieldSpeeds = frc::ChassisSpeeds::FromRobotRelativeSpeeds(
-				config.toChassisSpeeds(state.moduleStates),
-				state.pose.Rotation());
+		state.fieldSpeeds =
+				config.toChassisSpeeds(state.moduleStates).ToFieldRelative(
+						state.pose.Rotation());
 		state.linearVelocity = units::math::hypot(state.fieldSpeeds.vx,
 				state.fieldSpeeds.vy);
 	}

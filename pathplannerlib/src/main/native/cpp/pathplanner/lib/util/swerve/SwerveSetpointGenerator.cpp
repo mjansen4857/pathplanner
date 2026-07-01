@@ -8,7 +8,8 @@ SwerveSetpointGenerator::SwerveSetpointGenerator() : maxSteerVelocity(
 SwerveSetpointGenerator::SwerveSetpointGenerator(const RobotConfig &config,
 		units::turns_per_second_t maxSteerVelocity) : m_robotConfig(config), maxSteerVelocity(
 		maxSteerVelocity) {
-	brownoutVoltage = frc::RobotController::GetBrownoutVoltage();
+	//	brownoutVoltage = frc::RobotController::GetBrownoutVoltage();
+	brownoutVoltage = 6.75_V; // TODO: update when RobotController call doesn't crash or has a replacement
 }
 
 SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
@@ -326,7 +327,7 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 	frc::ChassisSpeeds retSpeeds = { prevSetpoint.robotRelativeSpeeds.vx
 			+ min_s * dx, prevSetpoint.robotRelativeSpeeds.vy + min_s * dy,
 			prevSetpoint.robotRelativeSpeeds.omega + min_s * dtheta };
-	retSpeeds = frc::ChassisSpeeds::Discretize(retSpeeds, dt);
+	retSpeeds = retSpeeds.Discretize(dt);
 
 	units::meters_per_second_t prevVelX = prevSetpoint.robotRelativeSpeeds.vx;
 	units::meters_per_second_t prevVelY = prevSetpoint.robotRelativeSpeeds.vy;

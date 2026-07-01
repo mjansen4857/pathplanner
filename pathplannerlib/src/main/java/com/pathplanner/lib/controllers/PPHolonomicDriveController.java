@@ -85,40 +85,51 @@ public class PPHolonomicDriveController implements PathFollowingController {
         rotationController.reset();
     }
 
-    /**
-     * Calculates the next output of the path following controller
-     *
-     * @param currentPose The current robot pose
-     * @param targetState The desired trajectory state
-     * @return The next robot relative output of the path following controller
-     */
-    @Override
-    public ChassisVelocities calculateRobotRelativeSpeeds(Pose2d currentPose, PathPlannerTrajectoryState targetState) {
-        double xFF = targetState.fieldSpeeds.vx;
-        double yFF = targetState.fieldSpeeds.vy;
-        this.translationError = currentPose.getTranslation().minus(targetState.pose.getTranslation());
-        if (!this.isEnabled) {
-            return new ChassisVelocities(xFF, yFF, 0).toRobotRelative(currentPose.getRotation());
-        }
-        double xFeedback = this.xController.calculate(currentPose.getX(), targetState.pose.getX());
-        double yFeedback = this.yController.calculate(currentPose.getY(), targetState.pose.getY());
-        Rotation2d targetRotation = targetState.pose.getRotation();
-        if (rotationTargetOverride != null) {
-            targetRotation = rotationTargetOverride.get().orElse(targetRotation);
-        }
-        double rotationFeedback = rotationController.calculate(currentPose.getRotation().getRadians(), targetRotation.getRadians());
-        double rotationFF = targetState.fieldSpeeds.omega;
-        if (xFeedbackOverride != null) {
-            xFeedback = xFeedbackOverride.getAsDouble();
-        }
-        if (yFeedbackOverride != null) {
-            yFeedback = yFeedbackOverride.getAsDouble();
-        }
-        if (rotFeedbackOverride != null) {
-            rotationFeedback = rotFeedbackOverride.getAsDouble();
-        }
-        return new ChassisVelocities(xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback).toRobotRelative(currentPose.getRotation());
+  /**
+   * Calculates the next output of the path following controller
+   *
+   * @param currentPose The current robot pose
+   * @param targetState The desired trajectory state
+   * @return The next robot relative output of the path following controller
+   */
+  @Override
+  public ChassisVelocities calculateRobotRelativeSpeeds(
+      Pose2d currentPose, PathPlannerTrajectoryState targetState) {
+    double xFF = targetState.fieldSpeeds.vx;
+    double yFF = targetState.fieldSpeeds.vy;
+
+    this.translationError = currentPose.getTranslation().minus(targetState.pose.getTranslation());
+
+    if (!this.isEnabled) {
+      return new ChassisVelocities(xFF, yFF, 0).toRobotRelative(currentPose.getRotation());
     }
+
+    double xFeedback = this.xController.calculate(currentPose.getX(), targetState.pose.getX());
+    double yFeedback = this.yController.calculate(currentPose.getY(), targetState.pose.getY());
+
+    Rotation2d targetRotation = targetState.pose.getRotation();
+    if (rotationTargetOverride != null) {
+      targetRotation = rotationTargetOverride.get().orElse(targetRotation);
+    }
+
+    double rotationFeedback =
+        rotationController.calculate(
+            currentPose.getRotation().getRadians(), targetRotation.getRadians());
+    double rotationFF = targetState.fieldSpeeds.omega;
+
+    if (xFeedbackOverride != null) {
+      xFeedback = xFeedbackOverride.getAsDouble();
+    }
+    if (yFeedbackOverride != null) {
+      yFeedback = yFeedbackOverride.getAsDouble();
+    }
+    if (rotFeedbackOverride != null) {
+      rotationFeedback = rotFeedbackOverride.getAsDouble();
+    }
+
+    return new ChassisVelocities(xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback)
+        .toRobotRelative(currentPose.getRotation());
+  }
 
     /**
      * Is this controller for holonomic drivetrains? Used to handle some differences in functionality

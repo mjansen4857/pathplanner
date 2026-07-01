@@ -53,8 +53,8 @@ public:
 							frc::ChassisSpeeds startSpeeds =
 									currentRobotRelativeSpeeds();
 							frc::ChassisSpeeds startFieldSpeeds =
-									frc::ChassisSpeeds::FromRobotRelativeSpeeds(
-											startSpeeds, startPose.Rotation());
+									startSpeeds.ToFieldRelative(
+											startPose.Rotation());
 							frc::Rotation2d startHeading = frc::Rotation2d(
 									startFieldSpeeds.vx(),
 									startFieldSpeeds.vy());

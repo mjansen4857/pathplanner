@@ -35,8 +35,8 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 			- referenceState.pose.Translation();
 
 	if (!m_enabled) {
-		return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF, yFF,
-				0_rad_per_s, currentPose.Rotation());
+		return frc::ChassisSpeeds(xFF, yFF, 0_rad_per_s).ToRobotRelative(
+				currentPose.Rotation());
 	}
 
 	units::meters_per_second_t xFeedback { m_xController.Calculate(
@@ -64,7 +64,7 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 		rotationFeedback = rotationFeedbackOverride();
 	}
 
-	return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF + xFeedback,
-			yFF + yFeedback, rotationFF + rotationFeedback,
+	return frc::ChassisSpeeds(xFF + xFeedback, yFF + yFeedback,
+			rotationFF + rotationFeedback).ToRobotRelative(
 			currentPose.Rotation());
 }

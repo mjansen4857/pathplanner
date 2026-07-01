@@ -74,35 +74,50 @@ public class PathPlannerPath {
      */
     public boolean preventFlipping = false;
 
-    /**
-     * Create a new path planner path
-     *
-     * @param waypoints List of waypoints representing the path. For on-the-fly paths, you likely want
-     *     to use waypointsFromPoses to create these.
-     * @param holonomicRotations List of rotation targets along the path
-     * @param pointTowardsZones List of point towards zones along the path
-     * @param constraintZones List of constraint zones along the path
-     * @param eventMarkers List of event markers along the path
-     * @param globalConstraints The global constraints of the path
-     * @param idealStartingState The ideal starting state of the path. Can be null if unknown
-     * @param goalEndState The goal end state of the path
-     * @param reversed Should the robot follow the path reversed (differential drive only)
-     */
-    public PathPlannerPath(List<Waypoint> waypoints, List<RotationTarget> holonomicRotations, List<PointTowardsZone> pointTowardsZones, List<ConstraintsZone> constraintZones, List<EventMarker> eventMarkers, PathConstraints globalConstraints, IdealStartingState idealStartingState, GoalEndState goalEndState, boolean reversed) {
-        this.waypoints = waypoints;
-        this.rotationTargets = holonomicRotations.stream().sorted(Comparator.comparingDouble(RotationTarget::position)).toList();
-        this.pointTowardsZones = pointTowardsZones;
-        this.constraintZones = constraintZones;
-        this.eventMarkers = eventMarkers.stream().sorted(Comparator.comparingDouble(EventMarker::position)).toList();
-        this.globalConstraints = globalConstraints;
-        this.idealStartingState = idealStartingState;
-        this.goalEndState = goalEndState;
-        this.reversed = reversed;
-        this.allPoints = createPath();
-        precalcValues();
-        instances++;
-        HAL.reportUsage("PathPlannerPath", instances, "");
-    }
+  /**
+   * Create a new path planner path
+   *
+   * @param waypoints List of waypoints representing the path. For on-the-fly paths, you likely want
+   *     to use waypointsFromPoses to create these.
+   * @param holonomicRotations List of rotation targets along the path
+   * @param pointTowardsZones List of point towards zones along the path
+   * @param constraintZones List of constraint zones along the path
+   * @param eventMarkers List of event markers along the path
+   * @param globalConstraints The global constraints of the path
+   * @param idealStartingState The ideal starting state of the path. Can be null if unknown
+   * @param goalEndState The goal end state of the path
+   * @param reversed Should the robot follow the path reversed (differential drive only)
+   */
+  public PathPlannerPath(
+      List<Waypoint> waypoints,
+      List<RotationTarget> holonomicRotations,
+      List<PointTowardsZone> pointTowardsZones,
+      List<ConstraintsZone> constraintZones,
+      List<EventMarker> eventMarkers,
+      PathConstraints globalConstraints,
+      IdealStartingState idealStartingState,
+      GoalEndState goalEndState,
+      boolean reversed) {
+    this.waypoints = waypoints;
+    this.rotationTargets =
+        holonomicRotations.stream()
+            .sorted(Comparator.comparingDouble(RotationTarget::position))
+            .toList();
+    this.pointTowardsZones = pointTowardsZones;
+    this.constraintZones = constraintZones;
+    this.eventMarkers =
+        eventMarkers.stream().sorted(Comparator.comparingDouble(EventMarker::position)).toList();
+    this.globalConstraints = globalConstraints;
+    this.idealStartingState = idealStartingState;
+    this.goalEndState = goalEndState;
+    this.reversed = reversed;
+    this.allPoints = createPath();
+
+    precalcValues();
+
+    instances++;
+    HAL.reportUsage("PathPlanner/PathPlannerPath", instances, "");
+  }
 
     /**
      * Simplified constructor to create a path with no rotation targets, constraint zones, or event
@@ -135,20 +150,21 @@ public class PathPlannerPath {
         this(waypoints, constraints, idealStartingState, goalEndState, false);
     }
 
-    private PathPlannerPath() {
-        this.waypoints = new ArrayList<>();
-        this.rotationTargets = new ArrayList<>();
-        this.pointTowardsZones = new ArrayList<>();
-        this.constraintZones = new ArrayList<>();
-        this.eventMarkers = new ArrayList<>();
-        this.globalConstraints = null;
-        this.idealStartingState = null;
-        this.goalEndState = null;
-        this.reversed = false;
-        this.allPoints = new ArrayList<>();
-        instances++;
-        HAL.reportUsage("PathPlannerPath", instances, "");
-    }
+  private PathPlannerPath() {
+    this.waypoints = new ArrayList<>();
+    this.rotationTargets = new ArrayList<>();
+    this.pointTowardsZones = new ArrayList<>();
+    this.constraintZones = new ArrayList<>();
+    this.eventMarkers = new ArrayList<>();
+    this.globalConstraints = null;
+    this.idealStartingState = null;
+    this.goalEndState = null;
+    this.reversed = false;
+    this.allPoints = new ArrayList<>();
+
+    instances++;
+    HAL.reportUsage("PathPlanner/PathPlannerPath", instances, "");
+  }
 
     /**
      * Create a path with pre-generated points. This should already be a smooth path.
@@ -279,135 +295,193 @@ public class PathPlannerPath {
         }
     }
 
-    private static void loadChoreoTrajectoryIntoCache(String trajectoryName) throws IOException, ParseException, FileVersionException {
-        try (BufferedReader br = new BufferedReader(new FileReader(new File(Filesystem.getDeployDirectory(), "choreo/" + trajectoryName + ".traj")))) {
-            StringBuilder fileContentBuilder = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                fileContentBuilder.append(line);
-            }
-            String fileContent = fileContentBuilder.toString();
-            JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
-            int version = 0;
-            try {
-                version = ((Number) json.get("version")).intValue();
-            } catch (Exception ignored) {
-                // Assume version 0
-            }
-            if (version > 3) {
-                throw new FileVersionException(Integer.toString(version), "<= 3", trajectoryName + ".traj");
-            }
-            JSONObject trajJson = (JSONObject) json.get("trajectory");
-            List<PathPlannerTrajectoryState> fullTrajStates = new ArrayList<>();
-            for (var s : (JSONArray) trajJson.get("samples")) {
-                JSONObject sample = (JSONObject) s;
-                var state = new PathPlannerTrajectoryState();
-                double time = ((Number) sample.get("t")).doubleValue();
-                double xPos = ((Number) sample.get("x")).doubleValue();
-                double yPos = ((Number) sample.get("y")).doubleValue();
-                double rotationRad = ((Number) sample.get("heading")).doubleValue();
-                double xVel = ((Number) sample.get("vx")).doubleValue();
-                double yVel = ((Number) sample.get("vy")).doubleValue();
-                double angularVelRps = ((Number) sample.get("omega")).doubleValue();
-                JSONArray fx = (JSONArray) sample.get("fx");
-                JSONArray fy = (JSONArray) sample.get("fy");
-                double[] forcesX = new double[fx.size()];
-                double[] forcesY = new double[fy.size()];
-                for (int i = 0; i < fx.size(); i++) {
-                    forcesX[i] = ((Number) fx.get(i)).doubleValue();
-                    forcesY[i] = ((Number) fy.get(i)).doubleValue();
-                }
-                state.timeSeconds = time;
-                state.linearVelocity = Math.hypot(xVel, yVel);
-                state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
-                state.fieldSpeeds = new ChassisVelocities(xVel, yVel, angularVelRps);
-                if (Math.abs(state.linearVelocity) > 1e-6) {
-                    state.heading = new Rotation2d(state.fieldSpeeds.vx, state.fieldSpeeds.vy);
-                }
-                // The module forces are field relative, rotate them to be robot relative
-                for (int i = 0; i < forcesX.length; i++) {
-                    Translation2d rotated = new Translation2d(forcesX[i], forcesY[i]).rotateBy(state.pose.getRotation().unaryMinus());
-                    forcesX[i] = rotated.getX();
-                    forcesY[i] = rotated.getY();
-                }
-                // All other feedforwards besides X and Y components will be zeros because they cannot be
-                // calculated without RobotConfig
-                state.feedforwards = new DriveFeedforwards(new double[forcesX.length], new double[forcesX.length], new double[forcesX.length], forcesX, forcesY);
-                fullTrajStates.add(state);
-            }
-            List<Event> fullEvents = new ArrayList<>();
-            for (var m : (JSONArray) json.get("events")) {
-                JSONObject markerJson = (JSONObject) m;
-                String name = (String) markerJson.get("name");
-                JSONObject fromJson = (JSONObject) markerJson.get("from");
-                JSONObject fromOffsetJson = (JSONObject) fromJson.get("offset");
-                double fromTargetTimestamp = ((Number) fromJson.get("targetTimestamp")).doubleValue();
-                double fromOffset = ((Number) fromOffsetJson.get("val")).doubleValue();
-                double fromTimestamp = fromTargetTimestamp + fromOffset;
-                fullEvents.add(new OneShotTriggerEvent(fromTimestamp, name));
-                if (markerJson.get("event") != null) {
-                    Command eventCommand = CommandUtil.commandFromJson((JSONObject) markerJson.get("event"), true, false);
-                    fullEvents.add(new ScheduleCommandEvent(fromTimestamp, eventCommand));
-                }
-            }
-            fullEvents.sort(Comparator.comparingDouble(Event::getTimestampSeconds));
-            // Add the full path to the cache
-            PathPlannerPath fullPath = new PathPlannerPath();
-            fullPath.globalConstraints = PathConstraints.unlimitedConstraints(12.0);
-            fullPath.idealStartingState = new IdealStartingState(Math.hypot(fullTrajStates.get(0).fieldSpeeds.vx, fullTrajStates.get(0).fieldSpeeds.vy), fullTrajStates.get(0).pose.getRotation());
-            fullPath.goalEndState = new GoalEndState(fullTrajStates.get(fullTrajStates.size() - 1).linearVelocity, fullTrajStates.get(fullTrajStates.size() - 1).pose.getRotation());
-            List<PathPoint> fullPathPoints = new ArrayList<>();
-            for (var state : fullTrajStates) {
-                fullPathPoints.add(new PathPoint(state.pose.getTranslation()));
-            }
-            fullPath.allPoints = fullPathPoints;
-            fullPath.isChoreoPath = true;
-            fullPath.idealTrajectory = Optional.of(new PathPlannerTrajectory(fullTrajStates, fullEvents));
-            fullPath.name = trajectoryName;
-            choreoPathCache.put(trajectoryName, fullPath);
-            JSONArray splitsJson = (JSONArray) trajJson.get("splits");
-            List<Integer> splits = new ArrayList<>();
-            for (Object o : splitsJson) {
-                splits.add(((Number) o).intValue());
-            }
-            if (splits.isEmpty() || splits.get(0) != 0) {
-                splits.add(0, 0);
-            }
-            for (int i = 0; i < splits.size(); i++) {
-                String name = trajectoryName + "." + i;
-                List<PathPlannerTrajectoryState> states = new ArrayList<>();
-                int splitStartIdx = splits.get(i);
-                int splitEndIdx = fullTrajStates.size();
-                if (i < splits.size() - 1) {
-                    splitEndIdx = splits.get(i + 1);
-                }
-                double startTime = fullTrajStates.get(splitStartIdx).timeSeconds;
-                double endTime = fullTrajStates.get(splitEndIdx - 1).timeSeconds;
-                for (int s = splitStartIdx; s < splitEndIdx; s++) {
-                    states.add(fullTrajStates.get(s).copyWithTime(fullTrajStates.get(s).timeSeconds - startTime));
-                }
-                List<Event> events = new ArrayList<>();
-                for (Event originalEvent : fullEvents) {
-                    if (originalEvent.getTimestampSeconds() >= startTime && originalEvent.getTimestampSeconds() <= endTime) {
-                        events.add(originalEvent.copyWithTimestamp(originalEvent.getTimestampSeconds() - startTime));
-                    }
-                }
-                PathPlannerPath path = new PathPlannerPath();
-                path.globalConstraints = PathConstraints.unlimitedConstraints(12.0);
-                path.idealStartingState = new IdealStartingState(Math.hypot(states.get(0).fieldSpeeds.vx, states.get(0).fieldSpeeds.vy), states.get(0).pose.getRotation());
-                path.goalEndState = new GoalEndState(states.get(states.size() - 1).linearVelocity, states.get(states.size() - 1).pose.getRotation());
-                List<PathPoint> pathPoints = new ArrayList<>();
-                for (var state : states) {
-                    pathPoints.add(new PathPoint(state.pose.getTranslation()));
-                }
-                path.allPoints = pathPoints;
-                path.isChoreoPath = true;
-                path.idealTrajectory = Optional.of(new PathPlannerTrajectory(states, events));
-                path.name = name;
-                choreoPathCache.put(name, path);
-            }
+  private static void loadChoreoTrajectoryIntoCache(String trajectoryName)
+      throws IOException, ParseException, FileVersionException {
+    try (BufferedReader br =
+        new BufferedReader(
+            new FileReader(
+                new File(Filesystem.getDeployDirectory(), "choreo/" + trajectoryName + ".traj")))) {
+      StringBuilder fileContentBuilder = new StringBuilder();
+      String line;
+      while ((line = br.readLine()) != null) {
+        fileContentBuilder.append(line);
+      }
+
+      String fileContent = fileContentBuilder.toString();
+      JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+
+      int version = 0;
+
+      try {
+        version = ((Number) json.get("version")).intValue();
+      } catch (Exception ignored) {
+        // Assume version 0
+      }
+
+      if (version > 1) {
+        throw new FileVersionException(Integer.toString(version), "<= 1", trajectoryName + ".traj");
+      }
+
+      JSONObject trajJson = (JSONObject) json.get("trajectory");
+
+      List<PathPlannerTrajectoryState> fullTrajStates = new ArrayList<>();
+      for (var s : (JSONArray) trajJson.get("samples")) {
+        JSONObject sample = (JSONObject) s;
+        var state = new PathPlannerTrajectoryState();
+
+        double time = ((Number) sample.get("t")).doubleValue();
+        double xPos = ((Number) sample.get("x")).doubleValue();
+        double yPos = ((Number) sample.get("y")).doubleValue();
+        double rotationRad = ((Number) sample.get("heading")).doubleValue();
+        double xVel = ((Number) sample.get("vx")).doubleValue();
+        double yVel = ((Number) sample.get("vy")).doubleValue();
+        double angularVelRps = ((Number) sample.get("omega")).doubleValue();
+
+        JSONArray fx = (JSONArray) sample.get("fx");
+        JSONArray fy = (JSONArray) sample.get("fy");
+        double[] forcesX = new double[fx.size()];
+        double[] forcesY = new double[fy.size()];
+        for (int i = 0; i < fx.size(); i++) {
+          forcesX[i] = ((Number) fx.get(i)).doubleValue();
+          forcesY[i] = ((Number) fy.get(i)).doubleValue();
         }
+
+        state.timeSeconds = time;
+        state.linearVelocity = Math.hypot(xVel, yVel);
+        state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
+        state.fieldSpeeds = new ChassisVelocities(xVel, yVel, angularVelRps);
+        if (Math.abs(state.linearVelocity) > 1e-6) {
+          state.heading = new Rotation2d(state.fieldSpeeds.vx, state.fieldSpeeds.vy);
+        }
+
+        // The module forces are field relative, rotate them to be robot relative
+        for (int i = 0; i < forcesX.length; i++) {
+          Translation2d rotated =
+              new Translation2d(forcesX[i], forcesY[i])
+                  .rotateBy(state.pose.getRotation().unaryMinus());
+          forcesX[i] = rotated.getX();
+          forcesY[i] = rotated.getY();
+        }
+
+        // All other feedforwards besides X and Y components will be zeros because they cannot be
+        // calculated without RobotConfig
+        state.feedforwards =
+            new DriveFeedforwards(
+                new double[forcesX.length],
+                new double[forcesX.length],
+                new double[forcesX.length],
+                forcesX,
+                forcesY);
+
+        fullTrajStates.add(state);
+      }
+
+      List<Event> fullEvents = new ArrayList<>();
+      for (var m : (JSONArray) json.get("events")) {
+        JSONObject markerJson = (JSONObject) m;
+        String name = (String) markerJson.get("name");
+
+        JSONObject fromJson = (JSONObject) markerJson.get("from");
+        JSONObject fromOffsetJson = (JSONObject) fromJson.get("offset");
+        double fromTargetTimestamp = ((Number) fromJson.get("targetTimestamp")).doubleValue();
+        double fromOffset = ((Number) fromOffsetJson.get("val")).doubleValue();
+        double fromTimestamp = fromTargetTimestamp + fromOffset;
+
+        fullEvents.add(new OneShotTriggerEvent(fromTimestamp, name));
+
+        if (markerJson.get("event") != null) {
+          Command eventCommand =
+              CommandUtil.commandFromJson((JSONObject) markerJson.get("event"), true, false);
+          fullEvents.add(new ScheduleCommandEvent(fromTimestamp, eventCommand));
+        }
+      }
+      fullEvents.sort(Comparator.comparingDouble(Event::getTimestampSeconds));
+
+      // Add the full path to the cache
+      PathPlannerPath fullPath = new PathPlannerPath();
+      fullPath.globalConstraints = PathConstraints.unlimitedConstraints(12.0);
+      fullPath.idealStartingState =
+          new IdealStartingState(
+              Math.hypot(
+                  fullTrajStates.get(0).fieldSpeeds.vx, fullTrajStates.get(0).fieldSpeeds.vy),
+              fullTrajStates.get(0).pose.getRotation());
+      fullPath.goalEndState =
+          new GoalEndState(
+              fullTrajStates.get(fullTrajStates.size() - 1).linearVelocity,
+              fullTrajStates.get(fullTrajStates.size() - 1).pose.getRotation());
+
+      List<PathPoint> fullPathPoints = new ArrayList<>();
+      for (var state : fullTrajStates) {
+        fullPathPoints.add(new PathPoint(state.pose.getTranslation()));
+      }
+
+      fullPath.allPoints = fullPathPoints;
+      fullPath.isChoreoPath = true;
+      fullPath.idealTrajectory = Optional.of(new PathPlannerTrajectory(fullTrajStates, fullEvents));
+      fullPath.name = trajectoryName;
+      choreoPathCache.put(trajectoryName, fullPath);
+
+      JSONArray splitsJson = (JSONArray) trajJson.get("splits");
+      List<Integer> splits = new ArrayList<>();
+      for (Object o : splitsJson) {
+        splits.add(((Number) o).intValue());
+      }
+
+      if (splits.isEmpty() || splits.get(0) != 0) {
+        splits.add(0, 0);
+      }
+
+      for (int i = 0; i < splits.size(); i++) {
+        String name = trajectoryName + "." + i;
+        List<PathPlannerTrajectoryState> states = new ArrayList<>();
+
+        int splitStartIdx = splits.get(i);
+
+        int splitEndIdx = fullTrajStates.size();
+        if (i < splits.size() - 1) {
+          splitEndIdx = splits.get(i + 1);
+        }
+
+        double startTime = fullTrajStates.get(splitStartIdx).timeSeconds;
+        double endTime = fullTrajStates.get(splitEndIdx - 1).timeSeconds;
+        for (int s = splitStartIdx; s < splitEndIdx; s++) {
+          states.add(
+              fullTrajStates.get(s).copyWithTime(fullTrajStates.get(s).timeSeconds - startTime));
+        }
+
+        List<Event> events = new ArrayList<>();
+        for (Event originalEvent : fullEvents) {
+          if (originalEvent.getTimestampSeconds() >= startTime
+              && originalEvent.getTimestampSeconds() <= endTime) {
+            events.add(
+                originalEvent.copyWithTimestamp(originalEvent.getTimestampSeconds() - startTime));
+          }
+        }
+
+        PathPlannerPath path = new PathPlannerPath();
+        path.globalConstraints = PathConstraints.unlimitedConstraints(12.0);
+        path.idealStartingState =
+            new IdealStartingState(
+                Math.hypot(states.get(0).fieldSpeeds.vx, states.get(0).fieldSpeeds.vy),
+                states.get(0).pose.getRotation());
+        path.goalEndState =
+            new GoalEndState(
+                states.get(states.size() - 1).linearVelocity,
+                states.get(states.size() - 1).pose.getRotation());
+
+        List<PathPoint> pathPoints = new ArrayList<>();
+        for (var state : states) {
+          pathPoints.add(new PathPoint(state.pose.getTranslation()));
+        }
+
+        path.allPoints = pathPoints;
+        path.isChoreoPath = true;
+        path.idealTrajectory = Optional.of(new PathPlannerTrajectory(states, events));
+        path.name = name;
+        choreoPathCache.put(name, path);
+      }
     }
+  }
 
     /**
      * Load a Choreo trajectory as a PathPlannerPath
@@ -506,25 +580,30 @@ public class PathPlannerPath {
         return waypoints;
     }
 
-    /**
-     * If possible, get the ideal trajectory for this path. This trajectory can be used if the robot
-     * is currently near the start of the path and at the ideal starting state. If there is no ideal
-     * starting state, there can be no ideal trajectory.
-     *
-     * @param robotConfig The config to generate the ideal trajectory with if it has not already been
-     *     generated
-     * @return An optional containing the ideal trajectory if it exists, an empty optional otherwise
-     */
-    public Optional<PathPlannerTrajectory> getIdealTrajectory(RobotConfig robotConfig) {
-        if (idealTrajectory.isEmpty() && idealStartingState != null) {
-            // The ideal starting state is known, generate the ideal trajectory
-            Rotation2d heading = getInitialHeading();
-            Translation2d fieldSpeeds = new Translation2d(idealStartingState.velocityMPS(), heading);
-            ChassisVelocities startingSpeeds = new ChassisVelocities(fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0).toRobotRelative(idealStartingState.rotation());
-            idealTrajectory = Optional.of(generateTrajectory(startingSpeeds, idealStartingState.rotation(), robotConfig));
-        }
-        return idealTrajectory;
+  /**
+   * If possible, get the ideal trajectory for this path. This trajectory can be used if the robot
+   * is currently near the start of the path and at the ideal starting state. If there is no ideal
+   * starting state, there can be no ideal trajectory.
+   *
+   * @param robotConfig The config to generate the ideal trajectory with if it has not already been
+   *     generated
+   * @return An optional containing the ideal trajectory if it exists, an empty optional otherwise
+   */
+  public Optional<PathPlannerTrajectory> getIdealTrajectory(RobotConfig robotConfig) {
+    if (idealTrajectory.isEmpty() && idealStartingState != null) {
+      // The ideal starting state is known, generate the ideal trajectory
+      Rotation2d heading = getInitialHeading();
+      Translation2d fieldSpeeds = new Translation2d(idealStartingState.velocityMPS(), heading);
+      ChassisVelocities startingSpeeds =
+          new ChassisVelocities(fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0)
+              .toRobotRelative(idealStartingState.rotation());
+      idealTrajectory =
+          Optional.of(
+              generateTrajectory(startingSpeeds, idealStartingState.rotation(), robotConfig));
     }
+
+    return idealTrajectory;
+  }
 
     /**
      * Get the initial heading, or direction of travel, at the start of the path.
@@ -961,78 +1040,171 @@ public class PathPlannerPath {
         return new Translation2d(translation.getX(), FlippingUtil.fieldSizeY - translation.getY());
     }
 
-    /**
-     * Mirror a path to the other side of the current alliance. For example, if this path is on the
-     * right of the blue alliance side of the field, it will be mirrored to the left of the blue
-     * alliance side of the field.
-     *
-     * @return The mirrored path
-     */
-    public PathPlannerPath mirrorPath() {
-        PathPlannerPath path = new PathPlannerPath();
-        Optional<PathPlannerTrajectory> mirroredTraj = Optional.empty();
-        if (idealTrajectory.isPresent()) {
-            PathPlannerTrajectory traj = idealTrajectory.get();
-            // Flip the ideal trajectory
-            mirroredTraj = Optional.of(new PathPlannerTrajectory(traj.getStates().stream().map(s -> {
-                var state = new PathPlannerTrajectoryState();
-                state.timeSeconds = s.timeSeconds;
-                state.linearVelocity = s.linearVelocity;
-                state.pose = new Pose2d(mirrorTranslation(s.pose.getTranslation()), s.pose.getRotation().unaryMinus());
-                state.fieldSpeeds = new ChassisVelocities(s.fieldSpeeds.vx, -s.fieldSpeeds.vy, -s.fieldSpeeds.omega);
-                DriveFeedforwards ff = s.feedforwards;
-                if (ff.accelerationsMPSSq().length == 4) {
-                    state.feedforwards = new DriveFeedforwards(new double[] { ff.accelerationsMPSSq()[1], ff.accelerationsMPSSq()[0], ff.accelerationsMPSSq()[3], ff.accelerationsMPSSq()[2] }, new double[] { ff.linearForcesNewtons()[1], ff.linearForcesNewtons()[0], ff.linearForcesNewtons()[3], ff.linearForcesNewtons()[2] }, new double[] { ff.torqueCurrentsAmps()[1], ff.torqueCurrentsAmps()[0], ff.torqueCurrentsAmps()[3], ff.torqueCurrentsAmps()[2] }, new double[] { ff.robotRelativeForcesXNewtons()[1], ff.robotRelativeForcesXNewtons()[0], ff.robotRelativeForcesXNewtons()[3], ff.robotRelativeForcesXNewtons()[2] }, new double[] { ff.robotRelativeForcesYNewtons()[1], ff.robotRelativeForcesYNewtons()[0], ff.robotRelativeForcesYNewtons()[3], ff.robotRelativeForcesYNewtons()[2] });
-                } else if (ff.accelerationsMPSSq().length == 2) {
-                    state.feedforwards = new DriveFeedforwards(new double[] { ff.accelerationsMPSSq()[1], ff.accelerationsMPSSq()[0] }, new double[] { ff.linearForcesNewtons()[1], ff.linearForcesNewtons()[0] }, new double[] { ff.torqueCurrentsAmps()[1], ff.torqueCurrentsAmps()[0] }, new double[] { ff.robotRelativeForcesXNewtons()[1], ff.robotRelativeForcesXNewtons()[0] }, new double[] { ff.robotRelativeForcesYNewtons()[1], ff.robotRelativeForcesYNewtons()[0] });
-                } else {
-                    state.feedforwards = ff;
-                }
-                state.heading = s.heading.unaryMinus();
-                return state;
-            }).toList(), traj.getEvents()));
-        }
-        path.waypoints = waypoints.stream().map(w -> {
-            Translation2d prevControl = null;
-            Translation2d anchor = mirrorTranslation(w.anchor());
-            Translation2d nextControl = null;
-            if (w.prevControl() != null) {
-                prevControl = mirrorTranslation(w.prevControl());
-            }
-            if (w.nextControl() != null) {
-                nextControl = mirrorTranslation(w.nextControl());
-            }
-            return new Waypoint(prevControl, anchor, nextControl);
-        }).toList();
-        path.rotationTargets = rotationTargets.stream().map(t -> new RotationTarget(t.position(), t.rotation().unaryMinus())).toList();
-        path.pointTowardsZones = pointTowardsZones.stream().map(z -> new PointTowardsZone(z.name(), mirrorTranslation(z.targetPosition()), z.rotationOffset(), z.minPosition(), z.maxPosition())).toList();
-        path.constraintZones = constraintZones;
-        path.eventMarkers = eventMarkers;
-        path.globalConstraints = globalConstraints;
-        if (idealStartingState != null) {
-            path.idealStartingState = new IdealStartingState(idealStartingState.velocityMPS(), idealStartingState.rotation().unaryMinus());
-        } else {
-            path.idealStartingState = null;
-        }
-        path.goalEndState = new GoalEndState(goalEndState.velocityMPS(), goalEndState.rotation().unaryMinus());
-        path.allPoints = allPoints.stream().map(p -> {
-            PathPoint point = new PathPoint(mirrorTranslation(p.position));
-            point.distanceAlongPath = p.distanceAlongPath;
-            point.maxV = p.maxV;
-            if (p.rotationTarget != null) {
-                point.rotationTarget = new RotationTarget(p.rotationTarget.position(), p.rotationTarget.rotation().unaryMinus());
-            }
-            point.constraints = p.constraints;
-            point.waypointRelativePos = p.waypointRelativePos;
-            return point;
-        }).toList();
-        path.reversed = reversed;
-        path.isChoreoPath = isChoreoPath;
-        path.idealTrajectory = mirroredTraj;
-        path.preventFlipping = preventFlipping;
-        path.name = name;
-        return path;
+  /**
+   * Mirror a path to the other side of the current alliance. For example, if this path is on the
+   * right of the blue alliance side of the field, it will be mirrored to the left of the blue
+   * alliance side of the field.
+   *
+   * @return The mirrored path
+   */
+  public PathPlannerPath mirrorPath() {
+    PathPlannerPath path = new PathPlannerPath();
+
+    Optional<PathPlannerTrajectory> mirroredTraj = Optional.empty();
+    if (idealTrajectory.isPresent()) {
+      PathPlannerTrajectory traj = idealTrajectory.get();
+      // Flip the ideal trajectory
+      mirroredTraj =
+          Optional.of(
+              new PathPlannerTrajectory(
+                  traj.getStates().stream()
+                      .map(
+                          s -> {
+                            var state = new PathPlannerTrajectoryState();
+
+                            state.timeSeconds = s.timeSeconds;
+                            state.linearVelocity = s.linearVelocity;
+                            state.pose =
+                                new Pose2d(
+                                    mirrorTranslation(s.pose.getTranslation()),
+                                    s.pose.getRotation().unaryMinus());
+                            state.fieldSpeeds =
+                                new ChassisVelocities(
+                                    s.fieldSpeeds.vx, -s.fieldSpeeds.vy, -s.fieldSpeeds.omega);
+                            DriveFeedforwards ff = s.feedforwards;
+                            if (ff.accelerationsMPSSq().length == 4) {
+                              state.feedforwards =
+                                  new DriveFeedforwards(
+                                      new double[] {
+                                        ff.accelerationsMPSSq()[1],
+                                        ff.accelerationsMPSSq()[0],
+                                        ff.accelerationsMPSSq()[3],
+                                        ff.accelerationsMPSSq()[2]
+                                      },
+                                      new double[] {
+                                        ff.linearForcesNewtons()[1],
+                                        ff.linearForcesNewtons()[0],
+                                        ff.linearForcesNewtons()[3],
+                                        ff.linearForcesNewtons()[2]
+                                      },
+                                      new double[] {
+                                        ff.torqueCurrentsAmps()[1],
+                                        ff.torqueCurrentsAmps()[0],
+                                        ff.torqueCurrentsAmps()[3],
+                                        ff.torqueCurrentsAmps()[2]
+                                      },
+                                      new double[] {
+                                        ff.robotRelativeForcesXNewtons()[1],
+                                        ff.robotRelativeForcesXNewtons()[0],
+                                        ff.robotRelativeForcesXNewtons()[3],
+                                        ff.robotRelativeForcesXNewtons()[2]
+                                      },
+                                      new double[] {
+                                        ff.robotRelativeForcesYNewtons()[1],
+                                        ff.robotRelativeForcesYNewtons()[0],
+                                        ff.robotRelativeForcesYNewtons()[3],
+                                        ff.robotRelativeForcesYNewtons()[2]
+                                      });
+                            } else if (ff.accelerationsMPSSq().length == 2) {
+                              state.feedforwards =
+                                  new DriveFeedforwards(
+                                      new double[] {
+                                        ff.accelerationsMPSSq()[1], ff.accelerationsMPSSq()[0]
+                                      },
+                                      new double[] {
+                                        ff.linearForcesNewtons()[1], ff.linearForcesNewtons()[0]
+                                      },
+                                      new double[] {
+                                        ff.torqueCurrentsAmps()[1], ff.torqueCurrentsAmps()[0]
+                                      },
+                                      new double[] {
+                                        ff.robotRelativeForcesXNewtons()[1],
+                                        ff.robotRelativeForcesXNewtons()[0]
+                                      },
+                                      new double[] {
+                                        ff.robotRelativeForcesYNewtons()[1],
+                                        ff.robotRelativeForcesYNewtons()[0]
+                                      });
+                            } else {
+                              state.feedforwards = ff;
+                            }
+                            state.heading = s.heading.unaryMinus();
+
+                            return state;
+                          })
+                      .toList(),
+                  traj.getEvents()));
     }
+
+    path.waypoints =
+        waypoints.stream()
+            .map(
+                w -> {
+                  Translation2d prevControl = null;
+                  Translation2d anchor = mirrorTranslation(w.anchor());
+                  Translation2d nextControl = null;
+
+                  if (w.prevControl() != null) {
+                    prevControl = mirrorTranslation(w.prevControl());
+                  }
+                  if (w.nextControl() != null) {
+                    nextControl = mirrorTranslation(w.nextControl());
+                  }
+                  return new Waypoint(prevControl, anchor, nextControl);
+                })
+            .toList();
+    path.rotationTargets =
+        rotationTargets.stream()
+            .map(t -> new RotationTarget(t.position(), t.rotation().unaryMinus()))
+            .toList();
+    path.pointTowardsZones =
+        pointTowardsZones.stream()
+            .map(
+                z ->
+                    new PointTowardsZone(
+                        z.name(),
+                        mirrorTranslation(z.targetPosition()),
+                        z.rotationOffset(),
+                        z.minPosition(),
+                        z.maxPosition()))
+            .toList();
+    path.constraintZones = constraintZones;
+    path.eventMarkers = eventMarkers;
+    path.globalConstraints = globalConstraints;
+    if (idealStartingState != null) {
+      path.idealStartingState =
+          new IdealStartingState(
+              idealStartingState.velocityMPS(), idealStartingState.rotation().unaryMinus());
+    } else {
+      path.idealStartingState = null;
+    }
+    path.goalEndState =
+        new GoalEndState(goalEndState.velocityMPS(), goalEndState.rotation().unaryMinus());
+    path.allPoints =
+        allPoints.stream()
+            .map(
+                p -> {
+                  PathPoint point = new PathPoint(mirrorTranslation(p.position));
+                  point.distanceAlongPath = p.distanceAlongPath;
+                  point.maxV = p.maxV;
+                  if (p.rotationTarget != null) {
+                    point.rotationTarget =
+                        new RotationTarget(
+                            p.rotationTarget.position(), p.rotationTarget.rotation().unaryMinus());
+                  }
+                  point.constraints = p.constraints;
+                  point.waypointRelativePos = p.waypointRelativePos;
+                  return point;
+                })
+            .toList();
+    path.reversed = reversed;
+    path.isChoreoPath = isChoreoPath;
+    path.idealTrajectory = mirroredTraj;
+    path.preventFlipping = preventFlipping;
+    path.name = name;
+
+    return path;
+  }
 
     /**
      * Get a list of poses representing every point in this path. This can be used to display a path

@@ -5,7 +5,6 @@
 #include <frc2/command/Commands.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
-#include <frc/controller/RamseteController.h>
 #include <vector>
 #include <map>
 #include <frc2/command/Command.h>

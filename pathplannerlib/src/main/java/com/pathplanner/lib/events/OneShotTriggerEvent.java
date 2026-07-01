@@ -15,17 +15,20 @@ public class OneShotTriggerEvent extends Event {
 
     private final Command resetCommand;
 
-    /**
-     * Create an event for activating a trigger, then deactivating it the next loop
-     *
-     * @param timestamp The trajectory timestamp of this event
-     * @param name The name of the trigger to control
-     */
-    public OneShotTriggerEvent(double timestamp, String name) {
-        super(timestamp);
-        this.name = name;
-        this.resetCommand = Commands.waitSeconds(0).andThen(Commands.runOnce(() -> EventTrigger.setCondition(name, false))).ignoringDisable(true);
-    }
+  /**
+   * Create an event for activating a trigger, then deactivating it the next loop
+   *
+   * @param timestamp The trajectory timestamp of this event
+   * @param name The name of the trigger to control
+   */
+  public OneShotTriggerEvent(double timestamp, String name) {
+    super(timestamp);
+    this.name = name;
+    this.resetCommand =
+        Commands.waitSeconds(0.0)
+            .andThen(Commands.runOnce(() -> EventTrigger.setCondition(name, false)))
+            .ignoringDisable(true);
+  }
 
     /**
      * Create an event for activating a trigger, then deactivating it the next loop

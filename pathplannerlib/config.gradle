@@ -17,10 +17,10 @@ nativeUtils.wpi.addWarningsAsErrors()
 
 nativeUtils.setSinglePrintPerPlatform()
 
-nativeUtils.wpi.addVendorDeps()
-nativeUtils.wpi.getVendorDeps().loadAll()
-nativeUtils.wpi.getVendorDeps().getNativeVendor().initializeNativeDependencies()
-nativeUtils.wpi.getVendorDeps().addVendorReposToMaven(false)
+//nativeUtils.wpi.addVendorDeps()
+//nativeUtils.wpi.getVendorDeps().loadAll()
+//nativeUtils.wpi.getVendorDeps().getNativeVendor().initializeNativeDependencies()
+//nativeUtils.wpi.getVendorDeps().addVendorReposToMaven(false)
 
 model {
     components {

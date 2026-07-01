@@ -4,7 +4,7 @@
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include <frc/Filesystem.h>
 #include <wpi/MemoryBuffer.h>
-#include <hal/FRCUsageReporting.h>
+#include <hal/UsageReporting.h>
 #include <stdexcept>
 
 using namespace pathplanner;
@@ -54,7 +54,7 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName, bool mirror) {
 	m_autoLoop = std::make_unique<frc::EventLoop>();
 
 	m_instances++;
-	HAL_Report(HALUsageReporting::kResourceType_PathPlannerAuto, m_instances);
+	HAL_ReportUsage("PathPlanner/PathPlannerAuto", m_instances, "");
 }
 
 PathPlannerAuto::PathPlannerAuto(frc2::CommandPtr &&autoCommand,
@@ -65,7 +65,7 @@ PathPlannerAuto::PathPlannerAuto(frc2::CommandPtr &&autoCommand,
 	m_autoLoop = std::make_unique<frc::EventLoop>();
 
 	m_instances++;
-	HAL_Report(HALUsageReporting::kResourceType_PathPlannerAuto, m_instances);
+	HAL_ReportUsage("PathPlanner/PathPlannerAuto", m_instances, "");
 }
 
 frc2::Trigger PathPlannerAuto::nearFieldPositionAutoFlipped(

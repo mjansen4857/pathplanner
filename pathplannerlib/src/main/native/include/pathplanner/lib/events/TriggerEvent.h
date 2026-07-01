@@ -14,7 +14,7 @@ public:
 	 * @param name The name of the trigger to control
 	 * @param active Should the trigger be activated by this event
 	 */
-	TriggerEvent(units::second_t timestamp, std::string name, bool active) : Event(
+	TriggerEvent(wpi::units::second_t timestamp, std::string name, bool active) : Event(
 			timestamp), m_name(name), m_active(active) {
 	}
 
@@ -29,8 +29,8 @@ public:
 		}
 	}
 
-	inline std::shared_ptr<Event> copyWithTimestamp(units::second_t timestamp)
-			override {
+	inline std::shared_ptr<Event> copyWithTimestamp(
+			wpi::units::second_t timestamp) override {
 		return std::make_shared < TriggerEvent > (timestamp, m_name, m_active);
 	}
 

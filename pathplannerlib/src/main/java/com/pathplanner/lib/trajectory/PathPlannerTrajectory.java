@@ -1,6 +1,7 @@
 package com.pathplanner.lib.trajectory;
 
 import static org.wpilib.units.Units.Seconds;
+
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.events.*;
 import com.pathplanner.lib.path.EventMarker;
@@ -9,43 +10,40 @@ import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.path.PointTowardsZone;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.GeometryUtil;
-import org.wpilib.math.util.MathUtil;
+import java.util.*;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
-import org.wpilib.units.measure.Time;
-import java.util.*;
 import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.math.kinematics.SwerveModuleVelocity;
+import org.wpilib.units.measure.Time;
 
-/**
- * Trajectory generated for a PathPlanner path
- */
+/** Trajectory generated for a PathPlanner path */
 public class PathPlannerTrajectory {
 
-    private final List<PathPlannerTrajectoryState> states;
+  private final List<PathPlannerTrajectoryState> states;
 
-    private final List<Event> events;
+  private final List<Event> events;
 
-    /**
-     * Create a trajectory with pre-generated states and list of events
-     *
-     * @param states Pre-generated states
-     * @param events Events for this trajectory
-     */
-    public PathPlannerTrajectory(List<PathPlannerTrajectoryState> states, List<Event> events) {
-        this.states = states;
-        this.events = events;
-    }
+  /**
+   * Create a trajectory with pre-generated states and list of events
+   *
+   * @param states Pre-generated states
+   * @param events Events for this trajectory
+   */
+  public PathPlannerTrajectory(List<PathPlannerTrajectoryState> states, List<Event> events) {
+    this.states = states;
+    this.events = events;
+  }
 
-    /**
-     * Create a trajectory with pre-generated states
-     *
-     * @param states Pre-generated states
-     */
-    public PathPlannerTrajectory(List<PathPlannerTrajectoryState> states) {
-        this(states, Collections.emptyList());
-    }
+  /**
+   * Create a trajectory with pre-generated states
+   *
+   * @param states Pre-generated states
+   */
+  public PathPlannerTrajectory(List<PathPlannerTrajectoryState> states) {
+    this(states, Collections.emptyList());
+  }
 
   /**
    * Generate a new trajectory for a given path
@@ -146,7 +144,8 @@ public class PathPlannerTrajectory {
 
           ChassisVelocities prevRobotSpeeds =
               prevState.fieldSpeeds.toRobotRelative(prevState.pose.getRotation());
-          ChassisVelocities robotSpeeds = state.fieldSpeeds.toRobotRelative(state.pose.getRotation());
+          ChassisVelocities robotSpeeds =
+              state.fieldSpeeds.toRobotRelative(state.pose.getRotation());
           double chassisAccelX = (robotSpeeds.vx - prevRobotSpeeds.vx) / dt;
           double chassisAccelY = (robotSpeeds.vy - prevRobotSpeeds.vy) / dt;
           double chassisForceX = chassisAccelX * config.massKG;
@@ -154,7 +153,8 @@ public class PathPlannerTrajectory {
 
           double angularAccel = (robotSpeeds.omega - prevRobotSpeeds.omega) / dt;
           double angTorque = angularAccel * config.MOI;
-          ChassisVelocities chassisForces = new ChassisVelocities(chassisForceX, chassisForceY, angTorque);
+          ChassisVelocities chassisForces =
+              new ChassisVelocities(chassisForceX, chassisForceY, angTorque);
 
           Translation2d[] wheelForces = config.chassisForcesToWheelForceVectors(chassisForces);
           double[] accelFF = new double[config.numModules];
@@ -206,75 +206,99 @@ public class PathPlannerTrajectory {
     }
   }
 
-    private static void generateStates(List<PathPlannerTrajectoryState> states, PathPlannerPath path, Rotation2d startingRotation, RobotConfig config) {
-        int prevRotationTargetIdx = 0;
-        Rotation2d prevRotationTargetRot = startingRotation;
-        int nextRotationTargetIdx = getNextRotationTargetIdx(path, 0);
-        Rotation2d nextRotationTargetRot = path.getPoint(nextRotationTargetIdx).rotationTarget.rotation();
-        for (int i = 0; i < path.numPoints(); i++) {
-            PathPoint p = path.getPoint(i);
-            if (i > nextRotationTargetIdx) {
-                prevRotationTargetIdx = nextRotationTargetIdx;
-                prevRotationTargetRot = nextRotationTargetRot;
-                nextRotationTargetIdx = getNextRotationTargetIdx(path, i);
-                nextRotationTargetRot = path.getPoint(nextRotationTargetIdx).rotationTarget.rotation();
-            }
-            // Holonomic rotation is interpolated. We use the distance along the path
-            // to calculate how much to interpolate since the distribution of path points
-            // is not the same along the whole segment
-            double t = (path.getPoint(i).distanceAlongPath - path.getPoint(prevRotationTargetIdx).distanceAlongPath) / (path.getPoint(nextRotationTargetIdx).distanceAlongPath - path.getPoint(prevRotationTargetIdx).distanceAlongPath);
-            Rotation2d holonomicRot = cosineInterpolate(prevRotationTargetRot, nextRotationTargetRot, t);
-            Pose2d robotPose = new Pose2d(p.position, holonomicRot);
-            var state = new PathPlannerTrajectoryState();
-            state.pose = robotPose;
-            state.constraints = p.constraints;
-            state.waypointRelativePos = p.waypointRelativePos;
-            // Calculate robot heading
-            if (i != path.numPoints() - 1) {
-                Translation2d headingTranslation = path.getPoint(i + 1).position.minus(state.pose.getTranslation());
-                if (headingTranslation.getNorm() <= 1e-6) {
-                    state.heading = Rotation2d.kZero;
-                } else {
-                    state.heading = headingTranslation.getAngle();
-                }
-            } else {
-                state.heading = states.get(i - 1).heading;
-            }
-            if (!config.isHolonomic) {
-                state.pose = new Pose2d(state.pose.getTranslation(), state.heading);
-            }
-            if (i != 0) {
-                state.deltaPos = state.pose.getTranslation().getDistance(states.get(i - 1).pose.getTranslation());
-                state.deltaRot = state.pose.getRotation().minus(states.get(i - 1).pose.getRotation());
-            }
-            state.moduleStates = new SwerveModuleTrajectoryState[config.numModules];
-            for (int m = 0; m < config.numModules; m++) {
-                state.moduleStates[m] = new SwerveModuleTrajectoryState();
-                state.moduleStates[m].fieldPos = state.pose.getTranslation().plus(config.moduleLocations[m].rotateBy(state.pose.getRotation()));
-                if (i != 0) {
-                    state.moduleStates[m].deltaPos = state.moduleStates[m].fieldPos.getDistance(states.get(i - 1).moduleStates[m].fieldPos);
-                }
-            }
-            states.add(state);
+  private static void generateStates(
+      List<PathPlannerTrajectoryState> states,
+      PathPlannerPath path,
+      Rotation2d startingRotation,
+      RobotConfig config) {
+    int prevRotationTargetIdx = 0;
+    Rotation2d prevRotationTargetRot = startingRotation;
+    int nextRotationTargetIdx = getNextRotationTargetIdx(path, 0);
+    Rotation2d nextRotationTargetRot =
+        path.getPoint(nextRotationTargetIdx).rotationTarget.rotation();
+    for (int i = 0; i < path.numPoints(); i++) {
+      PathPoint p = path.getPoint(i);
+      if (i > nextRotationTargetIdx) {
+        prevRotationTargetIdx = nextRotationTargetIdx;
+        prevRotationTargetRot = nextRotationTargetRot;
+        nextRotationTargetIdx = getNextRotationTargetIdx(path, i);
+        nextRotationTargetRot = path.getPoint(nextRotationTargetIdx).rotationTarget.rotation();
+      }
+      // Holonomic rotation is interpolated. We use the distance along the path
+      // to calculate how much to interpolate since the distribution of path points
+      // is not the same along the whole segment
+      double t =
+          (path.getPoint(i).distanceAlongPath
+                  - path.getPoint(prevRotationTargetIdx).distanceAlongPath)
+              / (path.getPoint(nextRotationTargetIdx).distanceAlongPath
+                  - path.getPoint(prevRotationTargetIdx).distanceAlongPath);
+      Rotation2d holonomicRot = cosineInterpolate(prevRotationTargetRot, nextRotationTargetRot, t);
+      Pose2d robotPose = new Pose2d(p.position, holonomicRot);
+      var state = new PathPlannerTrajectoryState();
+      state.pose = robotPose;
+      state.constraints = p.constraints;
+      state.waypointRelativePos = p.waypointRelativePos;
+      // Calculate robot heading
+      if (i != path.numPoints() - 1) {
+        Translation2d headingTranslation =
+            path.getPoint(i + 1).position.minus(state.pose.getTranslation());
+        if (headingTranslation.getNorm() <= 1e-6) {
+          state.heading = Rotation2d.kZero;
+        } else {
+          state.heading = headingTranslation.getAngle();
         }
-        // Calculate module headings
-        for (int i = 0; i < states.size(); i++) {
-            for (int m = 0; m < config.numModules; m++) {
-                if (i != states.size() - 1) {
-                    Translation2d fieldTranslation = states.get(i + 1).moduleStates[m].fieldPos.minus(states.get(i).moduleStates[m].fieldPos);
-                    if (fieldTranslation.getNorm() <= 1e-6) {
-                        states.get(i).moduleStates[m].fieldAngle = Rotation2d.kZero;
-                    } else {
-                        states.get(i).moduleStates[m].fieldAngle = fieldTranslation.getAngle();
-                    }
-                    states.get(i).moduleStates[m].angle = states.get(i).moduleStates[m].fieldAngle.minus(states.get(i).pose.getRotation());
-                } else {
-                    states.get(i).moduleStates[m].fieldAngle = states.get(i - 1).moduleStates[m].fieldAngle;
-                    states.get(i).moduleStates[m].angle = states.get(i).moduleStates[m].fieldAngle.minus(states.get(i).pose.getRotation());
-                }
-            }
+      } else {
+        state.heading = states.get(i - 1).heading;
+      }
+      if (!config.isHolonomic) {
+        state.pose = new Pose2d(state.pose.getTranslation(), state.heading);
+      }
+      if (i != 0) {
+        state.deltaPos =
+            state.pose.getTranslation().getDistance(states.get(i - 1).pose.getTranslation());
+        state.deltaRot = state.pose.getRotation().minus(states.get(i - 1).pose.getRotation());
+      }
+      state.moduleStates = new SwerveModuleTrajectoryState[config.numModules];
+      for (int m = 0; m < config.numModules; m++) {
+        state.moduleStates[m] = new SwerveModuleTrajectoryState();
+        state.moduleStates[m].fieldPos =
+            state
+                .pose
+                .getTranslation()
+                .plus(config.moduleLocations[m].rotateBy(state.pose.getRotation()));
+        if (i != 0) {
+          state.moduleStates[m].deltaPos =
+              state.moduleStates[m].fieldPos.getDistance(
+                  states.get(i - 1).moduleStates[m].fieldPos);
         }
+      }
+      states.add(state);
     }
+    // Calculate module headings
+    for (int i = 0; i < states.size(); i++) {
+      for (int m = 0; m < config.numModules; m++) {
+        if (i != states.size() - 1) {
+          Translation2d fieldTranslation =
+              states
+                  .get(i + 1)
+                  .moduleStates[m]
+                  .fieldPos
+                  .minus(states.get(i).moduleStates[m].fieldPos);
+          if (fieldTranslation.getNorm() <= 1e-6) {
+            states.get(i).moduleStates[m].fieldAngle = Rotation2d.kZero;
+          } else {
+            states.get(i).moduleStates[m].fieldAngle = fieldTranslation.getAngle();
+          }
+          states.get(i).moduleStates[m].angle =
+              states.get(i).moduleStates[m].fieldAngle.minus(states.get(i).pose.getRotation());
+        } else {
+          states.get(i).moduleStates[m].fieldAngle = states.get(i - 1).moduleStates[m].fieldAngle;
+          states.get(i).moduleStates[m].angle =
+              states.get(i).moduleStates[m].fieldAngle.minus(states.get(i).pose.getRotation());
+        }
+      }
+    }
+  }
 
   private static void forwardAccelPass(
       List<PathPlannerTrajectoryState> states, RobotConfig config) {
@@ -547,130 +571,129 @@ public class PathPlannerTrajectory {
     }
   }
 
-    /**
-     * Get all the events to run while following this trajectory
-     *
-     * @return Events in this trajectory
-     */
-    public List<Event> getEvents() {
-        return events;
-    }
+  /**
+   * Get all the events to run while following this trajectory
+   *
+   * @return Events in this trajectory
+   */
+  public List<Event> getEvents() {
+    return events;
+  }
 
-    /**
-     * Get all the pre-generated states in the trajectory
-     *
-     * @return List of all states
-     */
-    public List<PathPlannerTrajectoryState> getStates() {
-        return states;
-    }
+  /**
+   * Get all the pre-generated states in the trajectory
+   *
+   * @return List of all states
+   */
+  public List<PathPlannerTrajectoryState> getStates() {
+    return states;
+  }
 
-    /**
-     * Get the goal state at the given index
-     *
-     * @param index Index of the state to get
-     * @return The state at the given index
-     */
-    public PathPlannerTrajectoryState getState(int index) {
-        return states.get(index);
-    }
+  /**
+   * Get the goal state at the given index
+   *
+   * @param index Index of the state to get
+   * @return The state at the given index
+   */
+  public PathPlannerTrajectoryState getState(int index) {
+    return states.get(index);
+  }
 
-    /**
-     * Get the initial state of the trajectory
-     *
-     * @return The initial state
-     */
-    public PathPlannerTrajectoryState getInitialState() {
-        return states.get(0);
-    }
+  /**
+   * Get the initial state of the trajectory
+   *
+   * @return The initial state
+   */
+  public PathPlannerTrajectoryState getInitialState() {
+    return states.get(0);
+  }
 
-    /**
-     * Get the end state of the trajectory
-     *
-     * @return The end state
-     */
-    public PathPlannerTrajectoryState getEndState() {
-        return states.get(states.size() - 1);
-    }
+  /**
+   * Get the end state of the trajectory
+   *
+   * @return The end state
+   */
+  public PathPlannerTrajectoryState getEndState() {
+    return states.get(states.size() - 1);
+  }
 
-    /**
-     * Get the total run time of the trajectory
-     *
-     * @return Total run time in seconds
-     */
-    public double getTotalTimeSeconds() {
-        return getEndState().timeSeconds;
-    }
+  /**
+   * Get the total run time of the trajectory
+   *
+   * @return Total run time in seconds
+   */
+  public double getTotalTimeSeconds() {
+    return getEndState().timeSeconds;
+  }
 
-    /**
-     * Get the total run time of the trajectory
-     *
-     * @return Total run time
-     */
-    public Time getTotalTime() {
-        return Seconds.of(getTotalTimeSeconds());
-    }
+  /**
+   * Get the total run time of the trajectory
+   *
+   * @return Total run time
+   */
+  public Time getTotalTime() {
+    return Seconds.of(getTotalTimeSeconds());
+  }
 
-    /**
-     * Get the initial robot pose at the start of the trajectory
-     *
-     * @return Pose of the robot at the initial state
-     */
-    public Pose2d getInitialPose() {
-        return getInitialState().pose;
-    }
+  /**
+   * Get the initial robot pose at the start of the trajectory
+   *
+   * @return Pose of the robot at the initial state
+   */
+  public Pose2d getInitialPose() {
+    return getInitialState().pose;
+  }
 
-    /**
-     * Get the target state at the given point in time along the trajectory
-     *
-     * @param time The time to sample the trajectory at in seconds
-     * @return The target state
-     */
-    public PathPlannerTrajectoryState sample(double time) {
-        if (time <= getInitialState().timeSeconds)
-            return getInitialState();
-        if (time >= getTotalTimeSeconds())
-            return getEndState();
-        int low = 1;
-        int high = states.size() - 1;
-        while (low != high) {
-            int mid = (low + high) / 2;
-            if (getState(mid).timeSeconds < time) {
-                low = mid + 1;
-            } else {
-                high = mid;
-            }
-        }
-        var sample = getState(low);
-        var prevSample = getState(low - 1);
-        if (Math.abs(sample.timeSeconds - prevSample.timeSeconds) < 1E-3) {
-            return sample;
-        }
-        return prevSample.interpolate(sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
+  /**
+   * Get the target state at the given point in time along the trajectory
+   *
+   * @param time The time to sample the trajectory at in seconds
+   * @return The target state
+   */
+  public PathPlannerTrajectoryState sample(double time) {
+    if (time <= getInitialState().timeSeconds) return getInitialState();
+    if (time >= getTotalTimeSeconds()) return getEndState();
+    int low = 1;
+    int high = states.size() - 1;
+    while (low != high) {
+      int mid = (low + high) / 2;
+      if (getState(mid).timeSeconds < time) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
     }
+    var sample = getState(low);
+    var prevSample = getState(low - 1);
+    if (Math.abs(sample.timeSeconds - prevSample.timeSeconds) < 1E-3) {
+      return sample;
+    }
+    return prevSample.interpolate(
+        sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
+  }
 
-    /**
-     * Get the target state at the given point in time along the trajectory
-     *
-     * @param time The time to sample the trajectory at
-     * @return The target state
-     */
-    public PathPlannerTrajectoryState sample(Time time) {
-        return sample(time.in(Seconds));
-    }
+  /**
+   * Get the target state at the given point in time along the trajectory
+   *
+   * @param time The time to sample the trajectory at
+   * @return The target state
+   */
+  public PathPlannerTrajectoryState sample(Time time) {
+    return sample(time.in(Seconds));
+  }
 
-    /**
-     * Flip this trajectory for the other side of the field, maintaining a blue alliance origin
-     *
-     * @return This trajectory with all states flipped to the other side of the field
-     */
-    public PathPlannerTrajectory flip() {
-        List<PathPlannerTrajectoryState> mirroredStates = new ArrayList<>(states.size());
-        for (var state : states) {
-            mirroredStates.add(state.flip());
-        }
-        return new PathPlannerTrajectory(mirroredStates, getEvents());
+  /**
+   * Flip this trajectory for the other side of the field, maintaining a blue alliance origin
+   *
+   * @return This trajectory with all states flipped to the other side of the field
+   */
+  public PathPlannerTrajectory flip() {
+    List<PathPlannerTrajectoryState> mirroredStates = new ArrayList<>(states.size());
+    for (var state : states) {
+      mirroredStates.add(state.flip());
     }
+    return new PathPlannerTrajectory(mirroredStates, getEvents());
+  }
 
   private static void desaturateWheelSpeeds(
       SwerveModuleVelocity[] moduleStates,
@@ -711,17 +734,17 @@ public class PathPlannerTrajectory {
     }
   }
 
-    private static int getNextRotationTargetIdx(PathPlannerPath path, int startingIndex) {
-        for (int i = startingIndex; i < path.numPoints() - 1; i++) {
-            if (path.getPoint(i).rotationTarget != null) {
-                return i;
-            }
-        }
-        return path.numPoints() - 1;
+  private static int getNextRotationTargetIdx(PathPlannerPath path, int startingIndex) {
+    for (int i = startingIndex; i < path.numPoints() - 1; i++) {
+      if (path.getPoint(i).rotationTarget != null) {
+        return i;
+      }
     }
+    return path.numPoints() - 1;
+  }
 
-    private static Rotation2d cosineInterpolate(Rotation2d start, Rotation2d end, double t) {
-        double t2 = (1.0 - Math.cos(t * Math.PI)) / 2.0;
-        return start.interpolate(end, t2);
-    }
+  private static Rotation2d cosineInterpolate(Rotation2d start, Rotation2d end, double t) {
+    double t2 = (1.0 - Math.cos(t * Math.PI)) / 2.0;
+    return start.interpolate(end, t2);
+  }
 }

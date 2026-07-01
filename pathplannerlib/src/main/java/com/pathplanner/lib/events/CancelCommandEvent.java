@@ -1,49 +1,48 @@
 package com.pathplanner.lib.events;
 
 import static org.wpilib.units.Units.Seconds;
-import org.wpilib.units.measure.Time;
-import org.wpilib.command2.Command;
 
-/**
- * Event that will cancel a command within the EventScheduler
- */
+import org.wpilib.command2.Command;
+import org.wpilib.units.measure.Time;
+
+/** Event that will cancel a command within the EventScheduler */
 public class CancelCommandEvent extends Event {
 
-    private final Command command;
+  private final Command command;
 
-    /**
-     * Create an event to cancel a command
-     *
-     * @param timestamp The trajectory timestamp for this event
-     * @param command The command to cancel
-     */
-    public CancelCommandEvent(double timestamp, Command command) {
-        super(timestamp);
-        this.command = command;
-    }
+  /**
+   * Create an event to cancel a command
+   *
+   * @param timestamp The trajectory timestamp for this event
+   * @param command The command to cancel
+   */
+  public CancelCommandEvent(double timestamp, Command command) {
+    super(timestamp);
+    this.command = command;
+  }
 
-    /**
-     * Create an event to cancel a command
-     *
-     * @param timestamp The trajectory timestamp for this event
-     * @param command The command to cancel
-     */
-    public CancelCommandEvent(Time timestamp, Command command) {
-        this(timestamp.in(Seconds), command);
-    }
+  /**
+   * Create an event to cancel a command
+   *
+   * @param timestamp The trajectory timestamp for this event
+   * @param command The command to cancel
+   */
+  public CancelCommandEvent(Time timestamp, Command command) {
+    this(timestamp.in(Seconds), command);
+  }
 
-    @Override
-    public void handleEvent(EventScheduler eventScheduler) {
-        eventScheduler.cancelCommand(command);
-    }
+  @Override
+  public void handleEvent(EventScheduler eventScheduler) {
+    eventScheduler.cancelCommand(command);
+  }
 
-    @Override
-    public void cancelEvent(EventScheduler eventScheduler) {
-        // Do nothing, the event scheduler will already cancel all commands
-    }
+  @Override
+  public void cancelEvent(EventScheduler eventScheduler) {
+    // Do nothing, the event scheduler will already cancel all commands
+  }
 
-    @Override
-    public Event copyWithTimestamp(double timestampSeconds) {
-        return new CancelCommandEvent(timestampSeconds, command);
-    }
+  @Override
+  public Event copyWithTimestamp(double timestampSeconds) {
+    return new CancelCommandEvent(timestampSeconds, command);
+  }
 }

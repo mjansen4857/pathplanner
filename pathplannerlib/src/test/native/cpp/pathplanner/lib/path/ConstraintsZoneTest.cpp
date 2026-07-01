@@ -12,17 +12,12 @@ TEST(ConstraintsZoneTest, TestGetters) {
 }
 
 TEST(ConstraintsZoneTest, TestFromJson) {
-	wpi::json json;
-	wpi::json constraintsJson;
-	constraintsJson.emplace("maxVelocity", 1.0);
-	constraintsJson.emplace("maxAcceleration", 2.0);
-	constraintsJson.emplace("maxAngularVelocity", 90.0);
-	constraintsJson.emplace("maxAngularAcceleration", 180.0);
-	constraintsJson.emplace("nominalVoltage", 12.0);
-	constraintsJson.emplace("unlimited", false);
-	json.emplace("minWaypointRelativePos", 1.5);
-	json.emplace("maxWaypointRelativePos", 2.5);
-	json.emplace("constraints", constraintsJson);
+	wpi::util::json constraintsJson = wpi::util::json::object("maxVelocity",
+			1.0, "maxAcceleration", 2.0, "maxAngularVelocity", 90.0,
+			"maxAngularAcceleration", 180.0, "nominalVoltage", 12.0,
+			"unlimited", false);
+	wpi::util::json json = wpi::util::json::object("minWaypointRelativePos", 1.5,
+			"maxWaypointRelativePos", 2.5, "constraints", constraintsJson);
 
 	ConstraintsZone expected(1.5, 2.5, PathConstraints(1_mps, 2_mps_sq, 90_deg_per_s, 180_deg_per_s_sq, 12_V, false));
 	EXPECT_EQ(expected, ConstraintsZone::fromJson(json));

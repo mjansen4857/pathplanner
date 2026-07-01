@@ -1,10 +1,10 @@
 #pragma once
 
 #include "pathplanner/lib/controllers/PathFollowingController.h"
-#include <frc/controller/LTVUnicycleController.h>
+#include <wpi/math/controller/LTVUnicycleController.hpp>
 
 namespace pathplanner {
-class PPLTVController: public frc::LTVUnicycleController,
+class PPLTVController: public wpi::math::LTVUnicycleController,
 		public PathFollowingController {
 public:
 	/**
@@ -16,8 +16,8 @@ public:
 	 * @param maxVelocity The maximum velocity in meters per second for the controller gain lookup
 	 *     table. The default is 9 m/s.
 	 */
-	PPLTVController(units::second_t dt,
-			units::velocity::meters_per_second_t maxVelocity = 9_mps) : LTVUnicycleController(
+	PPLTVController(wpi::units::second_t dt,
+			wpi::units::velocity::meters_per_second_t maxVelocity = 9_mps) : LTVUnicycleController(
 			dt, maxVelocity), m_lastError(0_m) {
 	}
 
@@ -35,14 +35,14 @@ public:
 	 *     table. The default is 9 m/s.
 	 * @throws IllegalArgumentException if maxVelocity &lt;= 0 m/s or &gt;= 15 m/s.
 	 */
-	PPLTVController(const wpi::array<double, 3> &Qelems,
-			const wpi::array<double, 2> &Relems, units::second_t dt,
-			units::meters_per_second_t maxVelocity = 9_mps) : LTVUnicycleController(
+	PPLTVController(const wpi::util::array<double, 3> &Qelems,
+			const wpi::util::array<double, 2> &Relems, wpi::units::second_t dt,
+			wpi::units::meters_per_second_t maxVelocity = 9_mps) : LTVUnicycleController(
 			Qelems, Relems, dt, maxVelocity), m_lastError(0_m) {
 	}
 
-	frc::ChassisSpeeds calculateRobotRelativeSpeeds(
-			const frc::Pose2d &currentPose,
+	wpi::math::ChassisVelocities calculateRobotRelativeSpeeds(
+			const wpi::math::Pose2d &currentPose,
 			const PathPlannerTrajectoryState &targetState) override {
 		m_lastError = currentPose.Translation().Distance(
 				targetState.pose.Translation());
@@ -51,12 +51,12 @@ public:
 				targetState.linearVelocity, targetState.fieldSpeeds.omega);
 	}
 
-	inline void reset(const frc::Pose2d &currentPose,
-			const frc::ChassisSpeeds &currentSpeeds) override {
+	inline void reset(const wpi::math::Pose2d &currentPose,
+			const wpi::math::ChassisVelocities &currentSpeeds) override {
 		m_lastError = 0_m;
 	}
 
-	inline units::meter_t getPositionalError() override {
+	inline wpi::units::meter_t getPositionalError() override {
 		return m_lastError;
 	}
 
@@ -71,6 +71,6 @@ public:
 	}
 
 private:
-	units::meter_t m_lastError;
+	wpi::units::meter_t m_lastError;
 };
 }

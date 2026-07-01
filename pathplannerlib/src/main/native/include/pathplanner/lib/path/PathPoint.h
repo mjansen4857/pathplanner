@@ -1,10 +1,10 @@
 #pragma once
 
-#include <frc/geometry/Translation2d.h>
+#include <wpi/math/geometry/Translation2d.hpp>
 #include <limits>
 #include <optional>
-#include <units/length.h>
-#include <units/velocity.h>
+#include <wpi/units/length.hpp>
+#include <wpi/units/velocity.hpp>
 #include "pathplanner/lib/path/PathConstraints.h"
 #include "pathplanner/lib/path/RotationTarget.h"
 #include "pathplanner/lib/util/FlippingUtil.h"
@@ -12,21 +12,21 @@
 namespace pathplanner {
 class PathPoint {
 public:
-	frc::Translation2d position;
-	units::meter_t distanceAlongPath = 0_m;
-	units::meters_per_second_t maxV = units::meters_per_second_t {
+	wpi::math::Translation2d position;
+	wpi::units::meter_t distanceAlongPath = 0_m;
+	wpi::units::meters_per_second_t maxV = wpi::units::meters_per_second_t {
 			std::numeric_limits<double>::infinity() };
 	std::optional<RotationTarget> rotationTarget = std::nullopt;
 	std::optional<PathConstraints> constraints = std::nullopt;
 	double waypointRelativePos = 0.0;
 
-	constexpr PathPoint(frc::Translation2d pos,
+	constexpr PathPoint(wpi::math::Translation2d pos,
 			std::optional<RotationTarget> rot,
 			std::optional<PathConstraints> pathCostriaints) : position(pos), rotationTarget(
 			rot), constraints(pathCostriaints) {
 	}
 
-	constexpr PathPoint(frc::Translation2d pos) : position(pos) {
+	constexpr PathPoint(wpi::math::Translation2d pos) : position(pos) {
 	}
 
 	inline PathPoint flip() const {

@@ -13,12 +13,12 @@
 #include "pathplanner/lib/config/RobotConfig.h"
 #include <vector>
 #include <optional>
-#include <frc/geometry/Translation2d.h>
-#include <frc/kinematics/ChassisSpeeds.h>
-#include <wpi/json.h>
+#include <wpi/math/geometry/Translation2d.hpp>
+#include <wpi/math/kinematics/ChassisVelocities.hpp>
+#include <wpi/util/json.hpp>
 #include <string>
 #include <unordered_map>
-#include <units/length.h>
+#include <wpi/units/length.hpp>
 #include <memory>
 #include <initializer_list>
 
@@ -77,7 +77,7 @@ public:
 	 */
 	PathPlannerPath(PathConstraints constraints, GoalEndState goalEndState);
 
-	void hotReload(const wpi::json &json);
+	void hotReload(const wpi::util::json &json);
 
 	/**
 	 * Create the bezier waypoints necessary to create a path using a list of poses
@@ -86,7 +86,7 @@ public:
 	 * @return Bezier curve waypoints
 	 */
 	static std::vector<Waypoint> waypointsFromPoses(
-			std::vector<frc::Pose2d> poses);
+			std::vector<wpi::math::Pose2d> poses);
 
 	/**
 	 * Create the bezier waypoints necessary to create a path using a list of poses
@@ -96,7 +96,7 @@ public:
 	 */
 	[[deprecated("Renamed to waypointsFromPoses")]]
 	static inline std::vector<Waypoint> bezierFromPoses(
-			std::vector<frc::Pose2d> poses) {
+			std::vector<wpi::math::Pose2d> poses) {
 		return waypointsFromPoses(poses);
 	}
 
@@ -144,7 +144,7 @@ public:
 	 *
 	 * @return Pose at the path's starting point
 	 */
-	frc::Pose2d getStartingDifferentialPose();
+	wpi::math::Pose2d getStartingDifferentialPose();
 
 	/**
 	 * Get the holonomic pose for the start point of this path. If the path does not have an ideal
@@ -152,7 +152,7 @@ public:
 	 *
 	 * @return The ideal starting pose if an ideal starting state is present, nullopt otherwise
 	 */
-	std::optional<frc::Pose2d> getStartingHolonomicPose();
+	std::optional<wpi::math::Pose2d> getStartingHolonomicPose();
 
 	/**
 	 * Create a path planner path from pre-generated path points. This is used internally, and you
@@ -207,7 +207,7 @@ public:
 	 *
 	 * @return Initial heading
 	 */
-	inline frc::Rotation2d getInitialHeading() const {
+	inline wpi::math::Rotation2d getInitialHeading() const {
 		return (getPoint(1).position - getPoint(0).position).Angle();
 	}
 
@@ -299,8 +299,8 @@ public:
 	}
 
 	inline PathPlannerTrajectory generateTrajectory(
-			frc::ChassisSpeeds startingSpeeds, frc::Rotation2d startingRotation,
-			const RobotConfig &config) {
+			wpi::math::ChassisVelocities startingSpeeds,
+			wpi::math::Rotation2d startingRotation, const RobotConfig &config) {
 		if (m_isChoreoPath) {
 			return m_idealTrajectory.value();
 		} else {
@@ -331,10 +331,10 @@ public:
 	 *
 	 * @return List of poses for each point in this path
 	 */
-	inline std::vector<frc::Pose2d> getPathPoses() const {
-		std::vector < frc::Pose2d > poses;
+	inline std::vector<wpi::math::Pose2d> getPathPoses() const {
+		std::vector < wpi::math::Pose2d > poses;
 		for (const PathPoint &point : m_allPoints) {
-			poses.emplace_back(point.position, frc::Rotation2d());
+			poses.emplace_back(point.position, wpi::math::Rotation2d());
 		}
 		return poses;
 	}
@@ -348,13 +348,15 @@ public:
 private:
 	std::vector<PathPoint> createPath();
 
-	static std::shared_ptr<PathPlannerPath> fromJson(const wpi::json &json);
+	static std::shared_ptr<PathPlannerPath> fromJson(
+			const wpi::util::json &json);
 
 	static inline std::vector<Waypoint> waypointsFromJson(
-			const wpi::json &waypointsJson) {
+			const wpi::util::json &waypointsJson) {
 		std::vector < Waypoint > waypoints;
-		for (wpi::json::const_reference waypoint : waypointsJson) {
-			waypoints.emplace_back(Waypoint::fromJson(waypoint));
+		const auto &waypointsArray = waypointsJson.get_array();
+		for (size_t i = 0; i < waypointsArray.size(); i++) {
+			waypoints.emplace_back(Waypoint::fromJson(waypointsArray[i]));
 		}
 		return waypoints;
 	}
@@ -363,7 +365,7 @@ private:
 
 	void precalcValues();
 
-	static units::meter_t getCurveRadiusAtPoint(size_t index,
+	static wpi::units::meter_t getCurveRadiusAtPoint(size_t index,
 			std::vector<PathPoint> &points);
 
 	inline PathConstraints constraintsForWaypointPos(double pos) const {
@@ -394,9 +396,10 @@ private:
 		return std::nullopt;
 	}
 
-	static frc::Translation2d mirrorTranslation(frc::Translation2d translation);
+	static wpi::math::Translation2d mirrorTranslation(
+			wpi::math::Translation2d translation);
 
-	frc::Translation2d samplePath(double waypointRelativePos) const;
+	wpi::math::Translation2d samplePath(double waypointRelativePos) const;
 
 	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& getPathCache();
 
@@ -419,6 +422,6 @@ private:
 	static int m_instances;
 
 	static constexpr double targetIncrement = 0.05;
-	static constexpr units::meter_t targetSpacing = 0.2_m;
+	static constexpr wpi::units::meter_t targetSpacing = 0.2_m;
 };
 }

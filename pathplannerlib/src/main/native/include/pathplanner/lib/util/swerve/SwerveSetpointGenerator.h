@@ -3,9 +3,9 @@
 #include "pathplanner/lib/util/swerve/SwerveSetpoint.h"
 #include "pathplanner/lib/path/PathConstraints.h"
 
-#include <frc/kinematics/SwerveModuleState.h>
-#include <frc/kinematics/SwerveDriveKinematics.h>
-#include <frc/RobotController.h>
+#include <wpi/math/kinematics/SwerveModuleVelocity.hpp>
+#include <wpi/math/kinematics/SwerveDriveKinematics.hpp>
+#include <wpi/system/RobotController.hpp>
 #include <optional>
 
 using namespace pathplanner;
@@ -33,10 +33,10 @@ public:
 	 * @param maxSteerVelocity The maximum rotation velocity of a swerve module, in turns per second
 	 */
 	SwerveSetpointGenerator(const RobotConfig &config,
-			units::turns_per_second_t maxSteerVelocity);
+			wpi::units::turns_per_second_t maxSteerVelocity);
 
 	/**
-	 * Generate a new setpoint with explicit battery voltage. Note: Do not discretize ChassisSpeeds
+	 * Generate a new setpoint with explicit battery voltage. Note: Do not discretize ChassisVelocities
 	 * passed into or returned from this method. This method will discretize the speeds for you.
 	 *
 	 * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
@@ -55,12 +55,12 @@ public:
 	 *     desiredState quickly.
 	 */
 	SwerveSetpoint generateSetpoint(SwerveSetpoint prevSetpoint,
-			frc::ChassisSpeeds desiredStateRobotRelative,
-			std::optional<PathConstraints> constraints, units::second_t dt,
-			units::volt_t inputVoltage);
+			wpi::math::ChassisVelocities desiredStateRobotRelative,
+			std::optional<PathConstraints> constraints, wpi::units::second_t dt,
+			wpi::units::volt_t inputVoltage);
 
 	/**
-	 * Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
+	 * Generate a new setpoint. Note: Do not discretize ChassisVelocities passed into or returned from
 	 * this method. This method will discretize the speeds for you.
 	 *
 	 * <p>Note: This method will automatically use the current robot controller input voltage.
@@ -77,11 +77,12 @@ public:
 	 *     desiredState quickly.
 	 */
 	SwerveSetpoint generateSetpoint(SwerveSetpoint prevSetpoint,
-			frc::ChassisSpeeds desiredStateRobotRelative,
-			std::optional<PathConstraints> constraints, units::second_t dt);
+			wpi::math::ChassisVelocities desiredStateRobotRelative,
+			std::optional<PathConstraints> constraints,
+			wpi::units::second_t dt);
 
 	/**
-	 * Generate a new setpoint with explicit battery voltage. Note: Do not discretize ChassisSpeeds
+	 * Generate a new setpoint with explicit battery voltage. Note: Do not discretize ChassisVelocities
 	 * passed into or returned from this method. This method will discretize the speeds for you.
 	 *
 	 * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
@@ -97,14 +98,14 @@ public:
 	 *     desiredState quickly.
 	 */
 	SwerveSetpoint generateSetpoint(SwerveSetpoint prevSetpoint,
-			frc::ChassisSpeeds desiredStateRobotRelative, units::second_t dt,
-			units::volt_t inputVoltage) {
+			wpi::math::ChassisVelocities desiredStateRobotRelative,
+			wpi::units::second_t dt, wpi::units::volt_t inputVoltage) {
 		return generateSetpoint(prevSetpoint, desiredStateRobotRelative,
 				std::nullopt, dt, inputVoltage);
 	}
 
 	/**
-	 * Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
+	 * Generate a new setpoint. Note: Do not discretize ChassisVelocities passed into or returned from
 	 * this method. This method will discretize the speeds for you.
 	 *
 	 * <p>Note: This method will automatically use the current robot controller input voltage.
@@ -118,7 +119,8 @@ public:
 	 *     desiredState quickly.
 	 */
 	SwerveSetpoint generateSetpoint(SwerveSetpoint prevSetpoint,
-			frc::ChassisSpeeds desiredStateRobotRelative, units::second_t dt) {
+			wpi::math::ChassisVelocities desiredStateRobotRelative,
+			wpi::units::second_t dt) {
 		return generateSetpoint(prevSetpoint, desiredStateRobotRelative,
 				std::nullopt, dt);
 	}
@@ -132,18 +134,18 @@ public:
 	 * @return True if the shortest path to achieve this rotation involves flipping the drive
 	 *     direction.
 	 */
-	inline static bool flipHeading(frc::Rotation2d prevToGoal) {
-		return units::math::abs(prevToGoal.Radians()).value() > PI / 2.0;
+	inline static bool flipHeading(wpi::math::Rotation2d prevToGoal) {
+		return wpi::units::math::abs(prevToGoal.Radians()).value() > PI / 2.0;
 	}
 
-	inline static units::radian_t unwrapAngle(double ref, double angle) {
+	inline static wpi::units::radian_t unwrapAngle(double ref, double angle) {
 		double diff = angle - ref;
 		if (diff > PI) {
-			return units::radian_t(angle - 2.0 * PI);
+			return wpi::units::radian_t(angle - 2.0 * PI);
 		} else if (diff < -PI) {
-			return units::radian_t(angle + 2.0 * PI);
+			return wpi::units::radian_t(angle + 2.0 * PI);
 		} else {
-			return units::radian_t(angle);
+			return wpi::units::radian_t(angle);
 		}
 	}
 
@@ -151,22 +153,24 @@ private:
 	double kEpsilon = 1e-6;
 
 	RobotConfig m_robotConfig;
-	units::turns_per_second_t maxSteerVelocity;
-	units::volt_t brownoutVoltage;
+	wpi::units::turns_per_second_t maxSteerVelocity;
+	wpi::units::volt_t brownoutVoltage;
 
-	double findSteeringMaxS(units::meters_per_second_t x_0,
-			units::meters_per_second_t y_0, units::radian_t f_0,
-			units::meters_per_second_t x_1, units::meters_per_second_t y_1,
-			units::radian_t f_1, units::radian_t max_deviation);
+	double findSteeringMaxS(wpi::units::meters_per_second_t x_0,
+			wpi::units::meters_per_second_t y_0, wpi::units::radian_t f_0,
+			wpi::units::meters_per_second_t x_1,
+			wpi::units::meters_per_second_t y_1, wpi::units::radian_t f_1,
+			wpi::units::radian_t max_deviation);
 
 	inline bool isValidS(double s) {
 		return s >= 0.0 && s <= 1.0 && std::isfinite(s);
 	}
 
-	double findDriveMaxS(units::meters_per_second_t x_0,
-			units::meters_per_second_t y_0, units::meters_per_second_t x_1,
-			units::meters_per_second_t y_1,
-			units::meters_per_second_t max_vel_step);
+	double findDriveMaxS(wpi::units::meters_per_second_t x_0,
+			wpi::units::meters_per_second_t y_0,
+			wpi::units::meters_per_second_t x_1,
+			wpi::units::meters_per_second_t y_1,
+			wpi::units::meters_per_second_t max_vel_step);
 
 	inline bool epsilonEquals(double a, double b, double epsilon) {
 		return (a - epsilon <= b) && (a + epsilon >= b);
@@ -176,7 +180,8 @@ private:
 		return epsilonEquals(a, b, kEpsilon);
 	}
 
-	inline bool epsilonEquals(frc::ChassisSpeeds s1, frc::ChassisSpeeds s2) {
+	inline bool epsilonEquals(wpi::math::ChassisVelocities s1,
+			wpi::math::ChassisVelocities s2) {
 		return epsilonEquals(s1.vx.to<double>(), s2.vx.to<double>())
 				&& epsilonEquals(s1.vy.to<double>(), s2.vy.to<double>())
 				&& epsilonEquals(s1.omega.to<double>(), s2.omega.to<double>());

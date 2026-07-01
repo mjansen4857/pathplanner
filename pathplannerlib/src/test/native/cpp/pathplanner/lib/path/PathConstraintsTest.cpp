@@ -13,13 +13,10 @@ TEST(PathConstraintsTest, TestGetters) {
 }
 
 TEST(PathConstraintsTest, TestFromJson) {
-	wpi::json json;
-	json.emplace("maxVelocity", 1.0);
-	json.emplace("maxAcceleration", 2.0);
-	json.emplace("maxAngularVelocity", 90.0);
-	json.emplace("maxAngularAcceleration", 180.0);
-	json.emplace("nominalVoltage", 12.0);
-	json.emplace("unlimited", false);
+	wpi::util::json json = wpi::util::json::object("maxVelocity", 1.0,
+			"maxAcceleration", 2.0, "maxAngularVelocity", 90.0,
+			"maxAngularAcceleration", 180.0, "nominalVoltage", 12.0,
+			"unlimited", false);
 
 	PathConstraints fromJson = PathConstraints::fromJson(json);
 	EXPECT_EQ(PathConstraints(1_mps, 2_mps_sq, 90_deg_per_s, 180_deg_per_s_sq, 12_V, false), fromJson);

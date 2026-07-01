@@ -6,12 +6,14 @@
 using namespace pathplanner;
 
 FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
-		std::function<frc::Pose2d()> poseSupplier,
-		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
+		std::function<wpi::math::Pose2d()> poseSupplier,
+		std::function<wpi::math::ChassisVelocities()> speedsSupplier,
+		std::function<
+				void(const wpi::math::ChassisVelocities&,
+						const DriveFeedforwards&)> output,
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
-		frc2::Requirements requirements) : m_originalPath(path), m_poseSupplier(
+		wpi::cmd::Requirements requirements) : m_originalPath(path), m_poseSupplier(
 		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
 		controller), m_robotConfig(robotConfig), m_shouldFlipPath(
 		shouldFlipPath), m_eventScheduler() {
@@ -22,7 +24,7 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 
 	for (auto requirement : eventReqs) {
 		if (driveRequirements.find(requirement) != driveRequirements.end()) {
-			throw FRC_MakeError(frc::err::CommandIllegalUse,
+			throw WPILIB_MakeError(wpi::err::CommandIllegalUse,
 					"Events that are triggered during path following cannot require the drive subsystem");
 		}
 	}
@@ -46,22 +48,23 @@ void FollowPathCommand::Initialize() {
 		m_path = m_originalPath;
 	}
 
-	frc::Pose2d currentPose = m_poseSupplier();
-	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
+	wpi::math::Pose2d currentPose = m_poseSupplier();
+	wpi::math::ChassisVelocities currentSpeeds = m_speedsSupplier();
 
 	m_controller->reset(currentPose, currentSpeeds);
 
-	auto linearVel = units::math::hypot(currentSpeeds.vx, currentSpeeds.vy);
+	auto linearVel = wpi::units::math::hypot(currentSpeeds.vx,
+			currentSpeeds.vy);
 
 	if (m_path->getIdealStartingState().has_value()) {
 		// Check if we match the ideal starting state
-		bool idealVelocity = units::math::abs(
+		bool idealVelocity = wpi::units::math::abs(
 				linearVel
 						- m_path->getIdealStartingState().value().getVelocity())
 				<= 0.25_mps;
 		bool idealRotation =
 				!m_robotConfig.isHolonomic
-						|| units::math::abs(
+						|| wpi::units::math::abs(
 								(currentPose.Rotation()
 										- m_path->getIdealStartingState().value().getRotation()).Degrees())
 								<= 30_deg;
@@ -89,19 +92,19 @@ void FollowPathCommand::Initialize() {
 }
 
 void FollowPathCommand::Execute() {
-	units::second_t currentTime = m_timer.Get();
+	wpi::units::second_t currentTime = m_timer.Get();
 	PathPlannerTrajectoryState targetState = m_trajectory.sample(currentTime);
 	if (!m_controller->isHolonomic() && m_path->isReversed()) {
 		targetState = targetState.reverse();
 	}
 
-	frc::Pose2d currentPose = m_poseSupplier();
-	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
+	wpi::math::Pose2d currentPose = m_poseSupplier();
+	wpi::math::ChassisVelocities currentSpeeds = m_speedsSupplier();
 
-	units::meters_per_second_t currentVel = units::math::hypot(currentSpeeds.vx,
-			currentSpeeds.vy);
+	wpi::units::meters_per_second_t currentVel = wpi::units::math::hypot(
+			currentSpeeds.vx, currentSpeeds.vy);
 
-	frc::ChassisSpeeds targetSpeeds =
+	wpi::math::ChassisVelocities targetSpeeds =
 			m_controller->calculateRobotRelativeSpeeds(currentPose,
 					targetState);
 
@@ -120,7 +123,7 @@ void FollowPathCommand::Execute() {
 }
 
 bool FollowPathCommand::IsFinished() {
-	units::second_t totalTime = m_trajectory.getTotalTime();
+	wpi::units::second_t totalTime = m_trajectory.getTotalTime();
 	return m_timer.HasElapsed(totalTime) || !std::isfinite(totalTime());
 }
 
@@ -131,7 +134,7 @@ void FollowPathCommand::End(bool interrupted) {
 	// Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
 	// the command to smoothly transition into some auto-alignment routine
 	if (!interrupted && m_path->getGoalEndState().getVelocity() < 0.1_mps) {
-		m_output(frc::ChassisSpeeds(),
+		m_output(wpi::math::ChassisVelocities(),
 				DriveFeedforwards::zeros(m_robotConfig.numModules));
 	}
 

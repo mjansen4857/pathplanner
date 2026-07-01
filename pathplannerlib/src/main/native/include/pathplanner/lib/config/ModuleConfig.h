@@ -1,11 +1,11 @@
 #pragma once
 
-#include <units/length.h>
-#include <units/angular_velocity.h>
-#include <units/velocity.h>
-#include <units/torque.h>
-#include <units/current.h>
-#include <frc/system/plant/DCMotor.h>
+#include <wpi/units/length.hpp>
+#include <wpi/units/angular_velocity.hpp>
+#include <wpi/units/velocity.hpp>
+#include <wpi/units/torque.hpp>
+#include <wpi/units/current.hpp>
+#include <wpi/math/system/DCMotor.hpp>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -14,17 +14,17 @@
 namespace pathplanner {
 class ModuleConfig {
 public:
-	units::meter_t wheelRadius;
-	units::meters_per_second_t maxDriveVelocityMPS;
+	wpi::units::meter_t wheelRadius;
+	wpi::units::meters_per_second_t maxDriveVelocityMPS;
 	double wheelCOF;
-	frc::DCMotor driveMotor;
-	units::ampere_t driveCurrentLimit;
+	wpi::math::DCMotor driveMotor;
+	wpi::units::ampere_t driveCurrentLimit;
 
-	units::radians_per_second_t maxDriveVelocityRadPerSec;
+	wpi::units::radians_per_second_t maxDriveVelocityRadPerSec;
 
-	units::newton_meter_t torqueLoss;
+	wpi::units::newton_meter_t torqueLoss;
 
-	ModuleConfig() : driveMotor(frc::DCMotor::CIM()) {
+	ModuleConfig() : driveMotor(wpi::math::DCMotor::CIM()) {
 	}
 
 	/**
@@ -40,16 +40,17 @@ public:
 	 * @param driveCurrentLimit The current limit of the drive motor, in Amps
 	 * @param numMotors The number of motors per module. For swerve, this is 1. For differential, this is usually 2.
 	 */
-	ModuleConfig(units::meter_t wheelRadius,
-			units::meters_per_second_t maxDriveVelocityMPS, double wheelCOF,
-			frc::DCMotor driveMotor, units::ampere_t driveCurrentLimit,
-			int numMotors) : wheelRadius(wheelRadius), maxDriveVelocityMPS(
-			maxDriveVelocityMPS), wheelCOF(wheelCOF), driveMotor(driveMotor), driveCurrentLimit(
+	ModuleConfig(wpi::units::meter_t wheelRadius,
+			wpi::units::meters_per_second_t maxDriveVelocityMPS,
+			double wheelCOF, wpi::math::DCMotor driveMotor,
+			wpi::units::ampere_t driveCurrentLimit, int numMotors) : wheelRadius(
+			wheelRadius), maxDriveVelocityMPS(maxDriveVelocityMPS), wheelCOF(
+			wheelCOF), driveMotor(driveMotor), driveCurrentLimit(
 			driveCurrentLimit * numMotors), maxDriveVelocityRadPerSec {
 			maxDriveVelocityMPS() / wheelRadius() }, torqueLoss(
-			units::math::max(
+			wpi::units::math::max(
 					driveMotor.Torque(
-							units::math::min(
+							wpi::units::math::min(
 									driveMotor.Current(
 											maxDriveVelocityRadPerSec, 12_V),
 									driveCurrentLimit)), 0_Nm)) {
@@ -69,10 +70,10 @@ public:
 	 * @param driveCurrentLimit The current limit of the drive motor, in Amps
 	 * @param numMotors The number of motors per module. For swerve, this is 1. For differential, this is usually 2.
 	 */
-	ModuleConfig(units::meter_t wheelRadius,
-			units::meters_per_second_t maxDriveVelocityMPS, double wheelCOF,
-			frc::DCMotor driveMotor, double driveGearing,
-			units::ampere_t driveCurrentLimit, int numMotors) : ModuleConfig(
+	ModuleConfig(wpi::units::meter_t wheelRadius,
+			wpi::units::meters_per_second_t maxDriveVelocityMPS,
+			double wheelCOF, wpi::math::DCMotor driveMotor, double driveGearing,
+			wpi::units::ampere_t driveCurrentLimit, int numMotors) : ModuleConfig(
 			wheelRadius, maxDriveVelocityMPS, wheelCOF,
 			driveMotor.WithReduction(driveGearing), driveCurrentLimit,
 			numMotors) {

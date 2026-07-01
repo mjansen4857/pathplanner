@@ -1,18 +1,18 @@
 #pragma once
 
-#include <units/velocity.h>
-#include <units/length.h>
-#include <frc/geometry/Rotation2d.h>
-#include <frc/geometry/Translation2d.h>
+#include <wpi/units/velocity.hpp>
+#include <wpi/units/length.hpp>
+#include <wpi/math/geometry/Rotation2d.hpp>
+#include <wpi/math/geometry/Translation2d.hpp>
 
 namespace pathplanner {
 class SwerveModuleTrajectoryState {
 public:
-	units::meters_per_second_t speed = 0_mps;
-	frc::Rotation2d angle;
-	frc::Rotation2d fieldAngle;
-	frc::Translation2d fieldPos;
+	wpi::units::meters_per_second_t speed = 0_mps;
+	wpi::math::Rotation2d angle;
+	wpi::math::Rotation2d fieldAngle;
+	wpi::math::Translation2d fieldPos;
 
-	units::meter_t deltaPos = 0_m;
+	wpi::units::meter_t deltaPos = 0_m;
 };
 }

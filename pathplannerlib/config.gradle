@@ -7,7 +7,7 @@ nativeUtils.withCrossLinuxArm64()
 nativeUtils {
     wpi {
         configureDependencies {
-            wpiVersion = "2026.1.1"
+            wpiVersion = rootProject.ext.wpilibVersion
         }
     }
 }
@@ -17,10 +17,12 @@ nativeUtils.wpi.addWarningsAsErrors()
 
 nativeUtils.setSinglePrintPerPlatform()
 
-//nativeUtils.wpi.addVendorDeps()
-//nativeUtils.wpi.getVendorDeps().loadAll()
-//nativeUtils.wpi.getVendorDeps().getNativeVendor().initializeNativeDependencies()
-//nativeUtils.wpi.getVendorDeps().addVendorReposToMaven(false)
+nativeUtils.wpi.addVendorDeps()
+nativeUtils.wpi.getVendorDeps().getFixedVersion().set(rootProject.ext.wpilibVersion)
+nativeUtils.wpi.getVendorDeps().getWpilibYear().set("2027_alpha6")
+nativeUtils.wpi.getVendorDeps().loadAll()
+nativeUtils.wpi.getVendorDeps().getNativeVendor().initializeNativeDependencies()
+nativeUtils.wpi.getVendorDeps().addVendorReposToMaven(false)
 
 model {
     components {

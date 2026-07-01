@@ -1,12 +1,13 @@
 #include "pathplanner/lib/path/GoalEndState.h"
-#include <units/angle.h>
-#include <units/math.h>
+#include <wpi/units/angle.hpp>
+#include <wpi/units/math.hpp>
 
 using namespace pathplanner;
 
-GoalEndState GoalEndState::fromJson(const wpi::json &json) {
-	auto vel = units::meters_per_second_t(json.at("velocity").get<double>());
-	auto rotationDeg = units::degree_t(json.at("rotation").get<double>());
+GoalEndState GoalEndState::fromJson(const wpi::util::json &json) {
+	auto vel = wpi::units::meters_per_second_t(
+			json.at("velocity").get_number());
+	auto rotationDeg = wpi::units::degree_t(json.at("rotation").get_number());
 
-	return GoalEndState(vel, frc::Rotation2d(rotationDeg));
+	return GoalEndState(vel, wpi::math::Rotation2d(rotationDeg));
 }

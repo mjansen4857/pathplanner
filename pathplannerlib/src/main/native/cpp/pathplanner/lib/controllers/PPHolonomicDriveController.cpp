@@ -2,14 +2,14 @@
 
 using namespace pathplanner;
 
-std::function<std::optional<frc::Rotation2d>()> PPHolonomicDriveController::rotationTargetOverride;
-std::function<units::meters_per_second_t()> PPHolonomicDriveController::xFeedbackOverride;
-std::function<units::meters_per_second_t()> PPHolonomicDriveController::yFeedbackOverride;
-std::function<units::radians_per_second_t()> PPHolonomicDriveController::rotationFeedbackOverride;
+std::function<std::optional<wpi::math::Rotation2d>()> PPHolonomicDriveController::rotationTargetOverride;
+std::function<wpi::units::meters_per_second_t()> PPHolonomicDriveController::xFeedbackOverride;
+std::function<wpi::units::meters_per_second_t()> PPHolonomicDriveController::yFeedbackOverride;
+std::function<wpi::units::radians_per_second_t()> PPHolonomicDriveController::rotationFeedbackOverride;
 
 PPHolonomicDriveController::PPHolonomicDriveController(
 		PIDConstants translationConstants, PIDConstants rotationConstants,
-		units::second_t period) : m_xController(translationConstants.kP,
+		wpi::units::second_t period) : m_xController(translationConstants.kP,
 		translationConstants.kI, translationConstants.kD, period), m_yController(
 		translationConstants.kP, translationConstants.kI,
 		translationConstants.kD, period), m_rotationController(
@@ -25,34 +25,35 @@ PPHolonomicDriveController::PPHolonomicDriveController(
 	m_rotationController.EnableContinuousInput(-PI, PI);
 }
 
-frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
-		const frc::Pose2d &currentPose,
+wpi::math::ChassisVelocities PPHolonomicDriveController::calculateRobotRelativeSpeeds(
+		const wpi::math::Pose2d &currentPose,
 		const PathPlannerTrajectoryState &referenceState) {
-	units::meters_per_second_t xFF = referenceState.fieldSpeeds.vx;
-	units::meters_per_second_t yFF = referenceState.fieldSpeeds.vy;
+	wpi::units::meters_per_second_t xFF = referenceState.fieldSpeeds.vx;
+	wpi::units::meters_per_second_t yFF = referenceState.fieldSpeeds.vy;
 
 	m_translationError = currentPose.Translation()
 			- referenceState.pose.Translation();
 
 	if (!m_enabled) {
-		return frc::ChassisSpeeds(xFF, yFF, 0_rad_per_s).ToRobotRelative(
+		return wpi::math::ChassisVelocities(xFF, yFF, 0_rad_per_s).ToRobotRelative(
 				currentPose.Rotation());
 	}
 
-	units::meters_per_second_t xFeedback { m_xController.Calculate(
+	wpi::units::meters_per_second_t xFeedback { m_xController.Calculate(
 			currentPose.X()(), referenceState.pose.X()()) };
-	units::meters_per_second_t yFeedback { m_yController.Calculate(
+	wpi::units::meters_per_second_t yFeedback { m_yController.Calculate(
 			currentPose.Y()(), referenceState.pose.Y()()) };
 
-	frc::Rotation2d targetRotation = referenceState.pose.Rotation();
+	wpi::math::Rotation2d targetRotation = referenceState.pose.Rotation();
 	if (rotationTargetOverride) {
 		targetRotation = rotationTargetOverride().value_or(targetRotation);
 	}
 
-	units::radians_per_second_t rotationFeedback {
+	wpi::units::radians_per_second_t rotationFeedback {
 			m_rotationController.Calculate(currentPose.Rotation().Radians()(),
 					targetRotation.Radians()()) };
-	units::radians_per_second_t rotationFF = referenceState.fieldSpeeds.omega;
+	wpi::units::radians_per_second_t rotationFF =
+			referenceState.fieldSpeeds.omega;
 
 	if (xFeedbackOverride) {
 		xFeedback = xFeedbackOverride();
@@ -64,7 +65,7 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 		rotationFeedback = rotationFeedbackOverride();
 	}
 
-	return frc::ChassisSpeeds(xFF + xFeedback, yFF + yFeedback,
+	return wpi::math::ChassisVelocities(xFF + xFeedback, yFF + yFeedback,
 			rotationFF + rotationFeedback).ToRobotRelative(
 			currentPose.Rotation());
 }

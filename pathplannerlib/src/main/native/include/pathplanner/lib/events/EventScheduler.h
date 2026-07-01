@@ -3,9 +3,9 @@
 #include <vector>
 #include <deque>
 #include <memory>
-#include <frc2/command/Command.h>
-#include <wpi/SmallSet.h>
-#include <frc/event/EventLoop.h>
+#include <wpi/commands2/Command.hpp>
+#include <wpi/util/SmallSet.hpp>
+#include <wpi/event/EventLoop.hpp>
 #include <functional>
 #include "pathplanner/lib/events/Event.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
@@ -38,7 +38,7 @@ public:
 	 *
 	 * @param time The current time along the trajectory
 	 */
-	void execute(units::second_t time);
+	void execute(wpi::units::second_t time);
 
 	/**
 	 * End commands currently/events currently being handled by this scheduler. This should be called
@@ -52,9 +52,9 @@ public:
 	 * @param path The path to get all requirements for
 	 * @return Set of event requirements for the given path
 	 */
-	static inline wpi::SmallSet<frc2::Subsystem*, 4> getSchedulerRequirements(
+	static inline wpi::util::SmallSet<wpi::cmd::Subsystem*, 4> getSchedulerRequirements(
 			std::shared_ptr<PathPlannerPath> path) {
-		wpi::SmallSet<frc2::Subsystem*, 4> allReqs;
+		wpi::util::SmallSet<wpi::cmd::Subsystem*, 4> allReqs;
 		for (auto m : path->getEventMarkers()) {
 			auto markerReqs = m.getCommand()->GetRequirements();
 			allReqs.insert(markerReqs.begin(), markerReqs.end());
@@ -68,22 +68,22 @@ public:
 	 *
 	 * @param command The command to schedule
 	 */
-	void scheduleCommand(std::shared_ptr<frc2::Command> command);
+	void scheduleCommand(std::shared_ptr<wpi::cmd::Command> command);
 
 	/**
 	 * Cancel a command on this scheduler. Do not call this.
 	 *
 	 * @param command The command to cancel
 	 */
-	void cancelCommand(std::shared_ptr<frc2::Command> command);
+	void cancelCommand(std::shared_ptr<wpi::cmd::Command> command);
 
-	static inline frc::EventLoop* getEventLoop() {
-		static frc::EventLoop *eventLoop = new frc::EventLoop();
+	static inline wpi::EventLoop* getEventLoop() {
+		static wpi::EventLoop *eventLoop = new wpi::EventLoop();
 		return eventLoop;
 	}
 
 private:
-	std::vector<std::pair<std::shared_ptr<frc2::Command>, bool>> m_eventCommands;
+	std::vector<std::pair<std::shared_ptr<wpi::cmd::Command>, bool>> m_eventCommands;
 	std::deque<std::shared_ptr<Event>> m_upcomingEvents;
 };
 }

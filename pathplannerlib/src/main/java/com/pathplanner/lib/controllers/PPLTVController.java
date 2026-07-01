@@ -1,19 +1,17 @@
 package com.pathplanner.lib.controllers;
 
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-import org.wpilib.math.linalg.Vector;
 import org.wpilib.math.controller.LTVUnicycleController;
 import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.linalg.Vector;
 import org.wpilib.math.numbers.N2;
 import org.wpilib.math.numbers.N3;
-import org.wpilib.math.kinematics.ChassisVelocities;
 
-/**
- * LTV following controller
- */
+/** LTV following controller */
 public class PPLTVController extends LTVUnicycleController implements PathFollowingController {
 
-    private double lastError = 0;
+  private double lastError = 0;
 
   /**
    * Constructs a linear time-varying unicycle controller with default maximum desired error
@@ -57,25 +55,25 @@ public class PPLTVController extends LTVUnicycleController implements PathFollow
         currentPose, targetState.pose, targetState.linearVelocity, targetState.fieldSpeeds.omega);
   }
 
-    /**
-     * Resets the controller based on the current state of the robot
-     *
-     * @param currentPose Current robot pose
-     * @param currentSpeeds Current robot relative chassis speeds
-     */
-    @Override
-    public void reset(Pose2d currentPose, ChassisVelocities currentSpeeds) {
-        lastError = 0;
-    }
+  /**
+   * Resets the controller based on the current state of the robot
+   *
+   * @param currentPose Current robot pose
+   * @param currentSpeeds Current robot relative chassis speeds
+   */
+  @Override
+  public void reset(Pose2d currentPose, ChassisVelocities currentSpeeds) {
+    lastError = 0;
+  }
 
-    /**
-     * Is this controller for holonomic drivetrains? Used to handle some differences in functionality
-     * in the path following command.
-     *
-     * @return True if this controller is for a holonomic drive train
-     */
-    @Override
-    public boolean isHolonomic() {
-        return false;
-    }
+  /**
+   * Is this controller for holonomic drivetrains? Used to handle some differences in functionality
+   * in the path following command.
+   *
+   * @return True if this controller is for a holonomic drive train
+   */
+  @Override
+  public boolean isHolonomic() {
+    return false;
+  }
 }

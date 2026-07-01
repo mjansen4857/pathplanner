@@ -1,9 +1,9 @@
 #pragma once
 
-#include <units/velocity.h>
-#include <units/math.h>
-#include <frc/geometry/Rotation2d.h>
-#include <wpi/json.h>
+#include <wpi/units/velocity.hpp>
+#include <wpi/units/math.hpp>
+#include <wpi/math/geometry/Rotation2d.hpp>
+#include <wpi/util/json.hpp>
 
 namespace pathplanner {
 class IdealStartingState {
@@ -14,8 +14,8 @@ public:
 	 * @param velocity The ideal starting velocity (M/S)
 	 * @param rotation The ideal starting rotation
 	 */
-	constexpr IdealStartingState(units::meters_per_second_t velocity,
-			frc::Rotation2d rotation) : m_velocity(velocity), m_rotation(
+	constexpr IdealStartingState(wpi::units::meters_per_second_t velocity,
+			wpi::math::Rotation2d rotation) : m_velocity(velocity), m_rotation(
 			rotation) {
 	}
 
@@ -25,14 +25,14 @@ public:
 	 * @param json json reference representing an ideal starting state
 	 * @return The ideal starting state defined by the given json
 	 */
-	static IdealStartingState fromJson(const wpi::json &json);
+	static IdealStartingState fromJson(const wpi::util::json &json);
 
 	/**
 	 * Get the ideal starting velocity
 	 *
 	 * @return Ideal starting velocity (M/S)
 	 */
-	constexpr units::meters_per_second_t getVelocity() const {
+	constexpr wpi::units::meters_per_second_t getVelocity() const {
 		return m_velocity;
 	}
 
@@ -41,7 +41,7 @@ public:
 	 *
 	 * @return Ideal starting rotation
 	 */
-	constexpr const frc::Rotation2d& getRotation() const {
+	constexpr const wpi::math::Rotation2d& getRotation() const {
 		return m_rotation;
 	}
 
@@ -51,7 +51,7 @@ public:
 	}
 
 private:
-	units::meters_per_second_t m_velocity;
-	frc::Rotation2d m_rotation;
+	wpi::units::meters_per_second_t m_velocity;
+	wpi::math::Rotation2d m_rotation;
 };
 }

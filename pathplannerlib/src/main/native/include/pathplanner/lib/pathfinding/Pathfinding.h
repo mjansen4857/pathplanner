@@ -46,7 +46,7 @@ public:
 	 *     moved to the nearest non-obstacle node.
 	 */
 	static inline void setStartPosition(
-			const frc::Translation2d &startPosition) {
+			const wpi::math::Translation2d &startPosition) {
 		pathfinder->setStartPosition(startPosition);
 	}
 
@@ -56,7 +56,8 @@ public:
 	 * @param goalPosition Goal position on the field. f this is within an obstacle it will be moved
 	 *     to the nearest non-obstacle node.
 	 */
-	static inline void setGoalPosition(const frc::Translation2d &goalPosition) {
+	static inline void setGoalPosition(
+			const wpi::math::Translation2d &goalPosition) {
 		pathfinder->setGoalPosition(goalPosition);
 	}
 
@@ -69,8 +70,9 @@ public:
 	 *     position of the path if the robot is now within an obstacle.
 	 */
 	static inline void setDynamicObstacles(
-			const std::vector<std::pair<frc::Translation2d, frc::Translation2d>> &obs,
-			const frc::Translation2d &currentRobotPos) {
+			const std::vector<
+					std::pair<wpi::math::Translation2d, wpi::math::Translation2d>> &obs,
+			const wpi::math::Translation2d &currentRobotPos) {
 		pathfinder->setDynamicObstacles(obs, currentRobotPos);
 	}
 

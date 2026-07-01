@@ -1,14 +1,14 @@
 #pragma once
 
-#include <units/mass.h>
-#include <units/length.h>
-#include <units/force.h>
-#include <units/torque.h>
-#include <units/moment_of_inertia.h>
-#include <frc/geometry/Translation2d.h>
-#include <frc/kinematics/SwerveDriveKinematics.h>
-#include <frc/kinematics/DifferentialDriveKinematics.h>
-#include <frc/EigenCore.h>
+#include <wpi/units/mass.hpp>
+#include <wpi/units/length.hpp>
+#include <wpi/units/force.hpp>
+#include <wpi/units/torque.hpp>
+#include <wpi/units/moment_of_inertia.hpp>
+#include <wpi/math/geometry/Translation2d.hpp>
+#include <wpi/math/kinematics/SwerveDriveKinematics.hpp>
+#include <wpi/math/kinematics/DifferentialDriveKinematics.hpp>
+#include <wpi/math/linalg/EigenCore.hpp>
 #include <vector>
 #include "pathplanner/lib/config/ModuleConfig.h"
 #include "pathplanner/lib/trajectory/SwerveModuleTrajectoryState.h"
@@ -16,26 +16,27 @@
 namespace pathplanner {
 class RobotConfig {
 public:
-	units::kilogram_t mass;
-	units::kilogram_square_meter_t MOI;
+	wpi::units::kilogram_t mass;
+	wpi::units::kilogram_square_meter_t MOI;
 	ModuleConfig moduleConfig;
 
-	std::vector<frc::Translation2d> moduleLocations;
+	std::vector<wpi::math::Translation2d> moduleLocations;
 	bool isHolonomic;
 
 	size_t numModules;
-	std::vector<units::meter_t> modulePivotDistance;
-	units::newton_t wheelFrictionForce;
-	units::newton_meter_t maxTorqueFriction;
+	std::vector<wpi::units::meter_t> modulePivotDistance;
+	wpi::units::newton_t wheelFrictionForce;
+	wpi::units::newton_meter_t maxTorqueFriction;
 
 	RobotConfig();
 
-	RobotConfig(units::kilogram_t mass, units::kilogram_square_meter_t MOI,
-			ModuleConfig moduleConfig,
-			std::vector<frc::Translation2d> moduleOffsets);
+	RobotConfig(wpi::units::kilogram_t mass,
+			wpi::units::kilogram_square_meter_t MOI, ModuleConfig moduleConfig,
+			std::vector<wpi::math::Translation2d> moduleOffsets);
 
-	RobotConfig(units::kilogram_t mass, units::kilogram_square_meter_t MOI,
-			ModuleConfig moduleConfig, units::meter_t trackwidth);
+	RobotConfig(wpi::units::kilogram_t mass,
+			wpi::units::kilogram_square_meter_t MOI, ModuleConfig moduleConfig,
+			wpi::units::meter_t trackwidth);
 
 	static RobotConfig fromGUISettings();
 
@@ -46,8 +47,8 @@ public:
 	 * @param speeds Robot-relative chassis speeds
 	 * @return Vector of swerve module states
 	 */
-	std::vector<frc::SwerveModuleState> toSwerveModuleStates(
-			frc::ChassisSpeeds speeds) const;
+	std::vector<wpi::math::SwerveModuleVelocity> toSwerveModuleVelocitys(
+			wpi::math::ChassisVelocities speeds) const;
 
 	/**
 	 * Convert a vector of swerve module states to robot-relative chassis speeds. This will use
@@ -56,7 +57,7 @@ public:
 	 * @param states Vector of swerve module states
 	 * @return Robot-relative chassis speeds
 	 */
-	frc::ChassisSpeeds toChassisSpeeds(
+	wpi::math::ChassisVelocities toChassisVelocities(
 			std::vector<SwerveModuleTrajectoryState> states) const;
 
 	/**
@@ -66,8 +67,8 @@ public:
 	 * @param states Vector of swerve module states
 	 * @return Robot-relative chassis speeds
 	 */
-	frc::ChassisSpeeds toChassisSpeeds(
-			std::vector<frc::SwerveModuleState> states) const;
+	wpi::math::ChassisVelocities toChassisVelocities(
+			std::vector<wpi::math::SwerveModuleVelocity> states) const;
 
 	/**
 	 * Desaturate wheel speeds to respect velocity limits.
@@ -76,20 +77,20 @@ public:
 	 * @param maxSpeed The maximum speed that the robot can reach while actually driving the robot at full output
 	 * @return The desaturated module states
 	 */
-	std::vector<frc::SwerveModuleState> desaturateWheelSpeeds(
-			std::vector<frc::SwerveModuleState> moduleStates,
-			units::meters_per_second_t maxSpeed) const;
+	std::vector<wpi::math::SwerveModuleVelocity> desaturateWheelSpeeds(
+			std::vector<wpi::math::SwerveModuleVelocity> moduleStates,
+			wpi::units::meters_per_second_t maxSpeed) const;
 
-	std::vector<frc::Translation2d> chassisForcesToWheelForceVectors(
-			frc::ChassisSpeeds chassisForces) const;
+	std::vector<wpi::math::Translation2d> chassisForcesToWheelForceVectors(
+			wpi::math::ChassisVelocities chassisForces) const;
 
 private:
-	frc::SwerveDriveKinematics<4> swerveKinematics;
-	frc::DifferentialDriveKinematics diffKinematics;
-	frc::Matrixd<4 * 2, 3> swerveForceKinematics;
-	frc::Matrixd<2 * 2, 3> diffForceKinematics;
+	wpi::math::SwerveDriveKinematics<4> swerveKinematics;
+	wpi::math::DifferentialDriveKinematics diffKinematics;
+	wpi::math::Matrixd<4 * 2, 3> swerveForceKinematics;
+	wpi::math::Matrixd<2 * 2, 3> diffForceKinematics;
 
-	static frc::DCMotor getMotorFromSettingsString(std::string motorStr,
+	static wpi::math::DCMotor getMotorFromSettingsString(std::string motorStr,
 			int numMotors);
 };
 }

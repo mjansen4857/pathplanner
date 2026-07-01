@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pathplanner/lib/path/PathConstraints.h"
-#include <wpi/json.h>
+#include <wpi/util/json.hpp>
 
 namespace pathplanner {
 class ConstraintsZone {
@@ -25,7 +25,7 @@ public:
 	 * @param json A json reference representing a constraints zone
 	 * @return The constraints zone defined by the given json object
 	 */
-	static ConstraintsZone fromJson(const wpi::json &json);
+	static ConstraintsZone fromJson(const wpi::util::json &json);
 
 	/**
 	 * Get the starting position of the zone

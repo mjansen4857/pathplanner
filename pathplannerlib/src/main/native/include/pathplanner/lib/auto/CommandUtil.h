@@ -1,7 +1,7 @@
 #pragma once
 
-#include <wpi/json.h>
-#include <frc2/command/Command.h>
+#include <wpi/util/json.hpp>
+#include <wpi/commands2/Command.hpp>
 #include <memory>
 
 namespace pathplanner {
@@ -14,8 +14,8 @@ public:
 	 * @param command shared pointer to the command to wrap
 	 * @return a functional command that wraps the given command
 	 */
-	static frc2::CommandPtr wrappedEventCommand(
-			std::shared_ptr<frc2::Command> command);
+	static wpi::cmd::CommandPtr wrappedEventCommand(
+			std::shared_ptr<wpi::cmd::Command> command);
 
 	/**
 	 * Builds a command from the given JSON.
@@ -24,27 +24,29 @@ public:
 	 * @param loadChoreoPaths Load path commands using choreo trajectories
 	 * @return a command built from the JSON
 	 */
-	static frc2::CommandPtr commandFromJson(const wpi::json &json,
+	static wpi::cmd::CommandPtr commandFromJson(const wpi::util::json &json,
 			bool loadChoreoPaths, bool mirror);
 
 private:
-	static frc2::CommandPtr waitCommandFromJson(const wpi::json &json);
+	static wpi::cmd::CommandPtr waitCommandFromJson(
+			const wpi::util::json &json);
 
-	static frc2::CommandPtr namedCommandFromJson(const wpi::json &json);
+	static wpi::cmd::CommandPtr namedCommandFromJson(
+			const wpi::util::json &json);
 
-	static frc2::CommandPtr pathCommandFromJson(const wpi::json &json,
+	static wpi::cmd::CommandPtr pathCommandFromJson(const wpi::util::json &json,
 			bool loadChoreoPaths, bool mirror);
 
-	static frc2::CommandPtr sequentialGroupFromJson(const wpi::json &json,
+	static wpi::cmd::CommandPtr sequentialGroupFromJson(
+			const wpi::util::json &json, bool loadChoreoPaths, bool mirror);
+
+	static wpi::cmd::CommandPtr parallelGroupFromJson(
+			const wpi::util::json &json, bool loadChoreoPaths, bool mirror);
+
+	static wpi::cmd::CommandPtr raceGroupFromJson(const wpi::util::json &json,
 			bool loadChoreoPaths, bool mirror);
 
-	static frc2::CommandPtr parallelGroupFromJson(const wpi::json &json,
-			bool loadChoreoPaths, bool mirror);
-
-	static frc2::CommandPtr raceGroupFromJson(const wpi::json &json,
-			bool loadChoreoPaths, bool mirror);
-
-	static frc2::CommandPtr deadlineGroupFromJson(const wpi::json &json,
-			bool loadChoreoPaths, bool mirror);
+	static wpi::cmd::CommandPtr deadlineGroupFromJson(
+			const wpi::util::json &json, bool loadChoreoPaths, bool mirror);
 };
 }

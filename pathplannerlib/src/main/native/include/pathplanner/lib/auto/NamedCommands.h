@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
-#include <frc2/command/Commands.h>
+#include <wpi/commands2/Commands.hpp>
 
 namespace pathplanner {
 class NamedCommands {
@@ -15,14 +15,14 @@ public:
 	 * @param command shared pointer to the command to register
 	 */
 	static inline void registerCommand(std::string name,
-			std::shared_ptr<frc2::Command> command) {
+			std::shared_ptr<wpi::cmd::Command> command) {
 		NamedCommands::GetNamedCommands().emplace(name, command);
 	}
 
 	static inline void registerCommand(std::string name,
-			frc2::CommandPtr &&command) {
+			wpi::cmd::CommandPtr &&command) {
 		registerCommand(name,
-				std::shared_ptr < frc2::Command
+				std::shared_ptr < wpi::cmd::Command
 						> (std::move(command).Unwrap()));
 	}
 
@@ -42,8 +42,8 @@ public:
 	 * @param name the name of the command to get
 	 * @return the command with the given name, wrapped in a functional command, or a none command if it has not been registered
 	 */
-	static frc2::CommandPtr getCommand(std::string name);
+	static wpi::cmd::CommandPtr getCommand(std::string name);
 
-	static std::unordered_map<std::string, std::shared_ptr<frc2::Command>>& GetNamedCommands();
+	static std::unordered_map<std::string, std::shared_ptr<wpi::cmd::Command>>& GetNamedCommands();
 };
 }

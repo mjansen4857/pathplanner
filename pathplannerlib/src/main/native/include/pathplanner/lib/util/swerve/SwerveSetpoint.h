@@ -1,8 +1,8 @@
 #pragma once
 
 #include "pathplanner/lib/util/DriveFeedforwards.h"
-#include <frc/kinematics/ChassisSpeeds.h>
-#include <frc/kinematics/SwerveModuleState.h>
+#include <wpi/math/kinematics/ChassisVelocities.hpp>
+#include <wpi/math/kinematics/SwerveModuleVelocity.hpp>
 
 namespace pathplanner {
 /**
@@ -17,8 +17,8 @@ namespace pathplanner {
  */
 struct SwerveSetpoint {
 public:
-	frc::ChassisSpeeds robotRelativeSpeeds;
-	std::vector<frc::SwerveModuleState> moduleStates;
+	wpi::math::ChassisVelocities robotRelativeSpeeds;
+	std::vector<wpi::math::SwerveModuleVelocity> moduleStates;
 	pathplanner::DriveFeedforwards feedforwards;
 };
 }

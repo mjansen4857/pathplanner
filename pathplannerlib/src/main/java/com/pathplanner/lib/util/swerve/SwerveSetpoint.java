@@ -14,5 +14,7 @@ import org.wpilib.math.kinematics.SwerveModuleVelocity;
  * @param feedforwards Feedforwards for each module's drive motor. The arrays in this record will be
  *     in FL, FR, BL, BR order.
  */
-public record SwerveSetpoint(ChassisVelocities robotRelativeSpeeds, SwerveModuleVelocity[] moduleStates, DriveFeedforwards feedforwards) {
-}
+public record SwerveSetpoint(
+    ChassisVelocities robotRelativeSpeeds,
+    SwerveModuleVelocity[] moduleStates,
+    DriveFeedforwards feedforwards) {}

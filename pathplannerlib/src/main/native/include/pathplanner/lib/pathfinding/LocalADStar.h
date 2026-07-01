@@ -8,8 +8,8 @@
 #include <vector>
 #include <atomic>
 #include <thread>
-#include <wpi/mutex.h>
-#include <frc/geometry/Translation2d.h>
+#include <wpi/util/mutex.hpp>
+#include <wpi/math/geometry/Translation2d.hpp>
 #include <optional>
 
 namespace pathplanner {
@@ -54,15 +54,16 @@ public:
 	std::shared_ptr<PathPlannerPath> getCurrentPath(PathConstraints constraints,
 			GoalEndState goalEndState) override;
 
-	void setStartPosition(const frc::Translation2d &start) override;
+	void setStartPosition(const wpi::math::Translation2d &start) override;
 
-	void setGoalPosition(const frc::Translation2d &goal) override;
+	void setGoalPosition(const wpi::math::Translation2d &goal) override;
 
 	void setDynamicObstacles(
-			const std::vector<std::pair<frc::Translation2d, frc::Translation2d>> &obs,
-			const frc::Translation2d &currentRobotPos) override;
+			const std::vector<
+					std::pair<wpi::math::Translation2d, wpi::math::Translation2d>> &obs,
+			const wpi::math::Translation2d &currentRobotPos) override;
 
-	inline GridPosition getGridPos(const frc::Translation2d &pos) {
+	inline GridPosition getGridPos(const wpi::math::Translation2d &pos) {
 		return GridPosition(static_cast<int>(std::floor(pos.X()() / nodeSize)),
 				static_cast<int>(std::floor(pos.Y()() / nodeSize)));
 	}
@@ -89,15 +90,15 @@ private:
 	std::unordered_set<GridPosition> requestObstacles;
 
 	GridPosition requestStart;
-	frc::Translation2d requestRealStartPos;
+	wpi::math::Translation2d requestRealStartPos;
 	GridPosition requestGoal;
-	frc::Translation2d requestRealGoalPos;
+	wpi::math::Translation2d requestRealGoalPos;
 
 	double eps;
 
 	std::thread planningThread;
-	wpi::mutex pathMutex;
-	wpi::mutex requestMutex;
+	wpi::util::mutex pathMutex;
+	wpi::util::mutex requestMutex;
 
 	bool requestMinor;
 	bool requestMajor;
@@ -111,8 +112,8 @@ private:
 
 	void doWork(const bool needsReset, const bool doMinor, const bool doMajor,
 			const GridPosition &sStart, const GridPosition &sGoal,
-			const frc::Translation2d &realStartPos,
-			const frc::Translation2d &realGoalPos,
+			const wpi::math::Translation2d &realStartPos,
+			const wpi::math::Translation2d &realGoalPos,
 			const std::unordered_set<GridPosition> &obstacles);
 
 	GridPosition findClosestNonObstacle(const GridPosition &pos,
@@ -123,8 +124,8 @@ private:
 			const std::unordered_set<GridPosition> &obstacles);
 
 	std::vector<Waypoint> createWaypoints(const std::vector<GridPosition> &path,
-			const frc::Translation2d &realStartPos,
-			const frc::Translation2d &realGoalPos,
+			const wpi::math::Translation2d &realStartPos,
+			const wpi::math::Translation2d &realGoalPos,
 			const std::unordered_set<GridPosition> &obstacles);
 
 	bool walkable(const GridPosition &s1, const GridPosition &s2,
@@ -185,10 +186,11 @@ private:
 		return 0;
 	}
 
-	inline frc::Translation2d gridPosToTranslation2d(const GridPosition &pos) {
-		return frc::Translation2d(
-				units::meter_t { (pos.x * nodeSize) + (nodeSize / 2.0) },
-				units::meter_t { (pos.y * nodeSize) + (nodeSize / 2.0) });
+	inline wpi::math::Translation2d gridPosToTranslation2d(
+			const GridPosition &pos) {
+		return wpi::math::Translation2d(
+				wpi::units::meter_t { (pos.x * nodeSize) + (nodeSize / 2.0) },
+				wpi::units::meter_t { (pos.y * nodeSize) + (nodeSize / 2.0) });
 	}
 };
 }

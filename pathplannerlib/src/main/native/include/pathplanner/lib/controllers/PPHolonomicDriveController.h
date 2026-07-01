@@ -1,15 +1,15 @@
 #pragma once
 
-#include <frc/controller/PIDController.h>
-#include <frc/controller/ProfiledPIDController.h>
-#include <units/velocity.h>
-#include <units/length.h>
-#include <units/time.h>
-#include <units/angular_velocity.h>
-#include <frc/geometry/Translation2d.h>
-#include <frc/geometry/Rotation2d.h>
-#include <frc/geometry/Pose2d.h>
-#include <frc/kinematics/ChassisSpeeds.h>
+#include <wpi/math/controller/PIDController.hpp>
+#include <wpi/math/controller/ProfiledPIDController.hpp>
+#include <wpi/units/velocity.hpp>
+#include <wpi/units/length.hpp>
+#include <wpi/units/time.hpp>
+#include <wpi/units/angular_velocity.hpp>
+#include <wpi/math/geometry/Translation2d.hpp>
+#include <wpi/math/geometry/Rotation2d.hpp>
+#include <wpi/math/geometry/Pose2d.hpp>
+#include <wpi/math/kinematics/ChassisVelocities.hpp>
 #include <functional>
 #include <optional>
 #include "pathplanner/lib/util/GeometryUtil.h"
@@ -28,7 +28,8 @@ public:
 	 * @param period Period of the control loop in seconds
 	 */
 	PPHolonomicDriveController(PIDConstants translationConstants,
-			PIDConstants rotationConstants, units::second_t period = 0.02_s);
+			PIDConstants rotationConstants,
+			wpi::units::second_t period = 0.02_s);
 
 	/**
 	 * Enables and disables the controller for troubleshooting. When calculate() is called on a
@@ -40,8 +41,8 @@ public:
 		m_enabled = enabled;
 	}
 
-	inline void reset(const frc::Pose2d &currentPose,
-			const frc::ChassisSpeeds &currentSpeeds) override {
+	inline void reset(const wpi::math::Pose2d &currentPose,
+			const wpi::math::ChassisVelocities &currentSpeeds) override {
 		m_xController.Reset();
 		m_yController.Reset();
 		m_rotationController.Reset();
@@ -52,7 +53,7 @@ public:
 	 *
 	 * @return Positional error, in meters
 	 */
-	inline units::meter_t getPositionalError() override {
+	inline wpi::units::meter_t getPositionalError() override {
 		return m_translationError.Norm();
 	}
 
@@ -63,8 +64,8 @@ public:
 	 * @param referenceState The desired trajectory state
 	 * @return The next output of the holonomic drive controller (robot relative)
 	 */
-	frc::ChassisSpeeds calculateRobotRelativeSpeeds(
-			const frc::Pose2d &currentPose,
+	wpi::math::ChassisVelocities calculateRobotRelativeSpeeds(
+			const wpi::math::Pose2d &currentPose,
 			const PathPlannerTrajectoryState &referenceState) override;
 
 	/**
@@ -85,7 +86,7 @@ public:
 	 */
 	[[deprecated("Use overrideRotationFeedback instead, with the output of your own PID controller")]]
 	static inline void setRotationTargetOverride(
-			std::function<std::optional<frc::Rotation2d>()> rotationTargetOverride) {
+			std::function<std::optional<wpi::math::Rotation2d>()> rotationTargetOverride) {
 		PPHolonomicDriveController::rotationTargetOverride =
 				rotationTargetOverride;
 	}
@@ -96,7 +97,7 @@ public:
 	 * @param xFeedbackOverride Function that returns the desired FIELD-RELATIVE X feedback in meters/sec
 	 */
 	static inline void overrideXFeedback(
-			std::function<units::meters_per_second_t()> xFeedbackOverride) {
+			std::function<wpi::units::meters_per_second_t()> xFeedbackOverride) {
 		PPHolonomicDriveController::xFeedbackOverride = xFeedbackOverride;
 	}
 
@@ -114,7 +115,7 @@ public:
 	 * @param yFeedbackOverride Function that returns the desired FIELD-RELATIVE Y feedback in meters/sec
 	 */
 	static inline void overrideYFeedback(
-			std::function<units::meters_per_second_t()> yFeedbackOverride) {
+			std::function<wpi::units::meters_per_second_t()> yFeedbackOverride) {
 		PPHolonomicDriveController::yFeedbackOverride = yFeedbackOverride;
 	}
 
@@ -133,8 +134,8 @@ public:
 	 * @param yFeedbackOverride Function that returns the desired FIELD-RELATIVE Y feedback in meters/sec
 	 */
 	static inline void overrideXYFeedback(
-			std::function<units::meters_per_second_t()> xFeedbackOverride,
-			std::function<units::meters_per_second_t()> yFeedbackOverride) {
+			std::function<wpi::units::meters_per_second_t()> xFeedbackOverride,
+			std::function<wpi::units::meters_per_second_t()> yFeedbackOverride) {
 		overrideXFeedback(xFeedbackOverride);
 		overrideYFeedback(yFeedbackOverride);
 	}
@@ -154,7 +155,7 @@ public:
 	 * @param rotationFeedbackOverride Function that returns the desired rotation feedback in radians/sec
 	 */
 	static inline void overrideRotationFeedback(
-			std::function<units::radians_per_second_t()> rotationFeedbackOverride) {
+			std::function<wpi::units::radians_per_second_t()> rotationFeedbackOverride) {
 		PPHolonomicDriveController::rotationFeedbackOverride =
 				rotationFeedbackOverride;
 	}
@@ -174,17 +175,17 @@ public:
 	}
 
 private:
-	frc::PIDController m_xController;
-	frc::PIDController m_yController;
-	frc::PIDController m_rotationController;
+	wpi::math::PIDController m_xController;
+	wpi::math::PIDController m_yController;
+	wpi::math::PIDController m_rotationController;
 
-	frc::Translation2d m_translationError;
+	wpi::math::Translation2d m_translationError;
 	bool m_enabled = true;
 
-	static std::function<std::optional<frc::Rotation2d>()> rotationTargetOverride;
+	static std::function<std::optional<wpi::math::Rotation2d>()> rotationTargetOverride;
 
-	static std::function<units::meters_per_second_t()> xFeedbackOverride;
-	static std::function<units::meters_per_second_t()> yFeedbackOverride;
-	static std::function<units::radians_per_second_t()> rotationFeedbackOverride;
+	static std::function<wpi::units::meters_per_second_t()> xFeedbackOverride;
+	static std::function<wpi::units::meters_per_second_t()> yFeedbackOverride;
+	static std::function<wpi::units::radians_per_second_t()> rotationFeedbackOverride;
 };
 }

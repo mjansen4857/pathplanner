@@ -14,10 +14,11 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::interpolate(
 		return endVal.interpolate(*this, 1.0 - t);
 	}
 
-	lerpedState.fieldSpeeds = frc::ChassisSpeeds { GeometryUtil::unitLerp(
-			fieldSpeeds.vx, endVal.fieldSpeeds.vx, t), GeometryUtil::unitLerp(
-			fieldSpeeds.vy, endVal.fieldSpeeds.vy, t), GeometryUtil::unitLerp(
-			fieldSpeeds.omega, endVal.fieldSpeeds.omega, t) };
+	lerpedState.fieldSpeeds = wpi::math::ChassisVelocities {
+			GeometryUtil::unitLerp(fieldSpeeds.vx, endVal.fieldSpeeds.vx, t),
+			GeometryUtil::unitLerp(fieldSpeeds.vy, endVal.fieldSpeeds.vy, t),
+			GeometryUtil::unitLerp(fieldSpeeds.omega, endVal.fieldSpeeds.omega,
+					t) };
 
 	lerpedState.heading = heading;
 	lerpedState.linearVelocity = GeometryUtil::unitLerp(linearVelocity,
@@ -25,20 +26,20 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::interpolate(
 
 	// Integrate the field speeds to get the pose for this interpolated state, since linearly
 	// interpolating the pose gives an inaccurate result if the speeds are changing between states
-	units::meter_t lerpedXPos = pose.X();
-	units::meter_t lerpedYPos = pose.Y();
-	units::second_t intTime = time + 0.01_s;
+	wpi::units::meter_t lerpedXPos = pose.X();
+	wpi::units::meter_t lerpedYPos = pose.Y();
+	wpi::units::second_t intTime = time + 0.01_s;
 	while (true) {
 		double intT = ((intTime - time) / (lerpedState.time - time))();
-		units::meters_per_second_t intLinearVel = GeometryUtil::unitLerp(
+		wpi::units::meters_per_second_t intLinearVel = GeometryUtil::unitLerp(
 				linearVelocity, lerpedState.linearVelocity, intT);
-		units::meters_per_second_t intVX = intLinearVel
+		wpi::units::meters_per_second_t intVX = intLinearVel
 				* lerpedState.heading.Cos();
-		units::meters_per_second_t intVY = intLinearVel
+		wpi::units::meters_per_second_t intVY = intLinearVel
 				* lerpedState.heading.Sin();
 
 		if (intTime >= lerpedState.time - 0.01_s) {
-			units::second_t dt = lerpedState.time - intTime;
+			wpi::units::second_t dt = lerpedState.time - intTime;
 			lerpedXPos += intVX * dt;
 			lerpedYPos += intVY * dt;
 			break;
@@ -50,7 +51,7 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::interpolate(
 		intTime += 0.01_s;
 	}
 
-	lerpedState.pose = frc::Pose2d(lerpedXPos, lerpedYPos,
+	lerpedState.pose = wpi::math::Pose2d(lerpedXPos, lerpedYPos,
 			GeometryUtil::rotationLerp(pose.Rotation(), endVal.pose.Rotation(),
 					t));
 	lerpedState.feedforwards = feedforwards.interpolate(endVal.feedforwards, t);
@@ -62,17 +63,19 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::reverse() const {
 	PathPlannerTrajectoryState reversed;
 
 	reversed.time = time;
-	auto reversedSpeeds = frc::Translation2d(
-			units::meter_t { fieldSpeeds.vx() }, units::meter_t {
-					fieldSpeeds.vy() }).RotateBy(frc::Rotation2d(180_deg));
-	reversed.fieldSpeeds = frc::ChassisSpeeds { units::meters_per_second_t {
-			reversedSpeeds.X()() }, units::meters_per_second_t {
-			reversedSpeeds.Y()() }, fieldSpeeds.omega };
-	reversed.pose = frc::Pose2d(pose.Translation(),
-			pose.Rotation() + frc::Rotation2d(180_deg));
+	auto reversedSpeeds =
+			wpi::math::Translation2d(wpi::units::meter_t { fieldSpeeds.vx() },
+					wpi::units::meter_t { fieldSpeeds.vy() }).RotateBy(
+					wpi::math::Rotation2d(180_deg));
+	reversed.fieldSpeeds = wpi::math::ChassisVelocities {
+			wpi::units::meters_per_second_t { reversedSpeeds.X()() },
+			wpi::units::meters_per_second_t { reversedSpeeds.Y()() },
+			fieldSpeeds.omega };
+	reversed.pose = wpi::math::Pose2d(pose.Translation(),
+			pose.Rotation() + wpi::math::Rotation2d(180_deg));
 	reversed.linearVelocity = -linearVelocity;
 	reversed.feedforwards = feedforwards.reverse();
-	reversed.heading = heading + frc::Rotation2d(180_deg);
+	reversed.heading = heading + wpi::math::Rotation2d(180_deg);
 
 	return reversed;
 }
@@ -91,7 +94,7 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::flip() const {
 }
 
 PathPlannerTrajectoryState PathPlannerTrajectoryState::copyWithTime(
-		units::second_t time) const {
+		wpi::units::second_t time) const {
 	PathPlannerTrajectoryState copy;
 	copy.time = time;
 	copy.fieldSpeeds = fieldSpeeds;

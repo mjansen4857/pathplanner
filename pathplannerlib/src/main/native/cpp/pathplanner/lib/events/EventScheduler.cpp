@@ -2,7 +2,7 @@
 
 using namespace pathplanner;
 
-void EventScheduler::execute(units::second_t time) {
+void EventScheduler::execute(wpi::units::second_t time) {
 	// Check for events that should be handled this loop
 	while (!m_upcomingEvents.empty()
 			&& time >= m_upcomingEvents[0]->getTimestamp()) {
@@ -45,7 +45,8 @@ void EventScheduler::end() {
 	m_upcomingEvents.clear();
 }
 
-void EventScheduler::scheduleCommand(std::shared_ptr<frc2::Command> command) {
+void EventScheduler::scheduleCommand(
+		std::shared_ptr<wpi::cmd::Command> command) {
 	// Check for commands that should be cancelled by this command
 	auto commandReqs = command->GetRequirements();
 	if (!commandReqs.empty()) {
@@ -67,7 +68,7 @@ void EventScheduler::scheduleCommand(std::shared_ptr<frc2::Command> command) {
 	m_eventCommands.emplace_back(command, true);
 }
 
-void EventScheduler::cancelCommand(std::shared_ptr<frc2::Command> command) {
+void EventScheduler::cancelCommand(std::shared_ptr<wpi::cmd::Command> command) {
 	for (auto &entry : m_eventCommands) {
 		if (entry.first == command && entry.second) {
 			command->End(true);

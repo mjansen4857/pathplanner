@@ -5,13 +5,10 @@ plugins {
     id 'java'
     id 'google-test'
     id "org.wpilib.WPILibRepositoriesPlugin" version '2027.0.0'
-    id 'org.wpilib.NativeUtils' version '2027.10.0'
-    id "org.wpilib.Toolchain" version '2027.10.0'
+    id 'org.wpilib.NativeUtils' version '2027.7.1'
     id 'org.wpilib.GradleJni' version '2027.0.0'
-    id 'com.diffplug.spotless' version '8.0.0'
-    id "edu.wpi.first.GradleRIO2027" version "2027.0.0-alpha-1"
+    id 'com.diffplug.spotless' version '8.6.0'
     id 'jacoco'
-
 }
 
 ext.getCurrentArch = {
@@ -24,8 +21,11 @@ def systemArch = getCurrentArch()
 ext.wpilibVersion = "2027.0.0-alpha-6"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    sourceCompatibility = JavaVersion.toVersion("25")
+    targetCompatibility = JavaVersion.toVersion("25")
 }
 
 repositories {
@@ -127,6 +127,7 @@ model {
             }
 
             nativeUtils.useRequiredLibrary(it, "googletest_static")
+            nativeUtils.useRequiredLibrary(it, "wpilib_shared")
 
             binaries.all {
                 def arch = it.targetPlatform.name

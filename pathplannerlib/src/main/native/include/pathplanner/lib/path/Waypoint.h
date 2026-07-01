@@ -1,8 +1,8 @@
 #pragma once
 
-#include <frc/geometry/Translation2d.h>
-#include <frc/geometry/Rotation2d.h>
-#include <wpi/json.h>
+#include <wpi/math/geometry/Translation2d.hpp>
+#include <wpi/math/geometry/Rotation2d.hpp>
+#include <wpi/util/json.hpp>
 #include <optional>
 #include "pathplanner/lib/util/FlippingUtil.h"
 
@@ -12,9 +12,9 @@ namespace pathplanner {
 
 class Waypoint {
 public:
-	std::optional<frc::Translation2d> prevControl;
-	frc::Translation2d anchor;
-	std::optional<frc::Translation2d> nextControl;
+	std::optional<wpi::math::Translation2d> prevControl;
+	wpi::math::Translation2d anchor;
+	std::optional<wpi::math::Translation2d> nextControl;
 
 	/**
 	 * Create a waypoint from its anchor point and control points
@@ -23,9 +23,9 @@ public:
 	 * @param anchor The anchor position
 	 * @param nextControl The next control point position
 	 */
-	constexpr Waypoint(std::optional<frc::Translation2d> prevControl,
-			frc::Translation2d anchor,
-			std::optional<frc::Translation2d> nextControl) : prevControl(
+	constexpr Waypoint(std::optional<wpi::math::Translation2d> prevControl,
+			wpi::math::Translation2d anchor,
+			std::optional<wpi::math::Translation2d> nextControl) : prevControl(
 			prevControl), anchor(anchor), nextControl(nextControl) {
 	}
 
@@ -46,10 +46,10 @@ public:
 	 * @param nextAnchor The position of the next anchor point. This can be nullopt for the end point
 	 * @return Waypoint with auto calculated control points
 	 */
-	static Waypoint autoControlPoints(frc::Translation2d anchor,
-			frc::Rotation2d heading,
-			std::optional<frc::Translation2d> prevAnchor,
-			std::optional<frc::Translation2d> nextAnchor);
+	static Waypoint autoControlPoints(wpi::math::Translation2d anchor,
+			wpi::math::Rotation2d heading,
+			std::optional<wpi::math::Translation2d> prevAnchor,
+			std::optional<wpi::math::Translation2d> nextAnchor);
 
 	/**
 	 * Create a waypoint from JSON
@@ -57,6 +57,6 @@ public:
 	 * @param waypointJson JSON object representing a waypoint
 	 * @return The waypoint created from JSON
 	 */
-	static Waypoint fromJson(const wpi::json &waypointJson);
+	static Waypoint fromJson(const wpi::util::json &waypointJson);
 };
 }

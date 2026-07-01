@@ -1,11 +1,11 @@
 #pragma once
 
-#include <frc2/command/Commands.h>
-#include <frc/geometry/Translation2d.h>
-#include <frc/geometry/Pose2d.h>
-#include <units/length.h>
+#include <wpi/commands2/Commands.hpp>
+#include <wpi/math/geometry/Translation2d.hpp>
+#include <wpi/math/geometry/Pose2d.hpp>
+#include <wpi/units/length.hpp>
 #include <memory>
-#include <wpi/json.h>
+#include <wpi/util/json.hpp>
 
 namespace pathplanner {
 class EventMarker {
@@ -20,7 +20,7 @@ public:
 	 * @param command The command that should be triggered at this marker
 	 */
 	EventMarker(std::string triggerName, double waypointRelativePos,
-			double endWaypointRelativePos, frc2::CommandPtr &&command) : m_triggerName(
+			double endWaypointRelativePos, wpi::cmd::CommandPtr &&command) : m_triggerName(
 			triggerName), m_pos(waypointRelativePos), m_endWaypointRelativePos(
 			endWaypointRelativePos), m_command(std::move(command).Unwrap()) {
 	}
@@ -35,7 +35,7 @@ public:
 	 */
 	EventMarker(std::string triggerName, double waypointRelativePos,
 			double endWaypointRelativePos) : EventMarker(triggerName,
-			waypointRelativePos, endWaypointRelativePos, frc2::cmd::None()) {
+			waypointRelativePos, endWaypointRelativePos, wpi::cmd::None()) {
 	}
 
 	/**
@@ -46,7 +46,7 @@ public:
 	 * @param command The command that should be triggered at this marker
 	 */
 	EventMarker(std::string triggerName, double waypointRelativePos,
-			frc2::CommandPtr &&command) : EventMarker(triggerName,
+			wpi::cmd::CommandPtr &&command) : EventMarker(triggerName,
 			waypointRelativePos, -1.0, std::move(command)) {
 	}
 
@@ -57,7 +57,7 @@ public:
 	 * @param waypointRelativePos The waypoint relative position of the marker
 	 */
 	EventMarker(std::string triggerName, double waypointRelativePos) : EventMarker(
-			triggerName, waypointRelativePos, -1.0, frc2::cmd::None()) {
+			triggerName, waypointRelativePos, -1.0, wpi::cmd::None()) {
 	}
 
 	/**
@@ -71,7 +71,7 @@ public:
 	 */
 	EventMarker(std::string triggerName, double waypointRelativePos,
 			double endWaypointRelativePos,
-			std::shared_ptr<frc2::Command> command) : m_triggerName(
+			std::shared_ptr<wpi::cmd::Command> command) : m_triggerName(
 			triggerName), m_pos(waypointRelativePos), m_endWaypointRelativePos(
 			endWaypointRelativePos), m_command(command) {
 	}
@@ -84,8 +84,8 @@ public:
 	 * @param command The command that should be triggered at this marker
 	 */
 	EventMarker(std::string triggerName, double waypointRelativePos,
-			std::shared_ptr<frc2::Command> command) : EventMarker(triggerName,
-			waypointRelativePos, -1.0, command) {
+			std::shared_ptr<wpi::cmd::Command> command) : EventMarker(
+			triggerName, waypointRelativePos, -1.0, command) {
 	}
 
 	/**
@@ -94,14 +94,14 @@ public:
 	 * @param json json reference representing an event marker
 	 * @return The event marker defined by the given json object
 	 */
-	static EventMarker fromJson(const wpi::json &json);
+	static EventMarker fromJson(const wpi::util::json &json);
 
 	/**
 	 * Get the command associated with this marker
 	 *
 	 * @return Command for this marker
 	 */
-	std::shared_ptr<frc2::Command> getCommand() const {
+	std::shared_ptr<wpi::cmd::Command> getCommand() const {
 		return m_command;
 	}
 
@@ -137,6 +137,6 @@ private:
 	std::string m_triggerName;
 	double m_pos;
 	double m_endWaypointRelativePos;
-	std::shared_ptr<frc2::Command> m_command;
+	std::shared_ptr<wpi::cmd::Command> m_command;
 };
 }

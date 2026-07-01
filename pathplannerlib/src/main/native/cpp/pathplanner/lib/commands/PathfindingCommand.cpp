@@ -5,7 +5,7 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include <vector>
-#include <hal/UsageReporting.h>
+#include <wpi/hal/UsageReporting.hpp>
 
 using namespace pathplanner;
 
@@ -13,13 +13,16 @@ int PathfindingCommand::m_instances = 0;
 
 PathfindingCommand::PathfindingCommand(
 		std::shared_ptr<PathPlannerPath> targetPath,
-		PathConstraints constraints, std::function<frc::Pose2d()> poseSupplier,
-		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
+		PathConstraints constraints,
+		std::function<wpi::math::Pose2d()> poseSupplier,
+		std::function<wpi::math::ChassisVelocities()> speedsSupplier,
+		std::function<
+				void(const wpi::math::ChassisVelocities&,
+						const DriveFeedforwards&)> output,
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
-		frc2::Requirements requirements) : m_targetPath(targetPath), m_targetPose(), m_goalEndState(
-		0_mps, frc::Rotation2d()), m_constraints(constraints), m_poseSupplier(
+		wpi::cmd::Requirements requirements) : m_targetPath(targetPath), m_targetPose(), m_goalEndState(
+		0_mps, wpi::math::Rotation2d()), m_constraints(constraints), m_poseSupplier(
 		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
 		controller), m_robotConfig(robotConfig), m_shouldFlipPath(
 		shouldFlipPath) {
@@ -27,8 +30,8 @@ PathfindingCommand::PathfindingCommand(
 
 	Pathfinding::ensureInitialized();
 
-	frc::Rotation2d targetRotation;
-	units::meters_per_second_t goalEndVel =
+	wpi::math::Rotation2d targetRotation;
+	wpi::units::meters_per_second_t goalEndVel =
 			targetPath->getGlobalConstraints().getMaxVelocity();
 	if (targetPath->isChoreoPath()) {
 		// Can value() here without issue since all choreo trajectories have ideal trajectories
@@ -45,7 +48,7 @@ PathfindingCommand::PathfindingCommand(
 		}
 	}
 
-	m_targetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
+	m_targetPose = wpi::math::Pose2d(m_targetPath->getPoint(0).position,
 			targetRotation);
 	m_originalTargetPose = m_targetPose;
 	m_goalEndState = GoalEndState(goalEndVel, targetRotation);
@@ -54,13 +57,15 @@ PathfindingCommand::PathfindingCommand(
 	HAL_ReportUsage("PathPlanner/PathFindingCommand", m_instances, "");
 }
 
-PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
-		PathConstraints constraints, units::meters_per_second_t goalEndVel,
-		std::function<frc::Pose2d()> poseSupplier,
-		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
+PathfindingCommand::PathfindingCommand(wpi::math::Pose2d targetPose,
+		PathConstraints constraints, wpi::units::meters_per_second_t goalEndVel,
+		std::function<wpi::math::Pose2d()> poseSupplier,
+		std::function<wpi::math::ChassisVelocities()> speedsSupplier,
+		std::function<
+				void(const wpi::math::ChassisVelocities&,
+						const DriveFeedforwards&)> output,
 		std::shared_ptr<PathFollowingController> controller,
-		RobotConfig robotConfig, frc2::Requirements requirements) : m_targetPath(), m_targetPose(
+		RobotConfig robotConfig, wpi::cmd::Requirements requirements) : m_targetPath(), m_targetPose(
 		targetPose), m_originalTargetPose(targetPose), m_goalEndState(
 		goalEndVel, targetPose.Rotation()), m_constraints(constraints), m_poseSupplier(
 		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
@@ -79,12 +84,13 @@ void PathfindingCommand::Initialize() {
 	m_currentTrajectory = PathPlannerTrajectory();
 	m_timeOffset = 0_s;
 
-	frc::Pose2d currentPose = m_poseSupplier();
+	wpi::math::Pose2d currentPose = m_poseSupplier();
 
 	m_controller->reset(currentPose, m_speedsSupplier());
 
 	if (m_targetPath) {
-		m_originalTargetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
+		m_originalTargetPose = wpi::math::Pose2d(
+				m_targetPath->getPoint(0).position,
 				m_originalTargetPose.Rotation());
 		if (m_shouldFlipPath()) {
 			m_targetPose = FlippingUtil::flipFieldPose(m_originalTargetPose);
@@ -95,7 +101,7 @@ void PathfindingCommand::Initialize() {
 
 	if (currentPose.Translation().Distance(m_targetPose.Translation())
 			< 0.5_m) {
-		m_output(frc::ChassisSpeeds(),
+		m_output(wpi::math::ChassisVelocities(),
 				DriveFeedforwards::zeros(m_robotConfig.numModules));
 		Cancel();
 	} else {
@@ -105,8 +111,8 @@ void PathfindingCommand::Initialize() {
 }
 
 void PathfindingCommand::Execute() {
-	frc::Pose2d currentPose = m_poseSupplier();
-	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
+	wpi::math::Pose2d currentPose = m_poseSupplier();
+	wpi::math::ChassisVelocities currentSpeeds = m_speedsSupplier();
 
 	PathPlannerLogging::logCurrentPose(currentPose);
 	PPLibTelemetry::setCurrentPose(currentPose);
@@ -151,7 +157,7 @@ void PathfindingCommand::Execute() {
 					closestState2.pose.Translation());
 			double t = ((currentPose.Translation().Distance(
 					closestState1.pose.Translation())) / d)();
-			t = units::math::min(1.0, units::math::max(0.0, t));
+			t = wpi::units::math::min(1.0, wpi::units::math::max(0.0, t));
 
 			m_timeOffset = GeometryUtil::unitLerp(closestState1.time,
 					closestState2.time, t);
@@ -161,8 +167,8 @@ void PathfindingCommand::Execute() {
 			// This can prevent an issue where the robot will remain stationary if new paths come in
 			// every loop
 			if (m_timeOffset <= 0.02_s
-					&& units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
-							< 0.1_mps) {
+					&& wpi::units::math::hypot(currentSpeeds.vx,
+							currentSpeeds.vy) < 0.1_mps) {
 				m_timeOffset = 0.02_s;
 			}
 
@@ -178,11 +184,11 @@ void PathfindingCommand::Execute() {
 		PathPlannerTrajectoryState targetState = m_currentTrajectory.sample(
 				m_timer.Get() + m_timeOffset);
 
-		frc::ChassisSpeeds targetSpeeds =
+		wpi::math::ChassisVelocities targetSpeeds =
 				m_controller->calculateRobotRelativeSpeeds(currentPose,
 						targetState);
 
-		units::meters_per_second_t currentVel = units::math::hypot(
+		wpi::units::meters_per_second_t currentVel = wpi::units::math::hypot(
 				currentSpeeds.vx, currentSpeeds.vy);
 
 		PPLibTelemetry::setCurrentPose(currentPose);
@@ -205,12 +211,12 @@ bool PathfindingCommand::IsFinished() {
 	}
 
 	if (m_targetPath && !m_targetPath->isChoreoPath()) {
-		frc::Pose2d currentPose = m_poseSupplier();
-		frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
+		wpi::math::Pose2d currentPose = m_poseSupplier();
+		wpi::math::ChassisVelocities currentSpeeds = m_speedsSupplier();
 
-		units::meters_per_second_t currentVel = units::math::hypot(
+		wpi::units::meters_per_second_t currentVel = wpi::units::math::hypot(
 				currentSpeeds.vx, currentSpeeds.vy);
-		units::meter_t stoppingDistance = units::math::pow < 2
+		wpi::units::meter_t stoppingDistance = wpi::units::math::pow < 2
 				> (currentVel) / (2 * m_constraints.getMaxAcceleration());
 
 		return currentPose.Translation().Distance(m_targetPose.Translation())
@@ -231,7 +237,7 @@ void PathfindingCommand::End(bool interrupted) {
 	// Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
 	// the command to smoothly transition into some auto-alignment routine
 	if (!interrupted && m_goalEndState.getVelocity() < 0.1_mps) {
-		m_output(frc::ChassisSpeeds(),
+		m_output(wpi::math::ChassisVelocities(),
 				DriveFeedforwards::zeros(m_robotConfig.numModules));
 	}
 

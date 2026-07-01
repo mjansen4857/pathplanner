@@ -1,14 +1,14 @@
 #pragma once
 
-#include <frc2/command/SequentialCommandGroup.h>
-#include <frc2/command/Commands.h>
-#include <frc2/command/DeferredCommand.h>
+#include <wpi/commands2/SequentialCommandGroup.hpp>
+#include <wpi/commands2/Commands.hpp>
+#include <wpi/commands2/DeferredCommand.hpp>
 #include "pathplanner/lib/commands/FollowPathCommand.h"
 #include "pathplanner/lib/commands/PathfindingCommand.h"
 #include "pathplanner/lib/util/FlippingUtil.h"
 
 namespace pathplanner {
-class PathfindThenFollowPath: public frc2::SequentialCommandGroup {
+class PathfindThenFollowPath: public wpi::cmd::SequentialCommandGroup {
 public:
 	/**
 	 * Constructs a new PathfindThenFollowPath command group.
@@ -17,7 +17,7 @@ public:
 	 * @param pathfindingConstraints the path constraints for pathfinding
 	 * @param poseSupplier a supplier for the robot's current pose
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
-	 * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+	 * @param output Output function that accepts robot-relative ChassisVelocities and feedforwards for
 	 *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
 	 *     using a differential drive, they will be in L, R order.
 	 *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
@@ -30,36 +30,37 @@ public:
 	 */
 	PathfindThenFollowPath(std::shared_ptr<PathPlannerPath> goalPath,
 			PathConstraints pathfindingConstraints,
-			std::function<frc::Pose2d()> poseSupplier,
-			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
+			std::function<wpi::math::Pose2d()> poseSupplier,
+			std::function<wpi::math::ChassisVelocities()> currentRobotRelativeSpeeds,
 			std::function<
-					void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
+					void(const wpi::math::ChassisVelocities&,
+							const DriveFeedforwards&)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
-			frc2::Requirements requirements) {
+			wpi::cmd::Requirements requirements) {
 		AddCommands(
 				PathfindingCommand(goalPath, pathfindingConstraints,
 						poseSupplier, currentRobotRelativeSpeeds, output,
 						controller, robotConfig, shouldFlipPath, requirements),
-				frc2::DeferredCommand(
+				wpi::cmd::DeferredCommand(
 						[goalPath, pathfindingConstraints, poseSupplier,
 								currentRobotRelativeSpeeds, output, controller,
 								robotConfig, shouldFlipPath, requirements]() {
 							if (goalPath->numPoints() < 2) {
-								return frc2::cmd::None();
+								return wpi::cmd::None();
 							}
 
-							frc::Pose2d startPose = poseSupplier();
-							frc::ChassisSpeeds startSpeeds =
+							wpi::math::Pose2d startPose = poseSupplier();
+							wpi::math::ChassisVelocities startSpeeds =
 									currentRobotRelativeSpeeds();
-							frc::ChassisSpeeds startFieldSpeeds =
+							wpi::math::ChassisVelocities startFieldSpeeds =
 									startSpeeds.ToFieldRelative(
 											startPose.Rotation());
-							frc::Rotation2d startHeading = frc::Rotation2d(
-									startFieldSpeeds.vx(),
-									startFieldSpeeds.vy());
+							wpi::math::Rotation2d startHeading =
+									wpi::math::Rotation2d(startFieldSpeeds.vx(),
+											startFieldSpeeds.vy());
 
-							frc::Pose2d endWaypoint = frc::Pose2d(
+							wpi::math::Pose2d endWaypoint = wpi::math::Pose2d(
 									goalPath->getPoint(0).position,
 									goalPath->getInitialHeading());
 							bool shouldFlip = shouldFlipPath()
@@ -73,7 +74,7 @@ public:
 									pathfindingConstraints.getMaxVelocity(),
 									startPose.Rotation());
 							if (goalPath->getIdealStartingState().has_value()) {
-								frc::Rotation2d endRot =
+								wpi::math::Rotation2d endRot =
 										goalPath->getIdealStartingState().value().getRotation();
 								if (shouldFlip) {
 									endRot = FlippingUtil::flipFieldRotation(
@@ -89,11 +90,11 @@ public:
 									std::make_shared < PathPlannerPath
 											> (PathPlannerPath::waypointsFromPoses(
 													{
-															frc::Pose2d(
+															wpi::math::Pose2d(
 																	startPose.Translation(),
 																	startHeading),
 															endWaypoint }), pathfindingConstraints, IdealStartingState(
-													units::math::hypot(
+													wpi::units::math::hypot(
 															startSpeeds.vx,
 															startSpeeds.vy),
 													startPose.Rotation()), endState);

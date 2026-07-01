@@ -1,12 +1,12 @@
 #pragma once
 
-#include <units/velocity.h>
-#include <units/length.h>
-#include <units/time.h>
-#include <frc/kinematics/ChassisSpeeds.h>
-#include <frc/geometry/Pose2d.h>
-#include <frc/geometry/Translation2d.h>
-#include <frc/geometry/Rotation2d.h>
+#include <wpi/units/velocity.hpp>
+#include <wpi/units/length.hpp>
+#include <wpi/units/time.hpp>
+#include <wpi/math/kinematics/ChassisVelocities.hpp>
+#include <wpi/math/geometry/Pose2d.hpp>
+#include <wpi/math/geometry/Translation2d.hpp>
+#include <wpi/math/geometry/Rotation2d.hpp>
 #include <vector>
 #include "pathplanner/lib/trajectory/SwerveModuleTrajectoryState.h"
 #include "pathplanner/lib/path/PathConstraints.h"
@@ -16,15 +16,15 @@
 namespace pathplanner {
 class PathPlannerTrajectoryState {
 public:
-	units::second_t time = 0_s;
-	frc::ChassisSpeeds fieldSpeeds;
-	frc::Pose2d pose;
-	units::meters_per_second_t linearVelocity = 0_mps;
+	wpi::units::second_t time = 0_s;
+	wpi::math::ChassisVelocities fieldSpeeds;
+	wpi::math::Pose2d pose;
+	wpi::units::meters_per_second_t linearVelocity = 0_mps;
 	DriveFeedforwards feedforwards;
 
-	frc::Rotation2d heading;
-	units::meter_t deltaPos = 0_m;
-	frc::Rotation2d deltaRot;
+	wpi::math::Rotation2d heading;
+	wpi::units::meter_t deltaPos = 0_m;
+	wpi::math::Rotation2d deltaRot;
 	std::vector<SwerveModuleTrajectoryState> moduleStates;
 	PathConstraints constraints;
 	double waypointRelativePos = 0.0;
@@ -63,6 +63,6 @@ public:
 	 * @param time The new time to use
 	 * @return Copied state with the given time
 	 */
-	PathPlannerTrajectoryState copyWithTime(units::second_t time) const;
+	PathPlannerTrajectoryState copyWithTime(wpi::units::second_t time) const;
 };
 }

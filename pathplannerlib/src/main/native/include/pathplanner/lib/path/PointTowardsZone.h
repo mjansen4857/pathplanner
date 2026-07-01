@@ -1,8 +1,8 @@
 #pragma once
 
-#include <wpi/json.h>
-#include <frc/geometry/Translation2d.h>
-#include <frc/geometry/Rotation2d.h>
+#include <wpi/util/json.hpp>
+#include <wpi/math/geometry/Translation2d.hpp>
+#include <wpi/math/geometry/Rotation2d.hpp>
 #include <string>
 #include "pathplanner/lib/util/FlippingUtil.h"
 #include "pathplanner/lib/util/JSONUtil.h"
@@ -21,8 +21,8 @@ public:
 	 * @param minWaypointRelativePos Starting position of the zone
 	 * @param maxWaypointRelativePos End position of the zone
 	 */
-	PointTowardsZone(std::string name, frc::Translation2d targetPosition,
-			frc::Rotation2d rotationOffset, double minWaypointRelativePos,
+	PointTowardsZone(std::string name, wpi::math::Translation2d targetPosition,
+			wpi::math::Rotation2d rotationOffset, double minWaypointRelativePos,
 			double maxWaypointRelativePos) : m_name(name), m_targetPos(
 			targetPosition), m_rotationOffset(rotationOffset), m_minPos(
 			minWaypointRelativePos), m_maxPos(maxWaypointRelativePos) {
@@ -36,10 +36,10 @@ public:
 	 * @param minWaypointRelativePos Starting position of the zone
 	 * @param maxWaypointRelativePos End position of the zone
 	 */
-	PointTowardsZone(std::string name, frc::Translation2d targetPosition,
+	PointTowardsZone(std::string name, wpi::math::Translation2d targetPosition,
 			double minWaypointRelativePos, double maxWaypointRelativePos) : PointTowardsZone(
-			name, targetPosition, frc::Rotation2d(), minWaypointRelativePos,
-			maxWaypointRelativePos) {
+			name, targetPosition, wpi::math::Rotation2d(),
+			minWaypointRelativePos, maxWaypointRelativePos) {
 	}
 
 	/**
@@ -48,14 +48,16 @@ public:
 	 * @param json A json reference representing a point towards zone
 	 * @return The point towards zone defined by the given json object
 	 */
-	static inline PointTowardsZone fromJson(const wpi::json &json) {
-		std::string name = json.at("name").get<std::string>();
-		frc::Translation2d targetPos = JSONUtil::translation2dFromJson(
+	static inline PointTowardsZone fromJson(const wpi::util::json &json) {
+		std::string name = json.at("name").get_string();
+		wpi::math::Translation2d targetPos = JSONUtil::translation2dFromJson(
 				json.at("fieldPosition"));
-		frc::Rotation2d rotationOffset = frc::Rotation2d(
-				units::degree_t { json.at("rotationOffset").get<double>() });
-		double minPos = json.at("minWaypointRelativePos").get<double>();
-		double maxPos = json.at("maxWaypointRelativePos").get<double>();
+		wpi::math::Rotation2d rotationOffset =
+				wpi::math::Rotation2d(
+						wpi::units::degree_t {
+								json.at("rotationOffset").get_number() });
+		double minPos = json.at("minWaypointRelativePos").get_number();
+		double maxPos = json.at("maxWaypointRelativePos").get_number();
 		return PointTowardsZone(name, targetPos, rotationOffset, minPos, maxPos);
 	}
 
@@ -68,7 +70,7 @@ public:
 	 *
 	 * @return Target field position in meters
 	 */
-	constexpr frc::Translation2d& getTargetPosition() {
+	constexpr wpi::math::Translation2d& getTargetPosition() {
 		return m_targetPos;
 	}
 
@@ -77,7 +79,7 @@ public:
 	 *
 	 * @return Rotation offset
 	 */
-	constexpr frc::Rotation2d& getRotationOffset() {
+	constexpr wpi::math::Rotation2d& getRotationOffset() {
 		return m_rotationOffset;
 	}
 
@@ -115,8 +117,8 @@ public:
 
 private:
 	std::string m_name;
-	frc::Translation2d m_targetPos;
-	frc::Rotation2d m_rotationOffset;
+	wpi::math::Translation2d m_targetPos;
+	wpi::math::Rotation2d m_rotationOffset;
 	double m_minPos;
 	double m_maxPos;
 };

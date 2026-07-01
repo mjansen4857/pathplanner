@@ -1,10 +1,10 @@
 #include "pathplanner/lib/util/PPLibTelemetry.h"
-#include <frc/DriverStation.h>
-#include <frc/RobotBase.h>
-#include <wpi/json.h>
-#include <frc/Filesystem.h>
-#include <wpi/raw_ostream.h>
-#include <networktables/StringTopic.h>
+#include <wpi/driverstation/DriverStation.hpp>
+#include <wpi/framework/RobotBase.hpp>
+#include <wpi/util/json.hpp>
+#include <wpi/system/Filesystem.hpp>
+#include <wpi/util/raw_ostream.hpp>
+#include <wpi/nt/StringTopic.hpp>
 
 using namespace pathplanner;
 
@@ -12,15 +12,15 @@ bool PPLibTelemetry::m_compMode = false;
 nt::DoubleArrayPublisher PPLibTelemetry::m_velPub =
 		nt::NetworkTableInstance::GetDefault().GetDoubleArrayTopic(
 				"/PathPlanner/vel").Publish();
-nt::StructPublisher<frc::Pose2d> PPLibTelemetry::m_posePub =
-		nt::NetworkTableInstance::GetDefault().GetStructTopic < frc::Pose2d
-				> ("/PathPlanner/currentPose").Publish();
-nt::StructArrayPublisher<frc::Pose2d> PPLibTelemetry::m_pathPub =
-		nt::NetworkTableInstance::GetDefault().GetStructArrayTopic < frc::Pose2d
-				> ("/PathPlanner/activePath").Publish();
-nt::StructPublisher<frc::Pose2d> PPLibTelemetry::m_targetPosePub =
-		nt::NetworkTableInstance::GetDefault().GetStructTopic < frc::Pose2d
-				> ("/PathPlanner/targetPose").Publish();
+nt::StructPublisher<wpi::math::Pose2d> PPLibTelemetry::m_posePub =
+		nt::NetworkTableInstance::GetDefault().GetStructTopic
+				< wpi::math::Pose2d > ("/PathPlanner/currentPose").Publish();
+nt::StructArrayPublisher<wpi::math::Pose2d> PPLibTelemetry::m_pathPub =
+		nt::NetworkTableInstance::GetDefault().GetStructArrayTopic
+				< wpi::math::Pose2d > ("/PathPlanner/activePath").Publish();
+nt::StructPublisher<wpi::math::Pose2d> PPLibTelemetry::m_targetPosePub =
+		nt::NetworkTableInstance::GetDefault().GetStructTopic
+				< wpi::math::Pose2d > ("/PathPlanner/targetPose").Publish();
 
 std::unordered_map<std::string, std::vector<std::shared_ptr<PathPlannerPath>>> PPLibTelemetry::m_hotReloadPaths =
 		std::unordered_map<std::string,
@@ -34,7 +34,7 @@ void PPLibTelemetry::ensureHotReloadListenersInitialized() {
 		nt::NetworkTableInstance inst = nt::NetworkTableInstance::GetDefault();
 		inst.AddListener(
 				inst.GetStringTopic("/PathPlanner/HotReload/hotReloadPath"),
-				nt::EventFlags::kValueRemote, [](const nt::Event &event) {
+				nt::EventFlags::VALUE_REMOTE, [](const nt::Event &event) {
 					PPLibTelemetry::handlePathHotReloadEvent(event);
 				}
 		);
@@ -57,8 +57,8 @@ void PPLibTelemetry::registerHotReloadPath(std::string pathName,
 
 void PPLibTelemetry::handlePathHotReloadEvent(const nt::Event &event) {
 	if (!m_compMode) {
-		if (frc::DriverStation::IsEnabled()) {
-			FRC_ReportError(frc::warn::Warning,
+		if (wpi::RobotBase::IsEnabled()) {
+			WPILIB_ReportError(wpi::warn::Warning,
 					"Ignoring path hot reload, robot is enabled");
 			return;
 		}
@@ -67,10 +67,10 @@ void PPLibTelemetry::handlePathHotReloadEvent(const nt::Event &event) {
 			std::string_view jsonString =
 					event.GetValueEventData()->value.GetString();
 
-			wpi::json json = wpi::json::parse(jsonString);
+			wpi::util::json json = wpi::util::json::parse_or_throw(jsonString);
 
-			std::string pathName = json.at("name").get<std::string>();
-			wpi::json::const_reference pathJson = json.at("path");
+			std::string pathName = json.at("name").get_string();
+			const auto &pathJson = json.at("path");
 
 			if (m_hotReloadPaths.find(pathName) != m_hotReloadPaths.end()) {
 				for (std::shared_ptr<PathPlannerPath> path : m_hotReloadPaths.at(
@@ -79,13 +79,13 @@ void PPLibTelemetry::handlePathHotReloadEvent(const nt::Event &event) {
 				}
 			}
 
-			if (frc::RobotBase::IsReal()) {
+			if (wpi::RobotBase::IsReal()) {
 				const std::string filePath =
-						frc::filesystem::GetDeployDirectory()
+						wpi::filesystem::GetDeployDirectory()
 								+ "/pathplanner/paths/" + pathName + ".path";
 
 				std::error_code error_code;
-				wpi::raw_fd_ostream output { filePath, error_code };
+				wpi::util::raw_fd_ostream output { filePath, error_code };
 
 				if (error_code) {
 					throw std::runtime_error(
@@ -95,7 +95,7 @@ void PPLibTelemetry::handlePathHotReloadEvent(const nt::Event &event) {
 				output << pathJson;
 			}
 		} catch (...) {
-			FRC_ReportError(frc::warn::Warning,
+			WPILIB_ReportError(wpi::warn::Warning,
 					"Failed to hot reload path, please redeploy code");
 		}
 	}

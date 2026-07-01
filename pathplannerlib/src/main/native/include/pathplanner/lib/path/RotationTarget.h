@@ -1,7 +1,7 @@
 #pragma once
 
-#include <frc/geometry/Rotation2d.h>
-#include <wpi/json.h>
+#include <wpi/math/geometry/Rotation2d.hpp>
+#include <wpi/util/json.hpp>
 
 namespace pathplanner {
 class RotationTarget {
@@ -13,8 +13,8 @@ public:
 	 * @param target Target rotation
 	 */
 	constexpr RotationTarget(double waypointRelativePosition,
-			frc::Rotation2d target) : m_position(waypointRelativePosition), m_target(
-			target) {
+			wpi::math::Rotation2d target) : m_position(
+			waypointRelativePosition), m_target(target) {
 	}
 
 	/**
@@ -23,7 +23,7 @@ public:
 	 * @param json json reference representing a rotation target
 	 * @return Rotation target defined by the given json
 	 */
-	static RotationTarget fromJson(const wpi::json &json);
+	static RotationTarget fromJson(const wpi::util::json &json);
 
 	/**
 	 * Get the waypoint relative position of this target
@@ -39,7 +39,7 @@ public:
 	 *
 	 * @return Target rotation
 	 */
-	constexpr const frc::Rotation2d& getTarget() const {
+	constexpr const wpi::math::Rotation2d& getTarget() const {
 		return m_target;
 	}
 
@@ -50,6 +50,6 @@ public:
 
 private:
 	double m_position;
-	frc::Rotation2d m_target;
+	wpi::math::Rotation2d m_target;
 };
 }

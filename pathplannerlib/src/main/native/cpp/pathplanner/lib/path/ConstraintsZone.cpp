@@ -3,9 +3,9 @@
 
 using namespace pathplanner;
 
-ConstraintsZone ConstraintsZone::fromJson(const wpi::json &json) {
-	double minPos = json.at("minWaypointRelativePos").get<double>();
-	double maxPos = json.at("maxWaypointRelativePos").get<double>();
+ConstraintsZone ConstraintsZone::fromJson(const wpi::util::json &json) {
+	double minPos = json.at("minWaypointRelativePos").get_number();
+	double maxPos = json.at("maxWaypointRelativePos").get_number();
 	PathConstraints constraints = PathConstraints::fromJson(
 			json.at("constraints"));
 

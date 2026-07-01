@@ -1,9 +1,9 @@
 #pragma once
 
-#include <units/velocity.h>
-#include <units/math.h>
-#include <frc/geometry/Rotation2d.h>
-#include <wpi/json.h>
+#include <wpi/units/velocity.hpp>
+#include <wpi/units/math.hpp>
+#include <wpi/math/geometry/Rotation2d.hpp>
+#include <wpi/util/json.hpp>
 
 namespace pathplanner {
 class GoalEndState {
@@ -14,8 +14,8 @@ public:
 	 * @param velocity The goal end velocity (M/S)
 	 * @param rotation The goal rotation
 	 */
-	constexpr GoalEndState(units::meters_per_second_t velocity,
-			frc::Rotation2d rotation) : m_velocity(velocity), m_rotation(
+	constexpr GoalEndState(wpi::units::meters_per_second_t velocity,
+			wpi::math::Rotation2d rotation) : m_velocity(velocity), m_rotation(
 			rotation) {
 	}
 
@@ -25,14 +25,14 @@ public:
 	 * @param json json reference representing a goal end state
 	 * @return The goal end state defined by the given json
 	 */
-	static GoalEndState fromJson(const wpi::json &json);
+	static GoalEndState fromJson(const wpi::util::json &json);
 
 	/**
 	 * Get the goal end velocity
 	 *
 	 * @return Goal end velocity (M/S)
 	 */
-	constexpr units::meters_per_second_t getVelocity() const {
+	constexpr wpi::units::meters_per_second_t getVelocity() const {
 		return m_velocity;
 	}
 
@@ -41,7 +41,7 @@ public:
 	 *
 	 * @return Goal rotation
 	 */
-	constexpr const frc::Rotation2d& getRotation() const {
+	constexpr const wpi::math::Rotation2d& getRotation() const {
 		return m_rotation;
 	}
 
@@ -51,7 +51,7 @@ public:
 	}
 
 private:
-	units::meters_per_second_t m_velocity;
-	frc::Rotation2d m_rotation;
+	wpi::units::meters_per_second_t m_velocity;
+	wpi::math::Rotation2d m_rotation;
 };
 }

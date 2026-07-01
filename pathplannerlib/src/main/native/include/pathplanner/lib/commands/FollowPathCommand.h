@@ -1,17 +1,17 @@
 #pragma once
 
-#include <frc2/command/Command.h>
-#include <frc2/command/CommandHelper.h>
-#include <frc2/command/Requirements.h>
+#include <wpi/commands2/Command.hpp>
+#include <wpi/commands2/CommandHelper.hpp>
+#include <wpi/commands2/Requirements.hpp>
 #include <memory>
 #include <functional>
 #include <deque>
-#include <frc/geometry/Pose2d.h>
-#include <frc/kinematics/ChassisSpeeds.h>
-#include <frc/Timer.h>
-#include <units/velocity.h>
-#include <units/length.h>
-#include <units/time.h>
+#include <wpi/math/geometry/Pose2d.hpp>
+#include <wpi/math/kinematics/ChassisVelocities.hpp>
+#include <wpi/system/Timer.hpp>
+#include <wpi/units/velocity.hpp>
+#include <wpi/units/length.hpp>
+#include <wpi/units/time.hpp>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
@@ -22,7 +22,7 @@
 #include "pathplanner/lib/util/DriveFeedforwards.h"
 
 namespace pathplanner {
-class FollowPathCommand: public frc2::CommandHelper<frc2::Command,
+class FollowPathCommand: public wpi::cmd::CommandHelper<wpi::cmd::Command,
 		FollowPathCommand> {
 public:
 	/**
@@ -31,7 +31,7 @@ public:
 	 * @param path The path to follow
 	 * @param poseSupplier Function that supplies the current field-relative pose of the robot
 	 * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
-	 * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+	 * @param output Output function that accepts robot-relative ChassisVelocities and feedforwards for
 	 *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
 	 *     using a differential drive, they will be in L, R order.
 	 *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
@@ -43,13 +43,14 @@ public:
 	 * @param requirements Subsystems required by this command, usually just the drive subsystem
 	 */
 	FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
-			std::function<frc::Pose2d()> poseSupplier,
-			std::function<frc::ChassisSpeeds()> speedsSupplier,
+			std::function<wpi::math::Pose2d()> poseSupplier,
+			std::function<wpi::math::ChassisVelocities()> speedsSupplier,
 			std::function<
-					void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
+					void(const wpi::math::ChassisVelocities&,
+							const DriveFeedforwards&)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
-			frc2::Requirements requirements);
+			wpi::cmd::Requirements requirements);
 
 	void Initialize() override;
 
@@ -60,11 +61,12 @@ public:
 	void End(bool interrupted) override;
 
 private:
-	frc::Timer m_timer;
+	wpi::Timer m_timer;
 	std::shared_ptr<PathPlannerPath> m_originalPath;
-	std::function<frc::Pose2d()> m_poseSupplier;
-	std::function<frc::ChassisSpeeds()> m_speedsSupplier;
-	std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> m_output;
+	std::function<wpi::math::Pose2d()> m_poseSupplier;
+	std::function<wpi::math::ChassisVelocities()> m_speedsSupplier;
+	std::function<
+			void(const wpi::math::ChassisVelocities&, const DriveFeedforwards&)> m_output;
 	std::shared_ptr<PathFollowingController> m_controller;
 	RobotConfig m_robotConfig;
 	std::function<bool()> m_shouldFlipPath;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <units/time.h>
+#include <wpi/units/time.hpp>
 #include <memory>
 
 namespace pathplanner {
@@ -14,7 +14,7 @@ public:
 	 *
 	 * @param timestamp The trajectory timestamp this event should be handled at
 	 */
-	constexpr Event(units::second_t timestamp) : m_timestamp(timestamp) {
+	constexpr Event(wpi::units::second_t timestamp) : m_timestamp(timestamp) {
 	}
 
 	virtual ~Event() {
@@ -25,7 +25,7 @@ public:
 	 *
 	 * @return Trajectory timestamp, in seconds
 	 */
-	constexpr units::second_t getTimestamp() const {
+	constexpr wpi::units::second_t getTimestamp() const {
 		return m_timestamp;
 	}
 
@@ -34,7 +34,7 @@ public:
 	 *
 	 * @param timestamp Timestamp of this event along the trajectory
 	 */
-	constexpr void setTimestamp(units::second_t timestamp) {
+	constexpr void setTimestamp(wpi::units::second_t timestamp) {
 		m_timestamp = timestamp;
 	}
 
@@ -60,9 +60,9 @@ public:
 	 * @return Copied event with new time
 	 */
 	virtual std::shared_ptr<Event> copyWithTimestamp(
-			units::second_t timestamp) = 0;
+			wpi::units::second_t timestamp) = 0;
 
 private:
-	units::second_t m_timestamp;
+	wpi::units::second_t m_timestamp;
 };
 }

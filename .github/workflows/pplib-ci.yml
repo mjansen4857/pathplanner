@@ -15,7 +15,7 @@ jobs:
   formatting:
     name: "[PPLib] Check Formatting"
     runs-on: ubuntu-24.04
-    container: wpilib/ubuntu-base:24.04
+    container: wpilib/systemcore-cross-ubuntu:2027-24.04
 
     steps:
       - name: Checkout repo
@@ -35,7 +35,7 @@ jobs:
   test:
     name: "[PPLib] Unit Tests"
     runs-on: ubuntu-24.04
-    container: wpilib/ubuntu-base:24.04
+    container: wpilib/systemcore-cross-ubuntu:2027-24.04
 
     steps:
       - name: Checkout repo
@@ -123,7 +123,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: wpilib/ubuntu-base:24.04
+          - container: wpilib/ubuntu-base:2027-24.04
             artifact-name: PPLib-Linux
             build-options: "-Ponlylinuxx86-64"
           - container: wpilib/raspbian-cross-ubuntu:bookworm-24.04

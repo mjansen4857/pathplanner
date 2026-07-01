@@ -3,7 +3,7 @@
 #include "pathplanner/lib/events/Event.h"
 #include "pathplanner/lib/events/EventScheduler.h"
 #include <memory>
-#include <frc2/command/Command.h>
+#include <wpi/commands2/Command.hpp>
 
 namespace pathplanner {
 class ScheduleCommandEvent: public Event {
@@ -14,8 +14,8 @@ public:
 	 * @param timestamp The trajectory timestamp for this event
 	 * @param command The command to schedule
 	 */
-	ScheduleCommandEvent(units::second_t timestamp,
-			std::shared_ptr<frc2::Command> command) : Event(timestamp), m_command(
+	ScheduleCommandEvent(wpi::units::second_t timestamp,
+			std::shared_ptr<wpi::cmd::Command> command) : Event(timestamp), m_command(
 			command) {
 	}
 
@@ -27,12 +27,12 @@ public:
 		// Do nothing
 	}
 
-	inline std::shared_ptr<Event> copyWithTimestamp(units::second_t timestamp)
-			override {
+	inline std::shared_ptr<Event> copyWithTimestamp(
+			wpi::units::second_t timestamp) override {
 		return std::make_shared < ScheduleCommandEvent > (timestamp, m_command);
 	}
 
 private:
-	std::shared_ptr<frc2::Command> m_command;
+	std::shared_ptr<wpi::cmd::Command> m_command;
 };
 }

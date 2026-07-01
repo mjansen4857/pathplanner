@@ -1,23 +1,25 @@
 #pragma once
 
-#include <networktables/NetworkTableInstance.h>
-#include <networktables/DoubleArrayTopic.h>
-#include <networktables/DoubleTopic.h>
-#include <networktables/StructTopic.h>
-#include <networktables/StructArrayTopic.h>
-#include <networktables/NetworkTableListener.h>
+#include <wpi/nt/NetworkTableInstance.hpp>
+#include <wpi/nt/DoubleArrayTopic.hpp>
+#include <wpi/nt/DoubleTopic.hpp>
+#include <wpi/nt/StructTopic.hpp>
+#include <wpi/nt/StructArrayTopic.hpp>
+#include <wpi/nt/NetworkTableListener.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <memory>
 #include <optional>
-#include <units/velocity.h>
-#include <units/angular_velocity.h>
-#include <units/length.h>
+#include <wpi/units/velocity.hpp>
+#include <wpi/units/angular_velocity.hpp>
+#include <wpi/units/length.hpp>
 #include <span>
-#include <frc/geometry/Pose2d.h>
+#include <wpi/math/geometry/Pose2d.hpp>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/commands/PathPlannerAuto.h"
+
+namespace nt = wpi::nt;
 
 namespace pathplanner {
 class PPLibTelemetry {
@@ -26,17 +28,17 @@ public:
 		m_compMode = true;
 	}
 
-	static inline void setVelocities(units::meters_per_second_t actualVel,
-			units::meters_per_second_t commandedVel,
-			units::degrees_per_second_t actualAngVel,
-			units::degrees_per_second_t commandedAngVel) {
+	static inline void setVelocities(wpi::units::meters_per_second_t actualVel,
+			wpi::units::meters_per_second_t commandedVel,
+			wpi::units::degrees_per_second_t actualAngVel,
+			wpi::units::degrees_per_second_t commandedAngVel) {
 		if (!m_compMode) {
 			m_velPub.Set(std::span<const double>( { actualVel(), commandedVel(),
 					actualAngVel(), commandedAngVel() }));
 		}
 	}
 
-	static inline void setCurrentPose(frc::Pose2d pose) {
+	static inline void setCurrentPose(wpi::math::Pose2d pose) {
 		if (!m_compMode) {
 			m_posePub.Set(pose);
 		}
@@ -49,7 +51,7 @@ public:
 		}
 	}
 
-	static inline void setTargetPose(frc::Pose2d targetPose) {
+	static inline void setTargetPose(wpi::math::Pose2d targetPose) {
 		if (!m_compMode) {
 			m_targetPosePub.Set(targetPose);
 		}
@@ -66,9 +68,9 @@ private:
 	static bool m_compMode;
 
 	static nt::DoubleArrayPublisher m_velPub;
-	static nt::StructPublisher<frc::Pose2d> m_posePub;
-	static nt::StructArrayPublisher<frc::Pose2d> m_pathPub;
-	static nt::StructPublisher<frc::Pose2d> m_targetPosePub;
+	static nt::StructPublisher<wpi::math::Pose2d> m_posePub;
+	static nt::StructArrayPublisher<wpi::math::Pose2d> m_pathPub;
+	static nt::StructPublisher<wpi::math::Pose2d> m_targetPosePub;
 
 	static std::unordered_map<std::string,
 			std::vector<std::shared_ptr<PathPlannerPath>>> m_hotReloadPaths;

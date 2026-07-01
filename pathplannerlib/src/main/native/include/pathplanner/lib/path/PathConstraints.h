@@ -1,11 +1,11 @@
 #pragma once
 
-#include <units/velocity.h>
-#include <units/acceleration.h>
-#include <units/angular_velocity.h>
-#include <units/angular_acceleration.h>
-#include <units/voltage.h>
-#include <wpi/json.h>
+#include <wpi/units/velocity.hpp>
+#include <wpi/units/acceleration.hpp>
+#include <wpi/units/angular_velocity.hpp>
+#include <wpi/units/angular_acceleration.hpp>
+#include <wpi/units/voltage.hpp>
+#include <wpi/util/json.hpp>
 #include <limits>
 
 namespace pathplanner {
@@ -21,11 +21,11 @@ public:
 	 * @param nominalVoltage The nominal battery voltage (Volts)
 	 * @param unlimited Should the constraints be unlimited
 	 */
-	constexpr PathConstraints(units::meters_per_second_t maxVel,
-			units::meters_per_second_squared_t maxAccel,
-			units::radians_per_second_t maxAngularVel,
-			units::radians_per_second_squared_t maxAngularAccel,
-			units::volt_t nominalVoltage = 12_V, bool unlimited = false) : m_maxVelocity(
+	constexpr PathConstraints(wpi::units::meters_per_second_t maxVel,
+			wpi::units::meters_per_second_squared_t maxAccel,
+			wpi::units::radians_per_second_t maxAngularVel,
+			wpi::units::radians_per_second_squared_t maxAngularAccel,
+			wpi::units::volt_t nominalVoltage = 12_V, bool unlimited = false) : m_maxVelocity(
 			maxVel), m_maxAcceleration(maxAccel), m_maxAngularVelocity(
 			maxAngularVel), m_maxAngularAcceleration(maxAngularAccel), m_nominalVoltage(
 			nominalVoltage), m_unlimited(unlimited) {
@@ -37,7 +37,7 @@ public:
 	 * @param json json reference representing a path constraints object
 	 * @return The path constraints defined by the given json
 	 */
-	static PathConstraints fromJson(const wpi::json &json);
+	static PathConstraints fromJson(const wpi::util::json &json);
 
 	/**
 	 * Get unlimited PathConstraints
@@ -46,13 +46,13 @@ public:
 	 * @return Unlimited constraints
 	 */
 	static constexpr PathConstraints unlimitedConstraints(
-			units::volt_t nominalVoltage) {
+			wpi::units::volt_t nominalVoltage) {
 		double inf = std::numeric_limits<double>::infinity();
-		return PathConstraints(units::meters_per_second_t { inf },
-				units::meters_per_second_squared_t { inf },
-				units::radians_per_second_t { inf },
-				units::radians_per_second_squared_t { inf }, nominalVoltage,
-				true);
+		return PathConstraints(wpi::units::meters_per_second_t { inf },
+				wpi::units::meters_per_second_squared_t { inf },
+				wpi::units::radians_per_second_t { inf },
+				wpi::units::radians_per_second_squared_t { inf },
+				nominalVoltage, true);
 	}
 
 	/**
@@ -60,7 +60,7 @@ public:
 	 *
 	 * @return Max linear velocity (M/S)
 	 */
-	constexpr units::meters_per_second_t getMaxVelocity() const {
+	constexpr wpi::units::meters_per_second_t getMaxVelocity() const {
 		return m_maxVelocity;
 	}
 
@@ -69,7 +69,7 @@ public:
 	 *
 	 * @return Max linear acceleration (M/S^2)
 	 */
-	constexpr units::meters_per_second_squared_t getMaxAcceleration() const {
+	constexpr wpi::units::meters_per_second_squared_t getMaxAcceleration() const {
 		return m_maxAcceleration;
 	}
 
@@ -78,7 +78,7 @@ public:
 	 *
 	 * @return Max angular velocity (Rad/S)
 	 */
-	constexpr units::radians_per_second_t getMaxAngularVelocity() const {
+	constexpr wpi::units::radians_per_second_t getMaxAngularVelocity() const {
 		return m_maxAngularVelocity;
 	}
 
@@ -87,7 +87,7 @@ public:
 	 *
 	 * @return Max angular acceleration (Rad/S^2)
 	 */
-	constexpr units::radians_per_second_squared_t getMaxAngularAcceleration() const {
+	constexpr wpi::units::radians_per_second_squared_t getMaxAngularAcceleration() const {
 		return m_maxAngularAcceleration;
 	}
 
@@ -96,7 +96,7 @@ public:
 	 *
 	 * @return Nominal Voltage (Volts)
 	 */
-	constexpr units::volt_t getNominalVoltage() const {
+	constexpr wpi::units::volt_t getNominalVoltage() const {
 		return m_nominalVoltage;
 	}
 
@@ -119,11 +119,11 @@ public:
 	}
 
 private:
-	units::meters_per_second_t m_maxVelocity;
-	units::meters_per_second_squared_t m_maxAcceleration;
-	units::radians_per_second_t m_maxAngularVelocity;
-	units::radians_per_second_squared_t m_maxAngularAcceleration;
-	units::volt_t m_nominalVoltage;
+	wpi::units::meters_per_second_t m_maxVelocity;
+	wpi::units::meters_per_second_squared_t m_maxAcceleration;
+	wpi::units::radians_per_second_t m_maxAngularVelocity;
+	wpi::units::radians_per_second_squared_t m_maxAngularAcceleration;
+	wpi::units::volt_t m_nominalVoltage;
 	bool m_unlimited;
 };
 }

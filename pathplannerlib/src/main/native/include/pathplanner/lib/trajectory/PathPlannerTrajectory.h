@@ -1,18 +1,18 @@
 #pragma once
 
-#include <units/time.h>
-#include <units/length.h>
-#include <units/velocity.h>
-#include <units/acceleration.h>
-#include <units/angular_velocity.h>
-#include <units/curvature.h>
-#include <frc/geometry/Translation2d.h>
-#include <frc/geometry/Rotation2d.h>
-#include <frc/geometry/Pose2d.h>
-#include <frc/kinematics/ChassisSpeeds.h>
-#include <frc/kinematics/SwerveModuleState.h>
-#include <frc/MathUtil.h>
-#include <frc2/command/Command.h>
+#include <wpi/units/time.hpp>
+#include <wpi/units/length.hpp>
+#include <wpi/units/velocity.hpp>
+#include <wpi/units/acceleration.hpp>
+#include <wpi/units/angular_velocity.hpp>
+#include <wpi/units/curvature.hpp>
+#include <wpi/math/geometry/Translation2d.hpp>
+#include <wpi/math/geometry/Rotation2d.hpp>
+#include <wpi/math/geometry/Pose2d.hpp>
+#include <wpi/math/kinematics/ChassisVelocities.hpp>
+#include <wpi/math/kinematics/SwerveModuleVelocity.hpp>
+#include <wpi/math/util/MathUtil.hpp>
+#include <wpi/commands2/Command.hpp>
 #include <vector>
 #include <utility>
 #include <memory>
@@ -60,8 +60,9 @@ public:
 	 * @param config The RobotConfig describing the robot
 	 */
 	PathPlannerTrajectory(std::shared_ptr<PathPlannerPath> path,
-			const frc::ChassisSpeeds &startingSpeeds,
-			const frc::Rotation2d &startingRotation, const RobotConfig &config);
+			const wpi::math::ChassisVelocities &startingSpeeds,
+			const wpi::math::Rotation2d &startingRotation,
+			const RobotConfig &config);
 
 	/**
 	 * Get all the events to run while following this trajectory
@@ -114,7 +115,7 @@ public:
 	 *
 	 * @return Total run time in seconds
 	 */
-	inline units::second_t getTotalTime() {
+	inline wpi::units::second_t getTotalTime() {
 		return getEndState().time;
 	}
 
@@ -123,7 +124,7 @@ public:
 	 *
 	 * @return Pose of the robot at the initial state
 	 */
-	inline frc::Pose2d getInitialPose() {
+	inline wpi::math::Pose2d getInitialPose() {
 		return getInitialState().pose;
 	}
 
@@ -133,7 +134,7 @@ public:
 	 * @param time The time to sample the trajectory at in seconds
 	 * @return The target state
 	 */
-	PathPlannerTrajectoryState sample(const units::second_t time);
+	PathPlannerTrajectoryState sample(const wpi::units::second_t time);
 
 	/**
 	 * Flip this trajectory for the other side of the field, maintaining a blue alliance origin
@@ -153,7 +154,8 @@ private:
 
 	static void generateStates(std::vector<PathPlannerTrajectoryState> &states,
 			std::shared_ptr<PathPlannerPath> path,
-			const frc::Rotation2d &startingRotation, const RobotConfig &config);
+			const wpi::math::Rotation2d &startingRotation,
+			const RobotConfig &config);
 
 	static void forwardAccelPass(
 			std::vector<PathPlannerTrajectoryState> &states,
@@ -165,16 +167,17 @@ private:
 
 	static void desaturateWheelSpeeds(
 			std::vector<SwerveModuleTrajectoryState> &moduleStates,
-			const frc::ChassisSpeeds &desiredSpeeds,
-			units::meters_per_second_t maxModuleSpeed,
-			units::meters_per_second_t maxTranslationSpeed,
-			units::radians_per_second_t maxRotationSpeed);
+			const wpi::math::ChassisVelocities &desiredSpeeds,
+			wpi::units::meters_per_second_t maxModuleSpeed,
+			wpi::units::meters_per_second_t maxTranslationSpeed,
+			wpi::units::radians_per_second_t maxRotationSpeed);
 
 	static size_t getNextRotationTargetIdx(
 			std::shared_ptr<PathPlannerPath> path, const size_t startingIndex);
 
-	static inline frc::Rotation2d cosineInterpolate(const frc::Rotation2d start,
-			const frc::Rotation2d end, const double t) {
+	static inline wpi::math::Rotation2d cosineInterpolate(
+			const wpi::math::Rotation2d start, const wpi::math::Rotation2d end,
+			const double t) {
 		double t2 = (1.0 - std::cos(t * M_PI)) / 2.0;
 		return GeometryUtil::rotationLerp(start, end, t2);
 	}

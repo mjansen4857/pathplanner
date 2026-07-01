@@ -6,12 +6,12 @@
 #include "pathplanner/lib/events/OneShotTriggerEvent.h"
 #include "pathplanner/lib/events/ScheduleCommandEvent.h"
 #include "pathplanner/lib/util/FlippingUtil.h"
-#include <frc/Filesystem.h>
-#include <frc/MathUtil.h>
-#include <wpi/MemoryBuffer.h>
+#include <wpi/system/Filesystem.hpp>
+#include <wpi/math/util/MathUtil.hpp>
+#include <wpi/util/MemoryBuffer.hpp>
 #include <optional>
 #include <utility>
-#include <hal/UsageReporting.h>
+#include <wpi/hal/UsageReporting.hpp>
 
 using namespace pathplanner;
 
@@ -55,7 +55,7 @@ PathPlannerPath::PathPlannerPath(PathConstraints constraints,
 	HAL_ReportUsage("PathPlanner/PathPlannerPath", m_instances, "");
 }
 
-void PathPlannerPath::hotReload(const wpi::json &json) {
+void PathPlannerPath::hotReload(const wpi::util::json &json) {
 	auto updatedPath = PathPlannerPath::fromJson(json);
 
 	m_waypoints = updatedPath->m_waypoints;
@@ -74,9 +74,9 @@ void PathPlannerPath::hotReload(const wpi::json &json) {
 }
 
 std::vector<Waypoint> PathPlannerPath::waypointsFromPoses(
-		std::vector<frc::Pose2d> poses) {
+		std::vector<wpi::math::Pose2d> poses) {
 	if (poses.size() < 2) {
-		throw FRC_MakeError(frc::err::InvalidParameter,
+		throw WPILIB_MakeError(wpi::err::InvalidParameter,
 				"Not enough poses provided to waypointsFromPoses");
 	}
 
@@ -110,20 +110,22 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 		return PathPlannerPath::getPathCache()[pathName];
 	}
 
-	const std::string filePath = frc::filesystem::GetDeployDirectory()
+	const std::string filePath = wpi::filesystem::GetDeployDirectory()
 			+ "/pathplanner/paths/" + pathName + ".path";
 
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
+	auto fileBuffer = wpi::util::MemoryBuffer::GetFile(filePath);
 
 	if (!fileBuffer) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
+	auto charBuffer = fileBuffer.value()->GetCharBuffer();
+	wpi::util::json json = wpi::util::json::parse_or_throw(std::string_view {
+			charBuffer.data(), charBuffer.size() });
 
 	std::string version = "1.0";
 	if (json.at("version").is_string()) {
-		version = json.at("version").get<std::string>();
+		version = json.at("version").get_string();
 	}
 
 	if (version != "2025.0") {
@@ -144,20 +146,22 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 
 void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 		std::string trajectoryName) {
-	const std::string filePath = frc::filesystem::GetDeployDirectory()
+	const std::string filePath = wpi::filesystem::GetDeployDirectory()
 			+ "/choreo/" + trajectoryName + ".traj";
 
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
+	auto fileBuffer = wpi::util::MemoryBuffer::GetFile(filePath);
 
 	if (!fileBuffer) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
+	auto charBuffer = fileBuffer.value()->GetCharBuffer();
+	wpi::util::json json = wpi::util::json::parse_or_throw(std::string_view {
+			charBuffer.data(), charBuffer.size() });
 
 	int version = 0;
-	if (json.at("version").is_number_integer()) {
-		version = json.at("version").get<int>();
+	if (json.at("version").is_number()) {
+		version = json.at("version").get_number();
 	}
 
 	if (version > 3) {
@@ -170,83 +174,92 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 	auto trajJson = json.at("trajectory");
 
 	std::vector < PathPlannerTrajectoryState > fullTrajStates;
-	for (wpi::json::const_reference s : trajJson.at("samples")) {
+	const auto &samples = trajJson.at("samples").get_array();
+	for (size_t sampleIdx = 0; sampleIdx < samples.size(); sampleIdx++) {
+		const auto &s = samples[sampleIdx];
 		PathPlannerTrajectoryState state;
 
-		units::second_t time { s.at("t").get<double>() };
-		units::meter_t xPos { s.at("x").get<double>() };
-		units::meter_t yPos { s.at("y").get<double>() };
-		units::radian_t rotationRad { s.at("heading").get<double>() };
-		units::meters_per_second_t xVel { s.at("vx").get<double>() };
-		units::meters_per_second_t yVel { s.at("vy").get<double>() };
-		units::radians_per_second_t angularVelRps { s.at("omega").get<double>() };
+		wpi::units::second_t time { s.at("t").get_number() };
+		wpi::units::meter_t xPos { s.at("x").get_number() };
+		wpi::units::meter_t yPos { s.at("y").get_number() };
+		wpi::units::radian_t rotationRad { s.at("heading").get_number() };
+		wpi::units::meters_per_second_t xVel { s.at("vx").get_number() };
+		wpi::units::meters_per_second_t yVel { s.at("vy").get_number() };
+		wpi::units::radians_per_second_t angularVelRps {
+				s.at("omega").get_number() };
 
-		auto fx = s.at("fx");
-		auto fy = s.at("fy");
+		const auto &fx = s.at("fx").get_array();
+		const auto &fy = s.at("fy").get_array();
 
-		std::vector < units::newton_t > forcesX;
-		std::vector < units::newton_t > forcesY;
+		std::vector < wpi::units::newton_t > forcesX;
+		std::vector < wpi::units::newton_t > forcesY;
 		for (size_t i = 0; i < fx.size(); i++) {
-			forcesX.emplace_back(fx[i].get<double>());
-			forcesY.emplace_back(fy[i].get<double>());
+			forcesX.emplace_back(fx[i].get_number());
+			forcesY.emplace_back(fy[i].get_number());
 		}
 
 		state.time = time;
-		state.linearVelocity = units::math::hypot(xVel, yVel);
-		state.pose = frc::Pose2d(frc::Translation2d(xPos, yPos),
-				frc::Rotation2d(rotationRad));
-		state.fieldSpeeds = frc::ChassisSpeeds { xVel, yVel, angularVelRps };
-		if (units::math::abs(state.linearVelocity) > 1e-6_mps) {
-			state.heading = frc::Rotation2d(state.fieldSpeeds.vx(),
+		state.linearVelocity = wpi::units::math::hypot(xVel, yVel);
+		state.pose = wpi::math::Pose2d(wpi::math::Translation2d(xPos, yPos),
+				wpi::math::Rotation2d(rotationRad));
+		state.fieldSpeeds = wpi::math::ChassisVelocities { xVel, yVel,
+				angularVelRps };
+		if (wpi::units::math::abs(state.linearVelocity) > 1e-6_mps) {
+			state.heading = wpi::math::Rotation2d(state.fieldSpeeds.vx(),
 					state.fieldSpeeds.vy());
 		}
 
 		// The module forces are field relative, rotate them to be robot relative
 		for (size_t i = 0; i < forcesX.size(); i++) {
-			frc::Translation2d rotated = frc::Translation2d(units::meter_t {
-					forcesX[i]() }, units::meter_t { forcesY[i]() }).RotateBy(
-					-state.pose.Rotation());
-			forcesX[i] = units::newton_t { rotated.X()() };
-			forcesY[i] = units::newton_t { rotated.Y()() };
+			wpi::math::Translation2d rotated = wpi::math::Translation2d(
+					wpi::units::meter_t { forcesX[i]() }, wpi::units::meter_t {
+							forcesY[i]() }).RotateBy(-state.pose.Rotation());
+			forcesX[i] = wpi::units::newton_t { rotated.X()() };
+			forcesY[i] = wpi::units::newton_t { rotated.Y()() };
 		}
 
 		// All other feedforwards besides X and Y components will be zeros because they cannot be
 		// calculated without RobotConfig
 		state.feedforwards = DriveFeedforwards(
-				std::vector < units::meters_per_second_squared_t
+				std::vector < wpi::units::meters_per_second_squared_t
 						> (forcesX.size(), 0_mps_sq),
-				std::vector < units::newton_t > (forcesX.size(), 0_N),
-				std::vector < units::ampere_t > (forcesX.size(), 0_A), forcesX,
-				forcesY);
+				std::vector < wpi::units::newton_t > (forcesX.size(), 0_N),
+				std::vector < wpi::units::ampere_t > (forcesX.size(), 0_A),
+				forcesX, forcesY);
 
 		fullTrajStates.emplace_back(state);
 	}
 
 	std::vector < std::shared_ptr < Event >> fullEvents;
 	if (json.contains("events")) {
-		for (wpi::json::const_reference markerJson : json.at("events")) {
-			std::string name = markerJson.at("name").get<std::string>();
+		const auto &eventsJson = json.at("events").get_array();
+		for (size_t eventIdx = 0; eventIdx < eventsJson.size(); eventIdx++) {
+			const auto &markerJson = eventsJson[eventIdx];
+			std::string name = markerJson.at("name").get_string();
 
 			auto fromJson = markerJson.at("from");
 			auto fromOffsetJson = fromJson.at("offset");
 
-			units::second_t fromTargetTimestamp {
-					fromJson.at("targetTimestamp").get<double>() };
-			units::second_t fromOffset { fromOffsetJson.at("val").get<double>() };
-			units::second_t fromTimestamp = fromTargetTimestamp + fromOffset;
+			wpi::units::second_t fromTargetTimestamp { fromJson.at(
+					"targetTimestamp").get_number() };
+			wpi::units::second_t fromOffset {
+					fromOffsetJson.at("val").get_number() };
+			wpi::units::second_t fromTimestamp = fromTargetTimestamp
+					+ fromOffset;
 
 			fullEvents.emplace_back(
 					std::make_shared < OneShotTriggerEvent
 							> (fromTimestamp, name));
 
-			frc2::CommandPtr eventCommand = frc2::cmd::None();
+			wpi::cmd::CommandPtr eventCommand = wpi::cmd::None();
 			if (!markerJson.at("event").is_null()) {
 				eventCommand = CommandUtil::commandFromJson(
 						markerJson.at("event"), true, false);
 			}
 			fullEvents.emplace_back(
 					std::make_shared < ScheduleCommandEvent
-							> (fromTimestamp, std::shared_ptr < frc2::Command
+							> (fromTimestamp, std::shared_ptr
+									< wpi::cmd::Command
 									> (std::move(eventCommand).Unwrap())));
 		}
 	}
@@ -261,7 +274,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 					fullTrajStates[fullTrajStates.size() - 1].linearVelocity,
 					fullTrajStates[fullTrajStates.size() - 1].pose.Rotation()));
 	fullPath->m_idealStartingState = IdealStartingState(
-			units::math::hypot(fullTrajStates[0].fieldSpeeds.vx,
+			wpi::units::math::hypot(fullTrajStates[0].fieldSpeeds.vx,
 					fullTrajStates[0].fieldSpeeds.vy),
 			fullTrajStates[0].pose.Rotation());
 
@@ -281,8 +294,8 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 	std::vector < size_t > splits;
 
 	if (splitsJson.is_array()) {
-		for (auto split : splitsJson) {
-			splits.emplace_back(split.get<size_t>());
+		for (const auto &split : splitsJson.get_array()) {
+			splits.emplace_back(static_cast<size_t>(split.get_uint()));
 		}
 	}
 
@@ -324,7 +337,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 						states[states.size() - 1].linearVelocity,
 						states[states.size() - 1].pose.Rotation()));
 		path->m_idealStartingState = IdealStartingState(
-				units::math::hypot(states[0].fieldSpeeds.vx,
+				wpi::units::math::hypot(states[0].fieldSpeeds.vx,
 						states[0].fieldSpeeds.vy), states[0].pose.Rotation());
 
 		std::vector < PathPoint > pathPoints;
@@ -341,7 +354,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 }
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::fromJson(
-		const wpi::json &json) {
+		const wpi::util::json &json) {
 	std::vector < Waypoint > waypoints = PathPlannerPath::waypointsFromJson(
 			json.at("waypoints"));
 	PathConstraints globalConstraints = PathConstraints::fromJson(
@@ -349,29 +362,36 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromJson(
 	GoalEndState goalEndState = GoalEndState::fromJson(json.at("goalEndState"));
 	IdealStartingState idealStartingState = IdealStartingState::fromJson(
 			json.at("idealStartingState"));
-	bool reversed = json.at("reversed").get<bool>();
+	bool reversed = json.at("reversed").get_bool();
 	std::vector < RotationTarget > rotationTargets;
 	std::vector < PointTowardsZone > pointTowardsZones;
 	std::vector < ConstraintsZone > constraintZones;
 	std::vector < EventMarker > eventMarkers;
 
-	for (wpi::json::const_reference rotJson : json.at("rotationTargets")) {
-		rotationTargets.emplace_back(RotationTarget::fromJson(rotJson));
+	const auto &rotationTargetsJson = json.at("rotationTargets").get_array();
+	for (size_t i = 0; i < rotationTargetsJson.size(); i++) {
+		rotationTargets.emplace_back(
+				RotationTarget::fromJson(rotationTargetsJson[i]));
 	}
 
 	if (json.contains("pointTowardsZones")) {
-		for (wpi::json::const_reference zoneJson : json.at("pointTowardsZones")) {
+		const auto &pointTowardsZonesJson =
+				json.at("pointTowardsZones").get_array();
+		for (size_t i = 0; i < pointTowardsZonesJson.size(); i++) {
 			pointTowardsZones.emplace_back(
-					PointTowardsZone::fromJson(zoneJson));
+					PointTowardsZone::fromJson(pointTowardsZonesJson[i]));
 		}
 	}
 
-	for (wpi::json::const_reference zoneJson : json.at("constraintZones")) {
-		constraintZones.emplace_back(ConstraintsZone::fromJson(zoneJson));
+	const auto &constraintZonesJson = json.at("constraintZones").get_array();
+	for (size_t i = 0; i < constraintZonesJson.size(); i++) {
+		constraintZones.emplace_back(
+				ConstraintsZone::fromJson(constraintZonesJson[i]));
 	}
 
-	for (wpi::json::const_reference markerJson : json.at("eventMarkers")) {
-		eventMarkers.emplace_back(EventMarker::fromJson(markerJson));
+	const auto &eventMarkersJson = json.at("eventMarkers").get_array();
+	for (size_t i = 0; i < eventMarkersJson.size(); i++) {
+		eventMarkers.emplace_back(EventMarker::fromJson(eventMarkersJson[i]));
 	}
 
 	return std::make_shared < PathPlannerPath
@@ -409,10 +429,10 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 	double pos = targetIncrement;
 
 	while (pos < numSegments) {
-		frc::Translation2d position = samplePath(pos);
+		wpi::math::Translation2d position = samplePath(pos);
 
-		units::meter_t distance = points[points.size() - 1].position.Distance(
-				position);
+		wpi::units::meter_t distance =
+				points[points.size() - 1].position.Distance(position);
 		if (distance <= 0.01_m) {
 			pos = std::min(pos + targetIncrement,
 					static_cast<double>(numSegments));
@@ -421,7 +441,7 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 
 		double prevWaypointPos = pos - targetIncrement;
 
-		units::meter_t delta = distance - targetSpacing;
+		wpi::units::meter_t delta = distance - targetSpacing;
 		if (delta > targetSpacing * 0.25) {
 			// Points are too far apart, increment t by correct amount
 			double correctIncrement = (targetSpacing * targetIncrement)
@@ -491,10 +511,10 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 	pos = numSegments;
 	bool invalid = true;
 	while (invalid) {
-		frc::Translation2d position = samplePath(pos);
+		wpi::math::Translation2d position = samplePath(pos);
 
-		units::meter_t distance = points[points.size() - 1].position.Distance(
-				position);
+		wpi::units::meter_t distance =
+				points[points.size() - 1].position.Distance(position);
 		if (distance <= 0.01_m) {
 			// Make sure we at least have a second point
 			if (points.size() < 2) {
@@ -508,7 +528,7 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 
 		double prevPos = pos - trueIncrement;
 
-		units::meter_t delta = distance - targetSpacing;
+		wpi::units::meter_t delta = distance - targetSpacing;
 		if (delta > targetSpacing * 0.25) {
 			// Points are too far apart, increment waypoint relative pos by correct amount
 			double correctIncrement = (targetSpacing * trueIncrement)
@@ -551,14 +571,15 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 		auto pointZone = pointZoneForWaypointPos(points[i].waypointRelativePos);
 		if (pointZone.has_value()) {
 			PointTowardsZone zone = pointZone.value();
-			frc::Rotation2d angleToTarget = (zone.getTargetPosition()
+			wpi::math::Rotation2d angleToTarget = (zone.getTargetPosition()
 					- points[i].position).Angle();
-			frc::Rotation2d rotation = angleToTarget + zone.getRotationOffset();
+			wpi::math::Rotation2d rotation = angleToTarget
+					+ zone.getRotationOffset();
 			points[i].rotationTarget = RotationTarget(
 					points[i].waypointRelativePos, rotation);
 		}
 
-		units::meter_t curveRadius = GeometryUtil::calculateRadius(
+		wpi::units::meter_t curveRadius = GeometryUtil::calculateRadius(
 				points[i - 1].position, points[i].position,
 				points[i + 1].position);
 
@@ -566,7 +587,7 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 			continue;
 		}
 
-		if (units::math::abs(curveRadius) < 0.25_m) {
+		if (wpi::units::math::abs(curveRadius) < 0.25_m) {
 			// Curve radius is too tight for default spacing, insert 4 more points
 			double before1WaypointPos = GeometryUtil::doubleLerp(
 					points[i - 1].waypointRelativePos,
@@ -599,7 +620,7 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 			points.insert(points.begin() + (i + 3), after2);
 			points.insert(points.begin() + (i + 3), after1);
 			i += 4;
-		} else if (units::math::abs(curveRadius) < 0.5_m) {
+		} else if (wpi::units::math::abs(curveRadius) < 0.5_m) {
 			// Curve radius is too tight for default spacing, insert 2 more points
 			double beforeWaypointPos = GeometryUtil::doubleLerp(
 					points[i - 1].waypointRelativePos,
@@ -624,41 +645,40 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 	return points;
 }
 
-frc::Pose2d PathPlannerPath::getStartingDifferentialPose() {
-	frc::Translation2d startPos = getPoint(0).position;
-	frc::Rotation2d heading = getInitialHeading();
+wpi::math::Pose2d PathPlannerPath::getStartingDifferentialPose() {
+	wpi::math::Translation2d startPos = getPoint(0).position;
+	wpi::math::Rotation2d heading = getInitialHeading();
 
 	if (m_reversed) {
-		heading = frc::Rotation2d(
-				frc::InputModulus(heading.Degrees() + 180_deg, -180_deg,
+		heading = wpi::math::Rotation2d(
+				wpi::math::InputModulus(heading.Degrees() + 180_deg, -180_deg,
 						180_deg));
 	}
 
-	return frc::Pose2d(startPos, heading);
+	return wpi::math::Pose2d(startPos, heading);
 }
 
-std::optional<frc::Pose2d> PathPlannerPath::getStartingHolonomicPose() {
+std::optional<wpi::math::Pose2d> PathPlannerPath::getStartingHolonomicPose() {
 	if (!m_idealStartingState.has_value()) {
 		return std::nullopt;
 	}
 
-	frc::Translation2d startPos = getPoint(0).position;
-	frc::Rotation2d rotation = m_idealStartingState.value().getRotation();
+	wpi::math::Translation2d startPos = getPoint(0).position;
+	wpi::math::Rotation2d rotation = m_idealStartingState.value().getRotation();
 
-	return frc::Pose2d(startPos, rotation);
+	return wpi::math::Pose2d(startPos, rotation);
 }
 
 std::optional<PathPlannerTrajectory> PathPlannerPath::getIdealTrajectory(
 		RobotConfig robotConfig) {
 	if (!m_idealTrajectory.has_value() && m_idealStartingState.has_value()) {
 		// The ideal starting state is known, generate the ideal trajectory
-		frc::Rotation2d heading = getInitialHeading();
-		frc::Translation2d fieldSpeeds(
-				units::meter_t { m_idealStartingState.value().getVelocity()() },
-				heading);
-		frc::ChassisSpeeds startingSpeeds =
-				frc::ChassisSpeeds { units::meters_per_second_t {
-						fieldSpeeds.X()() }, units::meters_per_second_t {
+		wpi::math::Rotation2d heading = getInitialHeading();
+		wpi::math::Translation2d fieldSpeeds(wpi::units::meter_t {
+				m_idealStartingState.value().getVelocity()() }, heading);
+		wpi::math::ChassisVelocities startingSpeeds =
+				wpi::math::ChassisVelocities { wpi::units::meters_per_second_t {
+						fieldSpeeds.X()() }, wpi::units::meters_per_second_t {
 						fieldSpeeds.Y()() }, 0.0_rad_per_s }.ToRobotRelative(
 						m_idealStartingState.value().getRotation());
 		m_idealTrajectory = generateTrajectory(startingSpeeds,
@@ -673,14 +693,14 @@ void PathPlannerPath::precalcValues() {
 		for (size_t i = 0; i < m_allPoints.size(); i++) {
 			PathConstraints constraints = m_allPoints[i].constraints.value_or(
 					m_globalConstraints);
-			units::meter_t curveRadius = units::math::abs(
+			wpi::units::meter_t curveRadius = wpi::units::math::abs(
 					getCurveRadiusAtPoint(i, m_allPoints));
 
 			if (GeometryUtil::isFinite(curveRadius)) {
-				m_allPoints[i].maxV = units::math::min(
-						units::math::sqrt(
+				m_allPoints[i].maxV = wpi::units::math::min(
+						wpi::units::math::sqrt(
 								constraints.getMaxAcceleration()
-										* units::math::abs(curveRadius)),
+										* wpi::units::math::abs(curveRadius)),
 						constraints.getMaxVelocity());
 			} else {
 				m_allPoints[i].maxV = constraints.getMaxVelocity();
@@ -700,10 +720,10 @@ void PathPlannerPath::precalcValues() {
 	}
 }
 
-units::meter_t PathPlannerPath::getCurveRadiusAtPoint(size_t index,
+wpi::units::meter_t PathPlannerPath::getCurveRadiusAtPoint(size_t index,
 		std::vector<PathPoint> &points) {
 	if (points.size() < 3) {
-		return units::meter_t { std::numeric_limits<double>::infinity() };
+		return wpi::units::meter_t { std::numeric_limits<double>::infinity() };
 	}
 
 	if (index == 0) {
@@ -774,9 +794,9 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	return path;
 }
 
-frc::Translation2d PathPlannerPath::mirrorTranslation(
-		frc::Translation2d translation) {
-	return frc::Translation2d { translation.X(), FlippingUtil::fieldSizeY
+wpi::math::Translation2d PathPlannerPath::mirrorTranslation(
+		wpi::math::Translation2d translation) {
+	return wpi::math::Translation2d { translation.X(), FlippingUtil::fieldSizeY
 			- translation.Y() };
 }
 
@@ -791,42 +811,47 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::mirrorPath() {
 
 			state.time = s.time;
 			state.linearVelocity = s.linearVelocity;
-			state.pose = frc::Pose2d(mirrorTranslation(s.pose.Translation()),
+			state.pose = wpi::math::Pose2d(
+					mirrorTranslation(s.pose.Translation()),
 					-s.pose.Rotation());
-			state.fieldSpeeds = frc::ChassisSpeeds(s.fieldSpeeds.vx,
+			state.fieldSpeeds = wpi::math::ChassisVelocities(s.fieldSpeeds.vx,
 					-s.fieldSpeeds.vy, -s.fieldSpeeds.omega);
 
 			const auto &ff = s.feedforwards;
 			if (ff.accelerations.size() == 4) {
 				state.feedforwards = DriveFeedforwards { std::vector<
-						units::meters_per_second_squared_t> {
+						wpi::units::meters_per_second_squared_t> {
 						ff.accelerations[1], ff.accelerations[0],
 						ff.accelerations[3], ff.accelerations[2] }, std::vector<
-						units::newton_t> { ff.linearForces[1],
+						wpi::units::newton_t> { ff.linearForces[1],
 						ff.linearForces[0], ff.linearForces[3],
-						ff.linearForces[2] }, std::vector<units::ampere_t> {
-						ff.torqueCurrents[1], ff.torqueCurrents[0],
-						ff.torqueCurrents[3], ff.torqueCurrents[2] },
-						std::vector<units::newton_t> {
+						ff.linearForces[2] },
+						std::vector<wpi::units::ampere_t> {
+								ff.torqueCurrents[1], ff.torqueCurrents[0],
+								ff.torqueCurrents[3], ff.torqueCurrents[2] },
+						std::vector<wpi::units::newton_t> {
 								ff.robotRelativeForcesX[1],
 								ff.robotRelativeForcesX[0],
 								ff.robotRelativeForcesX[3],
 								ff.robotRelativeForcesX[2] }, std::vector<
-								units::newton_t> { ff.robotRelativeForcesY[1],
+								wpi::units::newton_t> {
+								ff.robotRelativeForcesY[1],
 								ff.robotRelativeForcesY[0],
 								ff.robotRelativeForcesY[3],
 								ff.robotRelativeForcesY[2] } };
 			} else if (ff.accelerations.size() == 2) {
 				state.feedforwards = DriveFeedforwards { std::vector<
-						units::meters_per_second_squared_t> {
+						wpi::units::meters_per_second_squared_t> {
 						ff.accelerations[1], ff.accelerations[0] }, std::vector<
-						units::newton_t> { ff.linearForces[1],
-						ff.linearForces[0] }, std::vector<units::ampere_t> {
-						ff.torqueCurrents[1], ff.torqueCurrents[0] },
-						std::vector<units::newton_t> {
+						wpi::units::newton_t> { ff.linearForces[1],
+						ff.linearForces[0] },
+						std::vector<wpi::units::ampere_t> {
+								ff.torqueCurrents[1], ff.torqueCurrents[0] },
+						std::vector<wpi::units::newton_t> {
 								ff.robotRelativeForcesX[1],
 								ff.robotRelativeForcesX[0] }, std::vector<
-								units::newton_t> { ff.robotRelativeForcesY[1],
+								wpi::units::newton_t> {
+								ff.robotRelativeForcesY[1],
 								ff.robotRelativeForcesY[0] } };
 			} else {
 				state.feedforwards = ff;
@@ -843,9 +868,9 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::mirrorPath() {
 
 	std::vector < Waypoint > newWaypoints;
 	for (const auto &w : m_waypoints) {
-		std::optional < frc::Translation2d > prevControl;
-		frc::Translation2d anchor = mirrorTranslation(w.anchor);
-		std::optional < frc::Translation2d > nextControl;
+		std::optional < wpi::math::Translation2d > prevControl;
+		wpi::math::Translation2d anchor = mirrorTranslation(w.anchor);
+		std::optional < wpi::math::Translation2d > nextControl;
 
 		if (w.prevControl.has_value()) {
 			prevControl = mirrorTranslation(w.prevControl.value());
@@ -912,7 +937,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::mirrorPath() {
 	return path;
 }
 
-frc::Translation2d PathPlannerPath::samplePath(
+wpi::math::Translation2d PathPlannerPath::samplePath(
 		double waypointRelativePos) const {
 	double pos = std::clamp(waypointRelativePos, 0.0, m_waypoints.size() - 1.0);
 

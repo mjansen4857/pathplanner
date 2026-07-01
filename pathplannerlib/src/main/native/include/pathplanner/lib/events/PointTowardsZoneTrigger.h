@@ -1,19 +1,19 @@
 #pragma once
 
-#include <frc2/command/button/Trigger.h>
+#include <wpi/commands2/button/Trigger.hpp>
 #include <string>
 #include <unordered_map>
 #include "pathplanner/lib/events/EventScheduler.h"
 
 namespace pathplanner {
-class PointTowardsZoneTrigger: public frc2::Trigger {
+class PointTowardsZoneTrigger: public wpi::cmd::Trigger {
 public:
 	/**
 	 * Create a new PointTowardsZoneTrigger
 	 *
 	 * @param name The name of the point towards zone
 	 */
-	PointTowardsZoneTrigger(std::string name) : frc2::Trigger(
+	PointTowardsZoneTrigger(std::string name) : wpi::cmd::Trigger(
 			EventScheduler::getEventLoop(), pollCondition(name)) {
 	}
 
@@ -24,7 +24,7 @@ public:
 	 * @param eventLoop The event loop to poll this trigger
 	 * @param name The name of the point towards zone
 	 */
-	PointTowardsZoneTrigger(frc::EventLoop *eventLoop, std::string name) : frc2::Trigger(
+	PointTowardsZoneTrigger(wpi::EventLoop *eventLoop, std::string name) : wpi::cmd::Trigger(
 			eventLoop, pollCondition(name)) {
 	}
 

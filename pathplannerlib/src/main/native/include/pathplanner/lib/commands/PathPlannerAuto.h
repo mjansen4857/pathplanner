@@ -1,15 +1,15 @@
 #pragma once
 
-#include <frc2/command/CommandHelper.h>
-#include <frc2/command/button/Trigger.h>
-#include <frc/geometry/Pose2d.h>
-#include <wpi/json.h>
+#include <wpi/commands2/CommandHelper.hpp>
+#include <wpi/commands2/button/Trigger.hpp>
+#include <wpi/math/geometry/Pose2d.hpp>
+#include <wpi/util/json.hpp>
 #include <string>
 #include <memory>
 #include <vector>
-#include <frc/event/EventLoop.h>
+#include <wpi/event/EventLoop.hpp>
 #include <functional>
-#include <frc/Timer.h>
+#include <wpi/system/Timer.hpp>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/events/EventTrigger.h"
 #include "pathplanner/lib/events/PointTowardsZoneTrigger.h"
@@ -19,7 +19,8 @@ namespace pathplanner {
 /**
  * A command that loads and runs an autonomous routine built using PathPlanner.
  */
-class PathPlannerAuto: public frc2::CommandHelper<frc2::Command, PathPlannerAuto> {
+class PathPlannerAuto: public wpi::cmd::CommandHelper<wpi::cmd::Command,
+		PathPlannerAuto> {
 public:
 	static std::string currentPathName;
 
@@ -46,8 +47,8 @@ public:
 	 * @param autoCommand The command this auto should run
 	 * @param startingPose The starting pose of the auto. Only used for the getStartingPose method
 	 */
-	PathPlannerAuto(frc2::CommandPtr &&autoCommand, frc::Pose2d startingPose =
-			frc::Pose2d());
+	PathPlannerAuto(wpi::cmd::CommandPtr &&autoCommand,
+			wpi::math::Pose2d startingPose = wpi::math::Pose2d());
 
 	/**
 	 * Get a vector of every path in the given auto (depth first)
@@ -64,7 +65,7 @@ public:
 	 *
 	 * @return The blue alliance starting pose
 	 */
-	constexpr frc::Pose2d getStartingPose() const {
+	constexpr wpi::math::Pose2d getStartingPose() const {
 		return m_startingPose;
 	}
 
@@ -75,8 +76,8 @@ public:
 	 * @param condition The condition represented by this trigger
 	 * @return Custom condition trigger
 	 */
-	inline frc2::Trigger condition(std::function<bool()> condition) {
-		return frc2::Trigger(m_autoLoop.get(), condition);
+	inline wpi::cmd::Trigger condition(std::function<bool()> condition) {
+		return wpi::cmd::Trigger(m_autoLoop.get(), condition);
 	}
 
 	/**
@@ -84,7 +85,7 @@ public:
 	 *
 	 * @return isRunning trigger
 	 */
-	inline frc2::Trigger isRunning() {
+	inline wpi::cmd::Trigger isRunning() {
 		return condition([this]() {
 			return m_isRunning;
 		});
@@ -96,7 +97,7 @@ public:
 	 * @param time The amount of time this auto should run before the trigger is activated
 	 * @return timeElapsed trigger
 	 */
-	inline frc2::Trigger timeElapsed(units::second_t time) {
+	inline wpi::cmd::Trigger timeElapsed(wpi::units::second_t time) {
 		return condition([this, time]() {
 			return m_timer.HasElapsed(time);
 		});
@@ -109,8 +110,8 @@ public:
 	 * @param endTime The ending time of the range
 	 * @return timeRange trigger
 	 */
-	inline frc2::Trigger timeRange(units::second_t startTime,
-			units::second_t endTime) {
+	inline wpi::cmd::Trigger timeRange(wpi::units::second_t startTime,
+			wpi::units::second_t endTime) {
 		return condition([this, startTime, endTime]() {
 			return m_timer.Get() >= startTime && m_timer.Get() <= endTime;
 		});
@@ -144,7 +145,7 @@ public:
 	 * @param pathName The name of the path to check for
 	 * @return activePath trigger
 	 */
-	inline frc2::Trigger activePath(std::string pathName) {
+	inline wpi::cmd::Trigger activePath(std::string pathName) {
 		return condition([pathName]() {
 			return pathName == PathPlannerAuto::currentPathName;
 		});
@@ -159,8 +160,9 @@ public:
 	 *     this distance from the target position
 	 * @return nearFieldPosition trigger
 	 */
-	inline frc2::Trigger nearFieldPosition(frc::Translation2d fieldPosition,
-			units::meter_t tolerance) {
+	inline wpi::cmd::Trigger nearFieldPosition(
+			wpi::math::Translation2d fieldPosition,
+			wpi::units::meter_t tolerance) {
 		return condition(
 				[fieldPosition, tolerance]() {
 					return AutoBuilder::getCurrentPose().Translation().Distance(
@@ -177,8 +179,9 @@ public:
 	 *     this distance from the target position
 	 * @return nearFieldPositionAutoFlipped trigger
 	 */
-	frc2::Trigger nearFieldPositionAutoFlipped(
-			frc::Translation2d blueFieldPosition, units::meter_t tolerance);
+	wpi::cmd::Trigger nearFieldPositionAutoFlipped(
+			wpi::math::Translation2d blueFieldPosition,
+			wpi::units::meter_t tolerance);
 
 	/**
 	 * Create a trigger that will be high when the robot is within a given area on the field. These
@@ -190,8 +193,8 @@ public:
 	 *     & Y coordinates of this position should be greater than the min position.
 	 * @return inFieldArea trigger
 	 */
-	frc2::Trigger inFieldArea(frc::Translation2d boundingBoxMin,
-			frc::Translation2d boundingBoxMax);
+	wpi::cmd::Trigger inFieldArea(wpi::math::Translation2d boundingBoxMin,
+			wpi::math::Translation2d boundingBoxMax);
 
 	/**
 	 * Create a trigger that will be high when the robot is within a given area on the field. These
@@ -205,8 +208,9 @@ public:
 	 *     position.
 	 * @return inFieldAreaAutoFlipped trigger
 	 */
-	frc2::Trigger inFieldAreaAutoFlipped(frc::Translation2d blueBoundingBoxMin,
-			frc::Translation2d blueBoundingBoxMax);
+	wpi::cmd::Trigger inFieldAreaAutoFlipped(
+			wpi::math::Translation2d blueBoundingBoxMin,
+			wpi::math::Translation2d blueBoundingBoxMax);
 
 	void Initialize() override;
 
@@ -217,18 +221,18 @@ public:
 	void End(bool interrupted) override;
 
 private:
-	std::unique_ptr<frc2::Command> m_autoCommand;
-	frc::Pose2d m_startingPose;
+	std::unique_ptr<wpi::cmd::Command> m_autoCommand;
+	wpi::math::Pose2d m_startingPose;
 
 	// Use a unique_ptr to avoid delted copy constructor shenanigans
-	std::unique_ptr<frc::EventLoop> m_autoLoop;
-	frc::Timer m_timer;
+	std::unique_ptr<wpi::EventLoop> m_autoLoop;
+	wpi::Timer m_timer;
 	bool m_isRunning;
 
 	static std::vector<std::shared_ptr<PathPlannerPath>> pathsFromCommandJson(
-			const wpi::json &json, bool choreoPaths);
+			const wpi::util::json &json, bool choreoPaths);
 
-	void initFromJson(const wpi::json &json, bool mirror);
+	void initFromJson(const wpi::util::json &json, bool mirror);
 
 	static int m_instances;
 };

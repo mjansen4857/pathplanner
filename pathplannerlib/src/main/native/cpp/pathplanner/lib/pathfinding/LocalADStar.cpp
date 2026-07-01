@@ -1,11 +1,11 @@
 #include "pathplanner/lib/pathfinding/LocalADStar.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include <cmath>
-#include <frc/Filesystem.h>
-#include <wpi/MemoryBuffer.h>
-#include <wpi/json.h>
+#include <wpi/system/Filesystem.hpp>
+#include <wpi/util/MemoryBuffer.hpp>
+#include <wpi/util/json.hpp>
 #include <chrono>
-#include <frc/Errors.h>
+#include <wpi/system/Errors.hpp>
 #include <queue>
 
 using namespace pathplanner;
@@ -16,42 +16,43 @@ LocalADStar::LocalADStar() : fieldLength(16.54), fieldWidth(8.02), nodeSize(
 		EPS), planningThread(), pathMutex(), requestMutex(), requestMinor(true), requestMajor(
 		true), requestReset(true), newPathAvailable(false), currentWaypoints() {
 	requestStart = GridPosition(0, 0);
-	requestRealStartPos = frc::Translation2d(0_m, 0_m);
+	requestRealStartPos = wpi::math::Translation2d(0_m, 0_m);
 	requestGoal = GridPosition(0, 0);
-	requestRealGoalPos = frc::Translation2d(0_m, 0_m);
+	requestRealGoalPos = wpi::math::Translation2d(0_m, 0_m);
 
 	staticObstacles.clear();
 	dynamicObstacles.clear();
 
-	const std::string filePath = frc::filesystem::GetDeployDirectory()
+	const std::string filePath = wpi::filesystem::GetDeployDirectory()
 			+ "/pathplanner/navgrid.json";
 
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
+	auto fileBuffer = wpi::util::MemoryBuffer::GetFile(filePath);
 
 	if (fileBuffer) {
 		try {
-			wpi::json json = wpi::json::parse(
-					fileBuffer.value()->GetCharBuffer());
+			auto charBuffer = fileBuffer.value()->GetCharBuffer();
+			wpi::util::json json = wpi::util::json::parse_or_throw(
+					std::string_view { charBuffer.data(), charBuffer.size() });
 
-			nodeSize = json.at("nodeSizeMeters").get<double>();
-			wpi::json::const_reference grid = json.at("grid");
+			nodeSize = json.at("nodeSizeMeters").get_number();
+			const auto &grid = json.at("grid").get_array();
 			nodesY = grid.size();
 			for (size_t row = 0; row < grid.size(); row++) {
-				wpi::json::const_reference rowArr = grid[row];
+				const auto &rowArr = grid[row].get_array();
 				if (row == 0) {
 					nodesX = rowArr.size();
 				}
 				for (size_t col = 0; col < rowArr.size(); col++) {
-					bool isObstacle = rowArr[col].get<bool>();
+					bool isObstacle = rowArr[col].get_bool();
 					if (isObstacle) {
 						staticObstacles.emplace(col, row);
 					}
 				}
 			}
 
-			wpi::json::const_reference fieldSize = json.at("field_size");
-			fieldLength = fieldSize.at("x").get<double>();
-			fieldWidth = fieldSize.at("y").get<double>();
+			const auto &fieldSize = json.at("field_size");
+			fieldLength = fieldSize.at("x").get_number();
+			fieldWidth = fieldSize.at("y").get_number();
 		} catch (...) {
 			// Ignore, just use defaults
 		}
@@ -80,9 +81,9 @@ void LocalADStar::runThread() {
 			bool minor;
 			bool major;
 			GridPosition start;
-			frc::Translation2d realStart;
+			wpi::math::Translation2d realStart;
 			GridPosition goal;
-			frc::Translation2d realGoal;
+			wpi::math::Translation2d realGoal;
 			std::unordered_set < GridPosition > obstacles;
 
 			{
@@ -125,8 +126,8 @@ void LocalADStar::runThread() {
 
 void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 		const bool doMajor, const GridPosition &sStart,
-		const GridPosition &sGoal, const frc::Translation2d &realStartPos,
-		const frc::Translation2d &realGoalPos,
+		const GridPosition &sGoal, const wpi::math::Translation2d &realStartPos,
+		const wpi::math::Translation2d &realGoalPos,
 		const std::unordered_set<GridPosition> &obstacles) {
 	if (needsReset) {
 		reset(sStart, sGoal);
@@ -193,7 +194,7 @@ std::shared_ptr<PathPlannerPath> LocalADStar::getCurrentPath(
 			> (waypoints, constraints, std::nullopt, goalEndState);
 }
 
-void LocalADStar::setStartPosition(const frc::Translation2d &start) {
+void LocalADStar::setStartPosition(const wpi::math::Translation2d &start) {
 	GridPosition startPos = findClosestNonObstacle(getGridPos(start),
 			requestObstacles);
 
@@ -207,7 +208,7 @@ void LocalADStar::setStartPosition(const frc::Translation2d &start) {
 	}
 }
 
-void LocalADStar::setGoalPosition(const frc::Translation2d &goal) {
+void LocalADStar::setGoalPosition(const wpi::math::Translation2d &goal) {
 	GridPosition gridPos = findClosestNonObstacle(getGridPos(goal),
 			requestObstacles);
 
@@ -260,8 +261,9 @@ GridPosition LocalADStar::findClosestNonObstacle(const GridPosition &pos,
 }
 
 void LocalADStar::setDynamicObstacles(
-		const std::vector<std::pair<frc::Translation2d, frc::Translation2d>> &obs,
-		const frc::Translation2d &currentRobotPos) {
+		const std::vector<
+				std::pair<wpi::math::Translation2d, wpi::math::Translation2d>> &obs,
+		const wpi::math::Translation2d &currentRobotPos) {
 	std::unordered_set < GridPosition > newObs;
 
 	for (auto obstacle : obs) {
@@ -348,8 +350,8 @@ std::vector<GridPosition> LocalADStar::extractPath(const GridPosition &sStart,
 
 std::vector<Waypoint> LocalADStar::createWaypoints(
 		const std::vector<GridPosition> &path,
-		const frc::Translation2d &realStartPos,
-		const frc::Translation2d &realGoalPos,
+		const wpi::math::Translation2d &realStartPos,
+		const wpi::math::Translation2d &realGoalPos,
 		const std::unordered_set<GridPosition> &obstacles) {
 	if (path.empty()) {
 		return std::vector<Waypoint>();
@@ -365,7 +367,7 @@ std::vector<Waypoint> LocalADStar::createWaypoints(
 	}
 	simplifiedPath.push_back(path[path.size() - 1]);
 
-	std::vector < frc::Translation2d > fieldPosPath;
+	std::vector < wpi::math::Translation2d > fieldPosPath;
 	for (const GridPosition &pos : simplifiedPath) {
 		fieldPosPath.push_back(gridPosToTranslation2d(pos));
 	}
@@ -378,20 +380,20 @@ std::vector<Waypoint> LocalADStar::createWaypoints(
 	fieldPosPath[0] = realStartPos;
 	fieldPosPath[fieldPosPath.size() - 1] = realGoalPos;
 
-	std::vector < frc::Pose2d > pathPoses;
+	std::vector < wpi::math::Pose2d > pathPoses;
 	pathPoses.emplace_back(fieldPosPath[0],
 			(fieldPosPath[1] - fieldPosPath[0]).Angle());
 	for (size_t i = 1; i < fieldPosPath.size() - 1; i++) {
-		frc::Translation2d last = fieldPosPath[i - 1];
-		frc::Translation2d current = fieldPosPath[i];
-		frc::Translation2d next = fieldPosPath[i + 1];
+		wpi::math::Translation2d last = fieldPosPath[i - 1];
+		wpi::math::Translation2d current = fieldPosPath[i];
+		wpi::math::Translation2d next = fieldPosPath[i + 1];
 
-		frc::Translation2d anchor1 = ((current - last) * SMOOTHING_ANCHOR_PCT)
-				+ last;
-		frc::Rotation2d heading1 = (current - last).Angle();
-		frc::Translation2d anchor2 = ((current - next) * SMOOTHING_ANCHOR_PCT)
-				+ next;
-		frc::Rotation2d heading2 = (next - anchor2).Angle();
+		wpi::math::Translation2d anchor1 = ((current - last)
+				* SMOOTHING_ANCHOR_PCT) + last;
+		wpi::math::Rotation2d heading1 = (current - last).Angle();
+		wpi::math::Translation2d anchor2 = ((current - next)
+				* SMOOTHING_ANCHOR_PCT) + next;
+		wpi::math::Rotation2d heading2 = (next - anchor2).Angle();
 
 		pathPoses.emplace_back(anchor1, heading1);
 		pathPoses.emplace_back(anchor2, heading2);

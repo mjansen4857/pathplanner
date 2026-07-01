@@ -1,9 +1,9 @@
 #pragma once
 
-#include <frc/geometry/Translation2d.h>
-#include <frc/geometry/Rotation2d.h>
-#include <frc/geometry/Pose2d.h>
-#include <frc/kinematics/ChassisSpeeds.h>
+#include <wpi/math/geometry/Translation2d.hpp>
+#include <wpi/math/geometry/Rotation2d.hpp>
+#include <wpi/math/geometry/Pose2d.hpp>
+#include <wpi/math/kinematics/ChassisVelocities.hpp>
 #include <vector>
 
 namespace pathplanner {
@@ -14,8 +14,8 @@ public:
 	};
 
 	static FieldSymmetry symmetryType;
-	static units::meter_t fieldSizeX;
-	static units::meter_t fieldSizeY;
+	static wpi::units::meter_t fieldSizeX;
+	static wpi::units::meter_t fieldSizeY;
 
 	/**
 	 * Flip a field position to the other side of the field, maintaining a blue alliance origin
@@ -23,15 +23,15 @@ public:
 	 * @param pos The position to flip
 	 * @return The flipped position
 	 */
-	static inline frc::Translation2d flipFieldPosition(
-			const frc::Translation2d &pos) {
+	static inline wpi::math::Translation2d flipFieldPosition(
+			const wpi::math::Translation2d &pos) {
 		switch (symmetryType) {
 		case kRotational:
-			return frc::Translation2d(fieldSizeX - pos.X(),
+			return wpi::math::Translation2d(fieldSizeX - pos.X(),
 					fieldSizeY - pos.Y());
 		case kMirrored:
 		default:
-			return frc::Translation2d(fieldSizeX - pos.X(), pos.Y());
+			return wpi::math::Translation2d(fieldSizeX - pos.X(), pos.Y());
 		}
 	}
 
@@ -41,14 +41,14 @@ public:
 	 * @param rotation The rotation to flip
 	 * @return The flipped rotation
 	 */
-	static inline frc::Rotation2d flipFieldRotation(
-			const frc::Rotation2d &rotation) {
+	static inline wpi::math::Rotation2d flipFieldRotation(
+			const wpi::math::Rotation2d &rotation) {
 		switch (symmetryType) {
 		case kRotational:
-			return rotation - frc::Rotation2d(180_deg);
+			return rotation - wpi::math::Rotation2d(180_deg);
 		case kMirrored:
 		default:
-			return frc::Rotation2d(180_deg) - rotation;
+			return wpi::math::Rotation2d(180_deg) - rotation;
 		}
 	}
 
@@ -58,8 +58,9 @@ public:
 	 * @param pose The pose to flip
 	 * @return The flipped pose
 	 */
-	static inline frc::Pose2d flipFieldPose(const frc::Pose2d &pose) {
-		return frc::Pose2d(flipFieldPosition(pose.Translation()),
+	static inline wpi::math::Pose2d flipFieldPose(
+			const wpi::math::Pose2d &pose) {
+		return wpi::math::Pose2d(flipFieldPosition(pose.Translation()),
 				flipFieldRotation(pose.Rotation()));
 	}
 
@@ -70,16 +71,16 @@ public:
 	 * @param fieldSpeeds Field relative chassis speeds
 	 * @return Flipped speeds
 	 */
-	static inline frc::ChassisSpeeds flipFieldSpeeds(
-			const frc::ChassisSpeeds &fieldSpeeds) {
+	static inline wpi::math::ChassisVelocities flipFieldSpeeds(
+			const wpi::math::ChassisVelocities &fieldSpeeds) {
 		switch (symmetryType) {
 		case kRotational:
-			return frc::ChassisSpeeds { -fieldSpeeds.vx, -fieldSpeeds.vy,
-					fieldSpeeds.omega };
+			return wpi::math::ChassisVelocities { -fieldSpeeds.vx,
+					-fieldSpeeds.vy, fieldSpeeds.omega };
 		case kMirrored:
 		default:
-			return frc::ChassisSpeeds { -fieldSpeeds.vx, fieldSpeeds.vy,
-					-fieldSpeeds.omega };
+			return wpi::math::ChassisVelocities { -fieldSpeeds.vx,
+					fieldSpeeds.vy, -fieldSpeeds.omega };
 		}
 	}
 
@@ -91,7 +92,7 @@ public:
 	 * @return The flipped feedforwards
 	 */
 	template<class UnitType, class = std::enable_if_t<
-			units::traits::is_unit_t<UnitType>::value>>
+			wpi::units::traits::is_unit_t<UnitType>::value>>
 	static inline std::vector<UnitType> flipFeedforwards(
 			const std::vector<UnitType> &feedforwards) {
 		switch (symmetryType) {
@@ -117,7 +118,7 @@ public:
 	 * @return The flipped feedforward X components
 	 */
 	template<class UnitType, class = std::enable_if_t<
-			units::traits::is_unit_t<UnitType>::value>>
+			wpi::units::traits::is_unit_t<UnitType>::value>>
 	static inline std::vector<UnitType> flipFeedforwardXs(
 			const std::vector<UnitType> &feedforwardXs) {
 		return flipFeedforwards(feedforwardXs);
@@ -131,7 +132,7 @@ public:
 	 * @return The flipped feedforward Y components
 	 */
 	template<class UnitType, class = std::enable_if_t<
-			units::traits::is_unit_t<UnitType>::value>>
+			wpi::units::traits::is_unit_t<UnitType>::value>>
 	static inline std::vector<UnitType> flipFeedforwardYs(
 			const std::vector<UnitType> &feedforwardYs) {
 		auto flippedFeedforwardYs = flipFeedforwards(feedforwardYs);

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <wpi/json.h>
-#include <frc/geometry/Translation2d.h>
+#include <wpi/util/json.hpp>
+#include <wpi/math/geometry/Translation2d.hpp>
 
 namespace pathplanner {
 
@@ -13,11 +13,11 @@ namespace JSONUtil {
  * @param translationJson The json object representing a translation
  * @return Translation2d from the given json
  */
-inline frc::Translation2d translation2dFromJson(
-		wpi::json::const_reference translationJson) {
-	auto x = units::meter_t { translationJson.at("x").get<double>() };
-	auto y = units::meter_t { translationJson.at("y").get<double>() };
-	return frc::Translation2d(x, y);
+inline wpi::math::Translation2d translation2dFromJson(
+		const wpi::util::json &translationJson) {
+	auto x = wpi::units::meter_t { translationJson.at("x").get_number() };
+	auto y = wpi::units::meter_t { translationJson.at("y").get_number() };
+	return wpi::math::Translation2d(x, y);
 }
 
 }

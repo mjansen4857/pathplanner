@@ -5,7 +5,7 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include <vector>
 #include <utility>
-#include <frc/geometry/Translation2d.h>
+#include <wpi/math/geometry/Translation2d.hpp>
 #include <memory>
 
 namespace pathplanner {
@@ -37,7 +37,8 @@ public:
 	 * @param startPosition Start position on the field. If this is within an obstacle it will be
 	 *     moved to the nearest non-obstacle node.
 	 */
-	virtual void setStartPosition(const frc::Translation2d &startPosition) = 0;
+	virtual void setStartPosition(
+			const wpi::math::Translation2d &startPosition) = 0;
 
 	/**
 	 * Set the goal position to pathfind to
@@ -45,7 +46,8 @@ public:
 	 * @param goalPosition Goal position on the field. f this is within an obstacle it will be moved
 	 *     to the nearest non-obstacle node.
 	 */
-	virtual void setGoalPosition(const frc::Translation2d &goalPosition) = 0;
+	virtual void setGoalPosition(
+			const wpi::math::Translation2d &goalPosition) = 0;
 
 	/**
 	 * Set the dynamic obstacles that should be avoided while pathfinding.
@@ -56,7 +58,8 @@ public:
 	 *     position of the path to properly avoid obstacles
 	 */
 	virtual void setDynamicObstacles(
-			const std::vector<std::pair<frc::Translation2d, frc::Translation2d>> &obs,
-			const frc::Translation2d &currentRobotPos) = 0;
+			const std::vector<
+					std::pair<wpi::math::Translation2d, wpi::math::Translation2d>> &obs,
+			const wpi::math::Translation2d &currentRobotPos) = 0;
 };
 }

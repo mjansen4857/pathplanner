@@ -1,21 +1,22 @@
 #include "pathplanner/lib/config/RobotConfig.h"
-#include <frc/Filesystem.h>
-#include <wpi/MemoryBuffer.h>
-#include <wpi/json.h>
-#include <frc/Errors.h>
+#include <wpi/system/Filesystem.hpp>
+#include <wpi/util/MemoryBuffer.hpp>
+#include <wpi/util/json.hpp>
+#include <wpi/system/Errors.hpp>
 
 using namespace pathplanner;
 
-RobotConfig::RobotConfig() : swerveKinematics(frc::Translation2d(0_m, 0_m),
-		frc::Translation2d(0_m, 0_m), frc::Translation2d(0_m, 0_m),
-		frc::Translation2d(0_m, 0_m)), diffKinematics(0.7_m) {
+RobotConfig::RobotConfig() : swerveKinematics(
+		wpi::math::Translation2d(0_m, 0_m), wpi::math::Translation2d(0_m, 0_m),
+		wpi::math::Translation2d(0_m, 0_m), wpi::math::Translation2d(0_m, 0_m)), diffKinematics(
+		0.7_m) {
 }
 
-RobotConfig::RobotConfig(units::kilogram_t mass,
-		units::kilogram_square_meter_t MOI, ModuleConfig moduleConfig,
-		std::vector<frc::Translation2d> moduleOffsets) : mass(mass), MOI(MOI), moduleConfig(
-		moduleConfig), moduleLocations(moduleOffsets), isHolonomic(true), numModules(
-		4), modulePivotDistance { moduleLocations[0].Norm(),
+RobotConfig::RobotConfig(wpi::units::kilogram_t mass,
+		wpi::units::kilogram_square_meter_t MOI, ModuleConfig moduleConfig,
+		std::vector<wpi::math::Translation2d> moduleOffsets) : mass(mass), MOI(
+		MOI), moduleConfig(moduleConfig), moduleLocations(moduleOffsets), isHolonomic(
+		true), numModules(4), modulePivotDistance { moduleLocations[0].Norm(),
 		moduleLocations[1].Norm(), moduleLocations[2].Norm(),
 		moduleLocations[3].Norm() }, wheelFrictionForce { moduleConfig.wheelCOF
 		* ((mass() / numModules) * 9.8) }, maxTorqueFriction(
@@ -23,31 +24,31 @@ RobotConfig::RobotConfig(units::kilogram_t mass,
 		moduleLocations[0], moduleLocations[1], moduleLocations[2],
 		moduleLocations[3] }, diffKinematics(0.7_m) {
 	for (size_t i = 0; i < numModules; i++) {
-		frc::Translation2d modPosReciprocal = frc::Translation2d(
-				units::meter_t { 1.0 / moduleLocations[i].Norm()() },
+		wpi::math::Translation2d modPosReciprocal = wpi::math::Translation2d(
+				wpi::units::meter_t { 1.0 / moduleLocations[i].Norm()() },
 				moduleLocations[i].Angle());
 		swerveForceKinematics.template block<2, 3>(i * 2, 0) << 1, 0, (-modPosReciprocal.Y()).value(), 0, 1, (modPosReciprocal.X()).value();
 	}
 	// No need to set up diff force kinematics, it will not be used
 }
 
-RobotConfig::RobotConfig(units::kilogram_t mass,
-		units::kilogram_square_meter_t MOI, ModuleConfig moduleConfig,
-		units::meter_t trackwidth) : mass(mass), MOI(MOI), moduleConfig(
-		moduleConfig), moduleLocations { frc::Translation2d(0_m,
-		trackwidth / 2), frc::Translation2d(0_m, -trackwidth / 2) }, isHolonomic(
+RobotConfig::RobotConfig(wpi::units::kilogram_t mass,
+		wpi::units::kilogram_square_meter_t MOI, ModuleConfig moduleConfig,
+		wpi::units::meter_t trackwidth) : mass(mass), MOI(MOI), moduleConfig(
+		moduleConfig), moduleLocations { wpi::math::Translation2d(0_m,
+		trackwidth / 2), wpi::math::Translation2d(0_m, -trackwidth / 2) }, isHolonomic(
 		false), numModules(2), modulePivotDistance { moduleLocations[0].Norm(),
 		moduleLocations[1].Norm() }, wheelFrictionForce { moduleConfig.wheelCOF
 		* ((mass() / numModules) * 9.8) }, maxTorqueFriction(
 		wheelFrictionForce * moduleConfig.wheelRadius), swerveKinematics(
-		frc::Translation2d(trackwidth / 2, trackwidth / 2),
-		frc::Translation2d(trackwidth / 2, -trackwidth / 2),
-		frc::Translation2d(-trackwidth / 2, trackwidth / 2),
-		frc::Translation2d(-trackwidth / 2, -trackwidth / 2)), diffKinematics(
+		wpi::math::Translation2d(trackwidth / 2, trackwidth / 2),
+		wpi::math::Translation2d(trackwidth / 2, -trackwidth / 2),
+		wpi::math::Translation2d(-trackwidth / 2, trackwidth / 2),
+		wpi::math::Translation2d(-trackwidth / 2, -trackwidth / 2)), diffKinematics(
 		trackwidth) {
 	for (size_t i = 0; i < numModules; i++) {
-		frc::Translation2d modPosReciprocal = frc::Translation2d(
-				units::meter_t { 1.0 / moduleLocations[i].Norm()() },
+		wpi::math::Translation2d modPosReciprocal = wpi::math::Translation2d(
+				wpi::units::meter_t { 1.0 / moduleLocations[i].Norm()() },
 				moduleLocations[i].Angle());
 		diffForceKinematics.template block<2, 3>(i * 2, 0) << 1, 0, (-modPosReciprocal.Y()).value(), 0, 1, (modPosReciprocal.X()).value();
 	}
@@ -55,156 +56,166 @@ RobotConfig::RobotConfig(units::kilogram_t mass,
 }
 
 RobotConfig RobotConfig::fromGUISettings() {
-	const std::string filePath = frc::filesystem::GetDeployDirectory()
+	const std::string filePath = wpi::filesystem::GetDeployDirectory()
 			+ "/pathplanner/settings.json";
 
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
+	auto fileBuffer = wpi::util::MemoryBuffer::GetFile(filePath);
 
 	if (!fileBuffer) {
-		throw FRC_MakeError(frc::err::Error,
+		throw WPILIB_MakeError(wpi::err::Error,
 				"PathPlanner settings file could not be read");
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
+	auto charBuffer = fileBuffer.value()->GetCharBuffer();
+	wpi::util::json json = wpi::util::json::parse_or_throw(std::string_view {
+			charBuffer.data(), charBuffer.size() });
 
-	bool isHolonomic = json.at("holonomicMode").get<bool>();
-	units::kilogram_t mass { json.at("robotMass").get<double>() };
-	units::kilogram_square_meter_t MOI { json.at("robotMOI").get<double>() };
-	units::meter_t wheelRadius { json.at("driveWheelRadius").get<double>() };
-	double gearing = json.at("driveGearing").get<double>();
-	units::meters_per_second_t maxDriveSpeed { json.at("maxDriveSpeed").get<
-			double>() };
-	double wheelCOF = json.at("wheelCOF").get<double>();
-	std::string driveMotor = json.at("driveMotorType").get<std::string>();
-	units::ampere_t driveCurrentLimit {
-			json.at("driveCurrentLimit").get<double>() };
+	bool isHolonomic = json.at("holonomicMode").get_bool();
+	wpi::units::kilogram_t mass { json.at("robotMass").get_number() };
+	wpi::units::kilogram_square_meter_t MOI { json.at("robotMOI").get_number() };
+	wpi::units::meter_t wheelRadius { json.at("driveWheelRadius").get_number() };
+	double gearing = json.at("driveGearing").get_number();
+	wpi::units::meters_per_second_t maxDriveSpeed {
+			json.at("maxDriveSpeed").get_number() };
+	double wheelCOF = json.at("wheelCOF").get_number();
+	std::string driveMotor = json.at("driveMotorType").get_string();
+	wpi::units::ampere_t driveCurrentLimit {
+			json.at("driveCurrentLimit").get_number() };
 
 	int numMotors = isHolonomic ? 1 : 2;
-	frc::DCMotor gearbox = RobotConfig::getMotorFromSettingsString(driveMotor,
-			numMotors).WithReduction(gearing);
+	wpi::math::DCMotor gearbox = RobotConfig::getMotorFromSettingsString(
+			driveMotor, numMotors).WithReduction(gearing);
 
 	ModuleConfig moduleConfig(wheelRadius, maxDriveSpeed, wheelCOF, gearbox,
 			driveCurrentLimit, numMotors);
 
 	if (isHolonomic) {
-		units::meter_t flModuleX { json.at("flModuleX").get<double>() };
-		units::meter_t flModuleY { json.at("flModuleY").get<double>() };
-		units::meter_t frModuleX { json.at("frModuleX").get<double>() };
-		units::meter_t frModuleY { json.at("frModuleY").get<double>() };
-		units::meter_t blModuleX { json.at("blModuleX").get<double>() };
-		units::meter_t blModuleY { json.at("blModuleY").get<double>() };
-		units::meter_t brModuleX { json.at("brModuleX").get<double>() };
-		units::meter_t brModuleY { json.at("brModuleY").get<double>() };
+		wpi::units::meter_t flModuleX { json.at("flModuleX").get_number() };
+		wpi::units::meter_t flModuleY { json.at("flModuleY").get_number() };
+		wpi::units::meter_t frModuleX { json.at("frModuleX").get_number() };
+		wpi::units::meter_t frModuleY { json.at("frModuleY").get_number() };
+		wpi::units::meter_t blModuleX { json.at("blModuleX").get_number() };
+		wpi::units::meter_t blModuleY { json.at("blModuleY").get_number() };
+		wpi::units::meter_t brModuleX { json.at("brModuleX").get_number() };
+		wpi::units::meter_t brModuleY { json.at("brModuleY").get_number() };
 
 		return RobotConfig(mass, MOI, moduleConfig,
-				{ frc::Translation2d(flModuleX, flModuleY), frc::Translation2d(
-						frModuleX, frModuleY), frc::Translation2d(blModuleX,
-						blModuleY), frc::Translation2d(brModuleX, brModuleY) });
+				{ wpi::math::Translation2d(flModuleX, flModuleY),
+						wpi::math::Translation2d(frModuleX, frModuleY),
+						wpi::math::Translation2d(blModuleX, blModuleY),
+						wpi::math::Translation2d(brModuleX, brModuleY) });
 	} else {
-		units::meter_t trackwidth { json.at("robotTrackwidth").get<double>() };
+		wpi::units::meter_t trackwidth { json.at("robotTrackwidth").get_number() };
 
 		return RobotConfig(mass, MOI, moduleConfig, trackwidth);
 	}
 }
 
-frc::DCMotor RobotConfig::getMotorFromSettingsString(std::string motorStr,
+wpi::math::DCMotor RobotConfig::getMotorFromSettingsString(std::string motorStr,
 		int numMotors) {
 	if (motorStr == "krakenX60") {
-		return frc::DCMotor::KrakenX60(numMotors);
+		return wpi::math::DCMotor::KrakenX60(numMotors);
 	} else if (motorStr == "krakenX60FOC") {
-		return frc::DCMotor::KrakenX60FOC(numMotors);
+		return wpi::math::DCMotor::KrakenX60FOC(numMotors);
 	} else if (motorStr == "falcon500") {
-		return frc::DCMotor::Falcon500(numMotors);
+		return wpi::math::DCMotor::Falcon500(numMotors);
 	} else if (motorStr == "falcon500FOC") {
-		return frc::DCMotor::Falcon500FOC(numMotors);
+		return wpi::math::DCMotor::Falcon500FOC(numMotors);
 	} else if (motorStr == "vortex") {
-		return frc::DCMotor::NeoVortex(numMotors);
+		return wpi::math::DCMotor::NeoVortex(numMotors);
 	} else if (motorStr == "NEO") {
-		return frc::DCMotor::NEO(numMotors);
+		return wpi::math::DCMotor::NEO(numMotors);
 	} else if (motorStr == "CIM") {
-		return frc::DCMotor::CIM(numMotors);
+		return wpi::math::DCMotor::CIM(numMotors);
 	} else if (motorStr == "miniCIM") {
-		return frc::DCMotor::MiniCIM(numMotors);
+		return wpi::math::DCMotor::MiniCIM(numMotors);
 	} else {
 		throw std::invalid_argument("Unknown motor type string: " + motorStr);
 	}
 }
 
-std::vector<frc::SwerveModuleState> RobotConfig::toSwerveModuleStates(
-		frc::ChassisSpeeds speeds) const {
+std::vector<wpi::math::SwerveModuleVelocity> RobotConfig::toSwerveModuleVelocitys(
+		wpi::math::ChassisVelocities speeds) const {
 	if (isHolonomic) {
-		auto states = swerveKinematics.ToSwerveModuleStates(speeds);
-		return std::vector < frc::SwerveModuleState
+		auto states = swerveKinematics.ToWheelVelocities(speeds);
+		return std::vector < wpi::math::SwerveModuleVelocity
 				> (states.begin(), states.end());
 	} else {
-		auto wheelSpeeds = diffKinematics.ToWheelSpeeds(speeds);
-		return std::vector<frc::SwerveModuleState> { frc::SwerveModuleState {
-				wheelSpeeds.left, frc::Rotation2d() }, frc::SwerveModuleState {
-				wheelSpeeds.right, frc::Rotation2d() } };
+		auto wheelSpeeds = diffKinematics.ToWheelVelocities(speeds);
+		return std::vector<wpi::math::SwerveModuleVelocity> {
+				wpi::math::SwerveModuleVelocity { wheelSpeeds.left,
+						wpi::math::Rotation2d() },
+				wpi::math::SwerveModuleVelocity { wheelSpeeds.right,
+						wpi::math::Rotation2d() } };
 	}
 }
 
-frc::ChassisSpeeds RobotConfig::toChassisSpeeds(
+wpi::math::ChassisVelocities RobotConfig::toChassisVelocities(
 		std::vector<SwerveModuleTrajectoryState> states) const {
 	if (isHolonomic) {
-		wpi::array < frc::SwerveModuleState, 4 > wpiStates {
-				frc::SwerveModuleState { states[0].speed, states[0].angle },
-				frc::SwerveModuleState { states[1].speed, states[1].angle },
-				frc::SwerveModuleState { states[2].speed, states[2].angle },
-				frc::SwerveModuleState { states[3].speed, states[3].angle } };
-		return swerveKinematics.ToChassisSpeeds(wpiStates);
+		wpi::util::array < wpi::math::SwerveModuleVelocity, 4
+				> wpiStates { wpi::math::SwerveModuleVelocity { states[0].speed,
+						states[0].angle }, wpi::math::SwerveModuleVelocity {
+						states[1].speed, states[1].angle },
+						wpi::math::SwerveModuleVelocity { states[2].speed,
+								states[2].angle },
+						wpi::math::SwerveModuleVelocity { states[3].speed,
+								states[3].angle } };
+		return swerveKinematics.ToChassisVelocities(wpiStates);
 	} else {
-		frc::DifferentialDriveWheelSpeeds wheelSpeeds { states[0].speed,
-				states[1].speed };
-		return diffKinematics.ToChassisSpeeds(wheelSpeeds);
+		wpi::math::DifferentialDriveWheelVelocities wheelSpeeds {
+				states[0].speed, states[1].speed };
+		return diffKinematics.ToChassisVelocities(wheelSpeeds);
 	}
 }
 
-frc::ChassisSpeeds RobotConfig::toChassisSpeeds(
-		std::vector<frc::SwerveModuleState> states) const {
+wpi::math::ChassisVelocities RobotConfig::toChassisVelocities(
+		std::vector<wpi::math::SwerveModuleVelocity> states) const {
 	if (isHolonomic) {
-		wpi::array < frc::SwerveModuleState, 4 > wpiStates { states.at(0),
-				states.at(1), states.at(2), states.at(3) };
-		return swerveKinematics.ToChassisSpeeds(wpiStates);
+		wpi::util::array < wpi::math::SwerveModuleVelocity, 4 > wpiStates {
+				states.at(0), states.at(1), states.at(2), states.at(3) };
+		return swerveKinematics.ToChassisVelocities(wpiStates);
 	} else {
-		frc::DifferentialDriveWheelSpeeds wheelSpeeds { states.at(0).speed,
-				states.at(1).speed };
-		return diffKinematics.ToChassisSpeeds(wheelSpeeds);
+		wpi::math::DifferentialDriveWheelVelocities wheelSpeeds {
+				states.at(0).velocity, states.at(1).velocity };
+		return diffKinematics.ToChassisVelocities(wheelSpeeds);
 	}
 }
 
-std::vector<frc::SwerveModuleState> RobotConfig::desaturateWheelSpeeds(
-		std::vector<frc::SwerveModuleState> moduleStates,
-		units::meters_per_second_t maxSpeed) const {
-	wpi::array < frc::SwerveModuleState, 4 > wpiStates { moduleStates.at(0),
-			moduleStates.at(1), moduleStates.at(2), moduleStates.at(3) };
-	swerveKinematics.DesaturateWheelSpeeds(&wpiStates, maxSpeed);
+std::vector<wpi::math::SwerveModuleVelocity> RobotConfig::desaturateWheelSpeeds(
+		std::vector<wpi::math::SwerveModuleVelocity> moduleStates,
+		wpi::units::meters_per_second_t maxSpeed) const {
+	wpi::util::array < wpi::math::SwerveModuleVelocity, 4 > wpiStates {
+			moduleStates.at(0), moduleStates.at(1), moduleStates.at(2),
+			moduleStates.at(3) };
+	wpiStates = wpi::math::SwerveDriveKinematics < 4
+			> ::DesaturateWheelVelocities(wpiStates, maxSpeed);
 
-	return std::vector < frc::SwerveModuleState
+	return std::vector < wpi::math::SwerveModuleVelocity
 			> (wpiStates.begin(), wpiStates.end());
 }
 
-std::vector<frc::Translation2d> RobotConfig::chassisForcesToWheelForceVectors(
-		frc::ChassisSpeeds chassisForces) const {
+std::vector<wpi::math::Translation2d> RobotConfig::chassisForcesToWheelForceVectors(
+		wpi::math::ChassisVelocities chassisForces) const {
 	Eigen::Vector3d chassisForceVector { chassisForces.vx.value(),
 			chassisForces.vy.value(), chassisForces.omega.value() };
-	std::vector < frc::Translation2d > forceVectors;
+	std::vector < wpi::math::Translation2d > forceVectors;
 
 	if (isHolonomic) {
-		frc::Matrixd < 4 * 2, 1 > moduleForceMatrix = swerveForceKinematics
-				* (chassisForceVector / numModules);
+		wpi::math::Matrixd < 4 * 2, 1 > moduleForceMatrix =
+				swerveForceKinematics * (chassisForceVector / numModules);
 		for (size_t i = 0; i < numModules; i++) {
-			units::meter_t x { moduleForceMatrix(i * 2, 0) };
-			units::meter_t y { moduleForceMatrix(i * 2 + 1, 0) };
+			wpi::units::meter_t x { moduleForceMatrix(i * 2, 0) };
+			wpi::units::meter_t y { moduleForceMatrix(i * 2 + 1, 0) };
 
 			forceVectors.emplace_back(x, y);
 		}
 	} else {
-		frc::Matrixd < 2 * 2, 1 > moduleForceMatrix = diffForceKinematics
+		wpi::math::Matrixd < 2 * 2, 1 > moduleForceMatrix = diffForceKinematics
 				* (chassisForceVector / numModules);
 		for (size_t i = 0; i < numModules; i++) {
-			units::meter_t x { moduleForceMatrix(i * 2, 0) };
-			units::meter_t y { moduleForceMatrix(i * 2 + 1, 0) };
+			wpi::units::meter_t x { moduleForceMatrix(i * 2, 0) };
+			wpi::units::meter_t y { moduleForceMatrix(i * 2 + 1, 0) };
 
 			forceVectors.emplace_back(x, y);
 		}

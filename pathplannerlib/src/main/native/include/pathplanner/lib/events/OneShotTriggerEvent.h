@@ -3,8 +3,8 @@
 #include "pathplanner/lib/events/Event.h"
 #include "pathplanner/lib/events/EventTrigger.h"
 #include <string>
-#include <frc2/command/CommandScheduler.h>
-#include <frc2/command/Commands.h>
+#include <wpi/commands2/CommandScheduler.hpp>
+#include <wpi/commands2/Commands.hpp>
 
 namespace pathplanner {
 class OneShotTriggerEvent: public Event {
@@ -15,9 +15,9 @@ public:
 	 * @param timestamp The trajectory timestamp of this event
 	 * @param name The name of the trigger to control
 	 */
-	OneShotTriggerEvent(units::second_t timestamp, std::string name) : Event(
+	OneShotTriggerEvent(wpi::units::second_t timestamp, std::string name) : Event(
 			timestamp), m_name(name), m_resetCommand(
-			frc2::cmd::Wait(0_s).AndThen(frc2::cmd::RunOnce([this]() {
+			wpi::cmd::Wait(0_s).AndThen(wpi::cmd::RunOnce([this]() {
 				EventTrigger::setCondition(m_name, false);
 			}
 			)
@@ -28,20 +28,20 @@ public:
 		EventTrigger::setCondition(m_name, true);
 		// We schedule this command with the main command scheduler so that it is guaranteed to be run
 		// in its entirety, since the EventScheduler could cancel this command before it finishes
-		frc2::CommandScheduler::GetInstance().Schedule(m_resetCommand);
+		wpi::cmd::CommandScheduler::GetInstance().Schedule(m_resetCommand);
 	}
 
 	inline void cancelEvent(EventScheduler *eventScheduler) override {
 		// Do nothing
 	}
 
-	inline std::shared_ptr<Event> copyWithTimestamp(units::second_t timestamp)
-			override {
+	inline std::shared_ptr<Event> copyWithTimestamp(
+			wpi::units::second_t timestamp) override {
 		return std::make_shared < OneShotTriggerEvent > (timestamp, m_name);
 	}
 
 private:
 	std::string m_name;
-	frc2::CommandPtr m_resetCommand;
+	wpi::cmd::CommandPtr m_resetCommand;
 };
 }

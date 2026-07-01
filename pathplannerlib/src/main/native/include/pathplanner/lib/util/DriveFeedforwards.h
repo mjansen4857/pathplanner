@@ -1,8 +1,8 @@
 #pragma once
 
-#include <units/acceleration.h>
-#include <units/force.h>
-#include <units/current.h>
+#include <wpi/units/acceleration.hpp>
+#include <wpi/units/force.hpp>
+#include <wpi/units/current.hpp>
 #include <vector>
 #include <stdexcept>
 #include "pathplanner/lib/util/GeometryUtil.h"
@@ -11,11 +11,11 @@
 namespace pathplanner {
 struct DriveFeedforwards {
 public:
-	std::vector<units::meters_per_second_squared_t> accelerations;
-	std::vector<units::newton_t> linearForces;
-	std::vector<units::ampere_t> torqueCurrents;
-	std::vector<units::newton_t> robotRelativeForcesX;
-	std::vector<units::newton_t> robotRelativeForcesY;
+	std::vector<wpi::units::meters_per_second_squared_t> accelerations;
+	std::vector<wpi::units::newton_t> linearForces;
+	std::vector<wpi::units::ampere_t> torqueCurrents;
+	std::vector<wpi::units::newton_t> robotRelativeForcesX;
+	std::vector<wpi::units::newton_t> robotRelativeForcesY;
 
 	/**
 	 * Create drive feedforwards consisting of all zeros
@@ -25,11 +25,12 @@ public:
 	 */
 	static inline DriveFeedforwards zeros(const size_t numModules) {
 		return DriveFeedforwards { std::vector
-				< units::meters_per_second_squared_t > (numModules, 0_mps_sq),
-				std::vector < units::newton_t > (numModules, 0_N), std::vector
-						< units::ampere_t > (numModules, 0_A), std::vector
-						< units::newton_t > (numModules, 0_N), std::vector
-						< units::newton_t > (numModules, 0_N) };
+				< wpi::units::meters_per_second_squared_t
+				> (numModules, 0_mps_sq), std::vector < wpi::units::newton_t
+				> (numModules, 0_N), std::vector < wpi::units::ampere_t
+				> (numModules, 0_A), std::vector < wpi::units::newton_t
+				> (numModules, 0_N), std::vector < wpi::units::newton_t
+				> (numModules, 0_N) };
 	}
 
 	inline DriveFeedforwards interpolate(const DriveFeedforwards &endVal,
@@ -56,13 +57,14 @@ public:
 		}
 
 		return DriveFeedforwards { std::vector<
-				units::meters_per_second_squared_t> { -accelerations[1],
-				-accelerations[0] }, std::vector<units::newton_t> {
-				-linearForces[1], -linearForces[0] }, std::vector<
-				units::ampere_t> { -torqueCurrents[1], -torqueCurrents[0] },
-				std::vector<units::newton_t> { -robotRelativeForcesX[1],
-						-robotRelativeForcesX[0] },
-				std::vector<units::newton_t> { -robotRelativeForcesY[1],
+				wpi::units::meters_per_second_squared_t> { -accelerations[1],
+				-accelerations[0] }, std::vector<wpi::units::newton_t> {
+				-linearForces[1], -linearForces[0] },
+				std::vector<wpi::units::ampere_t> { -torqueCurrents[1],
+						-torqueCurrents[0] },
+				std::vector<wpi::units::newton_t> { -robotRelativeForcesX[1],
+						-robotRelativeForcesX[0] }, std::vector<
+						wpi::units::newton_t> { -robotRelativeForcesY[1],
 						-robotRelativeForcesY[0] } };
 	}
 
@@ -82,7 +84,7 @@ public:
 
 private:
 	template<class UnitType, class = std::enable_if_t<
-			units::traits::is_unit_t<UnitType>::value>>
+			wpi::units::traits::is_unit_t<UnitType>::value>>
 	static constexpr std::vector<UnitType> interpolateVector(
 			const std::vector<UnitType> &a, const std::vector<UnitType> &b,
 			const double t) {

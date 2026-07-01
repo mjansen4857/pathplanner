@@ -6,40 +6,42 @@
 #include "pathplanner/lib/util/FlippingUtil.h"
 #include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include <stdexcept>
-#include <frc2/command/Commands.h>
-#include <frc/Filesystem.h>
+#include <wpi/commands2/Commands.hpp>
+#include <wpi/system/Filesystem.hpp>
 #include <optional>
-#include <wpi/MemoryBuffer.h>
+#include <wpi/util/MemoryBuffer.hpp>
 
 using namespace pathplanner;
 
 bool AutoBuilder::m_configured = false;
-std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> AutoBuilder::m_pathFollowingCommandBuilder;
-std::function<frc::Pose2d()> AutoBuilder::m_poseSupplier;
-std::function<void(const frc::Pose2d&)> AutoBuilder::m_resetPose;
+std::function<wpi::cmd::CommandPtr(std::shared_ptr<PathPlannerPath>)> AutoBuilder::m_pathFollowingCommandBuilder;
+std::function<wpi::math::Pose2d()> AutoBuilder::m_poseSupplier;
+std::function<void(const wpi::math::Pose2d&)> AutoBuilder::m_resetPose;
 std::function<bool()> AutoBuilder::m_shouldFlipPath;
 bool AutoBuilder::m_isHolonomic = false;
 
 bool AutoBuilder::m_commandRefsGeneratedForSendable = false;
-frc2::CommandPtr AutoBuilder::m_noneCommand = frc2::cmd::None();
-std::map<std::filesystem::path, frc2::CommandPtr> AutoBuilder::m_autoCommands;
+wpi::cmd::CommandPtr AutoBuilder::m_noneCommand = wpi::cmd::None();
+std::map<std::filesystem::path, wpi::cmd::CommandPtr> AutoBuilder::m_autoCommands;
 
 bool AutoBuilder::m_pathfindingConfigured = false;
 std::function<
-		frc2::CommandPtr(frc::Pose2d, PathConstraints,
-				units::meters_per_second_t)> AutoBuilder::m_pathfindToPoseCommandBuilder;
+		wpi::cmd::CommandPtr(wpi::math::Pose2d, PathConstraints,
+				wpi::units::meters_per_second_t)> AutoBuilder::m_pathfindToPoseCommandBuilder;
 std::function<
-		frc2::CommandPtr(std::shared_ptr<PathPlannerPath>, PathConstraints)> AutoBuilder::m_pathfindThenFollowPathCommandBuilder;
+		wpi::cmd::CommandPtr(std::shared_ptr<PathPlannerPath>, PathConstraints)> AutoBuilder::m_pathfindThenFollowPathCommandBuilder;
 
-void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
-		std::function<void(const frc::Pose2d&)> resetPose,
-		std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
-		std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
+void AutoBuilder::configure(std::function<wpi::math::Pose2d()> poseSupplier,
+		std::function<void(const wpi::math::Pose2d&)> resetPose,
+		std::function<wpi::math::ChassisVelocities()> robotRelativeSpeedsSupplier,
+		std::function<
+				void(const wpi::math::ChassisVelocities&,
+						const DriveFeedforwards&)> output,
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
-		frc2::Subsystem *driveSubsystem) {
+		wpi::cmd::Subsystem *driveSubsystem) {
 	if (m_configured) {
-		FRC_ReportError(frc::err::Error,
+		WPILIB_ReportError(wpi::err::Error,
 				"Auto builder has already been configured. This is likely in error.");
 	}
 
@@ -59,8 +61,8 @@ void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier,
 			robotRelativeSpeedsSupplier, output, controller, robotConfig,
-			driveSubsystem](frc::Pose2d pose, PathConstraints constraints,
-			units::meters_per_second_t goalEndVel) {
+			driveSubsystem](wpi::math::Pose2d pose, PathConstraints constraints,
+			wpi::units::meters_per_second_t goalEndVel) {
 		return PathfindingCommand(pose, constraints, goalEndVel, poseSupplier,
 				robotRelativeSpeedsSupplier, output, controller, robotConfig, {
 						driveSubsystem }).ToPtr();
@@ -77,12 +79,13 @@ void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_pathfindingConfigured = true;
 }
 
-void AutoBuilder::configureCustom(std::function<frc::Pose2d()> poseSupplier,
-		std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
-		std::function<void(const frc::Pose2d&)> resetPose, bool isHolonomic,
-		std::function<bool()> shouldFlipPose) {
+void AutoBuilder::configureCustom(
+		std::function<wpi::math::Pose2d()> poseSupplier,
+		std::function<wpi::cmd::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
+		std::function<void(const wpi::math::Pose2d&)> resetPose,
+		bool isHolonomic, std::function<bool()> shouldFlipPose) {
 	if (m_configured) {
-		FRC_ReportError(frc::err::Error,
+		WPILIB_ReportError(wpi::err::Error,
 				"Auto builder has already been configured. This is likely in error.");
 	}
 
@@ -96,7 +99,7 @@ void AutoBuilder::configureCustom(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_pathfindingConfigured = false;
 }
 
-frc2::CommandPtr AutoBuilder::followPath(
+wpi::cmd::CommandPtr AutoBuilder::followPath(
 		std::shared_ptr<PathPlannerPath> path) {
 	if (!m_configured) {
 		throw std::runtime_error(
@@ -106,17 +109,17 @@ frc2::CommandPtr AutoBuilder::followPath(
 	return m_pathFollowingCommandBuilder(path);
 }
 
-frc2::CommandPtr AutoBuilder::buildAuto(std::string autoName) {
+wpi::cmd::CommandPtr AutoBuilder::buildAuto(std::string autoName) {
 	return PathPlannerAuto(autoName).ToPtr();
 }
 
-frc2::CommandPtr AutoBuilder::resetOdom(frc::Pose2d bluePose) {
+wpi::cmd::CommandPtr AutoBuilder::resetOdom(wpi::math::Pose2d bluePose) {
 	if (!m_configured) {
 		throw std::runtime_error(
 				"Auto builder was used to build a command before being configured");
 	}
 
-	return frc2::cmd::RunOnce([bluePose]() {
+	return wpi::cmd::RunOnce([bluePose]() {
 		if (m_shouldFlipPath()) {
 			m_resetPose(FlippingUtil::flipFieldPose(bluePose));
 		} else {
@@ -125,8 +128,9 @@ frc2::CommandPtr AutoBuilder::resetOdom(frc::Pose2d bluePose) {
 	});
 }
 
-frc2::CommandPtr AutoBuilder::pathfindToPose(frc::Pose2d pose,
-		PathConstraints constraints, units::meters_per_second_t goalEndVel) {
+wpi::cmd::CommandPtr AutoBuilder::pathfindToPose(wpi::math::Pose2d pose,
+		PathConstraints constraints,
+		wpi::units::meters_per_second_t goalEndVel) {
 	if (!m_pathfindingConfigured) {
 		throw std::runtime_error(
 				"Auto builder was used to build a pathfinding command before being configured");
@@ -135,7 +139,7 @@ frc2::CommandPtr AutoBuilder::pathfindToPose(frc::Pose2d pose,
 	return m_pathfindToPoseCommandBuilder(pose, constraints, goalEndVel);
 }
 
-frc2::CommandPtr AutoBuilder::pathfindThenFollowPath(
+wpi::cmd::CommandPtr AutoBuilder::pathfindThenFollowPath(
 		std::shared_ptr<PathPlannerPath> goalPath,
 		PathConstraints pathfindingConstraints) {
 	if (!m_pathfindingConfigured) {
@@ -157,7 +161,7 @@ void AutoBuilder::regenerateSendableReferences() {
 	}
 }
 
-frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
+wpi::SendableChooser<wpi::cmd::Command*> AutoBuilder::buildAutoChooser(
 		std::string defaultAutoName) {
 	return buildAutoChooserFilterPath(
 			[](const PathPlannerAuto &autoCommand,
@@ -166,7 +170,7 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
 			},defaultAutoName);
 }
 
-frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooserFilter(
+wpi::SendableChooser<wpi::cmd::Command*> AutoBuilder::buildAutoChooserFilter(
 		std::function<bool(const PathPlannerAuto&)> filter,
 		std::string defaultAutoName) {
 	return buildAutoChooserFilterPath(
@@ -176,7 +180,7 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooserFilter(
 			},defaultAutoName);
 }
 
-frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooserFilterPath(
+wpi::SendableChooser<wpi::cmd::Command*> AutoBuilder::buildAutoChooserFilterPath(
 		std::function<bool(const PathPlannerAuto&, std::filesystem::path)> filter,
 		std::string defaultAutoName) {
 	if (!m_configured) {
@@ -189,10 +193,10 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooserFilterPath(
 		m_commandRefsGeneratedForSendable = true;
 	}
 
-	frc::SendableChooser<frc2::Command*> sendableChooser;
+	wpi::SendableChooser<wpi::cmd::Command*> sendableChooser;
 	bool defaultSelected = false;
 
-	for (const std::pair<const std::filesystem::path, frc2::CommandPtr> &entry : m_autoCommands) {
+	for (const std::pair<const std::filesystem::path, wpi::cmd::CommandPtr> &entry : m_autoCommands) {
 		std::string autoName = entry.first.stem().string();
 
 		// Found the default for sendableChooser
@@ -228,11 +232,11 @@ std::vector<std::string> AutoBuilder::getAllAutoNames() {
 }
 
 std::vector<std::filesystem::path> AutoBuilder::getAllAutoPaths() {
-	std::filesystem::path deployPath = frc::filesystem::GetDeployDirectory();
+	std::filesystem::path deployPath = wpi::filesystem::GetDeployDirectory();
 	std::filesystem::path autosPath = deployPath / "pathplanner/autos";
 
 	if (!std::filesystem::directory_entry { autosPath }.exists()) {
-		FRC_ReportError(frc::err::Error,
+		WPILIB_ReportError(wpi::err::Error,
 				"AutoBuilder could not locate the pathplanner autos directory");
 
 		return {};

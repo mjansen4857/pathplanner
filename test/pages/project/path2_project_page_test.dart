@@ -5,19 +5,17 @@ import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
-import 'package:pathplanner/auto/pathplanner_auto.dart';
-import 'package:pathplanner/commands/command_groups.dart';
-import 'package:pathplanner/commands/named_command.dart';
-import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/pages/project/path2_project_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
-import 'package:pathplanner/path2/event_marker.dart';
+import 'package:pathplanner/path2/graph.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
-import 'package:pathplanner/path2/waypoint.dart';
+import 'package:pathplanner/path2/pathplanner_auto.dart';
+import 'package:pathplanner/services/project_condition_registry.dart';
 import 'package:pathplanner/services/project_event_registry.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:pathplanner/path2/waypoint.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
@@ -29,6 +27,7 @@ void main() {
   final deployPath = Platform.isWindows ? r'C:\deploy' : '/deploy';
 
   setUp(() async {
+    ProjectConditionRegistry.clear();
     ProjectEventRegistry.clear();
     SharedPreferences.setMockInitialValues({
       PrefsKeys.projectLeftWeight: 0.5,
@@ -54,206 +53,371 @@ void main() {
         ),
       );
 
-  testWidgets('creates the Path2 example only for a physically empty directory',
-      (tester) async {
+  Future<void> pumpProject(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-
     await tester.pumpWidget(project());
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
     await tester.pumpAndSettle();
+  }
+
+  testWidgets('creates a graph example only for a physically empty directory',
+      (tester) async {
+    await pumpProject(tester);
 
     expect(
-        find.widgetWithText(ProjectItemCard, 'Example Path'), findsOneWidget);
-    expect(
-      fs.file(join(deployPath, 'paths', 'Example Path.path')).existsSync(),
-      isTrue,
+      find.widgetWithText(ProjectItemCard, 'Example Path'),
+      findsOneWidget,
     );
+    final file = fs.file(join(deployPath, 'paths', 'Example Path.path'));
+    final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+    expect(json['version'], '2027.1');
+    expect(json['nodes'], hasLength(2));
+    expect(json['branches'], hasLength(1));
+    expect(json, isNot(contains('waypoints')));
+    expect(json, isNot(contains('eventMarkers')));
   });
 
-  testWidgets('rejected paths stay reserved and suppress the example fallback',
+  testWidgets('rejected files stay untouched and reserve their names',
       (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1280, 720));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
     final pathsDir = fs.directory(join(deployPath, 'paths'))
       ..createSync(recursive: true);
-    // Case variants must collide too because the normal macOS deployment
-    // filesystem is case-insensitive.
-    final oldFile = fs.file(join(pathsDir.path, 'new path.path'));
-    const oldSource = '{"version":"2026.0"}';
-    oldFile.writeAsStringSync(oldSource);
-
-    await tester.pumpWidget(project());
-    await tester.pumpAndSettle();
-
-    expect(find.widgetWithText(ProjectItemCard, 'Example Path'), findsNothing);
-    expect(find.byType(ProjectItemCard), findsNothing);
-    await tester.tap(find.byTooltip('Add new path'));
-    await tester.pumpAndSettle();
-
-    expect(
-        find.widgetWithText(ProjectItemCard, 'New New Path'), findsOneWidget);
-    expect(oldFile.readAsStringSync(), oldSource);
-  });
-
-  testWidgets('hidden Choreo autos remain untouched and reserve their names',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1280, 720));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
     final autosDir = fs.directory(join(deployPath, 'autos'))
       ..createSync(recursive: true);
-    final choreo = PathPlannerAuto.defaultAuto(
-      name: 'New Auto',
-      autoDir: autosDir.path,
-      fs: fs,
-      choreoAuto: true,
-    );
-    final choreoFile = fs.file(join(autosDir.path, 'new auto.auto'));
-    final source = jsonEncode(choreo.toJson());
-    choreoFile.writeAsStringSync(source);
+    final oldPath = fs.file(join(pathsDir.path, 'new path.path'));
+    const oldPathSource = '{"version":"2027.0","waypoints":[]}';
+    oldPath.writeAsStringSync(oldPathSource);
+    final oldAuto = fs.file(join(autosDir.path, 'new auto.auto'));
+    const oldAutoSource = '{"version":"2027.0","command":{}}';
+    oldAuto.writeAsStringSync(oldAutoSource);
 
-    await tester.pumpWidget(project());
-    await tester.pumpAndSettle();
+    await pumpProject(tester);
 
-    expect(find.widgetWithText(ProjectItemCard, 'New Auto'), findsNothing);
+    expect(find.byType(ProjectItemCard), findsNothing);
+    await tester.tap(find.byTooltip('Add new path'));
     await tester.tap(find.byTooltip('Add new auto'));
     await tester.pumpAndSettle();
 
     expect(
-        find.widgetWithText(ProjectItemCard, 'New New Auto'), findsOneWidget);
-    final newAutoJson = jsonDecode(
-      fs.file(join(autosDir.path, 'New New Auto.auto')).readAsStringSync(),
-    ) as Map<String, dynamic>;
-    expect(newAutoJson, isNot(contains('resetOdom')));
-    expect(newAutoJson['startingPoseInitialized'], isFalse);
-    expect(choreoFile.readAsStringSync(), source);
-    expect(find.textContaining('Choreo'), findsNothing);
+      find.widgetWithText(ProjectItemCard, 'New New Path'),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(ProjectItemCard, 'New New Auto'),
+      findsOneWidget,
+    );
+    expect(oldPath.readAsStringSync(), oldPathSource);
+    expect(oldAuto.readAsStringSync(), oldAutoSource);
   });
 
-  testWidgets('missing path references are not persisted during initial load',
+  testWidgets('filters Choreo autos and creates an empty graph auto',
       (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1280, 720));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final pathsDir = fs.directory(join(deployPath, 'paths'))
-      ..createSync(recursive: true);
-    // A physical legacy path suppresses the fallback but is rejected by Path2.
-    fs
-        .file(join(pathsDir.path, 'missing.path'))
-        .writeAsStringSync('{"version":"2026.0"}');
     final autosDir = fs.directory(join(deployPath, 'autos'))
       ..createSync(recursive: true);
-    final auto = PathPlannerAuto(
-      name: 'references missing',
-      sequence: SequentialCommandGroup(
-        commands: [PathCommand(pathName: 'missing')],
-      ),
-      resetOdom: true,
-      autoDir: autosDir.path,
-      fs: fs,
-      folder: null,
-      choreoAuto: false,
-    );
-    final autoFile = fs.file(join(autosDir.path, '${auto.name}.auto'));
-    final source = jsonEncode(auto.toJson());
-    autoFile.writeAsStringSync(source);
+    final choreoFile = fs.file(join(autosDir.path, 'new auto.auto'));
+    const source = '{"choreoAuto":true,"version":"2026.0"}';
+    choreoFile.writeAsStringSync(source);
 
-    await tester.pumpWidget(project());
+    await pumpProject(tester);
+    await tester.tap(find.byTooltip('Add new auto'));
     await tester.pumpAndSettle();
 
     expect(
-      find.widgetWithText(ProjectItemCard, 'references missing'),
+      find.widgetWithText(ProjectItemCard, 'New New Auto'),
       findsOneWidget,
     );
+    final json = jsonDecode(
+      fs.file(join(autosDir.path, 'New New Auto.auto')).readAsStringSync(),
+    ) as Map<String, dynamic>;
+    expect(json['nodes'], isEmpty);
+    expect(json['branches'], isEmpty);
+    expect(json, isNot(contains('command')));
+    expect(choreoFile.readAsStringSync(), source);
+  });
+
+  testWidgets('condition manager renames and unsets path and auto branches',
+      (tester) async {
+    final pathsDir = fs.directory(join(deployPath, 'paths'))
+      ..createSync(recursive: true);
+    final path = path2.Path.defaultPath(
+      pathDir: pathsDir.path,
+      fs: fs,
+      name: 'Condition Path',
+    );
+    path.branches.single.transition =
+        ConditionTransition(conditionName: 'ready');
+    path.saveFile();
+
+    final autosDir = fs.directory(join(deployPath, 'autos'))
+      ..createSync(recursive: true);
+    final first = PathAutoNode(
+      pathName: path.name,
+      editorPosition: const Offset(80, 80),
+    );
+    final second = PathAutoNode(
+      pathName: path.name,
+      editorPosition: const Offset(80, 300),
+    );
+    final auto = Path2Auto(
+      name: 'Condition Auto',
+      nodes: [first, second],
+      branches: [
+        AutoBranch(
+          sourceId: first.id,
+          targetId: second.id,
+          transition: ConditionTransition(conditionName: 'ready'),
+        ),
+      ],
+      autoDir: autosDir.path,
+      fs: fs,
+    )..saveFile();
+
+    await pumpProject(tester);
+
+    expect(find.byTooltip('Manage Events'), findsOneWidget);
+    expect(find.byTooltip('Manage Conditions'), findsOneWidget);
+    expect(ProjectConditionRegistry.conditions, contains('ready'));
+
+    await tester.tap(find.byTooltip('Manage Conditions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Rename condition'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'armed');
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+
+    expect(ProjectConditionRegistry.conditions, contains('armed'));
+    expect(ProjectConditionRegistry.conditions, isNot(contains('ready')));
+    expect(
+      fs.file(join(pathsDir.path, '${path.name}.path')).readAsStringSync(),
+      contains('"conditionName": "armed"'),
+    );
+    expect(
+      fs.file(join(autosDir.path, '${auto.name}.auto')).readAsStringSync(),
+      contains('"conditionName": "armed"'),
+    );
+
+    await tester.tap(find.byTooltip('Remove condition'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+
+    expect(ProjectConditionRegistry.conditions, isNot(contains('armed')));
+    final pathJson = jsonDecode(
+      fs.file(join(pathsDir.path, '${path.name}.path')).readAsStringSync(),
+    ) as Map<String, dynamic>;
+    final autoJson = jsonDecode(
+      fs.file(join(autosDir.path, '${auto.name}.auto')).readAsStringSync(),
+    ) as Map<String, dynamic>;
+    expect(
+      (pathJson['branches'] as List).single['transition']['conditionName'],
+      isNull,
+    );
+    expect(
+      (autoJson['branches'] as List).single['transition']['conditionName'],
+      isNull,
+    );
+    final warningCard = tester.widget<ProjectItemCard>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is ProjectItemCard && widget.name == 'Condition Path',
+      ),
+    );
+    expect(warningCard.warningMessage, contains('no condition selected'));
+  });
+
+  testWidgets(
+      'path rename propagates and deletion clears only matching references',
+      (tester) async {
+    final pathsDir = fs.directory(join(deployPath, 'paths'))
+      ..createSync(recursive: true);
+    final path = path2.Path.defaultPath(
+      pathDir: pathsDir.path,
+      fs: fs,
+      name: 'Referenced Path',
+    )..saveFile();
+    final autosDir = fs.directory(join(deployPath, 'autos'))
+      ..createSync(recursive: true);
+    final auto = Path2Auto(
+      name: 'Referencing Auto',
+      nodes: [
+        PathAutoNode(
+          pathName: path.name,
+          editorPosition: const Offset(80, 80),
+        ),
+        PathAutoNode(
+          pathName: 'Still Missing',
+          editorPosition: const Offset(80, 300),
+        ),
+      ],
+      autoDir: autosDir.path,
+      fs: fs,
+    )..saveFile();
+
+    await pumpProject(tester);
+    await tester.enterText(find.text('Referenced Path'), 'Renamed Path');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    var autoJson = jsonDecode(
+      fs.file(join(autosDir.path, '${auto.name}.auto')).readAsStringSync(),
+    ) as Map<String, dynamic>;
+    expect((autoJson['nodes'] as List).first['pathName'], 'Renamed Path');
+    expect((autoJson['nodes'] as List).last['pathName'], 'Still Missing');
+
+    final pathCard = find.widgetWithText(ProjectItemCard, 'Renamed Path');
+    final menu = find.descendant(
+      of: pathCard,
+      matching: find.byType(PopupMenuButton<String>),
+    );
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DELETE'));
+    await tester.pumpAndSettle();
+
+    autoJson = jsonDecode(
+      fs.file(join(autosDir.path, '${auto.name}.auto')).readAsStringSync(),
+    ) as Map<String, dynamic>;
+    expect((autoJson['nodes'] as List).first['pathName'], isNull);
+    expect((autoJson['nodes'] as List).last['pathName'], 'Still Missing');
+    expect(
+      find.widgetWithText(ProjectItemCard, 'Renamed Path'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('missing path references warn without rewriting their auto',
+      (tester) async {
+    final autosDir = fs.directory(join(deployPath, 'autos'))
+      ..createSync(recursive: true);
+    final auto = Path2Auto(
+      name: 'Missing Reference',
+      nodes: [
+        PathAutoNode(
+          pathName: 'Unavailable Path',
+          editorPosition: const Offset(80, 80),
+        ),
+      ],
+      autoDir: autosDir.path,
+      fs: fs,
+    );
+    final autoFile = fs.file(join(autosDir.path, '${auto.name}.auto'));
+    final source = const JsonEncoder.withIndent('  ').convert(auto.toJson());
+    autoFile.writeAsStringSync(source);
+
+    await pumpProject(tester);
+
+    final card = tester.widget<ProjectItemCard>(
+      find.byWidgetPredicate(
+        (widget) => widget is ProjectItemCard && widget.name == auto.name,
+      ),
+    );
+    expect(card.warningMessage, contains('Unavailable Path'));
+    expect(card.warningMessage, contains('missing path'));
     expect(autoFile.readAsStringSync(), source);
   });
 
-  testWidgets('events-only management recursively renames and deletes events',
+  testWidgets('graph thumbnails use branch segments and every path leaf',
       (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1280, 720));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
     final pathsDir = fs.directory(join(deployPath, 'paths'))
       ..createSync(recursive: true);
-    final markerPath = path2.Path(
-      name: 'marker path',
-      waypoints: [
-        TranslationWaypoint(position: const Translation2d(0, 0)),
-        TranslationWaypoint(position: const Translation2d(1, 0)),
+    final root = path2.PathNode(
+      waypoint: TranslationWaypoint(position: const Translation2d(1, 1)),
+      editorPosition: const Offset(80, 80),
+    );
+    final left = path2.PathNode(
+      waypoint: TranslationWaypoint(position: const Translation2d(3, 2)),
+      editorPosition: const Offset(20, 300),
+    );
+    final right = path2.PathNode(
+      waypoint: TranslationWaypoint(position: const Translation2d(3, 6)),
+      editorPosition: const Offset(300, 300),
+    );
+    final path = path2.Path(
+      name: 'Branched Path',
+      nodes: [root, left, right],
+      branches: [
+        path2.PathBranch(sourceId: root.id, targetId: left.id),
+        path2.PathBranch(sourceId: root.id, targetId: right.id),
       ],
-      eventMarkers: [
-        EventMarker(
-          name: 'score',
-          waypointRelativePos: 0.5,
-          command: SequentialCommandGroup(
-            commands: [NamedCommand(name: 'score')],
-          ),
-        ),
-        EventMarker(
-          waypointRelativePos: 0.75,
-          command: SequentialCommandGroup(commands: [NamedCommand()]),
-        ),
-      ],
-      fs: fs,
       pathDir: pathsDir.path,
+      fs: fs,
     )..saveFile();
-    final markerPathFile =
-        fs.file(join(pathsDir.path, '${markerPath.name}.path'));
+
     final autosDir = fs.directory(join(deployPath, 'autos'))
       ..createSync(recursive: true);
-    final auto = PathPlannerAuto(
-      name: 'events',
-      sequence: SequentialCommandGroup(
-        commands: [
-          SequentialCommandGroup(
-            commands: [NamedCommand(name: 'score')],
-          ),
-        ],
-      ),
-      resetOdom: true,
+    Path2Auto(
+      name: 'Graph Auto',
+      nodes: [
+        PathAutoNode(
+          pathName: path.name,
+          editorPosition: const Offset(80, 80),
+        ),
+      ],
       autoDir: autosDir.path,
       fs: fs,
-      folder: null,
-      choreoAuto: false,
-    );
-    final autoFile = fs.file(join(autosDir.path, 'events.auto'));
-    autoFile.writeAsStringSync(jsonEncode(auto.toJson()));
+    ).saveFile();
 
-    await tester.pumpWidget(project());
-    await tester.pumpAndSettle();
-    expect(
-      find.byTooltip(
-          'Contains a NamedCommand that does not have a command selected'),
-      findsOneWidget,
+    await pumpProject(tester);
+
+    final pathCard = tester.widget<ProjectItemCard>(
+      find.byWidgetPredicate(
+        (widget) => widget is ProjectItemCard && widget.name == 'Branched Path',
+      ),
     );
+    expect(pathCard.paths, hasLength(2));
+    expect(pathCard.startPoints, [root.waypoint.position]);
+    expect(
+      pathCard.endPoints,
+      unorderedEquals([left.waypoint.position, right.waypoint.position]),
+    );
+
+    final autoCard = tester.widget<ProjectItemCard>(
+      find.byWidgetPredicate(
+        (widget) => widget is ProjectItemCard && widget.name == 'Graph Auto',
+      ),
+    );
+    expect(autoCard.paths, hasLength(2));
+    expect(autoCard.startPoints, [root.waypoint.position]);
+    expect(
+      autoCard.endPoints,
+      unorderedEquals([left.waypoint.position, right.waypoint.position]),
+    );
+  });
+
+  testWidgets('connectivity drafts warn and Manage Events stays usable',
+      (tester) async {
+    final pathsDir = fs.directory(join(deployPath, 'paths'))
+      ..createSync(recursive: true);
+    path2.Path(
+      name: 'Draft Path',
+      nodes: [
+        path2.PathNode(
+          waypoint: TranslationWaypoint(position: const Translation2d(1, 1)),
+          editorPosition: const Offset(80, 80),
+        ),
+        path2.PathNode(
+          waypoint: TranslationWaypoint(position: const Translation2d(2, 2)),
+          editorPosition: const Offset(300, 80),
+        ),
+      ],
+      pathDir: pathsDir.path,
+      fs: fs,
+    ).saveFile();
+    ProjectEventRegistry.events.add('Legacy Named Command');
+
+    await pumpProject(tester);
+
+    final card = tester.widget<ProjectItemCard>(
+      find.byWidgetPredicate(
+        (widget) => widget is ProjectItemCard && widget.name == 'Draft Path',
+      ),
+    );
+    expect(card.warningMessage, contains('exactly one start node'));
+
     await tester.tap(find.byTooltip('Manage Events'));
     await tester.pumpAndSettle();
-
-    expect(find.textContaining('Linked Waypoint'), findsNothing);
-    await tester.tap(find.byTooltip('Rename event'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).last, 'score renamed');
-    await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
-
-    expect(ProjectEventRegistry.events, contains('score renamed'));
-    expect(autoFile.readAsStringSync(), contains('score renamed'));
-    var markerJson =
-        jsonDecode(markerPathFile.readAsStringSync()) as Map<String, dynamic>;
-    var marker = (markerJson['eventMarkers'] as List).first as Map;
-    expect(marker['name'], 'score renamed');
-    expect(marker['command']['data']['commands'][0]['data']['name'],
-        'score renamed');
-
-    await tester.tap(find.byTooltip('Remove event'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
-
-    expect(ProjectEventRegistry.events, isNot(contains('score renamed')));
-    expect(autoFile.readAsStringSync(), contains('"name": null'));
-    markerJson =
-        jsonDecode(markerPathFile.readAsStringSync()) as Map<String, dynamic>;
-    marker = (markerJson['eventMarkers'] as List).first as Map;
-    expect(marker['name'], '');
-    expect(marker['command']['data']['commands'][0]['data']['name'], isNull);
+    expect(find.text('Legacy Named Command'), findsOneWidget);
   });
 }

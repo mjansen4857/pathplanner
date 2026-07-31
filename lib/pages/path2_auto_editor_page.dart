@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
 import 'package:pathplanner/path2/pathplanner_auto.dart';
-import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/editor/split_path2_auto_editor.dart';
@@ -20,8 +19,7 @@ class Path2AutoEditorPage extends StatefulWidget {
   final ValueChanged<String> onRenamed;
   final ChangeStack undoStack;
   final bool shortcuts;
-  final PPLibTelemetry? telemetry;
-  final bool hotReload;
+  final VoidCallback? onAutoChanged;
 
   const Path2AutoEditorPage({
     super.key,
@@ -33,8 +31,7 @@ class Path2AutoEditorPage extends StatefulWidget {
     required this.onRenamed,
     required this.undoStack,
     this.shortcuts = true,
-    this.telemetry,
-    this.hotReload = false,
+    this.onAutoChanged,
   });
 
   @override
@@ -43,32 +40,28 @@ class Path2AutoEditorPage extends StatefulWidget {
 
 class _Path2AutoEditorPageState extends State<Path2AutoEditorPage> {
   @override
+  void initState() {
+    super.initState();
+    if (widget.auto.initializeStartingPoseFromPaths(widget.allPaths)) {
+      widget.auto.saveFile();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final names = widget.auto.getAllPathNames();
-    final autoPaths = <path2.Path>[];
-    for (final name in names) {
-      for (final path in widget.allPaths) {
-        if (path.name == name) {
-          autoPaths.add(path);
-          break;
-        }
-      }
-    }
 
     final editor = SplitPath2AutoEditor(
       prefs: widget.prefs,
       auto: widget.auto,
-      autoPaths: autoPaths,
+      allPaths: widget.allPaths,
       allPathNames: widget.allPathNames,
       fieldImage: widget.fieldImage,
       undoStack: widget.undoStack,
       onAutoChanged: () {
         widget.auto.initializeStartingPoseFromPaths(widget.allPaths);
         setState(widget.auto.saveFile);
-        if (widget.hotReload) {
-          widget.telemetry?.hotReloadPath2Auto(widget.auto);
-        }
+        widget.onAutoChanged?.call();
       },
       onEditPathPressed: (pathName) {
         widget.undoStack.clearHistory();

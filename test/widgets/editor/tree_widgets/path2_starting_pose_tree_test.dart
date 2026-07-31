@@ -1,7 +1,6 @@
 import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/path2/pathplanner_auto.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path2_starting_pose_tree.dart';
@@ -16,7 +15,7 @@ void main() {
   setUp(() {
     auto = Path2Auto(
       name: 'Test Auto',
-      sequence: SequentialCommandGroup(commands: []),
+      nodes: [],
       startingPose: Pose2d(
         const Translation2d(1.25, 2.5),
         Rotation2d.fromDegrees(45),

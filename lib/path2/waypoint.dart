@@ -4,13 +4,11 @@ import 'package:pathplanner/util/wpimath/geometry.dart';
 
 abstract class Waypoint {
   static const num defaultMaxVelocity = 4.0;
-  static const num defaultHandoffDistance = 0.25;
   static const num defaultMaxAngularVelocity = 360.0;
   static const num defaultMaxAngularAcceleration = 720.0;
 
   Translation2d position;
   num maxVelocity;
-  num handoffDistance;
   num maxAngularVelocity;
   num maxAngularAcceleration;
 
@@ -19,20 +17,24 @@ abstract class Waypoint {
   Waypoint({
     required this.position,
     this.maxVelocity = defaultMaxVelocity,
-    this.handoffDistance = defaultHandoffDistance,
     this.maxAngularVelocity = defaultMaxAngularVelocity,
     this.maxAngularAcceleration = defaultMaxAngularAcceleration,
-  });
+  }) {
+    _validateFinite(position.x, 'position.x');
+    _validateFinite(position.y, 'position.y');
+    _validateNonNegativeFinite(maxVelocity, 'maxVelocity');
+    _validateNonNegativeFinite(maxAngularVelocity, 'maxAngularVelocity');
+    _validateNonNegativeFinite(
+        maxAngularAcceleration, 'maxAngularAcceleration');
+  }
 
   bool get isDragging => _isDragging;
 
   bool get isAnchorDragging => _isDragging;
 
-  bool shouldHandoff(Translation2d currentPos) {
-    return position.getDistance(currentPos) <= handoffDistance;
-  }
-
   void move(num x, num y) {
+    _validateFinite(x, 'x');
+    _validateFinite(y, 'y');
     position = Translation2d(x, y);
   }
 
@@ -65,7 +67,6 @@ abstract class Waypoint {
       return TranslationWaypoint(
         position: position,
         maxVelocity: maxVelocity,
-        handoffDistance: handoffDistance,
         maxAngularVelocity: maxAngularVelocity,
         maxAngularAcceleration: maxAngularAcceleration,
       );
@@ -75,7 +76,6 @@ abstract class Waypoint {
       position: position,
       rotation: rotation,
       maxVelocity: maxVelocity,
-      handoffDistance: handoffDistance,
       maxAngularVelocity: maxAngularVelocity,
       maxAngularAcceleration: maxAngularAcceleration,
     );
@@ -101,7 +101,6 @@ abstract class Waypoint {
       'type': type,
       'position': position.toJson(),
       'maxVelocity': maxVelocity,
-      'handoffDistance': handoffDistance,
       'maxAngularVelocity': maxAngularVelocity,
       'maxAngularAcceleration': maxAngularAcceleration,
     };
@@ -110,20 +109,18 @@ abstract class Waypoint {
   bool commonEquals(Waypoint other) {
     return other.position == position &&
         other.maxVelocity == maxVelocity &&
-        other.handoffDistance == handoffDistance &&
         other.maxAngularVelocity == maxAngularVelocity &&
         other.maxAngularAcceleration == maxAngularAcceleration;
   }
 
-  int get commonHashCode => Object.hash(position, maxVelocity, handoffDistance,
-      maxAngularVelocity, maxAngularAcceleration);
+  int get commonHashCode => Object.hash(
+      position, maxVelocity, maxAngularVelocity, maxAngularAcceleration);
 }
 
 class TranslationWaypoint extends Waypoint {
   TranslationWaypoint({
     required super.position,
     super.maxVelocity,
-    super.handoffDistance,
     super.maxAngularVelocity,
     super.maxAngularAcceleration,
   });
@@ -131,14 +128,12 @@ class TranslationWaypoint extends Waypoint {
   TranslationWaypoint.fromJson(Map<String, dynamic> json)
       : this(
           position: _positionFromJson(json),
-          maxVelocity:
-              _optionalNum(json, 'maxVelocity', Waypoint.defaultMaxVelocity),
-          handoffDistance: _optionalNum(
-              json, 'handoffDistance', Waypoint.defaultHandoffDistance),
-          maxAngularVelocity: _optionalNum(
+          maxVelocity: _optionalNonNegativeNum(
+              json, 'maxVelocity', Waypoint.defaultMaxVelocity),
+          maxAngularVelocity: _optionalNonNegativeNum(
               json, 'maxAngularVelocity', Waypoint.defaultMaxAngularVelocity),
-          maxAngularAcceleration: _optionalNum(json, 'maxAngularAcceleration',
-              Waypoint.defaultMaxAngularAcceleration),
+          maxAngularAcceleration: _optionalNonNegativeNum(json,
+              'maxAngularAcceleration', Waypoint.defaultMaxAngularAcceleration),
         );
 
   @override
@@ -146,7 +141,6 @@ class TranslationWaypoint extends Waypoint {
     return TranslationWaypoint(
       position: position,
       maxVelocity: maxVelocity,
-      handoffDistance: handoffDistance,
       maxAngularVelocity: maxAngularVelocity,
       maxAngularAcceleration: maxAngularAcceleration,
     );
@@ -170,23 +164,22 @@ class PoseWaypoint extends Waypoint {
     required super.position,
     required this.rotation,
     super.maxVelocity,
-    super.handoffDistance,
     super.maxAngularVelocity,
     super.maxAngularAcceleration,
-  });
+  }) {
+    _validateFinite(rotation.radians, 'rotation');
+  }
 
   PoseWaypoint.fromJson(Map<String, dynamic> json)
       : this(
           position: _positionFromJson(json),
           rotation: _rotationFromJson(json),
-          maxVelocity:
-              _optionalNum(json, 'maxVelocity', Waypoint.defaultMaxVelocity),
-          handoffDistance: _optionalNum(
-              json, 'handoffDistance', Waypoint.defaultHandoffDistance),
-          maxAngularVelocity: _optionalNum(
+          maxVelocity: _optionalNonNegativeNum(
+              json, 'maxVelocity', Waypoint.defaultMaxVelocity),
+          maxAngularVelocity: _optionalNonNegativeNum(
               json, 'maxAngularVelocity', Waypoint.defaultMaxAngularVelocity),
-          maxAngularAcceleration: _optionalNum(json, 'maxAngularAcceleration',
-              Waypoint.defaultMaxAngularAcceleration),
+          maxAngularAcceleration: _optionalNonNegativeNum(json,
+              'maxAngularAcceleration', Waypoint.defaultMaxAngularAcceleration),
         );
 
   @override
@@ -195,7 +188,6 @@ class PoseWaypoint extends Waypoint {
       position: position,
       rotation: rotation,
       maxVelocity: maxVelocity,
-      handoffDistance: handoffDistance,
       maxAngularVelocity: maxAngularVelocity,
       maxAngularAcceleration: maxAngularAcceleration,
     );
@@ -250,13 +242,26 @@ Rotation2d _rotationFromJson(Map<String, dynamic> json) {
   return Rotation2d(value);
 }
 
-num _optionalNum(Map<String, dynamic> json, String key, num defaultValue) {
+num _optionalNonNegativeNum(
+    Map<String, dynamic> json, String key, num defaultValue) {
   final value = json[key];
   if (value == null) {
     return defaultValue;
   }
-  if (value is! num || !value.isFinite) {
-    throw FormatException('$key must be a finite number');
+  if (value is! num || !value.isFinite || value < 0) {
+    throw FormatException('$key must be a finite non-negative number');
   }
   return value;
+}
+
+void _validateFinite(num value, String name) {
+  if (!value.isFinite) {
+    throw ArgumentError.value(value, name, 'Must be finite');
+  }
+}
+
+void _validateNonNegativeFinite(num value, String name) {
+  if (!value.isFinite || value < 0) {
+    throw ArgumentError.value(value, name, 'Must be finite and non-negative');
+  }
 }

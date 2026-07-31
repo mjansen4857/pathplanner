@@ -18,7 +18,6 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({
       PrefsKeys.holonomicMode: true,
-      PrefsKeys.hotReloadEnabled: true,
       PrefsKeys.teamColor: int.parse(Colors.black.toHexString(),
           radix: 16), // deprecating 'value' is so dumb
       PrefsKeys.ntServerAddress: '10.30.15.2',
@@ -313,7 +312,7 @@ void main() {
     expect(settingsChanged, false);
   });
 
-  testWidgets('hot reload chip', (widgetTester) async {
+  testWidgets('does not expose hot reload', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -329,19 +328,6 @@ void main() {
       ),
     ));
 
-    final chip = find.widgetWithText(FilterChip, 'Hot Reload');
-
-    expect(chip, findsOneWidget);
-
-    await widgetTester.tap(chip);
-    await widgetTester.pumpAndSettle();
-
-    expect(settingsChanged, true);
-    expect(prefs.getBool(PrefsKeys.hotReloadEnabled), false);
-
-    await widgetTester.tap(chip);
-    await widgetTester.pumpAndSettle();
-
-    expect(prefs.getBool(PrefsKeys.hotReloadEnabled), true);
+    expect(find.widgetWithText(FilterChip, 'Hot Reload'), findsNothing);
   });
 }

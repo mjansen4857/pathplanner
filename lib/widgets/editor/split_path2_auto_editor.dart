@@ -1,14 +1,8 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
 import 'package:pathplanner/path2/pathplanner_auto.dart';
-import 'package:pathplanner/path2/simulation/path2_simulator.dart';
-import 'package:pathplanner/path2/simulation/simulation_state.dart';
-import 'package:pathplanner/services/log.dart';
-import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
@@ -19,10 +13,14 @@ import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
+/// Split field/graph editor for Path 2 autos.
+///
+/// Path 2 graph previews are intentionally static. The seekbar remains visible
+/// to preserve the editor layout, but it is stopped at zero and disabled.
 class SplitPath2AutoEditor extends StatefulWidget {
   final SharedPreferences prefs;
   final Path2Auto auto;
-  final List<path2.Path> autoPaths;
+  final List<path2.Path> allPaths;
   final List<String> allPathNames;
   final VoidCallback? onAutoChanged;
   final FieldImage fieldImage;
@@ -33,7 +31,7 @@ class SplitPath2AutoEditor extends StatefulWidget {
     super.key,
     required this.prefs,
     required this.auto,
-    required this.autoPaths,
+    required this.allPaths,
     required this.allPathNames,
     required this.fieldImage,
     required this.undoStack,
@@ -50,10 +48,7 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
   final MultiSplitViewController _controller = MultiSplitViewController();
   late final AnimationController _previewController;
   late bool _treeOnRight;
-  String? _hoveredPath;
-  Path2SimulationResult? _simulation;
-  bool _paused = false;
-  int _simulationGeneration = 0;
+  String? _hoveredAutoNodeId;
   Offset? _panDownPosition;
   bool _draggingStartingPosition = false;
   bool _draggingStartingRotation = false;
@@ -87,7 +82,6 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
         minimalWeight: 0.4,
       ),
     ];
-    WidgetsBinding.instance.addPostFrameCallback((_) => _simulateAuto());
   }
 
   @override
@@ -99,14 +93,15 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final visibleOccurrences = _visiblePathOccurrences();
 
     final seekbar = PreviewSeekbar(
       previewController: _previewController,
-      onPauseStateChanged: (paused) => _paused = paused,
-      totalPathTime: _simulation?.totalTimeSeconds ?? 0,
-      enabled: _simulation != null,
+      onPauseStateChanged: (_) {},
+      totalPathTime: 0,
+      enabled: false,
     );
-    final tree = Card(
+    final graph = Card(
       margin: EdgeInsets.zero,
       elevation: 4,
       color: colorScheme.surface,
@@ -125,12 +120,12 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
           auto: widget.auto,
           allPathNames: widget.allPathNames,
           undoStack: widget.undoStack,
-          autoRuntime: _simulation?.totalTimeSeconds,
-          onPathHovered: (pathName) => setState(() => _hoveredPath = pathName),
+          onNodeHovered: (nodeId) {
+            setState(() => _hoveredAutoNodeId = nodeId);
+          },
           onAutoChanged: () {
             widget.onAutoChanged?.call();
-            WidgetsBinding.instance
-                .addPostFrameCallback((_) => _simulateAuto());
+            setState(() {});
           },
           onEditPathPressed: widget.onEditPathPressed,
           onSideSwapped: _swapTreeSide,
@@ -140,44 +135,48 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
 
     return Stack(
       children: [
-        Center(
+        Positioned.fill(
           child: InteractiveViewer(
             maxScale: 10,
-            child: GestureDetector(
-              key: const ValueKey('path2AutoFieldGesture'),
-              behavior: HitTestBehavior.opaque,
-              onTapDown: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-              onPanDown: (details) => _panDownPosition = details.localPosition,
-              onPanStart: _handlePanStart,
-              onPanUpdate: _handlePanUpdate,
-              onPanEnd: (_) => _finishStartingPoseDrag(),
-              onPanCancel: _finishStartingPoseDrag,
-              child: Padding(
-                padding: const EdgeInsets.all(48),
-                child: Stack(
-                  children: [
-                    widget.fieldImage.getWidget(),
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: Path2Painter(
-                          colorScheme: colorScheme,
-                          paths: widget.autoPaths,
-                          fieldImage: widget.fieldImage,
-                          prefs: widget.prefs,
-                          simple: true,
-                          hideOtherPathsOnHover: widget.prefs
-                                  .getBool(PrefsKeys.hidePathsOnHover) ??
-                              Defaults.hidePathsOnHover,
-                          hoveredPath: _hoveredPath,
-                          simulation: _simulation,
-                          animation: _previewController.view,
-                          autoStartingPose: widget.auto.startingPose,
-                          showStartingPoseHandles: true,
-                          showWaypointRobotPreviews: false,
+            boundaryMargin: const EdgeInsets.all(200),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 64),
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: widget.fieldImage.defaultSize.width /
+                      widget.fieldImage.defaultSize.height,
+                  child: GestureDetector(
+                    key: const ValueKey('path2AutoFieldGesture'),
+                    behavior: HitTestBehavior.opaque,
+                    onTapDown: (_) =>
+                        FocusManager.instance.primaryFocus?.unfocus(),
+                    onPanDown: (details) =>
+                        _panDownPosition = details.localPosition,
+                    onPanStart: _handlePanStart,
+                    onPanUpdate: _handlePanUpdate,
+                    onPanEnd: (_) => _finishStartingPoseDrag(),
+                    onPanCancel: _finishStartingPoseDrag,
+                    child: Stack(
+                      children: [
+                        widget.fieldImage.getWidget(),
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: Path2Painter(
+                              colorScheme: colorScheme,
+                              paintPaths: visibleOccurrences,
+                              fieldImage: widget.fieldImage,
+                              prefs: widget.prefs,
+                              simple: true,
+                              hoveredOccurrenceId: _hoveredAutoNodeId,
+                              autoStartingPose: widget.auto.startingPose,
+                              showStartingPoseHandles: true,
+                              showWaypointRobotPreviews: false,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -202,11 +201,55 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
                 newWeight ?? Defaults.editorTreeWeight,
               );
             },
-            children: _treeOnRight ? [seekbar, tree] : [tree, seekbar],
+            children: _treeOnRight ? [seekbar, graph] : [graph, seekbar],
           ),
         ),
       ],
     );
+  }
+
+  /// Resolves paths by auto-node occurrence, rather than collapsing them by
+  /// path name. This makes predecessor filtering deterministic even when two
+  /// auto nodes reference the same path.
+  List<Path2PaintPath> _visiblePathOccurrences() {
+    final hoveredId = _hoveredAutoNodeId;
+    final visibleNodeIds = hoveredId == null
+        ? {for (final node in widget.auto.nodes) node.id}
+        : widget.auto.reverseReachableNodeIds(hoveredId);
+    final occurrences = <Path2PaintPath>[];
+    for (final node in widget.auto.nodes) {
+      if (!visibleNodeIds.contains(node.id) || node is! PathAutoNode) {
+        continue;
+      }
+      final pathName = node.pathName;
+      if (pathName == null) {
+        continue;
+      }
+      path2.Path? resolved;
+      for (final candidate in widget.allPaths) {
+        if (candidate.name == pathName) {
+          resolved = candidate;
+          break;
+        }
+      }
+      if (resolved != null) {
+        occurrences.add(
+          Path2PaintPath(path: resolved, occurrenceId: node.id),
+        );
+      }
+    }
+    // Duplicate auto nodes can reference the exact same path geometry. Paint
+    // the hovered occurrence last so a later unhighlighted duplicate cannot
+    // cover its highlighted waypoints.
+    if (hoveredId != null) {
+      final hoveredIndex = occurrences.indexWhere(
+        (occurrence) => occurrence.occurrenceId == hoveredId,
+      );
+      if (hoveredIndex >= 0 && hoveredIndex != occurrences.length - 1) {
+        occurrences.add(occurrences.removeAt(hoveredIndex));
+      }
+    }
+    return occurrences;
   }
 
   void _swapTreeSide() {
@@ -264,10 +307,7 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
       setState(() {
         widget.auto.startingPose = Pose2d(
           pose.translation,
-          Rotation2d.fromComponents(
-            x - pose.x,
-            y - pose.y,
-          ),
+          Rotation2d.fromComponents(x - pose.x, y - pose.y),
         );
       });
       return;
@@ -277,15 +317,15 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
     }
 
     var targetX = _xPixelsToMeters(
-      min(
-        88 + widget.fieldImage.defaultSize.width * Path2Painter.scale,
-        max(8, details.localPosition.dx),
+      details.localPosition.dx.clamp(
+        0,
+        widget.fieldImage.defaultSize.width * Path2Painter.scale,
       ),
     );
     var targetY = _yPixelsToMeters(
-      min(
-        88 + widget.fieldImage.defaultSize.height * Path2Painter.scale,
-        max(8, details.localPosition.dy),
+      details.localPosition.dy.clamp(
+        0,
+        widget.fieldImage.defaultSize.height * Path2Painter.scale,
       ),
     );
     final snapSetting = widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
@@ -295,9 +335,9 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
         HardwareKeyboard.instance.logicalKeysPressed
             .contains(LogicalKeyboardKey.controlRight);
     if (snapSetting ^ ctrlHeld) {
-      final waypointPositions = widget.autoPaths
-          .expand((path) => path.waypoints)
-          .map((waypoint) => waypoint.position);
+      final waypointPositions = widget.allPaths
+          .expand((path) => path.nodes)
+          .map((node) => node.waypoint.position);
       num? closestX;
       num? closestY;
       for (final position in waypointPositions) {
@@ -347,7 +387,6 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
         () {
           setState(() => widget.auto.setStartingPose(after));
           widget.onAutoChanged?.call();
-          WidgetsBinding.instance.addPostFrameCallback((_) => _simulateAuto());
         },
         (oldValue) {
           setState(() {
@@ -355,7 +394,6 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
             widget.auto.startingPoseInitialized = oldValue.initialized;
           });
           widget.onAutoChanged?.call();
-          WidgetsBinding.instance.addPostFrameCallback((_) => _simulateAuto());
         },
       ),
     );
@@ -367,107 +405,6 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
     _startingPoseBeforeDrag = null;
   }
 
-  Future<void> _simulateAuto() async {
-    final generation = ++_simulationGeneration;
-    final referencedPathCount = widget.auto.getAllPathNames().length;
-    if (widget.auto.hasEmptyPathCommands()) {
-      _applySimulationFailure(
-        generation,
-        const Path2SimulationFailure(
-          Path2SimulationFailureKind.missingPath,
-          'A path command does not reference a loaded path.',
-        ),
-      );
-      return;
-    }
-    if (referencedPathCount == 0) {
-      _previewController
-        ..stop()
-        ..reset();
-      if (mounted && generation == _simulationGeneration) {
-        setState(() => _simulation = null);
-      }
-      return;
-    }
-    if (referencedPathCount != widget.autoPaths.length) {
-      _applySimulationFailure(
-        generation,
-        const Path2SimulationFailure(
-          Path2SimulationFailureKind.missingPath,
-          'One or more referenced paths could not be loaded.',
-        ),
-      );
-      return;
-    }
-
-    final previousSimulation = _simulation;
-    final previousTime = previousSimulation == null
-        ? 0.0
-        : _previewController.value * previousSimulation.totalTimeSeconds;
-    late final Path2SimulationOutcome outcome;
-    try {
-      outcome = await Path2Simulator.simulateAutoInBackground(
-        widget.autoPaths,
-        widget.auto.startingPose,
-        RobotConfig.fromPrefs(widget.prefs),
-      );
-    } catch (error) {
-      outcome = Path2SimulationOutcome.failed(
-        Path2SimulationFailure(
-          Path2SimulationFailureKind.invalidConfiguration,
-          error.toString(),
-        ),
-      );
-    }
-    if (!mounted || generation != _simulationGeneration) {
-      return;
-    }
-    final result = outcome.result;
-    if (result == null) {
-      _applySimulationFailure(generation, outcome.failure!);
-      return;
-    }
-
-    setState(() => _simulation = result);
-    _previewController
-      ..stop()
-      ..duration = Duration(
-        milliseconds: max(1, (result.totalTimeSeconds * 1000).round()),
-      );
-    if (_paused) {
-      _previewController.value = result.totalTimeSeconds <= 0
-          ? 0
-          : (previousTime / result.totalTimeSeconds).clamp(0.0, 1.0).toDouble();
-    } else {
-      _previewController
-        ..value = 0
-        ..repeat();
-    }
-  }
-
-  void _applySimulationFailure(
-    int generation,
-    Path2SimulationFailure failure,
-  ) {
-    if (!mounted || generation != _simulationGeneration) {
-      return;
-    }
-    _previewController
-      ..stop()
-      ..reset();
-    setState(() => _simulation = null);
-    Log.warning('Failed to simulate Path2 auto ${widget.auto.name}: $failure');
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('Unable to simulate ${widget.auto.name}: '
-              '${failure.message}'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-  }
-
   Translation2d _startingRotationHandlePosition(Pose2d pose) {
     return pose.translation +
         Translation2d(
@@ -477,14 +414,13 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
   }
 
   double _xPixelsToMeters(double pixels) {
-    return (((pixels - 48) / Path2Painter.scale) /
-            widget.fieldImage.pixelsPerMeter) -
+    return ((pixels / Path2Painter.scale) / widget.fieldImage.pixelsPerMeter) -
         widget.fieldImage.marginMeters;
   }
 
   double _yPixelsToMeters(double pixels) {
     return ((widget.fieldImage.defaultSize.height -
-                (pixels - 48) / Path2Painter.scale) /
+                pixels / Path2Painter.scale) /
             widget.fieldImage.pixelsPerMeter) -
         widget.fieldImage.marginMeters;
   }

@@ -1,742 +1,525 @@
 import 'dart:convert';
 
-import 'package:collection/collection.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path/path.dart' as p;
-import 'package:pathplanner/commands/command_groups.dart';
-import 'package:pathplanner/commands/named_command.dart';
-import 'package:pathplanner/path2/constraints_zone.dart';
-import 'package:pathplanner/path2/event_marker.dart';
+import 'package:pathplanner/path2/graph.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
-import 'package:pathplanner/path2/point_towards_zone.dart';
 import 'package:pathplanner/path2/waypoint.dart';
-import 'package:pathplanner/services/hot_reloadable_path.dart';
-import 'package:pathplanner/services/project_event_registry.dart';
+import 'package:pathplanner/services/project_condition_registry.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
+
+const _nodeA = '11111111-1111-4111-8111-111111111111';
+const _nodeB = '22222222-2222-4222-8222-222222222222';
+const _nodeC = '33333333-3333-4333-8333-333333333333';
+const _nodeD = '44444444-4444-4444-8444-444444444444';
+const _branchA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const _branchB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+const _branchC = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+const _branchD = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 
 void main() {
   late MemoryFileSystem fs;
-  const pathsDir = '/paths';
 
   setUp(() {
-    ProjectEventRegistry.clear();
     fs = MemoryFileSystem();
-    fs.directory(pathsDir).createSync(recursive: true);
+    ProjectConditionRegistry.clear();
   });
 
-  group('Path2 model', () {
-    test('requires at least one waypoint', () {
-      expect(
-          () => path2.Path(
-                name: 'empty',
-                waypoints: [],
-                fs: fs,
-                pathDir: pathsDir,
-              ),
-          throwsArgumentError);
-
-      expect(
-          () => path2.Path.fromJson({
-                'version': path2.fileVersion,
-                'waypoints': [],
-              }, 'empty', pathsDir, fs),
-          throwsFormatException);
-    });
-
-    test('JSON round trip preserves version, folder, tolerances and waypoints',
-        () {
-      final original = path2.Path(
-        name: 'roundtrip',
-        waypoints: [
-          TranslationWaypoint(
-            position: const Translation2d(1, 2),
-            maxVelocity: 3,
-            handoffDistance: 0.4,
-            maxAngularVelocity: 100,
-            maxAngularAcceleration: 200,
-          ),
-          PoseWaypoint(
-            position: const Translation2d(4, 5),
-            rotation: Rotation2d.fromDegrees(60),
-            maxVelocity: 6,
-            handoffDistance: 0.7,
-            maxAngularVelocity: 300,
-            maxAngularAcceleration: 400,
-          ),
-        ],
-        endToleranceMeters: 0.25,
-        endAngleToleranceDegrees: 3.5,
-        folder: 'Folder',
-        sourceVersion: '2028.1.0-beta.1',
-        fs: fs,
-        pathDir: pathsDir,
+  path2.PathNode node(
+    String id,
+    num x, {
+    num editorY = 0,
+    bool pose = false,
+  }) =>
+      path2.PathNode(
+        id: id,
+        waypoint: pose
+            ? PoseWaypoint(
+                position: Translation2d(x, 1),
+                rotation: Rotation2d.fromDegrees(20),
+              )
+            : TranslationWaypoint(position: Translation2d(x, 1)),
+        editorPosition: Offset(50, editorY.toDouble()),
+        endTolerance: EndTolerance(distanceMeters: 0.15, angleDegrees: 2.5),
       );
 
-      final restored = path2.Path.fromJson(
-          jsonDecode(jsonEncode(original.toJson())),
-          original.name,
-          pathsDir,
-          fs);
+  path2.Path path({
+    List<path2.PathNode>? nodes,
+    List<path2.PathBranch>? branches,
+    String name = 'Test',
+    String? folder,
+    String sourceVersion = path2.fileVersion,
+  }) =>
+      path2.Path(
+        name: name,
+        nodes: nodes ?? [node(_nodeA, 1), node(_nodeB, 2)],
+        branches: branches ??
+            [
+              path2.PathBranch(
+                id: _branchA,
+                sourceId: _nodeA,
+                targetId: _nodeB,
+              ),
+            ],
+        pathDir: '/paths',
+        fs: fs,
+        folder: folder,
+        sourceVersion: sourceVersion,
+      );
 
-      expect(restored, original);
-      expect(restored, isA<HotReloadablePath>());
-      expect(restored.sourceVersion, '2028.1.0-beta.1');
-      expect(restored.folder, 'Folder');
-      expect(restored.waypoints.first.handoffDistance, 0.4);
+  Map<String, dynamic> validJson() => path().toJson();
+
+  group('path graph model', () {
+    test('default path has two vertical pose nodes and a distance branch', () {
+      final defaultPath = path2.Path.defaultPath(pathDir: '/paths', fs: fs);
+
+      expect(defaultPath.nodes, hasLength(2));
+      expect(
+        defaultPath.nodes.every((node) => node.waypoint is PoseWaypoint),
+        isTrue,
+      );
+      expect(defaultPath.nodes[0].editorPosition.dx,
+          defaultPath.nodes[1].editorPosition.dx);
+      expect(
+        defaultPath.nodes[1].editorPosition.dy -
+            defaultPath.nodes[0].editorPosition.dy,
+        greaterThanOrEqualTo(430),
+      );
+      expect(defaultPath.branches, hasLength(1));
+      expect(
+        defaultPath.branches.single.transition,
+        DistanceTransition(distanceMeters: 0.25),
+      );
+      expect(defaultPath.diagnostics.isComplete, isTrue);
     });
 
-    test('JSON round trip preserves markers and ordered zones', () {
-      final original = path2.Path(
-        name: 'annotations',
-        waypoints: [
-          TranslationWaypoint(position: const Translation2d(0, 0)),
-          TranslationWaypoint(position: const Translation2d(4, 0)),
+    test('generated node and branch IDs are stable through round trip', () {
+      final defaultPath = path2.Path.defaultPath(pathDir: '/paths', fs: fs);
+      final nodeIds = defaultPath.nodes.map((node) => node.id).toList();
+      final branchIds =
+          defaultPath.branches.map((branch) => branch.id).toList();
+
+      final restored = path2.Path.fromJson(
+        defaultPath.toJson(),
+        defaultPath.name,
+        '/paths',
+        fs,
+      );
+
+      expect(restored.nodes.map((node) => node.id), nodeIds);
+      expect(restored.branches.map((branch) => branch.id), branchIds);
+      expect(restored, defaultPath);
+    });
+
+    test('round trips layout, waypoint subtypes, tolerances, and transitions',
+        () {
+      final original = path(
+        nodes: [
+          node(_nodeA, 1, pose: true),
+          node(_nodeB, 2, editorY: 300),
+          node(_nodeC, 3, editorY: 600),
         ],
-        eventMarkers: [
-          EventMarker(
-            name: 'late',
-            waypointRelativePos: 0.8,
+        branches: [
+          path2.PathBranch(
+            id: _branchA,
+            sourceId: _nodeA,
+            targetId: _nodeB,
+            transition: DistanceTransition(distanceMeters: 0.8),
           ),
-          EventMarker(
-            name: 'early',
-            waypointRelativePos: 0.2,
-            endWaypointRelativePos: 0.6,
-            command: SequentialCommandGroup(
-              commands: [NamedCommand(name: 'nested')],
-            ),
-          ),
-        ],
-        constraintZones: [
-          ConstraintsZone(
-            name: 'slow',
-            minWaypointRelativePos: 0.1,
-            maxWaypointRelativePos: 0.4,
-            constraints: WaypointConstraints(
-              maxVelocity: 1.5,
-              maxAngularVelocity: 120,
-              maxAngularAcceleration: 240,
-            ),
-          ),
-          ConstraintsZone(name: 'second'),
-        ],
-        pointTowardsZones: [
-          PointTowardsZone(
-            name: 'speaker',
-            fieldPosition: const Translation2d(1, 2),
-            rotationOffset: Rotation2d.fromDegrees(180),
-            minWaypointRelativePos: 0.3,
-            maxWaypointRelativePos: 0.7,
-            unprofiled: true,
+          path2.PathBranch(
+            id: _branchB,
+            sourceId: _nodeB,
+            targetId: _nodeC,
+            transition: ConditionTransition(conditionName: 'clear'),
           ),
         ],
-        fs: fs,
-        pathDir: pathsDir,
+        folder: 'Qualification',
+        sourceVersion: '2028.2.0-beta.1',
       );
 
       final json = original.toJson();
-      final restored = path2.Path.fromJson(
-        jsonDecode(jsonEncode(json)),
-        original.name,
-        pathsDir,
-        fs,
-      );
-      final sortedExpected = original.duplicate(original.name)
-        ..eventMarkers.sort(
-            (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+      final restored = path2.Path.fromJson(json, original.name, '/paths', fs);
 
-      expect(restored, sortedExpected);
-      expect(restored.hashCode, sortedExpected.hashCode);
-      expect(
-        (json['eventMarkers'] as List).map((marker) => marker['name']),
-        ['early', 'late'],
-      );
-      expect(
-        (json['eventMarkers'] as List)
-            .every((marker) => !marker.containsKey('color')),
-        isTrue,
-      );
-      expect(
-        (json['constraintZones'] as List).map((zone) => zone['name']),
-        ['slow', 'second'],
-      );
-      expect(
-        (json['pointTowardsZones'] as List).single['unprofiled'],
-        isTrue,
-      );
-      final constraints =
-          (json['constraintZones'] as List).first['constraints'] as Map;
-      expect(
-        constraints.keys,
-        unorderedEquals([
-          'maxVelocity',
-          'maxAngularVelocity',
-          'maxAngularAcceleration',
-        ]),
-      );
-      expect(ProjectEventRegistry.events,
-          containsAll(['early', 'late', 'nested']));
+      expect(json.keys,
+          unorderedEquals(['version', 'nodes', 'branches', 'folder']));
+      expect(json, isNot(contains('waypoints')));
+      expect(json, isNot(contains('eventMarkers')));
+      expect(json, isNot(contains('endToleranceMeters')));
+      expect(restored, original);
+      expect(restored.version, '2028.2.0-beta.1');
+      expect(ProjectConditionRegistry.conditions, contains('clear'));
     });
 
-    test('annotation positions and zone ordering are validated', () {
-      expect(
-        () => path2.Path(
-          name: 'out of range',
-          waypoints: [
-            TranslationWaypoint(position: const Translation2d(0, 0)),
-          ],
-          eventMarkers: [EventMarker(waypointRelativePos: 0.1)],
-          fs: fs,
-          pathDir: pathsDir,
-        ),
-        throwsArgumentError,
+    test('supports splits, merges, multiple leaves, and parallel branches', () {
+      final graph = path(
+        nodes: [
+          node(_nodeA, 1),
+          node(_nodeB, 2),
+          node(_nodeC, 3),
+          node(_nodeD, 4),
+        ],
+        branches: [
+          path2.PathBranch(id: _branchA, sourceId: _nodeA, targetId: _nodeB),
+          path2.PathBranch(id: _branchB, sourceId: _nodeA, targetId: _nodeB),
+          path2.PathBranch(id: _branchC, sourceId: _nodeA, targetId: _nodeC),
+          path2.PathBranch(id: _branchD, sourceId: _nodeB, targetId: _nodeD),
+          path2.PathBranch(
+            id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+            sourceId: _nodeC,
+            targetId: _nodeD,
+          ),
+        ],
       );
 
+      expect(graph.rootNodes.map((node) => node.id), [_nodeA]);
+      expect(graph.leafNodes.map((node) => node.id), [_nodeD]);
+      expect(
+        graph.reverseReachableNodeIds(_nodeD),
+        {_nodeA, _nodeB, _nodeC, _nodeD},
+      );
+      expect(graph.reachableNodeIds, {_nodeA, _nodeB, _nodeC, _nodeD});
+      expect(graph.diagnostics.isComplete, isTrue);
+    });
+
+    test('disconnected and multiple-root drafts are saveable warnings', () {
+      final draft = path(
+        nodes: [node(_nodeA, 1), node(_nodeB, 2)],
+        branches: [],
+      );
+
+      expect(draft.diagnostics.hardErrors, isEmpty);
+      expect(draft.diagnostics.draftWarnings, isNotEmpty);
+      expect(() => draft.toJson(), returnsNormally);
+
+      final restored =
+          path2.Path.fromJson(draft.toJson(), draft.name, '/paths', fs);
+      expect(restored.nodes, hasLength(2));
+      expect(restored.diagnostics.draftWarnings, isNotEmpty);
+    });
+
+    test('unset conditions are configuration warnings and remain nullable', () {
+      final draft = path(
+        branches: [
+          path2.PathBranch(
+            id: _branchA,
+            sourceId: _nodeA,
+            targetId: _nodeB,
+            transition: ConditionTransition(),
+          ),
+        ],
+      );
+
+      expect(draft.diagnostics.hardErrors, isEmpty);
+      expect(draft.diagnostics.configurationWarnings, hasLength(1));
+      final restored =
+          path2.Path.fromJson(draft.toJson(), draft.name, '/paths', fs);
+      expect(
+        (restored.branches.single.transition as ConditionTransition)
+            .conditionName,
+        isNull,
+      );
+    });
+
+    test('branch addition rejects self-links and cycles but permits parallel',
+        () {
+      final graph = path();
+
+      expect(
+        graph.addBranch(path2.PathBranch(
+          id: _branchB,
+          sourceId: _nodeA,
+          targetId: _nodeB,
+        )),
+        isTrue,
+      );
+      expect(
+        graph.addBranch(path2.PathBranch(
+          id: _branchC,
+          sourceId: _nodeA,
+          targetId: _nodeA,
+        )),
+        isFalse,
+      );
+      expect(
+        graph.addBranch(path2.PathBranch(
+          id: _branchD,
+          sourceId: _nodeB,
+          targetId: _nodeA,
+        )),
+        isFalse,
+      );
+    });
+
+    test('node removal removes incident branches and never removes last node',
+        () {
+      final graph = path();
+
+      expect(graph.removeNode(_nodeA), isTrue);
+      expect(graph.nodes.map((node) => node.id), [_nodeB]);
+      expect(graph.branches, isEmpty);
+      expect(graph.removeNode(_nodeB), isFalse);
+    });
+
+    test('snapshots and duplicates are deep copies with stable IDs', () {
+      final original = path();
+      final snapshot = original.snapshotGraph();
+      final duplicate = original.duplicate('Copy');
+
+      original.nodes.first.waypoint.move(9, 10);
+      original.nodes.first.endTolerance.distanceMeters = 0.9;
+      original.nodes.first.editorPosition = const Offset(900, 900);
+      (original.branches.first.transition as DistanceTransition)
+          .distanceMeters = 1.2;
+      original.restoreGraph(snapshot);
+
+      expect(original.nodes.first.waypoint.position, const Translation2d(1, 1));
+      expect(original.nodes.first.endTolerance.distanceMeters, 0.15);
+      expect(original.nodes.first.editorPosition, const Offset(50, 0));
+      expect(
+        (original.branches.first.transition as DistanceTransition)
+            .distanceMeters,
+        0.25,
+      );
+
+      duplicate.nodes.first.waypoint.move(7, 8);
+      expect(duplicate.nodes.first.id, original.nodes.first.id);
+      expect(original.nodes.first.waypoint.position, const Translation2d(1, 1));
+    });
+
+    test('condition rename and deletion update matching transitions', () {
+      final graph = path(
+        branches: [
+          path2.PathBranch(
+            id: _branchA,
+            sourceId: _nodeA,
+            targetId: _nodeB,
+            transition: ConditionTransition(conditionName: 'old'),
+          ),
+        ],
+      );
+
+      expect(graph.updateConditionName('old', 'new'), isTrue);
+      expect(graph.getAllConditionNames(), ['new']);
+      expect(ProjectConditionRegistry.conditions, contains('new'));
+      expect(graph.updateConditionName('new', null), isTrue);
+      expect(graph.getAllConditionNames(), isEmpty);
+      expect(graph.diagnostics.configurationWarnings, isNotEmpty);
+    });
+  });
+
+  group('path schema validation', () {
+    test('rejects empty, duplicate, dangling, self-linked, and cyclic graphs',
+        () {
+      final base = validJson();
+
+      expect(
+        () => path2.Path.fromJson({...base, 'nodes': []}, 'Bad', '/paths', fs),
+        throwsFormatException,
+      );
+
+      final duplicateNodes = List<dynamic>.from(base['nodes'] as List)
+        ..add(Map<String, dynamic>.from((base['nodes'] as List).first as Map));
+      expect(
+        () => path2.Path.fromJson(
+          {...base, 'nodes': duplicateNodes},
+          'Bad',
+          '/paths',
+          fs,
+        ),
+        throwsFormatException,
+      );
+
+      final danglingBranch =
+          Map<String, dynamic>.from((base['branches'] as List).first as Map)
+            ..['targetId'] = _nodeC;
       expect(
         () => path2.Path.fromJson(
           {
-            'version': path2.fileVersion,
-            'waypoints': [
-              {
-                'type': 'translation',
-                'position': {'x': 0, 'y': 0},
-              },
-              {
-                'type': 'translation',
-                'position': {'x': 1, 'y': 0},
-              },
-            ],
-            'constraintZones': [
-              {
-                'name': 'backwards',
-                'minWaypointRelativePos': 0.8,
-                'maxWaypointRelativePos': 0.2,
-                'constraints': {},
-              },
-            ],
+            ...base,
+            'branches': [danglingBranch],
           },
-          'invalid',
-          pathsDir,
+          'Bad',
+          '/paths',
+          fs,
+        ),
+        throwsFormatException,
+      );
+
+      final selfBranch =
+          Map<String, dynamic>.from((base['branches'] as List).first as Map)
+            ..['targetId'] = _nodeA;
+      expect(
+        () => path2.Path.fromJson(
+          {
+            ...base,
+            'branches': [selfBranch],
+          },
+          'Bad',
+          '/paths',
+          fs,
+        ),
+        throwsFormatException,
+      );
+
+      final reverseBranch = path2.PathBranch(
+        id: _branchB,
+        sourceId: _nodeB,
+        targetId: _nodeA,
+      ).toJson();
+      expect(
+        () => path2.Path.fromJson(
+          {
+            ...base,
+            'branches': [...base['branches'] as List, reverseBranch],
+          },
+          'Bad',
+          '/paths',
           fs,
         ),
         throwsFormatException,
       );
     });
 
-    test('omitted optional path values use defaults', () {
-      final path = path2.Path.fromJson({
-        'version': path2.fileVersion,
-        'waypoints': [
-          {
-            'type': 'translation',
-            'position': {'x': 1, 'y': 2},
-          }
-        ],
-        'pointTowardsZones': [
-          {
-            'name': 'legacy point zone',
-            'fieldPosition': {'x': 2, 'y': 3},
-            'rotationOffset': 0,
-            'minWaypointRelativePos': 0,
-            'maxWaypointRelativePos': 0,
-          },
-        ],
-        'eventMarkers': [
-          {
-            'name': 'legacy marker',
-            'waypointRelativePos': 0,
-          },
-        ],
-      }, 'defaults', pathsDir, fs);
+    test('rejects graph-wide duplicate IDs', () {
+      final base = validJson();
+      final duplicateIdBranch =
+          Map<String, dynamic>.from((base['branches'] as List).first as Map)
+            ..['id'] = _nodeA;
 
-      expect(path.endToleranceMeters, 0.1);
-      expect(path.endAngleToleranceDegrees, 2.0);
-      expect(path.folder, isNull);
-      expect(path.pointTowardsZones.single.unprofiled, isFalse);
-      expect(
-        (path.toJson()['eventMarkers'] as List).single.containsKey('color'),
-        isFalse,
-      );
-    });
-
-    test('runtime event marker palette has eight evenly spaced tinted hues',
-        () {
-      expect(eventMarkerColorPalette, hasLength(8));
-      for (var i = 0; i < eventMarkerColorPalette.length; i++) {
-        expect(eventMarkerColorForIndex(i), eventMarkerColorPalette[i]);
-        expect(
-          eventMarkerColorForIndex(i + eventMarkerColorPalette.length),
-          eventMarkerColorPalette[i],
-        );
-      }
-
-      for (var i = 0; i < eventMarkerColorPalette.length; i++) {
-        final color = eventMarkerColorPalette[i];
-        final red = (color >> 16) & 0xFF;
-        final green = (color >> 8) & 0xFF;
-        final blue = color & 0xFF;
-        final maximum = [red, green, blue].reduce((a, b) => a > b ? a : b);
-        final minimum = [red, green, blue].reduce((a, b) => a < b ? a : b);
-        final delta = maximum - minimum;
-        late double hue;
-        if (maximum == red) {
-          hue = 60 * ((green - blue) / delta % 6);
-        } else if (maximum == green) {
-          hue = 60 * ((blue - red) / delta + 2);
-        } else {
-          hue = 60 * ((red - green) / delta + 4);
-        }
-        if (hue < 0) {
-          hue += 360;
-        }
-
-        expect(maximum, 135);
-        expect(minimum, 66);
-        expect(hue, closeTo(i * 45.0, 1.0));
-      }
-    });
-
-    test('append, midpoint insertion and preview positions use translations',
-        () {
-      final path = path2.Path(
-        name: 'editing',
-        waypoints: [
-          TranslationWaypoint(position: const Translation2d(0, 0)),
-          PoseWaypoint(
-              position: const Translation2d(4, 2),
-              rotation: const Rotation2d()),
-        ],
-        fs: fs,
-        pathDir: pathsDir,
-      );
-
-      path.insertWaypointAfter(-1);
-      path.insertWaypointAfter(1);
-      expect(path.waypoints, hasLength(2));
-
-      path.insertWaypointAfter(0);
-      expect(path.waypoints, hasLength(3));
-      expect(path.waypoints[1], isA<TranslationWaypoint>());
-      expect(path.waypoints[1].position, const Translation2d(2, 1));
-
-      path.addWaypoint(const Translation2d(8, 3));
-      expect(path.waypoints.last, isA<TranslationWaypoint>());
-      expect(path.pathPositions, const [
-        Translation2d(0, 0),
-        Translation2d(2, 1),
-        Translation2d(4, 2),
-        Translation2d(8, 3),
-      ]);
-    });
-
-    test('straight-line sampling clamps and interpolates', () {
-      final onePoint = path2.Path(
-        name: 'one',
-        waypoints: [
-          TranslationWaypoint(position: const Translation2d(2, 3)),
-        ],
-        fs: fs,
-        pathDir: pathsDir,
-      );
-      expect(onePoint.samplePath(-10), const Translation2d(2, 3));
-      expect(onePoint.samplePath(10), const Translation2d(2, 3));
-
-      final line = path2.Path(
-        name: 'line',
-        waypoints: [
-          TranslationWaypoint(position: const Translation2d(0, 0)),
-          TranslationWaypoint(position: const Translation2d(4, 2)),
-          TranslationWaypoint(position: const Translation2d(8, 2)),
-        ],
-        fs: fs,
-        pathDir: pathsDir,
-      );
-      expect(line.samplePath(-1), const Translation2d(0, 0));
-      expect(line.samplePath(0.25), const Translation2d(1, 0.5));
-      expect(line.samplePath(1.5), const Translation2d(6, 2));
-      expect(line.samplePath(20), const Translation2d(8, 2));
-    });
-
-    test('waypoint insertion and deletion remap every annotation endpoint', () {
-      final path = path2.Path(
-        name: 'remap',
-        waypoints: [
-          TranslationWaypoint(position: const Translation2d(0, 0)),
-          TranslationWaypoint(position: const Translation2d(2, 0)),
-          TranslationWaypoint(position: const Translation2d(4, 0)),
-        ],
-        eventMarkers: [
-          EventMarker(
-            waypointRelativePos: 0.25,
-            endWaypointRelativePos: 1.75,
-          ),
-        ],
-        constraintZones: [
-          ConstraintsZone(
-            minWaypointRelativePos: 0.5,
-            maxWaypointRelativePos: 1.5,
-          ),
-        ],
-        pointTowardsZones: [
-          PointTowardsZone(
-            minWaypointRelativePos: 0.75,
-            maxWaypointRelativePos: 2,
-          ),
-        ],
-        fs: fs,
-        pathDir: pathsDir,
-      );
-
-      path.insertWaypointAfter(0);
-      expect(path.eventMarkers.single.waypointRelativePos, 0.5);
-      expect(path.eventMarkers.single.endWaypointRelativePos, 2.75);
-      expect(path.constraintZones.single.minWaypointRelativePos, 1);
-      expect(path.constraintZones.single.maxWaypointRelativePos, 2.5);
-      expect(path.pointTowardsZones.single.minWaypointRelativePos, 1.5);
-      expect(path.pointTowardsZones.single.maxWaypointRelativePos, 3);
-
-      path.removeWaypointAt(1);
-      expect(path.eventMarkers.single.waypointRelativePos, 0.25);
-      expect(path.eventMarkers.single.endWaypointRelativePos, 1.75);
-      expect(path.constraintZones.single.minWaypointRelativePos, 0.5);
-      expect(path.constraintZones.single.maxWaypointRelativePos, 1.5);
-      expect(path.pointTowardsZones.single.minWaypointRelativePos, 0.75);
-      expect(path.pointTowardsZones.single.maxWaypointRelativePos, 2);
-    });
-
-    test('append preserves annotations and endpoint deletion clamps ranges',
-        () {
-      path2.Path annotatedPath() => path2.Path(
-            name: 'endpoints',
-            waypoints: [
-              TranslationWaypoint(position: const Translation2d(0, 0)),
-              TranslationWaypoint(position: const Translation2d(2, 0)),
-              TranslationWaypoint(position: const Translation2d(4, 0)),
-            ],
-            eventMarkers: [
-              EventMarker(
-                waypointRelativePos: 0.25,
-                endWaypointRelativePos: 1.75,
-              ),
-            ],
-            constraintZones: [
-              ConstraintsZone(
-                minWaypointRelativePos: 0.5,
-                maxWaypointRelativePos: 2,
-              ),
-            ],
-            pointTowardsZones: [
-              PointTowardsZone(
-                minWaypointRelativePos: 0.75,
-                maxWaypointRelativePos: 1.25,
-              ),
-            ],
-            fs: fs,
-            pathDir: pathsDir,
-          );
-
-      final appended = annotatedPath();
-      final beforeAppend = appended.snapshotAnnotations();
-      appended.addWaypoint(const Translation2d(6, 0));
-      expect(appended.eventMarkers, beforeAppend.eventMarkers);
-      expect(appended.constraintZones, beforeAppend.constraintZones);
-      expect(appended.pointTowardsZones, beforeAppend.pointTowardsZones);
-
-      final firstDeleted = annotatedPath()..removeWaypointAt(0);
-      expect(firstDeleted.eventMarkers.single.waypointRelativePos, 0);
-      expect(firstDeleted.eventMarkers.single.endWaypointRelativePos, 0.75);
-      expect(firstDeleted.constraintZones.single.minWaypointRelativePos, 0);
-      expect(firstDeleted.constraintZones.single.maxWaypointRelativePos, 1);
-      expect(firstDeleted.pointTowardsZones.single.minWaypointRelativePos, 0);
-      expect(
-          firstDeleted.pointTowardsZones.single.maxWaypointRelativePos, 0.25);
-
-      final lastDeleted = annotatedPath()..removeWaypointAt(2);
-      expect(lastDeleted.eventMarkers.single.waypointRelativePos, 0.25);
-      expect(lastDeleted.eventMarkers.single.endWaypointRelativePos, 1);
-      expect(lastDeleted.constraintZones.single.minWaypointRelativePos, 0.5);
-      expect(lastDeleted.constraintZones.single.maxWaypointRelativePos, 1);
-      expect(lastDeleted.pointTowardsZones.single.minWaypointRelativePos, 0.75);
-      expect(lastDeleted.pointTowardsZones.single.maxWaypointRelativePos, 1);
-    });
-
-    test('deleting down to one waypoint collapses all annotation positions',
-        () {
-      final path = path2.Path(
-        name: 'collapse',
-        waypoints: [
-          TranslationWaypoint(position: const Translation2d(0, 0)),
-          TranslationWaypoint(position: const Translation2d(2, 0)),
-        ],
-        eventMarkers: [
-          EventMarker(
-            waypointRelativePos: 0.25,
-            endWaypointRelativePos: 0.75,
-          ),
-        ],
-        constraintZones: [
-          ConstraintsZone(
-            minWaypointRelativePos: 0.1,
-            maxWaypointRelativePos: 0.9,
-          ),
-        ],
-        pointTowardsZones: [
-          PointTowardsZone(
-            minWaypointRelativePos: 0.2,
-            maxWaypointRelativePos: 0.8,
-          ),
-        ],
-        fs: fs,
-        pathDir: pathsDir,
-      );
-
-      path.removeWaypointAt(1);
-
-      expect(path.waypoints, hasLength(1));
-      expect(path.eventMarkers.single.waypointRelativePos, 0);
-      expect(path.eventMarkers.single.endWaypointRelativePos, 0);
-      expect(path.constraintZones.single.minWaypointRelativePos, 0);
-      expect(path.constraintZones.single.maxWaypointRelativePos, 0);
-      expect(path.pointTowardsZones.single.minWaypointRelativePos, 0);
-      expect(path.pointTowardsZones.single.maxWaypointRelativePos, 0);
       expect(
         () => path2.Path.fromJson(
-          jsonDecode(jsonEncode(path.toJson())),
-          path.name,
-          pathsDir,
+          {
+            ...base,
+            'branches': [duplicateIdBranch],
+          },
+          'Bad',
+          '/paths',
           fs,
         ),
-        returnsNormally,
+        throwsFormatException,
       );
     });
 
-    test('annotation snapshots restore deep clones and empty commands warn',
-        () {
-      final path = path2.Path(
-        name: 'snapshot',
-        waypoints: [
-          TranslationWaypoint(position: const Translation2d(0, 0)),
-        ],
-        eventMarkers: [
-          EventMarker(
-            name: 'event',
-            command: SequentialCommandGroup(
-              commands: [NamedCommand()],
-            ),
-          ),
-        ],
-        constraintZones: [ConstraintsZone()],
-        pointTowardsZones: [
-          PointTowardsZone(
-            minWaypointRelativePos: 0,
-            maxWaypointRelativePos: 0,
-          ),
-        ],
-        fs: fs,
-        pathDir: pathsDir,
+    test('rejects malformed and unknown numeric/type payloads', () {
+      final base = validJson();
+
+      Map<String, dynamic> changedNode(
+          void Function(Map<String, dynamic>) change) {
+        final copied = jsonDecode(jsonEncode(base)) as Map<String, dynamic>;
+        change((copied['nodes'] as List).first as Map<String, dynamic>);
+        return copied;
+      }
+
+      expect(
+        () => path2.Path.fromJson(
+          changedNode((node) => node['editorPosition'] = {'x': 'bad', 'y': 0}),
+          'Bad',
+          '/paths',
+          fs,
+        ),
+        throwsFormatException,
       );
-      final snapshot = path.snapshotAnnotations();
+      expect(
+        () => path2.Path.fromJson(
+          changedNode((node) => node['endTolerance'] = {
+                'distanceMeters': -1,
+                'angleDegrees': 2,
+              }),
+          'Bad',
+          '/paths',
+          fs,
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => path2.Path.fromJson(
+          changedNode((node) =>
+              (node['waypoint'] as Map<String, dynamic>)['maxVelocity'] = -1),
+          'Bad',
+          '/paths',
+          fs,
+        ),
+        throwsFormatException,
+      );
 
-      expect(path.hasEmptyNamedCommand(), isTrue);
-      path.eventMarkers.single.name = 'changed';
-      path.constraintZones.single.constraints.maxVelocity = 99;
-      path.pointTowardsZones.clear();
-      path.restoreAnnotations(snapshot);
-
-      expect(path.eventMarkers.single.name, 'event');
-      expect(path.constraintZones.single.constraints.maxVelocity,
-          Waypoint.defaultMaxVelocity);
-      expect(path.pointTowardsZones, hasLength(1));
-      expect(identical(path.eventMarkers, snapshot.eventMarkers), isFalse);
-      path.eventMarkers.single.name = 'changed again';
-      expect(snapshot.eventMarkers.single.name, 'event');
+      final unknown = jsonDecode(jsonEncode(base)) as Map<String, dynamic>;
+      ((unknown['branches'] as List).first
+          as Map<String, dynamic>)['transition'] = {'type': 'mystery'};
+      expect(
+        () => path2.Path.fromJson(unknown, 'Bad', '/paths', fs),
+        throwsFormatException,
+      );
     });
 
-    test('duplicate deeply clones waypoints, annotations and path settings',
-        () {
-      final original = path2.Path(
-        name: 'original',
-        waypoints: [
-          PoseWaypoint(
-              position: const Translation2d(1, 2),
-              rotation: Rotation2d.fromDegrees(45)),
-        ],
-        eventMarkers: [EventMarker(name: 'event')],
-        constraintZones: [ConstraintsZone()],
-        pointTowardsZones: [
-          PointTowardsZone(
-            minWaypointRelativePos: 0,
-            maxWaypointRelativePos: 0,
-          ),
-        ],
-        endToleranceMeters: 0.3,
-        endAngleToleranceDegrees: 4,
-        folder: 'Folder',
-        sourceVersion: '2028.0',
-        fs: fs,
-        pathDir: pathsDir,
+    test('rejects 2027.0 without migration and accepts future versions', () {
+      final base = validJson();
+      expect(
+        () => path2.Path.fromJson(
+          {...base, 'version': '2027.0'},
+          'Legacy',
+          '/paths',
+          fs,
+        ),
+        throwsFormatException,
       );
-
-      final duplicate = original.duplicate('copy');
-      duplicate.waypoints.first.move(9, 10);
-      duplicate.eventMarkers.first.name = 'changed';
-      duplicate.constraintZones.first.constraints.maxVelocity = 99;
-      duplicate.pointTowardsZones.first.fieldPosition =
-          const Translation2d(8, 9);
-
-      expect(duplicate.name, 'copy');
-      expect(duplicate.waypoints.first, isA<PoseWaypoint>());
-      expect(identical(duplicate.waypoints.first, original.waypoints.first),
-          false);
-      expect(original.waypoints.first.position, const Translation2d(1, 2));
-      expect(original.eventMarkers.first.name, 'event');
-      expect(original.constraintZones.first.constraints.maxVelocity,
-          Waypoint.defaultMaxVelocity);
-      expect(original.pointTowardsZones.first.fieldPosition,
-          const Translation2d(0.4, 5.5));
-      expect(duplicate.endToleranceMeters, original.endToleranceMeters);
-      expect(duplicate.endAngleToleranceDegrees,
-          original.endAngleToleranceDegrees);
-      expect(duplicate.folder, original.folder);
-      expect(duplicate.sourceVersion, original.sourceVersion);
+      expect(
+        path2.Path.fromJson(
+          {...base, 'version': '2029.4.0'},
+          'Future',
+          '/paths',
+          fs,
+        ).version,
+        '2029.4.0',
+      );
     });
   });
 
-  group('Path2 file management', () {
-    test('save, rename and delete are synchronous', () {
-      final path = path2.Path.defaultPath(
-          name: 'test', pathDir: pathsDir, fs: fs, folder: 'Folder');
-      path.lastModified = DateTime.utc(2000);
+  group('path files', () {
+    test('save, rename, duplicate, and delete preserve folder behavior', () {
+      final graph = path(folder: 'Folder');
 
-      path.saveFile();
-
-      final originalFile = fs.file(p.join(pathsDir, 'test.path'));
-      expect(originalFile.existsSync(), true);
-      expect(path.lastModified.isAfter(DateTime.utc(2000)), true);
+      graph.saveFile();
+      expect(fs.file('/paths/Test.path').existsSync(), isTrue);
       expect(
-          const DeepCollectionEquality().equals(
-              jsonDecode(originalFile.readAsStringSync()), path.toJson()),
-          true);
-
-      path.renamePath('renamed');
-      expect(path.name, 'renamed');
-      expect(originalFile.existsSync(), false);
-      expect(fs.file(p.join(pathsDir, 'renamed.path')).existsSync(), true);
-
-      path.deletePath();
-      expect(fs.file(p.join(pathsDir, 'renamed.path')).existsSync(), false);
-    });
-
-    test('loader gates versions, isolates failures, and rewrites no files',
-        () async {
-      String validFile(String version) => jsonEncode({
-            'version': version,
-            'waypoints': [
-              {
-                'type': 'translation',
-                'position': {'x': 1, 'y': 2},
-              }
-            ],
-            'folder': 'Loaded',
-          });
-
-      final contents = <String, String>{
-        'current.path': validFile('2027.0'),
-        'future.path': validFile('2028.1.0-beta.1'),
-        'old.path': validFile('2026.9.9'),
-        'prerelease.path': validFile('2027.0-alpha.1'),
-        'missing.path': jsonEncode({
-          'waypoints': [
-            {
-              'type': 'translation',
-              'position': {'x': 1, 'y': 2},
-            }
-          ]
-        }),
-        'malformed.path': validFile('not-a-version'),
-        'corrupt.path': '{bad json',
-        'empty.path': jsonEncode({
-          'version': '2027.0',
-          'waypoints': [],
-        }),
-      };
-
-      for (final entry in contents.entries) {
-        fs.file(p.join(pathsDir, entry.key)).writeAsStringSync(entry.value);
-      }
-
-      final loaded = await path2.Path.loadAllPathsInDir(pathsDir, fs);
-
-      loaded.sort((a, b) => a.name.compareTo(b.name));
-      expect(loaded.map((path) => path.name), ['current', 'future']);
-      expect(loaded.first.sourceVersion, '2027.0');
-      expect(loaded.last.sourceVersion, '2028.1.0-beta.1');
-      expect(loaded.first.folder, 'Loaded');
-
-      for (final entry in contents.entries) {
-        expect(fs.file(p.join(pathsDir, entry.key)).readAsStringSync(),
-            entry.value,
-            reason: '${entry.key} was unexpectedly rewritten');
-      }
-    });
-
-    test('saving a loaded future path preserves its source version', () async {
-      final file = fs.file(p.join(pathsDir, 'future.path'));
-      file.writeAsStringSync(jsonEncode({
-        'version': '2030.2.0',
-        'waypoints': [
-          {
-            'type': 'pose',
-            'position': {'x': 1, 'y': 2},
-            'rotation': {'value': 0.5},
-          }
-        ],
-      }));
-
-      final loaded = await path2.Path.loadAllPathsInDir(pathsDir, fs);
-      loaded.single.saveFile();
-
-      expect(jsonDecode(file.readAsStringSync())['version'], '2030.2.0');
-    });
-
-    test('old stored marker colors are ignored and removed when saved',
-        () async {
-      final file = fs.file(p.join(pathsDir, 'marker.path'));
-      file.writeAsStringSync(jsonEncode({
-        'version': path2.fileVersion,
-        'waypoints': [
-          {
-            'type': 'translation',
-            'position': {'x': 1, 'y': 2},
-          }
-        ],
-        'eventMarkers': [
-          {
-            'name': 'legacy marker',
-            'waypointRelativePos': 0,
-          },
-          {
-            'name': 'old generated marker',
-            'waypointRelativePos': 0,
-            'color': 0xFF123456,
-          },
-        ],
-      }));
-
-      final loaded = await path2.Path.loadAllPathsInDir(pathsDir, fs);
-      loaded.single.saveFile();
-      final persisted = jsonDecode(file.readAsStringSync()) as Map;
-
-      expect(
-        (persisted['eventMarkers'] as List)
-            .every((marker) => !marker.containsKey('color')),
-        isTrue,
+        (jsonDecode(fs.file('/paths/Test.path').readAsStringSync())
+            as Map<String, dynamic>)['folder'],
+        'Folder',
       );
+
+      graph.renamePath('Renamed');
+      expect(fs.file('/paths/Test.path').existsSync(), isFalse);
+      expect(fs.file('/paths/Renamed.path').existsSync(), isTrue);
+      expect(graph.duplicate('Copy').folder, 'Folder');
+
+      graph.deletePath();
+      expect(fs.file('/paths/Renamed.path').existsSync(), isFalse);
     });
 
-    test('missing directory loads as an empty list', () async {
-      expect(
-          await path2.Path.loadAllPathsInDir('/does-not-exist', fs), isEmpty);
+    test('loading rejects legacy files without rewriting them', () async {
+      const legacy = '{"version":"2027.0","waypoints":[],"folder":"untouched"}';
+      fs.file('/paths/Legacy.path')
+        ..createSync(recursive: true)
+        ..writeAsStringSync(legacy);
+
+      final loaded = await path2.Path.loadAllPathsInDir('/paths', fs);
+
+      expect(loaded, isEmpty);
+      expect(fs.file('/paths/Legacy.path').readAsStringSync(), legacy);
+    });
+
+    test('loading retains accepted future version and does not rewrite',
+        () async {
+      final future = path(sourceVersion: '2030.1.0');
+      final source =
+          const JsonEncoder.withIndent('  ').convert(future.toJson());
+      fs.file('/paths/Future.path')
+        ..createSync(recursive: true)
+        ..writeAsStringSync(source);
+
+      final loaded = await path2.Path.loadAllPathsInDir('/paths', fs);
+
+      expect(loaded.single.version, '2030.1.0');
+      expect(fs.file('/paths/Future.path').readAsStringSync(), source);
     });
   });
 }

@@ -6,11 +6,15 @@ import 'package:pathplanner/util/path_painter_util.dart';
 
 class MiniPathsPreview extends StatelessWidget {
   final List<List<Translation2d>> paths;
+  final List<Translation2d>? startPoints;
+  final List<Translation2d>? endPoints;
   final FieldImage fieldImage;
 
   const MiniPathsPreview({
     super.key,
     required this.paths,
+    this.startPoints,
+    this.endPoints,
     required this.fieldImage,
   });
 
@@ -22,6 +26,8 @@ class MiniPathsPreview extends StatelessWidget {
         Positioned.fill(
           child: PathPreviewPainter(
             paths: paths,
+            startPoints: startPoints,
+            endPoints: endPoints,
             fieldImage: fieldImage,
           ),
         ),
@@ -33,11 +39,15 @@ class MiniPathsPreview extends StatelessWidget {
 @visibleForTesting
 class PathPreviewPainter extends StatelessWidget {
   final List<List<Translation2d>> paths;
+  final List<Translation2d>? startPoints;
+  final List<Translation2d>? endPoints;
   final FieldImage fieldImage;
 
   const PathPreviewPainter({
     super.key,
     required this.paths,
+    this.startPoints,
+    this.endPoints,
     required this.fieldImage,
   });
 
@@ -46,6 +56,8 @@ class PathPreviewPainter extends StatelessWidget {
     return CustomPaint(
       painter: _Painter(
         paths: paths,
+        startPoints: startPoints,
+        endPoints: endPoints,
         fieldImage: fieldImage,
         colorScheme: Theme.of(context).colorScheme,
       ),
@@ -55,11 +67,15 @@ class PathPreviewPainter extends StatelessWidget {
 
 class _Painter extends CustomPainter {
   final List<List<Translation2d>> paths;
+  final List<Translation2d>? startPoints;
+  final List<Translation2d>? endPoints;
   final FieldImage fieldImage;
   final ColorScheme colorScheme;
 
   const _Painter({
     required this.paths,
+    this.startPoints,
+    this.endPoints,
     required this.fieldImage,
     required this.colorScheme,
   });
@@ -71,16 +87,35 @@ class _Painter extends CustomPainter {
     for (List<Translation2d> path in paths) {
       if (path.isNotEmpty) {
         _paintPathPoints(canvas, scale, colorScheme.secondary, path);
-        _paintWaypoint(canvas, scale, path.first, Colors.green);
-        _paintWaypoint(canvas, scale, path.last, Colors.red);
       }
+    }
+
+    final starts = startPoints ??
+        [
+          for (final path in paths)
+            if (path.isNotEmpty) path.first
+        ];
+    final ends = endPoints ??
+        [
+          for (final path in paths)
+            if (path.isNotEmpty) path.last
+        ];
+    for (final start in starts) {
+      _paintWaypoint(canvas, scale, start, Colors.green);
+    }
+    for (final end in ends) {
+      _paintWaypoint(canvas, scale, end, Colors.red);
     }
   }
 
   @override
   bool shouldRepaint(_Painter oldDelegate) {
     return oldDelegate.fieldImage != fieldImage ||
-        !(const DeepCollectionEquality()).equals(oldDelegate.paths, paths);
+        !(const DeepCollectionEquality()).equals(oldDelegate.paths, paths) ||
+        !(const DeepCollectionEquality())
+            .equals(oldDelegate.startPoints, startPoints) ||
+        !(const DeepCollectionEquality())
+            .equals(oldDelegate.endPoints, endPoints);
   }
 
   void _paintPathPoints(Canvas canvas, double scale, Color baseColor,

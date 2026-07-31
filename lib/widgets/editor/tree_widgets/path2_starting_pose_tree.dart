@@ -7,7 +7,7 @@ import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
-/// Edits the field-relative pose where a Path2 auto begins simulation.
+/// Edits the field-relative pose where a Path 2 auto begins.
 class Path2StartingPoseTree extends StatelessWidget {
   final Path2Auto auto;
   final VoidCallback? onAutoChanged;

@@ -1,0 +1,105 @@
+{
+  "version": "2027.1",
+  "nodes": [
+    {
+      "id": "cd104cad-daa3-40cb-b5d2-7aa0ba0258ce",
+      "waypoint": {
+        "type": "pose",
+        "position": {
+          "x": 2.0,
+          "y": 7.0
+        },
+        "maxVelocity": 4.0,
+        "maxAngularVelocity": 360.0,
+        "maxAngularAcceleration": 720.0,
+        "rotation": {
+          "value": 0
+        }
+      },
+      "editorPosition": {
+        "x": 100.0,
+        "y": 80.0
+      },
+      "endTolerance": {
+        "distanceMeters": 0.1,
+        "angleDegrees": 2.0
+      }
+    },
+    {
+      "id": "1a331c64-e800-478e-9884-2c63bb5639d9",
+      "waypoint": {
+        "type": "pose",
+        "position": {
+          "x": 4.992978975044743,
+          "y": 5.091209389047378
+        },
+        "maxVelocity": 4.0,
+        "maxAngularVelocity": 360.0,
+        "maxAngularAcceleration": 720.0,
+        "rotation": {
+          "value": 0
+        }
+      },
+      "editorPosition": {
+        "x": -60.87110269562396,
+        "y": 678.2494879472529
+      },
+      "endTolerance": {
+        "distanceMeters": 0.1,
+        "angleDegrees": 2.0
+      }
+    },
+    {
+      "id": "fd8973b2-9c9b-440d-8724-33ec73bbccf7",
+      "waypoint": {
+        "type": "translation",
+        "position": {
+          "x": 3.6785901691624128,
+          "y": 7.272960600876493
+        },
+        "maxVelocity": 4.0,
+        "maxAngularVelocity": 360.0,
+        "maxAngularAcceleration": 720.0
+      },
+      "editorPosition": {
+        "x": 329.21651465753575,
+        "y": 418.0653074675076
+      },
+      "endTolerance": {
+        "distanceMeters": 0.1,
+        "angleDegrees": 2.0
+      }
+    }
+  ],
+  "branches": [
+    {
+      "id": "2cc1a121-f15a-416a-95e5-c97528ca02d4",
+      "sourceId": "cd104cad-daa3-40cb-b5d2-7aa0ba0258ce",
+      "targetId": "1a331c64-e800-478e-9884-2c63bb5639d9",
+      "transition": {
+        "type": "distance",
+        "distanceMeters": 0.25
+      }
+    },
+    {
+      "id": "68541c79-0d94-4612-9fc4-e63fd0dd75c4",
+      "sourceId": "cd104cad-daa3-40cb-b5d2-7aa0ba0258ce",
+      "targetId": "fd8973b2-9c9b-440d-8724-33ec73bbccf7",
+      "transition": {
+        "type": "condition",
+        "conditionName": "test",
+        "previewDistanceMeters": 0.25
+      }
+    },
+    {
+      "id": "22bf26da-1daf-4ee4-823f-f9f55be782d1",
+      "sourceId": "fd8973b2-9c9b-440d-8724-33ec73bbccf7",
+      "targetId": "1a331c64-e800-478e-9884-2c63bb5639d9",
+      "transition": {
+        "type": "distance",
+        "distanceMeters": 0.25
+      }
+    }
+  ],
+  "folder": null
+}

@@ -1,0 +1,95 @@
+{
+  "version": "2027.1",
+  "nodes": [
+    {
+      "id": "d49e6a08-f741-4077-91ad-b734474a13e6",
+      "waypoint": {
+        "type": "pose",
+        "position": {
+          "x": 6.660307245575222,
+          "y": 4.2888109789823
+        },
+        "maxVelocity": 4.0,
+        "maxAngularVelocity": 360.0,
+        "maxAngularAcceleration": 720.0,
+        "rotation": {
+          "value": 0
+        }
+      },
+      "editorPosition": {
+        "x": 100.0,
+        "y": 80.0
+      },
+      "endTolerance": {
+        "distanceMeters": 0.1,
+        "angleDegrees": 2.0
+      }
+    },
+    {
+      "id": "0e41e45c-9b0f-419b-8e81-b59854e71194",
+      "waypoint": {
+        "type": "pose",
+        "position": {
+          "x": 6.2868061393805315,
+          "y": 1.390781941371681
+        },
+        "maxVelocity": 4.0,
+        "maxAngularVelocity": 360.0,
+        "maxAngularAcceleration": 720.0,
+        "rotation": {
+          "value": 0
+        }
+      },
+      "editorPosition": {
+        "x": 100.0,
+        "y": 600.0
+      },
+      "endTolerance": {
+        "distanceMeters": 0.1,
+        "angleDegrees": 2.0
+      }
+    },
+    {
+      "id": "0d064a34-ac59-4adf-b12b-ea298bbfd3fd",
+      "waypoint": {
+        "type": "translation",
+        "position": {
+          "x": 8.134060149336284,
+          "y": 2.4449524336283184
+        },
+        "maxVelocity": 4.0,
+        "maxAngularVelocity": 360.0,
+        "maxAngularAcceleration": 720.0
+      },
+      "editorPosition": {
+        "x": 99.97261161008123,
+        "y": 345.863557745967
+      },
+      "endTolerance": {
+        "distanceMeters": 0.1,
+        "angleDegrees": 2.0
+      }
+    }
+  ],
+  "branches": [
+    {
+      "id": "dfe76065-4556-4495-997c-0f8445629a34",
+      "sourceId": "d49e6a08-f741-4077-91ad-b734474a13e6",
+      "targetId": "0d064a34-ac59-4adf-b12b-ea298bbfd3fd",
+      "transition": {
+        "type": "distance",
+        "distanceMeters": 0.25
+      }
+    },
+    {
+      "id": "086ac0d8-91e8-4886-a2ef-dc9742e2d11c",
+      "sourceId": "0d064a34-ac59-4adf-b12b-ea298bbfd3fd",
+      "targetId": "0e41e45c-9b0f-419b-8e81-b59854e71194",
+      "transition": {
+        "type": "distance",
+        "distanceMeters": 0.25
+      }
+    }
+  ],
+  "folder": null
+}

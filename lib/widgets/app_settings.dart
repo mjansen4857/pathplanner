@@ -41,7 +41,6 @@ class _AppSettingsState extends State<AppSettings> {
   late num _defaultMaxAngVel;
   late num _defaultMaxAngAccel;
   late num _defaultNominalVoltage;
-  late bool _hotReload;
   late FieldImage _selectedField;
   late Color _teamColor;
   late String _pplibClientHost;
@@ -66,8 +65,6 @@ class _AppSettingsState extends State<AppSettings> {
     // compatibility preference normalized because robot-side settings readers
     // still expect the key to be present.
     widget.prefs.setBool(PrefsKeys.holonomicMode, true);
-    _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
-        Defaults.hotReloadEnabled;
     _selectedField = widget.selectedField;
     _teamColor =
         Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
@@ -77,8 +74,6 @@ class _AppSettingsState extends State<AppSettings> {
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -239,33 +234,6 @@ class _AppSettingsState extends State<AppSettings> {
                       _pplibClientHost,
                       null,
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Additional Options:'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilterChip.elevated(
-                    label: const Text('Hot Reload'),
-                    selected: _hotReload,
-                    backgroundColor: colorScheme.surfaceContainerHigh,
-                    onSelected: (value) {
-                      widget.prefs.setBool(PrefsKeys.hotReloadEnabled, value);
-                      setState(() {
-                        _hotReload = value;
-                      });
-                      widget.onSettingsChanged();
-                    },
                   ),
                 ],
               ),

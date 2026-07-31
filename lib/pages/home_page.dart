@@ -14,6 +14,7 @@ import 'package:pathplanner/pages/telemetry_page.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/services/project_condition_registry.dart';
 import 'package:pathplanner/services/project_event_registry.dart';
 import 'package:pathplanner/services/update_checker.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -63,7 +64,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   static const _settingsDir = 'settings.json';
   int _selectedPage = 0;
   final PageController _pageController = PageController();
-  late bool _hotReload;
 
   FileSystem get fs => widget.fs;
 
@@ -128,9 +128,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
 
       setState(() {
-        _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
-            Defaults.hotReloadEnabled;
-
         String? selectedFieldName =
             widget.prefs.getString(PrefsKeys.fieldImage);
         if (selectedFieldName != null) {
@@ -431,8 +428,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   pathplannerDirectory: _pathplannerDir,
                   fs: fs,
                   undoStack: widget.undoStack,
-                  telemetry: widget.telemetry,
-                  hotReload: _hotReload,
                   onFoldersChanged: () =>
                       _saveProjectSettingsToFile(_projectDir!),
                 ),
@@ -492,11 +487,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         widget.telemetry.setServerAddress(serverAddress);
       }
     }
-
-    setState(() {
-      _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
-          Defaults.hotReloadEnabled;
-    });
   }
 
   Future<void> _loadProjectSettingsFromFile(Directory projectDir) async {
@@ -726,6 +716,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Clear event names
     if (projectDir != _projectDir?.path) {
       ProjectEventRegistry.clear();
+      ProjectConditionRegistry.clear();
     }
 
     setState(() {

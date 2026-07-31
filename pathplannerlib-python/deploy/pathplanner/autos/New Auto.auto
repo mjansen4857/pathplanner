@@ -1,0 +1,42 @@
+{
+  "version": "2027.1",
+  "nodes": [
+    {
+      "id": "8d299ac6-cad7-4e4f-906b-a9509ce61b18",
+      "type": "path",
+      "pathName": "Example Path",
+      "editorPosition": {
+        "x": 164.92578125,
+        "y": 48.93359375
+      }
+    },
+    {
+      "id": "49e2dfc1-7059-434b-a849-7abc3dd859d3",
+      "type": "path",
+      "pathName": "New Path",
+      "editorPosition": {
+        "x": 165.19223020805362,
+        "y": 381.1429079939918
+      }
+    }
+  ],
+  "branches": [
+    {
+      "id": "e9c6f52c-a980-4e52-bb84-101f911390ca",
+      "sourceId": "8d299ac6-cad7-4e4f-906b-a9509ce61b18",
+      "targetId": "49e2dfc1-7059-434b-a849-7abc3dd859d3",
+      "transition": {
+        "type": "finished"
+      }
+    }
+  ],
+  "startingPose": {
+    "position": {
+      "x": 0.6700063907398905,
+      "y": 7.160497616038604
+    },
+    "rotation": 0
+  },
+  "startingPoseInitialized": true,
+  "folder": null
+}

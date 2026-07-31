@@ -11,6 +11,8 @@ class ProjectItemCard extends StatefulWidget {
   final String name;
   final FieldImage fieldImage;
   final List<List<Translation2d>> paths;
+  final List<Translation2d>? startPoints;
+  final List<Translation2d>? endPoints;
   final VoidCallback onOpened;
   final VoidCallback? onDuplicated;
   final VoidCallback? onDeleted;
@@ -25,6 +27,8 @@ class ProjectItemCard extends StatefulWidget {
     required this.name,
     required this.fieldImage,
     required this.paths,
+    this.startPoints,
+    this.endPoints,
     required this.onOpened,
     this.onDuplicated,
     this.onDeleted,
@@ -163,6 +167,8 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                               children: [
                                 MiniPathsPreview(
                                   paths: widget.paths,
+                                  startPoints: widget.startPoints,
+                                  endPoints: widget.endPoints,
                                   fieldImage: widget.fieldImage,
                                 ),
                                 Positioned.fill(

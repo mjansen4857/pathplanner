@@ -3,16 +3,16 @@ import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:path/path.dart' as p;
-import 'package:pathplanner/commands/command.dart';
-import 'package:pathplanner/commands/command_groups.dart';
-import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/pages/path2_auto_editor_page.dart';
 import 'package:pathplanner/pages/path2_editor_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
+import 'package:pathplanner/path2/graph.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
 import 'package:pathplanner/path2/pathplanner_auto.dart';
-import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/services/project_condition_registry.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/widgets/dialogs/project_conditions_dialog.dart';
 import 'package:pathplanner/widgets/dialogs/project_events_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
@@ -29,8 +29,6 @@ class Path2ProjectPage extends StatefulWidget {
   final FileSystem fs;
   final ChangeStack undoStack;
   final bool shortcuts;
-  final PPLibTelemetry? telemetry;
-  final bool hotReload;
   final VoidCallback? onFoldersChanged;
 
   const Path2ProjectPage({
@@ -41,8 +39,6 @@ class Path2ProjectPage extends StatefulWidget {
     required this.fs,
     required this.undoStack,
     this.shortcuts = true,
-    this.telemetry,
-    this.hotReload = false,
     this.onFoldersChanged,
   });
 
@@ -138,15 +134,16 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
         path.folder = null;
       }
     }
-    final pathNames = paths.map((path) => path.name).toList();
     for (final auto in autos) {
       if (!_autoFolders.contains(auto.folder)) {
         auto.folder = null;
       }
-      // Do not save here. Missing references are persisted only after a user
-      // edit, preserving files that reference rejected pre-2027 paths.
-      auto.handleMissingPaths(pathNames);
     }
+
+    ProjectConditionRegistry.rebuild([
+      for (final path in paths) ...path.getAllConditionNames(),
+      for (final auto in autos) ...auto.getAllConditionNames(),
+    ]);
 
     if (reservedPaths.isEmpty) {
       final example = path2.Path.defaultPath(
@@ -225,12 +222,27 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
           alignment: Alignment.bottomRight,
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: FloatingActionButton(
-              tooltip: 'Manage Events',
-              backgroundColor: colorScheme.surface,
-              foregroundColor: colorScheme.onSurface,
-              onPressed: _showEventsDialog,
-              child: const Icon(Icons.edit_note_rounded),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'manageEvents',
+                  tooltip: 'Manage Events',
+                  backgroundColor: colorScheme.surface,
+                  foregroundColor: colorScheme.onSurface,
+                  onPressed: _showEventsDialog,
+                  child: const Icon(Icons.edit_note_rounded),
+                ),
+                const SizedBox(width: 8),
+                FloatingActionButton(
+                  heroTag: 'manageConditions',
+                  tooltip: 'Manage Conditions',
+                  backgroundColor: colorScheme.surface,
+                  foregroundColor: colorScheme.onSurface,
+                  onPressed: _showConditionsDialog,
+                  child: const Icon(Icons.question_mark_rounded),
+                ),
+              ],
             ),
           ),
         ),
@@ -593,14 +605,19 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
   }
 
   Widget _buildPathCard(path2.Path path, BuildContext context) {
+    final diagnostics = path.diagnostics;
     final card = ProjectItemCard(
       name: path.name,
       compact: _pathsCompact,
       fieldImage: widget.fieldImage,
-      paths: [path.pathPositions],
-      warningMessage: path.hasEmptyNamedCommand()
-          ? 'Contains a NamedCommand that does not have a command selected'
-          : null,
+      paths: _pathSegments(path),
+      startPoints: [
+        for (final node in path.rootNodes) node.waypoint.position,
+      ],
+      endPoints: [
+        for (final node in path.leafNodes) node.waypoint.position,
+      ],
+      warningMessage: _diagnosticMessage(diagnostics),
       onOpened: () => _openPath(path),
       onDuplicated: () {
         final name = _uniqueName('Copy of ${path.name}', _reservedPathNames,
@@ -613,12 +630,14 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
         });
       },
       onDeleted: () {
+        final deletedName = path.name;
         path.deletePath();
         setState(() {
           _paths.remove(path);
-          _reservedPathNames.remove(path.name);
+          _reservedPathNames.remove(deletedName);
         });
-        _handleMissingPathReferences();
+        _clearPathReferences({deletedName});
+        _rebuildConditionRegistry();
       },
       onRenamed: (name) => _renamePath(path, name, context),
     );
@@ -626,23 +645,28 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
   }
 
   Widget _buildAutoCard(Path2Auto auto, BuildContext context) {
-    String? warning;
-    if (auto.hasEmptyPathCommands()) {
-      warning =
-          'Contains a FollowPathCommand that does not have a path selected';
-    } else if (auto.hasEmptyNamedCommand()) {
-      warning = 'Contains a NamedCommand that does not have a command selected';
-    }
+    final diagnostics = auto.getDiagnostics(paths: _paths);
 
     final card = ProjectItemCard(
       name: auto.name,
       compact: _autosCompact,
       fieldImage: widget.fieldImage,
       paths: [
-        for (final path in _pathsForNames(auto.getAllPathNames()))
-          path.pathPositions,
+        for (final node in auto.nodes.whereType<PathAutoNode>())
+          if (_pathForAutoNode(node) case final path2.Path path)
+            ..._pathSegments(path),
       ],
-      warningMessage: warning,
+      startPoints: [
+        for (final node in auto.rootNodes.whereType<PathAutoNode>())
+          if (_pathForAutoNode(node) case final path2.Path path)
+            for (final root in path.rootNodes) root.waypoint.position,
+      ],
+      endPoints: [
+        for (final node in auto.leafNodes.whereType<PathAutoNode>())
+          if (_pathForAutoNode(node) case final path2.Path path)
+            for (final leaf in path.leafNodes) leaf.waypoint.position,
+      ],
+      warningMessage: _diagnosticMessage(diagnostics),
       onOpened: () => _openAuto(auto),
       onDuplicated: () {
         final name = _uniqueName('Copy of ${auto.name}', _reservedAutoNames,
@@ -660,6 +684,7 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
           _autos.remove(auto);
           _reservedAutoNames.remove(auto.name);
         });
+        _rebuildConditionRegistry();
       },
       onRenamed: (name) => _renameAuto(auto, name, context),
     );
@@ -736,13 +761,15 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
           undoStack: widget.undoStack,
           onRenamed: (name) => _renamePath(path, name, context),
           shortcuts: widget.shortcuts,
-          telemetry: widget.telemetry,
-          hotReload: widget.hotReload,
-          onPathChanged: () => setState(() {}),
+          onPathChanged: () {
+            _rebuildConditionRegistry();
+            setState(() {});
+          },
         ),
       ),
     );
     if (mounted) setState(_sortPaths);
+    _rebuildConditionRegistry();
   }
 
   Future<void> _openAuto(Path2Auto auto) async {
@@ -758,24 +785,31 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
           undoStack: widget.undoStack,
           onRenamed: (name) => _renameAuto(auto, name, context),
           shortcuts: widget.shortcuts,
-          telemetry: widget.telemetry,
-          hotReload: widget.hotReload,
+          onAutoChanged: () {
+            _rebuildConditionRegistry();
+            setState(() {});
+          },
         ),
       ),
     );
     if (!mounted) return;
     setState(_sortAutos);
+    _rebuildConditionRegistry();
     final path = _paths.firstWhereOrNull((path) => path.name == pathName);
     if (path != null) await _openPath(path);
   }
 
-  List<path2.Path> _pathsForNames(List<String> names) {
-    final paths = <path2.Path>[];
-    for (final name in names) {
-      final path = _paths.firstWhereOrNull((path) => path.name == name);
-      if (path != null) paths.add(path);
-    }
-    return paths;
+  path2.Path? _pathForAutoNode(PathAutoNode node) {
+    return _paths.firstWhereOrNull((path) => path.name == node.pathName);
+  }
+
+  List<List<Translation2d>> _pathSegments(path2.Path path) {
+    return [
+      for (final branch in path.branches)
+        if (path.nodeById(branch.sourceId) case final path2.PathNode source)
+          if (path.nodeById(branch.targetId) case final path2.PathNode target)
+            [source.waypoint.position, target.waypoint.position],
+    ];
   }
 
   void _renamePath(path2.Path path, String newName, BuildContext context) {
@@ -836,10 +870,19 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
     );
   }
 
-  void _handleMissingPathReferences() {
-    final names = _paths.map((path) => path.name).toList();
+  void _clearPathReferences(Iterable<String> deletedPathNames) {
+    final deleted = deletedPathNames.toSet();
     for (final auto in _autos) {
-      auto.handleMissingPaths(names);
+      var changed = false;
+      for (final node in auto.nodes.whereType<PathAutoNode>()) {
+        if (node.pathName != null && deleted.contains(node.pathName)) {
+          node.pathName = null;
+          changed = true;
+        }
+      }
+      if (changed) {
+        auto.saveFile();
+      }
     }
     setState(() {});
   }
@@ -909,6 +952,7 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
     final folder = _pathFolder;
     if (folder == null || !await _confirmDeleteFolder(folder, true)) return;
     final paths = _paths.where((path) => path.folder == folder).toList();
+    final deletedNames = {for (final path in paths) path.name};
     for (final path in paths) {
       path.deletePath();
       _reservedPathNames.remove(path.name);
@@ -918,7 +962,8 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
       _pathFolders.remove(folder);
       _pathFolder = null;
     });
-    _handleMissingPathReferences();
+    _clearPathReferences(deletedNames);
+    _rebuildConditionRegistry();
     _saveFolders();
   }
 
@@ -935,6 +980,7 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
       _autoFolders.remove(folder);
       _autoFolder = null;
     });
+    _rebuildConditionRegistry();
     _saveFolders();
   }
 
@@ -1017,65 +1063,76 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
     showDialog<void>(
       context: context,
       builder: (context) => ProjectEventsDialog(
-        onEventRenamed: (oldName, newName) {
-          for (final path in _paths) {
-            if (_replacePathEvent(path, oldName, newName)) {
-              path.saveFile();
-            }
-          }
-          for (final auto in _autos) {
-            if (_replaceNamedCommand(oldName, newName, auto.sequence)) {
-              auto.saveFile();
-            }
-          }
-          setState(() {});
+        onEventRenamed: (_, __) => setState(() {}),
+        onEventDeleted: (_) => setState(() {}),
+      ),
+    );
+  }
+
+  void _showConditionsDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => ProjectConditionsDialog(
+        onConditionRenamed: (oldName, newName) {
+          _replaceConditionName(oldName, newName);
         },
-        onEventDeleted: (name) {
-          for (final path in _paths) {
-            if (_replacePathEvent(path, name, null)) {
-              path.saveFile();
-            }
-          }
-          for (final auto in _autos) {
-            if (_replaceNamedCommand(name, null, auto.sequence)) {
-              auto.saveFile();
-            }
-          }
-          setState(() {});
+        onConditionDeleted: (name) {
+          _replaceConditionName(name, null);
         },
       ),
     );
   }
 
-  bool _replacePathEvent(
-      path2.Path path, String originalName, String? newName) {
-    var changed = false;
-    for (final marker in path.eventMarkers) {
-      if (marker.name == originalName) {
-        marker.name = newName ?? '';
-        changed = true;
+  void _replaceConditionName(String oldName, String? newName) {
+    for (final path in _paths) {
+      var changed = false;
+      for (final branch in path.branches) {
+        final transition = branch.transition;
+        if (transition is ConditionTransition &&
+            transition.conditionName == oldName) {
+          transition.conditionName = newName;
+          changed = true;
+        }
       }
-      final command = marker.command;
-      if (command != null) {
-        changed =
-            _replaceNamedCommand(originalName, newName, command) || changed;
+      if (changed) {
+        path.saveFile();
       }
     }
-    return changed;
+
+    for (final auto in _autos) {
+      var changed = false;
+      for (final branch in auto.branches) {
+        final transition = branch.transition;
+        if (transition is ConditionTransition &&
+            transition.conditionName == oldName) {
+          transition.conditionName = newName;
+          changed = true;
+        }
+      }
+      if (changed) {
+        auto.saveFile();
+      }
+    }
+
+    _rebuildConditionRegistry();
+    setState(() {});
   }
 
-  bool _replaceNamedCommand(
-      String originalName, String? newName, Command command) {
-    var changed = false;
-    if (command is NamedCommand && command.name == originalName) {
-      command.name = newName;
-      changed = true;
-    }
-    if (command is CommandGroup) {
-      for (final child in command.commands) {
-        changed = _replaceNamedCommand(originalName, newName, child) || changed;
-      }
-    }
-    return changed;
+  void _rebuildConditionRegistry() {
+    ProjectConditionRegistry.rebuild([
+      for (final path in _paths)
+        for (final branch in path.branches)
+          if (branch.transition is ConditionTransition)
+            (branch.transition as ConditionTransition).conditionName,
+      for (final auto in _autos)
+        for (final branch in auto.branches)
+          if (branch.transition is ConditionTransition)
+            (branch.transition as ConditionTransition).conditionName,
+    ]);
+  }
+
+  String? _diagnosticMessage(GraphDiagnostics diagnostics) {
+    final messages = [...diagnostics.hardErrors, ...diagnostics.warnings];
+    return messages.isEmpty ? null : messages.join('\n');
   }
 }

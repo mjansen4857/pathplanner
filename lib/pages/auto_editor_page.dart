@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -53,14 +53,19 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
     List<PathPlannerPath> autoPaths = widget.auto.choreoAuto
         ? []
         : autoPathNames
-            .map((name) =>
-                widget.allPaths.firstWhere((path) => path.name == name))
-            .toList();
+              .map(
+                (name) =>
+                    widget.allPaths.firstWhere((path) => path.name == name),
+              )
+              .toList();
     List<ChoreoPath> autoChoreoPaths = widget.auto.choreoAuto
         ? autoPathNames
-            .map((name) =>
-                widget.allChoreoPaths.firstWhere((path) => path.name == name))
-            .toList()
+              .map(
+                (name) => widget.allChoreoPaths.firstWhere(
+                  (path) => path.name == name,
+                ),
+              )
+              .toList()
         : [];
 
     final editorWidget = SplitAutoEditor(

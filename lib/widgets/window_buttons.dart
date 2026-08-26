@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:window_manager/window_manager.dart';
 
 class WindowButton extends StatefulWidget {
@@ -62,45 +62,47 @@ class _WindowButtonState extends State<WindowButton> {
 
 class MinimizeWindowButton extends WindowButton {
   MinimizeWindowButton({super.key})
-      : super(
-          icon: Icons.minimize,
-          padding: const EdgeInsets.fromLTRB(8, 16, 8, 24),
-          onPressed: () {
-            windowManager.minimize();
-          },
-        );
+    : super(
+        icon: Icons.minimize,
+        padding: const EdgeInsets.fromLTRB(8, 16, 8, 24),
+        onPressed: () {
+          windowManager.minimize();
+        },
+      );
 }
 
 class MaximizeWindowButton extends WindowButton {
   MaximizeWindowButton({super.key})
-      : super(
-          icon: Icons.check_box_outline_blank,
-          padding: const EdgeInsets.fromLTRB(8, 20, 8, 20),
-          onPressed: () async {
-            if (await windowManager.isMaximized()) {
-              windowManager.unmaximize();
-            } else {
-              windowManager.maximize();
-            }
-          },
-        );
+    : super(
+        icon: Icons.check_box_outline_blank,
+        padding: const EdgeInsets.fromLTRB(8, 20, 8, 20),
+        onPressed: () async {
+          if (await windowManager.isMaximized()) {
+            windowManager.unmaximize();
+          } else {
+            windowManager.maximize();
+          }
+        },
+      );
 }
 
 class CloseWindowButton extends WindowButton {
   CloseWindowButton({super.key})
-      : super(
-          icon: Icons.close,
-          padding: const EdgeInsets.fromLTRB(8, 20, 8, 20),
-          hoverBackgroundColor: const Color(0xFFD32F2F),
-          pressedBackgroundColor: const Color(0xFFD32F2F),
-          onPressed: () {
-            windowManager.close();
-          },
-        );
+    : super(
+        icon: Icons.close,
+        padding: const EdgeInsets.fromLTRB(8, 20, 8, 20),
+        hoverBackgroundColor: const Color(0xFFD32F2F),
+        pressedBackgroundColor: const Color(0xFFD32F2F),
+        onPressed: () {
+          windowManager.close();
+        },
+      );
 }
 
 typedef MouseStateBuilderCB = Widget Function(
-    BuildContext context, MouseState mouseState);
+  BuildContext context,
+  MouseState mouseState,
+);
 
 class MouseState {
   bool isMouseOver = false;
@@ -131,39 +133,41 @@ class _MouseStateBuilderState extends State<MouseStateBuilder> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-        onEnter: (event) {
+      onEnter: (event) {
+        setState(() {
+          _mouseState.isMouseOver = true;
+        });
+      },
+      onExit: (event) {
+        setState(() {
+          _mouseState.isMouseOver = false;
+        });
+      },
+      child: GestureDetector(
+        onTapDown: (_) {
           setState(() {
-            _mouseState.isMouseOver = true;
+            _mouseState.isMouseDown = true;
           });
         },
-        onExit: (event) {
+        onTapCancel: () {
           setState(() {
+            _mouseState.isMouseDown = false;
+          });
+        },
+        onTap: () {
+          setState(() {
+            _mouseState.isMouseDown = false;
             _mouseState.isMouseOver = false;
           });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (widget.onPressed != null) {
+              widget.onPressed!();
+            }
+          });
         },
-        child: GestureDetector(
-            onTapDown: (_) {
-              setState(() {
-                _mouseState.isMouseDown = true;
-              });
-            },
-            onTapCancel: () {
-              setState(() {
-                _mouseState.isMouseDown = false;
-              });
-            },
-            onTap: () {
-              setState(() {
-                _mouseState.isMouseDown = false;
-                _mouseState.isMouseOver = false;
-              });
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (widget.onPressed != null) {
-                  widget.onPressed!();
-                }
-              });
-            },
-            onTapUp: (_) {},
-            child: widget.builder!(context, _mouseState)));
+        onTapUp: (_) {},
+        child: widget.builder!(context, _mouseState),
+      ),
+    );
   }
 }

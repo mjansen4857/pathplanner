@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/editor_settings_tree.dart';
@@ -16,13 +16,11 @@ void main() {
   });
 
   testWidgets('Editor Settings Tree checks', (widgetTester) async {
-    await widgetTester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: EditorSettingsTree(
-          initiallyExpanded: true,
-        ),
+    await widgetTester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: EditorSettingsTree(initiallyExpanded: true)),
       ),
-    ));
+    );
     await widgetTester.pump();
 
     // List of all settings to test
@@ -39,18 +37,12 @@ void main() {
       final prefKey = setting.$2;
 
       final row = find
-          .ancestor(
-            of: find.text(label),
-            matching: find.byType(Row),
-          )
+          .ancestor(of: find.text(label), matching: find.byType(Row))
           .first;
 
       expect(row, findsOneWidget);
 
-      final check = find.descendant(
-        of: row,
-        matching: find.byType(Checkbox),
-      );
+      final check = find.descendant(of: row, matching: find.byType(Checkbox));
 
       expect(check, findsOneWidget);
 

@@ -20,23 +20,20 @@ class RoundedRectFeature extends Feature {
   }) : super(type: 'rounded_rect');
 
   RoundedRectFeature.fromDataJson(Map<String, dynamic> dataJson, String name)
-      : this(
-          center: Translation2d.fromJson(dataJson['center']),
-          size: Size(dataJson['size']['width'], dataJson['size']['length']),
-          borderRadius: dataJson['borderRadius'],
-          strokeWidth: dataJson['strokeWidth'],
-          filled: dataJson['filled'],
-          name: name,
-        );
+    : this(
+        center: Translation2d.fromJson(dataJson['center']),
+        size: Size(dataJson['size']['width'], dataJson['size']['length']),
+        borderRadius: dataJson['borderRadius'],
+        strokeWidth: dataJson['strokeWidth'],
+        filled: dataJson['filled'],
+        name: name,
+      );
 
   @override
   Map<String, dynamic> dataToJson() {
     return {
       'center': center.toJson(),
-      'size': {
-        'width': size.width,
-        'length': size.height,
-      },
+      'size': {'width': size.width, 'length': size.height},
       'borderRadius': borderRadius,
       'strokeWidth': strokeWidth,
       'filled': filled,
@@ -50,19 +47,24 @@ class RoundedRectFeature extends Feature {
       ..strokeWidth = strokeWidth * pixelsPerMeter
       ..color = color;
 
-    Offset centerPixels =
-        Offset(center.x * pixelsPerMeter, -center.y * pixelsPerMeter);
+    Offset centerPixels = Offset(
+      center.x * pixelsPerMeter,
+      -center.y * pixelsPerMeter,
+    );
     Size sizePixels = size * pixelsPerMeter;
     double borderRadiusPixels = borderRadius * pixelsPerMeter;
 
     canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromCenter(
-                center: centerPixels,
-                width: sizePixels.height,
-                height: sizePixels.width),
-            Radius.circular(borderRadiusPixels)),
-        paint);
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: centerPixels,
+          width: sizePixels.height,
+          height: sizePixels.width,
+        ),
+        Radius.circular(borderRadiusPixels),
+      ),
+      paint,
+    );
   }
 
   @override

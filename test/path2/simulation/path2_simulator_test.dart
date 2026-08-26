@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path2/graph.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
@@ -163,8 +163,9 @@ void main() {
       transition: DistanceTransition(distanceMeters: 0.8),
     );
 
-    final traversals =
-        Path2Simulator.previewTraversals(graph([root, leaf], [near, far]));
+    final traversals = Path2Simulator.previewTraversals(
+      graph([root, leaf], [near, far]),
+    );
 
     expect(traversals, hasLength(2));
     expect(
@@ -173,53 +174,58 @@ void main() {
     );
   });
 
-  test('simulates all traversals from time zero and uses the longest duration',
-      () {
-    final short = Path2SimulationPathSnapshot(
-      name: 'short',
-      nodeIds: const ['one', 'two'],
-      branchIds: const ['short-branch'],
-      waypoints: [
-        simulationWaypoint(0, 0, handoffDistance: 0.25),
-        simulationWaypoint(1, 0, handoffDistance: 0),
-      ],
-      endToleranceMeters: 0.1,
-      endAngleToleranceRadians: math.pi / 90,
-    );
-    final long = Path2SimulationPathSnapshot(
-      name: 'long',
-      nodeIds: const ['one', 'three'],
-      branchIds: const ['long-branch'],
-      waypoints: [
-        simulationWaypoint(0, 0, handoffDistance: 0.25),
-        simulationWaypoint(3, 0, handoffDistance: 0),
-      ],
-      endToleranceMeters: 0.1,
-      endAngleToleranceRadians: math.pi / 90,
-    );
+  test(
+    'simulates all traversals from time zero and uses the longest duration',
+    () {
+      final short = Path2SimulationPathSnapshot(
+        name: 'short',
+        nodeIds: const ['one', 'two'],
+        branchIds: const ['short-branch'],
+        waypoints: [
+          simulationWaypoint(0, 0, handoffDistance: 0.25),
+          simulationWaypoint(1, 0, handoffDistance: 0),
+        ],
+        endToleranceMeters: 0.1,
+        endAngleToleranceRadians: math.pi / 90,
+      );
+      final long = Path2SimulationPathSnapshot(
+        name: 'long',
+        nodeIds: const ['one', 'three'],
+        branchIds: const ['long-branch'],
+        waypoints: [
+          simulationWaypoint(0, 0, handoffDistance: 0.25),
+          simulationWaypoint(3, 0, handoffDistance: 0),
+        ],
+        endToleranceMeters: 0.1,
+        endAngleToleranceRadians: math.pi / 90,
+      );
 
-    final outcome =
-        Path2Simulator.simulateTraversals([short, long], robotConfig);
+      final outcome = Path2Simulator.simulateTraversals([
+        short,
+        long,
+      ], robotConfig);
 
-    expect(outcome.failure, isNull);
-    expect(outcome.result!.traversals, hasLength(2));
-    expect(
-      outcome.result!.traversals
-          .map((traversal) => traversal.samples.first.timeSeconds),
-      everyElement(0),
-    );
-    expect(
-      outcome.result!.totalTimeSeconds,
-      outcome.result!.traversals
-          .map((traversal) => traversal.totalTimeSeconds)
-          .reduce(math.max),
-    );
-    expect(outcome.result!.runtimesByLeafNodeId.keys, {'two', 'three'});
-    expect(outcome.result!.runtimesByLeafNodeId['two'], hasLength(1));
-    expect(outcome.result!.runtimesByLeafNodeId['three'], hasLength(1));
-    final restored = Path2SimulationOutcome.fromMap(outcome.toMap());
-    expect(restored.result!.runtimesByLeafNodeId.keys, {'two', 'three'});
-  });
+      expect(outcome.failure, isNull);
+      expect(outcome.result!.traversals, hasLength(2));
+      expect(
+        outcome.result!.traversals.map(
+          (traversal) => traversal.samples.first.timeSeconds,
+        ),
+        everyElement(0),
+      );
+      expect(
+        outcome.result!.totalTimeSeconds,
+        outcome.result!.traversals
+            .map((traversal) => traversal.totalTimeSeconds)
+            .reduce(math.max),
+      );
+      expect(outcome.result!.runtimesByLeafNodeId.keys, {'two', 'three'});
+      expect(outcome.result!.runtimesByLeafNodeId['two'], hasLength(1));
+      expect(outcome.result!.runtimesByLeafNodeId['three'], hasLength(1));
+      final restored = Path2SimulationOutcome.fromMap(outcome.toMap());
+      expect(restored.result!.runtimesByLeafNodeId.keys, {'two', 'three'});
+    },
+  );
 }
 
 Path2SimulationWaypoint simulationWaypoint(

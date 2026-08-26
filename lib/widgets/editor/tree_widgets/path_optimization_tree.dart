@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/util/path_optimizer.dart';
@@ -80,7 +80,8 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
                   elevation: 4.0,
                   minimumSize: const Size(0, 56),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 onPressed: _running ? null : _runOptimization,
               ),
@@ -88,10 +89,7 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
             const SizedBox(width: 8),
             Expanded(
               child: ElevatedButton.icon(
-                icon: Icon(
-                  Icons.close,
-                  color: colorScheme.onErrorContainer,
-                ),
+                icon: Icon(Icons.close, color: colorScheme.onErrorContainer),
                 label: const Text('Discard'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.errorContainer,
@@ -99,7 +97,8 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
                   elevation: 4.0,
                   minimumSize: const Size(0, 56),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 onPressed: (_running || _currentResult == null)
                     ? null
@@ -120,7 +119,8 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
                   elevation: 4.0,
                   minimumSize: const Size(0, 56),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 onPressed: (_running || _currentResult == null)
                     ? null
@@ -187,29 +187,32 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
   void _acceptOptimization() {
     if (_currentResult == null) return;
 
-    final points =
-        PathPlannerPath.cloneWaypoints(_currentResult!.path.waypoints);
+    final points = PathPlannerPath.cloneWaypoints(
+      _currentResult!.path.waypoints,
+    );
 
-    widget.undoStack.add(Change(
-      PathPlannerPath.cloneWaypoints(widget.path.waypoints),
-      () {
-        setState(() {
-          _currentResult = null;
-        });
-        widget.onUpdate?.call(_currentResult?.path);
+    widget.undoStack.add(
+      Change(
+        PathPlannerPath.cloneWaypoints(widget.path.waypoints),
+        () {
+          setState(() {
+            _currentResult = null;
+          });
+          widget.onUpdate?.call(_currentResult?.path);
 
-        widget.path.waypoints = points;
-        widget.onPathChanged?.call();
-      },
-      (oldValue) {
-        setState(() {
-          _currentResult = null;
-        });
-        widget.onUpdate?.call(_currentResult?.path);
+          widget.path.waypoints = points;
+          widget.onPathChanged?.call();
+        },
+        (oldValue) {
+          setState(() {
+            _currentResult = null;
+          });
+          widget.onUpdate?.call(_currentResult?.path);
 
-        widget.path.waypoints = PathPlannerPath.cloneWaypoints(oldValue);
-        widget.onPathChanged?.call();
-      },
-    ));
+          widget.path.waypoints = PathPlannerPath.cloneWaypoints(oldValue);
+          widget.onPathChanged?.call();
+        },
+      ),
+    );
   }
 }

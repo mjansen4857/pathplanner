@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -20,14 +20,16 @@ void main() {
     when(updateChecker.isGuiUpdateAvailable(any))
         .thenAnswer((realInvocation) => Future.value(true));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: UpdateCard(
-          currentVersion: '2077.1.0',
-          updateChecker: updateChecker,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: UpdateCard(
+            currentVersion: '2077.1.0',
+            updateChecker: updateChecker,
+          ),
         ),
       ),
-    ));
+    );
 
     // Card initially hidden
     expect(find.text('PathPlanner update available!'), findsNothing);

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,55 +37,54 @@ class ErrorPopup extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                'Uncaught Error',
-                style: TextStyle(fontSize: 32),
-              ),
+              const Text('Uncaught Error', style: TextStyle(fontSize: 32)),
               const Divider(),
               const SizedBox(height: 24),
               SizedBox(
                 height: 40,
                 child: Center(
-                  child: Text(
-                    '$error',
-                    textAlign: TextAlign.center,
-                  ),
+                  child: Text('$error', textAlign: TextAlign.center),
                 ),
               ),
               const SizedBox(height: 24),
-              Builder(builder: (context) {
-                ColorScheme colorScheme = Theme.of(context).colorScheme;
-                return ElevatedButton.icon(
-                  icon: const Icon(Icons.copy),
-                  label: const Text('Copy Stack Trace'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.surface,
-                    surfaceTintColor: colorScheme.surfaceTint,
-                    foregroundColor: colorScheme.primary,
-                  ),
-                  onPressed: () => Clipboard.setData(
-                      ClipboardData(text: stackTrace.toString())),
-                );
-              }),
+              Builder(
+                builder: (context) {
+                  ColorScheme colorScheme = Theme.of(context).colorScheme;
+                  return ElevatedButton.icon(
+                    icon: const Icon(Icons.copy),
+                    label: const Text('Copy Stack Trace'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.surface,
+                      surfaceTintColor: colorScheme.surfaceTint,
+                      foregroundColor: colorScheme.primary,
+                    ),
+                    onPressed: () => Clipboard.setData(
+                      ClipboardData(text: stackTrace.toString()),
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 8),
-              Builder(builder: (context) {
-                ColorScheme colorScheme = Theme.of(context).colorScheme;
-                return ElevatedButton.icon(
-                  icon: const Icon(Icons.report),
-                  label: const Text('Report Issue'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.surface,
-                    surfaceTintColor: colorScheme.surfaceTint,
-                    foregroundColor: colorScheme.error,
-                  ),
-                  onPressed: () async {
-                    Uri url = Uri.parse(_reportURL);
-                    if (await canLaunchUrl(url)) {
-                      launchUrl(url);
-                    }
-                  },
-                );
-              }),
+              Builder(
+                builder: (context) {
+                  ColorScheme colorScheme = Theme.of(context).colorScheme;
+                  return ElevatedButton.icon(
+                    icon: const Icon(Icons.report),
+                    label: const Text('Report Issue'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.surface,
+                      surfaceTintColor: colorScheme.surfaceTint,
+                      foregroundColor: colorScheme.error,
+                    ),
+                    onPressed: () async {
+                      Uri url = Uri.parse(_reportURL);
+                      if (await canLaunchUrl(url)) {
+                        launchUrl(url);
+                      }
+                    },
+                  );
+                },
+              ),
             ],
           ),
         ),

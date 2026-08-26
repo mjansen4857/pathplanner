@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -7,17 +7,19 @@ void main() {
   testWidgets('enter text', (widgetTester) async {
     num? lastSubmit;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: NumberTextField(
-          initialValue: 0.0,
-          label: 'Test Label',
-          onSubmitted: (value) {
-            lastSubmit = value;
-          },
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NumberTextField(
+            initialValue: 0.0,
+            label: 'Test Label',
+            onSubmitted: (value) {
+              lastSubmit = value;
+            },
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.byType(TextField);
     expect(textField, findsOneWidget);
@@ -55,18 +57,20 @@ void main() {
   testWidgets('increment arrow key up', (widgetTester) async {
     num? lastSubmit;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: NumberTextField(
-          initialValue: 0.0,
-          label: 'Test Label',
-          arrowKeyIncrement: 1.0,
-          onSubmitted: (value) {
-            lastSubmit = value;
-          },
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NumberTextField(
+            initialValue: 0.0,
+            label: 'Test Label',
+            arrowKeyIncrement: 1.0,
+            onSubmitted: (value) {
+              lastSubmit = value;
+            },
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.byType(TextField);
     await widgetTester.tap(textField);
@@ -84,18 +88,20 @@ void main() {
   testWidgets('increment arrow key up partial', (widgetTester) async {
     num? lastSubmit;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: NumberTextField(
-          initialValue: 0.7,
-          label: 'Test Label',
-          arrowKeyIncrement: 1.0,
-          onSubmitted: (value) {
-            lastSubmit = value;
-          },
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NumberTextField(
+            initialValue: 0.7,
+            label: 'Test Label',
+            arrowKeyIncrement: 1.0,
+            onSubmitted: (value) {
+              lastSubmit = value;
+            },
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.byType(TextField);
     await widgetTester.tap(textField);
@@ -109,18 +115,20 @@ void main() {
 
     expect(lastSubmit, closeTo(1.0, 0.01));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: NumberTextField(
-          initialValue: 0.2,
-          label: 'Test Label',
-          arrowKeyIncrement: 1.0,
-          onSubmitted: (value) {
-            lastSubmit = value;
-          },
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NumberTextField(
+            initialValue: 0.2,
+            label: 'Test Label',
+            arrowKeyIncrement: 1.0,
+            onSubmitted: (value) {
+              lastSubmit = value;
+            },
+          ),
         ),
       ),
-    ));
+    );
 
     textField = find.byType(TextField);
     await widgetTester.tap(textField);
@@ -138,18 +146,20 @@ void main() {
   testWidgets('increment arrow key down', (widgetTester) async {
     num? lastSubmit;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: NumberTextField(
-          initialValue: 0.0,
-          label: 'Test Label',
-          arrowKeyIncrement: 1.0,
-          onSubmitted: (value) {
-            lastSubmit = value;
-          },
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NumberTextField(
+            initialValue: 0.0,
+            label: 'Test Label',
+            arrowKeyIncrement: 1.0,
+            onSubmitted: (value) {
+              lastSubmit = value;
+            },
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.byType(TextField);
     await widgetTester.tap(textField);
@@ -167,18 +177,20 @@ void main() {
   testWidgets('increment arrow key partial', (widgetTester) async {
     num? lastSubmit;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: NumberTextField(
-          initialValue: -0.2,
-          label: 'Test Label',
-          arrowKeyIncrement: 1.0,
-          onSubmitted: (value) {
-            lastSubmit = value;
-          },
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NumberTextField(
+            initialValue: -0.2,
+            label: 'Test Label',
+            arrowKeyIncrement: 1.0,
+            onSubmitted: (value) {
+              lastSubmit = value;
+            },
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.byType(TextField);
     await widgetTester.tap(textField);
@@ -192,18 +204,20 @@ void main() {
 
     expect(lastSubmit, closeTo(-1.0, 0.01));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: NumberTextField(
-          initialValue: -0.7,
-          label: 'Test Label',
-          arrowKeyIncrement: 1.0,
-          onSubmitted: (value) {
-            lastSubmit = value;
-          },
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NumberTextField(
+            initialValue: -0.7,
+            label: 'Test Label',
+            arrowKeyIncrement: 1.0,
+            onSubmitted: (value) {
+              lastSubmit = value;
+            },
+          ),
         ),
       ),
-    ));
+    );
 
     textField = find.byType(TextField);
     await widgetTester.tap(textField);

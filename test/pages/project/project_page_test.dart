@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
@@ -41,27 +41,30 @@ void main() {
     });
     prefs = await SharedPreferences.getInstance();
     fs = MemoryFileSystem(
-        style: Platform.isWindows
-            ? FileSystemStyle.windows
-            : FileSystemStyle.posix);
+      style: Platform.isWindows
+          ? FileSystemStyle.windows
+          : FileSystemStyle.posix,
+    );
   });
 
   testWidgets('initially loading', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.byType(ProjectItemCard), findsNothing);
@@ -70,25 +73,29 @@ void main() {
   testWidgets('loads empty project', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.byType(ProjectItemCard), findsOneWidget);
     expect(
-        find.widgetWithText(ProjectItemCard, 'Example Path'), findsOneWidget);
+      find.widgetWithText(ProjectItemCard, 'Example Path'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('loads populated project', (widgetTester) async {
@@ -132,19 +139,21 @@ void main() {
         .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
@@ -154,8 +163,9 @@ void main() {
     expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsOneWidget);
   });
 
-  testWidgets('loads populated project w/ bad file contents',
-      (widgetTester) async {
+  testWidgets('loads populated project w/ bad file contents', (
+    widgetTester,
+  ) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await fs.directory(join(deployPath, 'paths')).create(recursive: true);
@@ -194,19 +204,21 @@ void main() {
         .file(join(deployPath, 'autos', 'auto2.auto'))
         .writeAsString('{{invalid json..[]}.');
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
@@ -219,19 +231,21 @@ void main() {
 
   testWidgets('add new path', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final addButton = find.byTooltip('Add new path');
@@ -244,19 +258,21 @@ void main() {
 
   testWidgets('add new auto', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final addButton = find.byTooltip('Add new auto');
@@ -270,19 +286,21 @@ void main() {
   testWidgets('add new path button', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final addButton = find.byTooltip('Add new path');
@@ -300,7 +318,9 @@ void main() {
 
     expect(find.byType(ProjectItemCard), findsNWidgets(3));
     expect(
-        find.widgetWithText(ProjectItemCard, 'New New Path'), findsOneWidget);
+      find.widgetWithText(ProjectItemCard, 'New New Path'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('add new auto button w/ choreo', (widgetTester) async {
@@ -309,54 +329,58 @@ void main() {
     await fs.directory(join(deployPath, 'choreo')).create(recursive: true);
     await fs
         .file(join(deployPath, 'choreo', 'test.traj'))
-        .writeAsString(jsonEncode({
-          'trajectory': {
-            'samples': [
-              {
-                't': 0.0,
-                'x': 0.0,
-                'y': 0.0,
-                'heading': 0.0,
-                'vx': 0.0,
-                'vy': 0.0,
-                'omega': 0.0,
-              },
-              {
-                't': 0.5,
-                'x': 0.0,
-                'y': 0.0,
-                'heading': 0.0,
-                'vx': 0.0,
-                'vy': 0.0,
-                'omega': 0.0,
-              },
-              {
-                't': 1.0,
-                'x': 0.0,
-                'y': 0.0,
-                'heading': 0.0,
-                'vx': 0.0,
-                'vy': 0.0,
-                'omega': 0.0,
-              },
-            ],
-            'splits': [1],
-          },
-        }));
+        .writeAsString(
+          jsonEncode({
+            'trajectory': {
+              'samples': [
+                {
+                  't': 0.0,
+                  'x': 0.0,
+                  'y': 0.0,
+                  'heading': 0.0,
+                  'vx': 0.0,
+                  'vy': 0.0,
+                  'omega': 0.0,
+                },
+                {
+                  't': 0.5,
+                  'x': 0.0,
+                  'y': 0.0,
+                  'heading': 0.0,
+                  'vx': 0.0,
+                  'vy': 0.0,
+                  'omega': 0.0,
+                },
+                {
+                  't': 1.0,
+                  'x': 0.0,
+                  'y': 0.0,
+                  'heading': 0.0,
+                  'vx': 0.0,
+                  'vy': 0.0,
+                  'omega': 0.0,
+                },
+              ],
+              'splits': [1],
+            },
+          }),
+        );
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final addButton = find.byTooltip('Add new auto');
@@ -376,19 +400,21 @@ void main() {
   testWidgets('add new auto button', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final addButton = find.byTooltip('Add new auto');
@@ -406,25 +432,29 @@ void main() {
 
     expect(find.byType(ProjectItemCard), findsNWidgets(3));
     expect(
-        find.widgetWithText(ProjectItemCard, 'New New Auto'), findsOneWidget);
+      find.widgetWithText(ProjectItemCard, 'New New Auto'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('add new auto button', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final addButton = find.byTooltip('Add new auto');
@@ -442,30 +472,35 @@ void main() {
 
     expect(find.byType(ProjectItemCard), findsNWidgets(3));
     expect(
-        find.widgetWithText(ProjectItemCard, 'New New Auto'), findsOneWidget);
+      find.widgetWithText(ProjectItemCard, 'New New Auto'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('duplicate path', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final menuButton = find.descendant(
-        of: find.widgetWithText(ProjectItemCard, 'Example Path'),
-        matching: find.byType(PopupMenuButton<String>));
+      of: find.widgetWithText(ProjectItemCard, 'Example Path'),
+      matching: find.byType(PopupMenuButton<String>),
+    );
 
     expect(menuButton, findsOneWidget);
 
@@ -475,8 +510,10 @@ void main() {
     await widgetTester.tap(find.text('Duplicate'));
     await widgetTester.pumpAndSettle();
 
-    expect(find.widgetWithText(ProjectItemCard, 'Copy of Example Path'),
-        findsOneWidget);
+    expect(
+      find.widgetWithText(ProjectItemCard, 'Copy of Example Path'),
+      findsOneWidget,
+    );
 
     await widgetTester.tap(menuButton);
     await widgetTester.pumpAndSettle();
@@ -484,8 +521,10 @@ void main() {
     await widgetTester.tap(find.text('Duplicate'));
     await widgetTester.pumpAndSettle();
 
-    expect(find.widgetWithText(ProjectItemCard, 'Copy of Copy of Example Path'),
-        findsOneWidget);
+    expect(
+      find.widgetWithText(ProjectItemCard, 'Copy of Copy of Example Path'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('duplicate auto', (widgetTester) async {
@@ -511,24 +550,27 @@ void main() {
         .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final menuButton = find.descendant(
-        of: find.widgetWithText(ProjectItemCard, 'auto1'),
-        matching: find.byType(PopupMenuButton<String>));
+      of: find.widgetWithText(ProjectItemCard, 'auto1'),
+      matching: find.byType(PopupMenuButton<String>),
+    );
 
     expect(menuButton, findsOneWidget);
 
@@ -539,7 +581,9 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(
-        find.widgetWithText(ProjectItemCard, 'Copy of auto1'), findsOneWidget);
+      find.widgetWithText(ProjectItemCard, 'Copy of auto1'),
+      findsOneWidget,
+    );
 
     await widgetTester.tap(menuButton);
     await widgetTester.pumpAndSettle();
@@ -547,31 +591,36 @@ void main() {
     await widgetTester.tap(find.text('Duplicate'));
     await widgetTester.pumpAndSettle();
 
-    expect(find.widgetWithText(ProjectItemCard, 'Copy of Copy of auto1'),
-        findsOneWidget);
+    expect(
+      find.widgetWithText(ProjectItemCard, 'Copy of Copy of auto1'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('delete path', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final menuButton = find.descendant(
-        of: find.widgetWithText(ProjectItemCard, 'Example Path'),
-        matching: find.byType(PopupMenuButton<String>));
+      of: find.widgetWithText(ProjectItemCard, 'Example Path'),
+      matching: find.byType(PopupMenuButton<String>),
+    );
 
     expect(menuButton, findsOneWidget);
 
@@ -611,24 +660,27 @@ void main() {
         .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final menuButton = find.descendant(
-        of: find.widgetWithText(ProjectItemCard, 'auto1'),
-        matching: find.byType(PopupMenuButton<String>));
+      of: find.widgetWithText(ProjectItemCard, 'auto1'),
+      matching: find.byType(PopupMenuButton<String>),
+    );
 
     expect(menuButton, findsOneWidget);
 
@@ -666,9 +718,7 @@ void main() {
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       sequence: SequentialCommandGroup(
-        commands: [
-          PathCommand(pathName: 'path1'),
-        ],
+        commands: [PathCommand(pathName: 'path1')],
       ),
       resetOdom: true,
       folder: null,
@@ -685,19 +735,21 @@ void main() {
         .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     await widgetTester.enterText(find.text('path1'), 'path2');
@@ -741,19 +793,21 @@ void main() {
         .file(join(deployPath, 'autos', 'auto2.auto'))
         .writeAsString(jsonEncode(auto2.toJson()));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     await widgetTester.enterText(find.text('auto1'), 'auto2');
@@ -789,19 +843,21 @@ void main() {
         .file(join(deployPath, 'paths', 'path1.path'))
         .writeAsString(jsonEncode(path1.toJson()));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     await widgetTester.tap(find.widgetWithText(ProjectItemCard, 'path1'));
@@ -810,7 +866,9 @@ void main() {
     expect(find.byType(SplitPathEditor), findsOneWidget);
 
     final nameField = find.descendant(
-        of: find.byType(CustomAppBar), matching: find.text('path1'));
+      of: find.byType(CustomAppBar),
+      matching: find.text('path1'),
+    );
     expect(nameField, findsOneWidget);
 
     await widgetTester.enterText(nameField, 'path2');
@@ -839,19 +897,21 @@ void main() {
         .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     await widgetTester.tap(find.widgetWithText(ProjectItemCard, 'auto1'));
@@ -860,7 +920,9 @@ void main() {
     expect(find.byType(SplitAutoEditor), findsOneWidget);
 
     final nameField = find.descendant(
-        of: find.byType(CustomAppBar), matching: find.text('auto1'));
+      of: find.byType(CustomAppBar),
+      matching: find.text('auto1'),
+    );
     expect(nameField, findsOneWidget);
 
     await widgetTester.enterText(nameField, 'auto2');
@@ -879,41 +941,45 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     await widgetTester.dragFrom(
-        widgetTester.getCenter(find.byType(ProjectPage)),
-        const Offset(-200, 0));
+      widgetTester.getCenter(find.byType(ProjectPage)),
+      const Offset(-200, 0),
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 
     expect(prefs.getDouble(PrefsKeys.projectLeftWeight), closeTo(0.35, 0.01));
 
     await widgetTester.dragFrom(
-        widgetTester.getCenter(find.byType(ProjectPage)) +
-            const Offset(-200, 0),
-        const Offset(400, 0));
+      widgetTester.getCenter(find.byType(ProjectPage)) + const Offset(-200, 0),
+      const Offset(400, 0),
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 
     expect(prefs.getDouble(PrefsKeys.projectLeftWeight), closeTo(0.65, 0.01));
 
     await widgetTester.dragFrom(
-        widgetTester.getCenter(find.byType(ProjectPage)) + const Offset(200, 0),
-        const Offset(-200, 0));
+      widgetTester.getCenter(find.byType(ProjectPage)) + const Offset(200, 0),
+      const Offset(-200, 0),
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 
@@ -925,25 +991,31 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     expect(
-        find.widgetWithText(DragTarget<PathPlannerPath>, 'p'), findsOneWidget);
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'p'),
+      findsOneWidget,
+    );
     expect(
-        find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'), findsOneWidget);
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('open path folder', (widgetTester) async {
@@ -951,35 +1023,45 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'p'),
+    );
     await widgetTester.pump();
     expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'), findsNothing);
-    expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'),
-        findsOneWidget);
+    expect(
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'),
+      findsOneWidget,
+    );
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'),
+    );
     await widgetTester.pump();
     expect(
-        find.widgetWithText(DragTarget<PathPlannerPath>, 'p'), findsOneWidget);
-    expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'),
-        findsNothing);
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'p'),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'),
+      findsNothing,
+    );
   });
 
   testWidgets('open auto folder', (widgetTester) async {
@@ -987,35 +1069,45 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'),
+    );
     await widgetTester.pump();
     expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'), findsNothing);
-    expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'),
-        findsOneWidget);
+    expect(
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'),
+      findsOneWidget,
+    );
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'),
+    );
     await widgetTester.pump();
     expect(
-        find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'), findsOneWidget);
-    expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'),
-        findsNothing);
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'),
+      findsNothing,
+    );
   });
 
   testWidgets('drag to path folder', (widgetTester) async {
@@ -1023,25 +1115,29 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
-    var pathOffset = widgetTester
-        .getCenter(find.widgetWithText(ProjectItemCard, 'Example Path'));
-    var folderOffset = widgetTester
-        .getCenter(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'));
+    var pathOffset = widgetTester.getCenter(
+      find.widgetWithText(ProjectItemCard, 'Example Path'),
+    );
+    var folderOffset = widgetTester.getCenter(
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'p'),
+    );
     var dragOffset = folderOffset - pathOffset;
 
     await widgetTester.dragFrom(pathOffset, dragOffset);
@@ -1049,24 +1145,30 @@ void main() {
 
     expect(find.widgetWithText(ProjectItemCard, 'Example Path'), findsNothing);
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'p'),
+    );
     await widgetTester.pump();
 
     expect(
-        find.widgetWithText(ProjectItemCard, 'Example Path'), findsOneWidget);
+      find.widgetWithText(ProjectItemCard, 'Example Path'),
+      findsOneWidget,
+    );
 
     await widgetTester.dragFrom(pathOffset, dragOffset);
     await widgetTester.pump();
 
     expect(find.widgetWithText(ProjectItemCard, 'Example Path'), findsNothing);
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'),
+    );
     await widgetTester.pump();
 
     expect(
-        find.widgetWithText(ProjectItemCard, 'Example Path'), findsOneWidget);
+      find.widgetWithText(ProjectItemCard, 'Example Path'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('drag to auto folder', (widgetTester) async {
@@ -1095,25 +1197,29 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
-    var pathOffset =
-        widgetTester.getCenter(find.widgetWithText(ProjectItemCard, 'auto1'));
-    var folderOffset = widgetTester
-        .getCenter(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'));
+    var pathOffset = widgetTester.getCenter(
+      find.widgetWithText(ProjectItemCard, 'auto1'),
+    );
+    var folderOffset = widgetTester.getCenter(
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'),
+    );
     var dragOffset = folderOffset - pathOffset;
 
     await widgetTester.dragFrom(pathOffset, dragOffset);
@@ -1121,8 +1227,9 @@ void main() {
 
     expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsNothing);
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'),
+    );
     await widgetTester.pump();
 
     expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsOneWidget);
@@ -1132,8 +1239,9 @@ void main() {
 
     expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsNothing);
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'),
+    );
     await widgetTester.pump();
 
     expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsOneWidget);
@@ -1142,28 +1250,32 @@ void main() {
   testWidgets('add path folder', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     // Find the specific 'Add new folder' button for paths
     final addFolderButton = find
-        .byWidgetPredicate((widget) =>
-            widget is IconButton &&
-            widget.tooltip == 'Add new folder' &&
-            widget.icon is Icon &&
-            (widget.icon as Icon).icon == Icons.create_new_folder_outlined)
+        .byWidgetPredicate(
+          (widget) =>
+              widget is IconButton &&
+              widget.tooltip == 'Add new folder' &&
+              widget.icon is Icon &&
+              (widget.icon as Icon).icon == Icons.create_new_folder_outlined,
+        )
         .first;
 
     expect(addFolderButton, findsOneWidget);
@@ -1177,28 +1289,32 @@ void main() {
   testWidgets('add auto folder', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     // Find the specific 'Add new folder' button for autos
     final addAutoFolderButton = find
-        .byWidgetPredicate((widget) =>
-            widget is IconButton &&
-            widget.tooltip == 'Add new folder' &&
-            widget.icon is Icon &&
-            (widget.icon as Icon).icon == Icons.create_new_folder_outlined)
+        .byWidgetPredicate(
+          (widget) =>
+              widget is IconButton &&
+              widget.tooltip == 'Add new folder' &&
+              widget.icon is Icon &&
+              (widget.icon as Icon).icon == Icons.create_new_folder_outlined,
+        )
         .last; // Assuming the auto folder button is the second (last) one
 
     expect(addAutoFolderButton, findsOneWidget);
@@ -1227,23 +1343,26 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'p'),
+    );
     await widgetTester.pump();
 
     expect(find.byTooltip('Delete path folder'), findsOneWidget);
@@ -1286,56 +1405,60 @@ void main() {
         .writeAsString(jsonEncode(path1.toJson()));
     await fs
         .file(join(deployPath, 'choreo', 'test.traj'))
-        .writeAsString(jsonEncode({
-          'trajectory': {
-            'samples': [
-              {
-                't': 0.0,
-                'x': 0.0,
-                'y': 0.0,
-                'heading': 0.0,
-                'vx': 0.0,
-                'vy': 0.0,
-                'omega': 0.0,
-              },
-              {
-                't': 0.5,
-                'x': 0.0,
-                'y': 0.0,
-                'heading': 0.0,
-                'vx': 0.0,
-                'vy': 0.0,
-                'omega': 0.0,
-              },
-              {
-                't': 1.0,
-                'x': 0.0,
-                'y': 0.0,
-                'heading': 0.0,
-                'vx': 0.0,
-                'vy': 0.0,
-                'omega': 0.0,
-              },
-            ],
-            'splits': [1],
-          },
-        }));
+        .writeAsString(
+          jsonEncode({
+            'trajectory': {
+              'samples': [
+                {
+                  't': 0.0,
+                  'x': 0.0,
+                  'y': 0.0,
+                  'heading': 0.0,
+                  'vx': 0.0,
+                  'vy': 0.0,
+                  'omega': 0.0,
+                },
+                {
+                  't': 0.5,
+                  'x': 0.0,
+                  'y': 0.0,
+                  'heading': 0.0,
+                  'vx': 0.0,
+                  'vy': 0.0,
+                  'omega': 0.0,
+                },
+                {
+                  't': 1.0,
+                  'x': 0.0,
+                  'y': 0.0,
+                  'heading': 0.0,
+                  'vx': 0.0,
+                  'vy': 0.0,
+                  'omega': 0.0,
+                },
+              ],
+              'splits': [1],
+            },
+          }),
+        );
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final folder = find.text('Choreo Paths');
@@ -1372,23 +1495,26 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'),
+    );
     await widgetTester.pump();
 
     expect(find.byTooltip('Delete auto folder'), findsOneWidget);
@@ -1433,19 +1559,21 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     await widgetTester.enterText(find.text('p'), 'r');
@@ -1454,16 +1582,20 @@ void main() {
 
     expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'), findsNothing);
     expect(
-        find.widgetWithText(DragTarget<PathPlannerPath>, 'r'), findsOneWidget);
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'r'),
+      findsOneWidget,
+    );
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'r'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'r'),
+    );
     await widgetTester.pump();
 
     expect(find.widgetWithText(ProjectItemCard, 'path1'), findsOneWidget);
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'),
+    );
     await widgetTester.pump();
 
     await widgetTester.enterText(find.text('other'), 'r');
@@ -1493,19 +1625,21 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     await widgetTester.enterText(find.text('a'), 'r');
@@ -1514,16 +1648,20 @@ void main() {
 
     expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'), findsNothing);
     expect(
-        find.widgetWithText(DragTarget<PathPlannerAuto>, 'r'), findsOneWidget);
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'r'),
+      findsOneWidget,
+    );
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'r'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'r'),
+    );
     await widgetTester.pump();
 
     expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsOneWidget);
 
-    await widgetTester
-        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'));
+    await widgetTester.tap(
+      find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'),
+    );
     await widgetTester.pump();
 
     await widgetTester.enterText(find.text('other'), 'r');
@@ -1551,11 +1689,7 @@ void main() {
         name: 'test1',
         command: SequentialCommandGroup(
           commands: [
-            ParallelCommandGroup(
-              commands: [
-                NamedCommand(name: 'test1'),
-              ],
-            ),
+            ParallelCommandGroup(commands: [NamedCommand(name: 'test1')]),
           ],
         ),
       ),
@@ -1569,19 +1703,21 @@ void main() {
     auto.sequence.commands.add(NamedCommand(name: 'test1'));
     auto.saveFile();
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final fab = find.byType(FloatingActionButton);
@@ -1592,15 +1728,18 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     final renameBtn = find.descendant(
-        of: find.widgetWithText(ListTile, 'test1'),
-        matching: find.byTooltip('Rename event'));
+      of: find.widgetWithText(ListTile, 'test1'),
+      matching: find.byTooltip('Rename event'),
+    );
     expect(renameBtn, findsOneWidget);
 
     await widgetTester.tap(renameBtn);
     await widgetTester.pumpAndSettle();
 
     final textField = find.descendant(
-        of: find.byType(AlertDialog), matching: find.byType(TextField));
+      of: find.byType(AlertDialog),
+      matching: find.byType(TextField),
+    );
 
     await widgetTester.enterText(textField, 'test1renamed');
     await widgetTester.pump();
@@ -1628,19 +1767,21 @@ void main() {
     path.waypoints[0].linkedName = 'link1';
     path.generateAndSavePath();
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final fab = find.byType(FloatingActionButton);
@@ -1654,15 +1795,18 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     final renameBtn = find.descendant(
-        of: find.widgetWithText(ListTile, 'link1'),
-        matching: find.byTooltip('Rename linked waypoint'));
+      of: find.widgetWithText(ListTile, 'link1'),
+      matching: find.byTooltip('Rename linked waypoint'),
+    );
     expect(renameBtn, findsOneWidget);
 
     await widgetTester.tap(renameBtn);
     await widgetTester.pumpAndSettle();
 
     final textField = find.descendant(
-        of: find.byType(AlertDialog), matching: find.byType(TextField));
+      of: find.byType(AlertDialog),
+      matching: find.byType(TextField),
+    );
 
     await widgetTester.enterText(textField, 'link1renamed');
     await widgetTester.pump();
@@ -1691,11 +1835,7 @@ void main() {
         name: 'test1',
         command: SequentialCommandGroup(
           commands: [
-            ParallelCommandGroup(
-              commands: [
-                NamedCommand(name: 'test1'),
-              ],
-            ),
+            ParallelCommandGroup(commands: [NamedCommand(name: 'test1')]),
           ],
         ),
       ),
@@ -1709,19 +1849,21 @@ void main() {
     auto.sequence.commands.add(NamedCommand(name: 'test1'));
     auto.saveFile();
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final fab = find.byType(FloatingActionButton);
@@ -1732,8 +1874,9 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     final removeBtn = find.descendant(
-        of: find.widgetWithText(ListTile, 'test1'),
-        matching: find.byTooltip('Remove event'));
+      of: find.widgetWithText(ListTile, 'test1'),
+      matching: find.byTooltip('Remove event'),
+    );
     expect(removeBtn, findsOneWidget);
 
     await widgetTester.tap(removeBtn);
@@ -1761,19 +1904,21 @@ void main() {
     path.waypoints[0].linkedName = 'link1';
     path.generateAndSavePath();
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     final fab = find.byType(FloatingActionButton);
@@ -1787,8 +1932,9 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     final removeBtn = find.descendant(
-        of: find.widgetWithText(ListTile, 'link1'),
-        matching: find.byTooltip('Remove linked waypoint'));
+      of: find.widgetWithText(ListTile, 'link1'),
+      matching: find.byTooltip('Remove linked waypoint'),
+    );
     expect(removeBtn, findsOneWidget);
 
     await widgetTester.tap(removeBtn);
@@ -1841,19 +1987,21 @@ void main() {
         .file(join(deployPath, 'autos', 'Another Auto.auto'))
         .writeAsString(jsonEncode(auto2.toJson()));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectPage(
-          prefs: prefs,
-          fieldImage: FieldImage.defaultField,
-          pathplannerDirectory: fs.directory(deployPath),
-          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
-          fs: fs,
-          undoStack: ChangeStack(),
-          shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectPage(
+            prefs: prefs,
+            fieldImage: FieldImage.defaultField,
+            pathplannerDirectory: fs.directory(deployPath),
+            choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+            fs: fs,
+            undoStack: ChangeStack(),
+            shortcuts: false,
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.pumpAndSettle();
 

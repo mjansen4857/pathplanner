@@ -26,9 +26,9 @@ class Path2SimulationPathSnapshot {
     required List<Path2SimulationWaypoint> waypoints,
     required this.endToleranceMeters,
     required this.endAngleToleranceRadians,
-  })  : nodeIds = List.unmodifiable(nodeIds),
-        branchIds = List.unmodifiable(branchIds),
-        waypoints = List.unmodifiable(waypoints);
+  }) : nodeIds = List.unmodifiable(nodeIds),
+       branchIds = List.unmodifiable(branchIds),
+       waypoints = List.unmodifiable(waypoints);
 
   factory Path2SimulationPathSnapshot.fromMap(Map<String, dynamic> map) {
     return Path2SimulationPathSnapshot(
@@ -43,21 +43,21 @@ class Path2SimulationPathSnapshot {
           )
           .toList(growable: false),
       endToleranceMeters: (map['endToleranceMeters'] as num).toDouble(),
-      endAngleToleranceRadians:
-          (map['endAngleToleranceRadians'] as num).toDouble(),
+      endAngleToleranceRadians: (map['endAngleToleranceRadians'] as num)
+          .toDouble(),
     );
   }
 
   Map<String, dynamic> toMap() => {
-        'name': name,
-        'nodeIds': nodeIds,
-        'branchIds': branchIds,
-        'waypoints': waypoints
-            .map((waypoint) => waypoint.toMap())
-            .toList(growable: false),
-        'endToleranceMeters': endToleranceMeters,
-        'endAngleToleranceRadians': endAngleToleranceRadians,
-      };
+    'name': name,
+    'nodeIds': nodeIds,
+    'branchIds': branchIds,
+    'waypoints': waypoints
+        .map((waypoint) => waypoint.toMap())
+        .toList(growable: false),
+    'endToleranceMeters': endToleranceMeters,
+    'endAngleToleranceRadians': endAngleToleranceRadians,
+  };
 }
 
 /// A simulated traversal paired with the graph IDs that produced it.
@@ -65,10 +65,7 @@ class Path2SimulatedTraversal {
   final Path2SimulationPathSnapshot path;
   final Path2SimulationResult simulation;
 
-  const Path2SimulatedTraversal({
-    required this.path,
-    required this.simulation,
-  });
+  const Path2SimulatedTraversal({required this.path, required this.simulation});
 
   factory Path2SimulatedTraversal.fromMap(Map<String, dynamic> map) {
     return Path2SimulatedTraversal(
@@ -84,9 +81,9 @@ class Path2SimulatedTraversal {
   String get leafNodeId => path.nodeIds.last;
 
   Map<String, dynamic> toMap() => {
-        'path': path.toMap(),
-        'simulation': simulation.toMap(),
-      };
+    'path': path.toMap(),
+    'simulation': simulation.toMap(),
+  };
 }
 
 /// All simulations that begin together for a Path 2 graph.
@@ -112,8 +109,8 @@ class Path2GraphSimulationResult {
   }
 
   List<Path2SimulationResult> get traversals => List.unmodifiable(
-        simulatedTraversals.map((traversal) => traversal.simulation),
-      );
+    simulatedTraversals.map((traversal) => traversal.simulation),
+  );
 
   Map<String, List<double>> get runtimesByLeafNodeId {
     final runtimes = <String, List<double>>{};
@@ -129,16 +126,16 @@ class Path2GraphSimulationResult {
   }
 
   double get totalTimeSeconds => simulatedTraversals.fold(
-        0.0,
-        (longest, traversal) =>
-            math.max(longest, traversal.simulation.totalTimeSeconds),
-      );
+    0.0,
+    (longest, traversal) =>
+        math.max(longest, traversal.simulation.totalTimeSeconds),
+  );
 
   Map<String, dynamic> toMap() => {
-        'traversals': simulatedTraversals
-            .map((result) => result.toMap())
-            .toList(growable: false),
-      };
+    'traversals': simulatedTraversals
+        .map((result) => result.toMap())
+        .toList(growable: false),
+  };
 }
 
 /// A non-throwing result envelope suitable for a Flutter isolate boundary.
@@ -149,10 +146,10 @@ class Path2SimulationOutcome {
   const Path2SimulationOutcome._({this.result, this.failure});
 
   const Path2SimulationOutcome.success(Path2GraphSimulationResult result)
-      : this._(result: result);
+    : this._(result: result);
 
   const Path2SimulationOutcome.failed(Path2SimulationFailure failure)
-      : this._(failure: failure);
+    : this._(failure: failure);
 
   factory Path2SimulationOutcome.fromMap(Map<String, dynamic> map) {
     final resultMap = map['result'];
@@ -166,9 +163,7 @@ class Path2SimulationOutcome {
     final failureMap = Map<String, dynamic>.from(map['failure'] as Map);
     return Path2SimulationOutcome.failed(
       Path2SimulationFailure(
-        Path2SimulationFailureKind.values.byName(
-          failureMap['kind'] as String,
-        ),
+        Path2SimulationFailureKind.values.byName(failureMap['kind'] as String),
         failureMap['message'] as String,
       ),
     );
@@ -182,10 +177,7 @@ class Path2SimulationOutcome {
       return {'result': successfulResult.toMap()};
     }
     return {
-      'failure': {
-        'kind': failure!.kind.name,
-        'message': failure!.message,
-      },
+      'failure': {'kind': failure!.kind.name, 'message': failure!.message},
     };
   }
 }
@@ -198,9 +190,7 @@ abstract final class Path2Simulator {
 
   /// Enumerates every unique branch traversal from the single graph root to a
   /// leaf. Condition transitions use their configured preview distance.
-  static List<Path2SimulationPathSnapshot> previewTraversals(
-    path2.Path path,
-  ) {
+  static List<Path2SimulationPathSnapshot> previewTraversals(path2.Path path) {
     final roots = path.rootNodes;
     if (roots.length != 1) {
       return const [];
@@ -219,9 +209,7 @@ abstract final class Path2Simulator {
     ) {
       final allOutgoing = outgoing[node.id] ?? const [];
       if (allOutgoing.isEmpty) {
-        traversals.add(
-          _snapshotForTraversal(path, nodes, branches),
-        );
+        traversals.add(_snapshotForTraversal(path, nodes, branches));
         return;
       }
       for (final branch in allOutgoing) {
@@ -242,8 +230,7 @@ abstract final class Path2Simulator {
   /// implementation. It now includes condition branches as well.
   static List<Path2SimulationPathSnapshot> distanceTraversals(
     path2.Path path,
-  ) =>
-      previewTraversals(path);
+  ) => previewTraversals(path);
 
   static Future<Path2SimulationOutcome> simulatePathInBackground(
     path2.Path path,
@@ -260,8 +247,9 @@ abstract final class Path2Simulator {
         );
       }
       final request = <String, dynamic>{
-        'traversals':
-            traversals.map((path) => path.toMap()).toList(growable: false),
+        'traversals': traversals
+            .map((path) => path.toMap())
+            .toList(growable: false),
         'config': Path2RobotConfigSnapshot.fromRobotConfig(robotConfig).toMap(),
       };
       return Path2SimulationOutcome.fromMap(
@@ -511,9 +499,7 @@ abstract final class Path2Simulator {
 
   static void _validateState(Path2SimulationState state) {
     if (!Path2SimulationMath.isFinitePose(state.pose) ||
-        !Path2SimulationMath.isFiniteChassisSpeeds(
-          state.robotRelativeSpeeds,
-        ) ||
+        !Path2SimulationMath.isFiniteChassisSpeeds(state.robotRelativeSpeeds) ||
         state.moduleStates.any(
           (module) =>
               !module.speedMetersPerSecond.isFinite ||
@@ -527,9 +513,7 @@ abstract final class Path2Simulator {
   }
 }
 
-Map<String, dynamic> _runPath2SimulationRequest(
-  Map<String, dynamic> request,
-) {
+Map<String, dynamic> _runPath2SimulationRequest(Map<String, dynamic> request) {
   try {
     final traversals = (request['traversals'] as List<dynamic>)
         .map(

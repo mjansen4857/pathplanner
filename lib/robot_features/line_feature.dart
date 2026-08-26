@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/robot_features/feature.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 
@@ -15,12 +15,12 @@ class LineFeature extends Feature {
   }) : super(type: 'line');
 
   LineFeature.fromDataJson(Map<String, dynamic> dataJson, String name)
-      : this(
-          start: Translation2d.fromJson(dataJson['start']),
-          end: Translation2d.fromJson(dataJson['end']),
-          strokeWidth: dataJson['strokeWidth'],
-          name: name,
-        );
+    : this(
+        start: Translation2d.fromJson(dataJson['start']),
+        end: Translation2d.fromJson(dataJson['end']),
+        strokeWidth: dataJson['strokeWidth'],
+        name: name,
+      );
 
   @override
   Map<String, dynamic> dataToJson() {
@@ -38,8 +38,10 @@ class LineFeature extends Feature {
       ..strokeWidth = strokeWidth * pixelsPerMeter
       ..color = color;
 
-    Offset startPixels =
-        Offset(start.x * pixelsPerMeter, -start.y * pixelsPerMeter);
+    Offset startPixels = Offset(
+      start.x * pixelsPerMeter,
+      -start.y * pixelsPerMeter,
+    );
     Offset endPixels = Offset(end.x * pixelsPerMeter, -end.y * pixelsPerMeter);
 
     canvas.drawLine(startPixels, endPixels, paint);

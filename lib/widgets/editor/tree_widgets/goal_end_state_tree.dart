@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
@@ -29,8 +29,9 @@ class GoalEndStateTree extends StatelessWidget {
         children: [
           const Text('Goal End State'),
           InfoCard(
-              value:
-                  '${path.goalEndState.rotation.degrees.toStringAsFixed(2)}° ending with ${path.goalEndState.velocityMPS.toStringAsFixed(2)} M/S'),
+            value:
+                '${path.goalEndState.rotation.degrees.toStringAsFixed(2)}° ending with ${path.goalEndState.velocityMPS.toStringAsFixed(2)} M/S',
+          ),
         ],
       ),
       leading: const Icon(Icons.flag_circle_rounded),
@@ -47,21 +48,22 @@ class GoalEndStateTree extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                  child: Tooltip(
-                message:
-                    'The allowed velocity of the robot at end of the path.',
-                child: NumberTextField(
-                  initialValue: path.goalEndState.velocityMPS,
-                  label: 'Velocity (M/S)',
-                  arrowKeyIncrement: 0.1,
-                  minValue: 0.0,
-                  onSubmitted: (value) {
-                    if (value != null) {
-                      _addChange(() => path.goalEndState.velocityMPS = value);
-                    }
-                  },
+                child: Tooltip(
+                  message:
+                      'The allowed velocity of the robot at end of the path.',
+                  child: NumberTextField(
+                    initialValue: path.goalEndState.velocityMPS,
+                    label: 'Velocity (M/S)',
+                    arrowKeyIncrement: 0.1,
+                    minValue: 0.0,
+                    onSubmitted: (value) {
+                      if (value != null) {
+                        _addChange(() => path.goalEndState.velocityMPS = value);
+                      }
+                    },
+                  ),
                 ),
-              )),
+              ),
               if (holonomicMode) const SizedBox(width: 8),
               if (holonomicMode)
                 Expanded(
@@ -70,9 +72,12 @@ class GoalEndStateTree extends StatelessWidget {
                     label: 'Rotation (Deg)',
                     onSubmitted: (value) {
                       if (value != null) {
-                        _addChange(() => path.goalEndState.rotation =
-                            Rotation2d.fromDegrees(
-                                MathUtil.inputModulus(value, -180, 180)));
+                        _addChange(
+                          () => path.goalEndState.rotation =
+                              Rotation2d.fromDegrees(
+                                MathUtil.inputModulus(value, -180, 180),
+                              ),
+                        );
                       }
                     },
                   ),
@@ -85,16 +90,18 @@ class GoalEndStateTree extends StatelessWidget {
   }
 
   void _addChange(VoidCallback execute) {
-    undoStack.add(Change(
-      path.goalEndState.clone(),
-      () {
-        execute.call();
-        onPathChanged?.call();
-      },
-      (oldValue) {
-        path.goalEndState = oldValue.clone();
-        onPathChanged?.call();
-      },
-    ));
+    undoStack.add(
+      Change(
+        path.goalEndState.clone(),
+        () {
+          execute.call();
+          onPathChanged?.call();
+        },
+        (oldValue) {
+          path.goalEndState = oldValue.clone();
+          onPathChanged?.call();
+        },
+      ),
+    );
   }
 }

@@ -38,10 +38,7 @@ void main() {
             .toList(),
       );
 
-      final next = generator.generateSetpoint(
-        previous,
-        const ChassisSpeeds(),
-      );
+      final next = generator.generateSetpoint(previous, const ChassisSpeeds());
 
       expect(next.robotRelativeSpeeds, const ChassisSpeeds());
       for (var module = 0; module < 4; module++) {
@@ -68,29 +65,24 @@ void main() {
 
     test('wheel friction limits first-step forward acceleration', () {
       final frictionLimitedConfig = _testConfig(currentLimitAmps: 500.0);
-      final frictionLimitedGenerator =
-          SwerveSetpointGenerator(frictionLimitedConfig);
+      final frictionLimitedGenerator = SwerveSetpointGenerator(
+        frictionLimitedConfig,
+      );
       final next = frictionLimitedGenerator.generateSetpoint(
         Path2SwerveSetpoint.atRest(),
         const ChassisSpeeds(vx: 20.0),
       );
       final maximumVelocityStep =
           frictionLimitedConfig.wheelCoefficientOfFriction *
-              9.8 *
-              SwerveSetpointGenerator.periodSeconds;
+          9.8 *
+          SwerveSetpointGenerator.periodSeconds;
 
       expect(next.robotRelativeSpeeds.vx, greaterThan(0.0));
-      expect(
-        next.robotRelativeSpeeds.vx,
-        closeTo(maximumVelocityStep, 1e-9),
-      );
+      expect(next.robotRelativeSpeeds.vx, closeTo(maximumVelocityStep, 1e-9));
       expect(next.robotRelativeSpeeds.vy, closeTo(0.0, 1e-12));
       expect(next.robotRelativeSpeeds.omega, closeTo(0.0, 1e-12));
       for (final state in next.moduleStates) {
-        expect(
-          state.speedMetersPerSecond,
-          closeTo(maximumVelocityStep, 1e-9),
-        );
+        expect(state.speedMetersPerSecond, closeTo(maximumVelocityStep, 1e-9));
       }
     });
 
@@ -99,18 +91,20 @@ void main() {
         currentLimitAmps: 5.0,
         coefficientOfFriction: 10.0,
       );
-      final currentLimitedGenerator =
-          SwerveSetpointGenerator(currentLimitedConfig);
+      final currentLimitedGenerator = SwerveSetpointGenerator(
+        currentLimitedConfig,
+      );
 
       final next = currentLimitedGenerator.generateSetpoint(
         Path2SwerveSetpoint.atRest(),
         const ChassisSpeeds(vx: 4.0),
       );
-      final expectedModuleTorque = currentLimitedConfig.motorTorque(5.0) -
+      final expectedModuleTorque =
+          currentLimitedConfig.motorTorque(5.0) -
           currentLimitedConfig.torqueLoss;
       final expectedAcceleration =
           (expectedModuleTorque / currentLimitedConfig.wheelRadiusMeters * 4) /
-              currentLimitedConfig.massKg;
+          currentLimitedConfig.massKg;
 
       expect(
         next.robotRelativeSpeeds.vx,

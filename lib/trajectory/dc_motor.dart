@@ -17,38 +17,38 @@ class DCMotor {
     num freeCurrentAmps,
     this.freeSpeedRadPerSec,
     int numMotors,
-  )   : stallTorqueNM = stallTorqueNM * numMotors,
-        stallCurrentAmps = stallCurrentAmps * numMotors,
-        freeCurrentAmps = freeCurrentAmps * numMotors,
-        rOhms = nominalVoltageVolts / stallCurrentAmps,
-        kTNMPerAmp = stallTorqueNM / stallCurrentAmps {
+  ) : stallTorqueNM = stallTorqueNM * numMotors,
+      stallCurrentAmps = stallCurrentAmps * numMotors,
+      freeCurrentAmps = freeCurrentAmps * numMotors,
+      rOhms = nominalVoltageVolts / stallCurrentAmps,
+      kTNMPerAmp = stallTorqueNM / stallCurrentAmps {
     kVRadPerSecPerVolt =
         freeSpeedRadPerSec / (nominalVoltageVolts - rOhms * freeCurrentAmps);
   }
 
   DCMotor.getCIM(int numMotors)
-      : this(12, 2.42, 133, 2.7, Units.rpmToRadsPerSec(5310), numMotors);
+    : this(12, 2.42, 133, 2.7, Units.rpmToRadsPerSec(5310), numMotors);
 
   DCMotor.getNEO(int numMotors)
-      : this(12, 2.6, 105, 1.8, Units.rpmToRadsPerSec(5676), numMotors);
+    : this(12, 2.6, 105, 1.8, Units.rpmToRadsPerSec(5676), numMotors);
 
   DCMotor.getMiniCIM(int numMotors)
-      : this(12, 1.41, 89, 3, Units.rpmToRadsPerSec(5840), numMotors);
+    : this(12, 1.41, 89, 3, Units.rpmToRadsPerSec(5840), numMotors);
 
   DCMotor.getFalcon500(int numMotors)
-      : this(12, 4.69, 257, 1.5, Units.rpmToRadsPerSec(6380), numMotors);
+    : this(12, 4.69, 257, 1.5, Units.rpmToRadsPerSec(6380), numMotors);
 
   DCMotor.getFalcon500FOC(int numMotors)
-      : this(12, 5.84, 304, 1.5, Units.rpmToRadsPerSec(6080), numMotors);
+    : this(12, 5.84, 304, 1.5, Units.rpmToRadsPerSec(6080), numMotors);
 
   DCMotor.getKrakenX60(int numMotors)
-      : this(12, 7.09, 366, 2, Units.rpmToRadsPerSec(6000), numMotors);
+    : this(12, 7.09, 366, 2, Units.rpmToRadsPerSec(6000), numMotors);
 
   DCMotor.getKrakenX60FOC(int numMotors)
-      : this(12, 9.37, 483, 2, Units.rpmToRadsPerSec(5800), numMotors);
+    : this(12, 9.37, 483, 2, Units.rpmToRadsPerSec(5800), numMotors);
 
   DCMotor.getNeoVortex(int numMotors)
-      : this(12, 3.6, 211, 3.6, Units.rpmToRadsPerSec(6784), numMotors);
+    : this(12, 3.6, 211, 3.6, Units.rpmToRadsPerSec(6784), numMotors);
 
   num getCurrent(num speedRadPerSec, num voltage) {
     return -1.0 / kVRadPerSecPerVolt / rOhms * speedRadPerSec +
@@ -61,12 +61,13 @@ class DCMotor {
 
   DCMotor withReduction(num gearboxReduction) {
     return DCMotor(
-        nominalVoltageVolts,
-        stallTorqueNM * gearboxReduction,
-        stallCurrentAmps,
-        freeCurrentAmps,
-        freeSpeedRadPerSec / gearboxReduction,
-        1);
+      nominalVoltageVolts,
+      stallTorqueNM * gearboxReduction,
+      stallCurrentAmps,
+      freeCurrentAmps,
+      freeSpeedRadPerSec / gearboxReduction,
+      1,
+    );
   }
 
   factory DCMotor.fromString(String str, int numMotors) {

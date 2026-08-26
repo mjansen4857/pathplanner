@@ -4,7 +4,7 @@ import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:pathplanner/robot_features/feature.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
@@ -57,12 +57,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
     _robotSize = Size(width, length);
 
     _bumperOffset = Translation2d(
-        widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
-            Defaults.bumperOffsetX,
-        widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
-            Defaults.bumperOffsetY);
+      widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ?? Defaults.bumperOffsetX,
+      widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ?? Defaults.bumperOffsetY,
+    );
 
-    _useSim = widget.prefs.getBool(PrefsKeys.telemetryUseSim) ??
+    _useSim =
+        widget.prefs.getBool(PrefsKeys.telemetryUseSim) ??
         Defaults.telemetryUseSim;
 
     for (String featureJson
@@ -126,8 +126,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
   void _calcError() {
     if (_gotCurrentPose && _gotTargetPose) {
       setState(() {
-        num xyError =
-            _currentPose!.translation.getDistance(_targetPose!.translation);
+        num xyError = _currentPose!.translation.getDistance(
+          _targetPose!.translation,
+        );
         num thetaError =
             (_currentPose!.rotation - _targetPose!.rotation).radians;
 
@@ -181,9 +182,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
               Text(
                 'Please ensure that:',
                 style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500),
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 8),
               _buildConnectionTip('The simulator is running'),
@@ -197,9 +199,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
               Text(
                 'Please ensure that:',
                 style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500),
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 8),
               _buildConnectionTip('The robot is powered on'),
@@ -255,133 +258,121 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   ),
                 ],
               ),
-              Align(
-                alignment: Alignment.bottomLeft,
-                child: _buildSimChooser(),
-              ),
+              Align(alignment: Alignment.bottomLeft, child: _buildSimChooser()),
             ],
           ),
         ).animate().fade(duration: 300.ms, curve: Curves.easeInOut),
         Expanded(
           flex: 4,
           child: Row(
-            children: [
-              _buildGraph(
-                title: 'Robot Velocity',
-                legend: _buildLegend(Colors.green, Colors.deepPurple),
-                data: _buildData(
-                  maxY: 6.0,
-                  horizontalInterval: 1.5,
-                  spots: [
-                    [
-                      for (int i = 0; i < _velData.length; i++)
-                        FlSpot(i * 0.033, _velData[i][1].toDouble()),
-                    ],
-                    [
-                      for (int i = 0; i < _velData.length; i++)
-                        FlSpot(i * 0.033, _velData[i][0].toDouble()),
-                    ],
-                  ],
-                  lineGradients: const [
-                    LinearGradient(
-                      colors: [
-                        Colors.deepPurple,
-                        Colors.deepPurpleAccent,
-                      ],
-                    ),
-                    LinearGradient(
-                      colors: [
-                        Colors.green,
-                        Colors.greenAccent,
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              _buildGraph(
-                title: 'Angular Velocity',
-                legend: _buildLegend(Colors.orange, Colors.blue),
-                data: _buildData(
-                  minY: -2 * pi,
-                  maxY: 2 * pi,
-                  horizontalInterval: pi,
-                  spots: [
-                    [
-                      for (int i = 0; i < _velData.length; i++)
-                        FlSpot(i * 0.033, _velData[i][3].toDouble()),
-                    ],
-                    [
-                      for (int i = 0; i < _velData.length; i++)
-                        FlSpot(i * 0.033, _velData[i][2].toDouble()),
-                    ],
-                  ],
-                  lineGradients: const [
-                    LinearGradient(
-                      colors: [
-                        Colors.blue,
-                        Colors.blueAccent,
-                      ],
-                    ),
-                    LinearGradient(
-                      colors: [
-                        Colors.orange,
-                        Colors.orangeAccent,
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              _buildGraph(
-                title: 'Path Following Error',
-                legend: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withAlpha(150),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildLegendItem('XY Error', Colors.red),
-                      const SizedBox(width: 8),
-                      _buildLegendItem('Theta Error', Colors.cyan),
-                    ],
-                  ),
-                ),
-                data: _buildData(
-                  maxY: 1.0,
-                  horizontalInterval: 0.25,
-                  spots: [
-                    [
-                      for (int i = 0; i < _xyErrorData.length; i++)
-                        FlSpot(i * 0.033, _xyErrorData.elementAt(i).toDouble()),
-                    ],
-                    [
-                      for (int i = 0; i < _thetaErrorData.length; i++)
-                        FlSpot(
-                            i * 0.033, _thetaErrorData.elementAt(i).toDouble()),
-                    ],
-                  ],
-                  lineGradients: const [
-                    LinearGradient(
-                      colors: [
-                        Colors.red,
-                        Colors.redAccent,
-                      ],
-                    ),
-                    LinearGradient(
-                      colors: [
-                        Colors.cyan,
-                        Colors.cyanAccent,
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ]
-                .animate(interval: 100.ms)
-                .fade(duration: 300.ms, curve: Curves.easeInOut)
-                .slide(begin: const Offset(0, 0.3)),
+            children:
+                [
+                      _buildGraph(
+                        title: 'Robot Velocity',
+                        legend: _buildLegend(Colors.green, Colors.deepPurple),
+                        data: _buildData(
+                          maxY: 6.0,
+                          horizontalInterval: 1.5,
+                          spots: [
+                            [
+                              for (int i = 0; i < _velData.length; i++)
+                                FlSpot(i * 0.033, _velData[i][1].toDouble()),
+                            ],
+                            [
+                              for (int i = 0; i < _velData.length; i++)
+                                FlSpot(i * 0.033, _velData[i][0].toDouble()),
+                            ],
+                          ],
+                          lineGradients: const [
+                            LinearGradient(
+                              colors: [
+                                Colors.deepPurple,
+                                Colors.deepPurpleAccent,
+                              ],
+                            ),
+                            LinearGradient(
+                              colors: [Colors.green, Colors.greenAccent],
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildGraph(
+                        title: 'Angular Velocity',
+                        legend: _buildLegend(Colors.orange, Colors.blue),
+                        data: _buildData(
+                          minY: -2 * pi,
+                          maxY: 2 * pi,
+                          horizontalInterval: pi,
+                          spots: [
+                            [
+                              for (int i = 0; i < _velData.length; i++)
+                                FlSpot(i * 0.033, _velData[i][3].toDouble()),
+                            ],
+                            [
+                              for (int i = 0; i < _velData.length; i++)
+                                FlSpot(i * 0.033, _velData[i][2].toDouble()),
+                            ],
+                          ],
+                          lineGradients: const [
+                            LinearGradient(
+                              colors: [Colors.blue, Colors.blueAccent],
+                            ),
+                            LinearGradient(
+                              colors: [Colors.orange, Colors.orangeAccent],
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildGraph(
+                        title: 'Path Following Error',
+                        legend: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withAlpha(150),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildLegendItem('XY Error', Colors.red),
+                              const SizedBox(width: 8),
+                              _buildLegendItem('Theta Error', Colors.cyan),
+                            ],
+                          ),
+                        ),
+                        data: _buildData(
+                          maxY: 1.0,
+                          horizontalInterval: 0.25,
+                          spots: [
+                            [
+                              for (int i = 0; i < _xyErrorData.length; i++)
+                                FlSpot(
+                                  i * 0.033,
+                                  _xyErrorData.elementAt(i).toDouble(),
+                                ),
+                            ],
+                            [
+                              for (int i = 0; i < _thetaErrorData.length; i++)
+                                FlSpot(
+                                  i * 0.033,
+                                  _thetaErrorData.elementAt(i).toDouble(),
+                                ),
+                            ],
+                          ],
+                          lineGradients: const [
+                            LinearGradient(
+                              colors: [Colors.red, Colors.redAccent],
+                            ),
+                            LinearGradient(
+                              colors: [Colors.cyan, Colors.cyanAccent],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ]
+                    .animate(interval: 100.ms)
+                    .fade(duration: 300.ms, curve: Curves.easeInOut)
+                    .slide(begin: const Offset(0, 0.3)),
           ),
         ),
       ],
@@ -393,14 +384,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
       padding: const EdgeInsets.all(8.0),
       child: SegmentedButton<bool>(
         segments: const [
-          ButtonSegment(
-            value: true,
-            label: Text('Simulator'),
-          ),
-          ButtonSegment(
-            value: false,
-            label: Text('Robot'),
-          ),
+          ButtonSegment(value: true, label: Text('Simulator')),
+          ButtonSegment(value: false, label: Text('Robot')),
         ],
         selected: {_useSim},
         onSelectionChanged: (val) {
@@ -413,8 +398,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
             widget.telemetry.setServerAddress('127.0.0.1');
           } else {
             widget.telemetry.setServerAddress(
-                widget.prefs.getString(PrefsKeys.ntServerAddress) ??
-                    Defaults.ntServerAddress);
+              widget.prefs.getString(PrefsKeys.ntServerAddress) ??
+                  Defaults.ntServerAddress,
+            );
           }
         },
       ),
@@ -437,26 +423,20 @@ class _TelemetryPageState extends State<TelemetryPage> {
         child: Stack(
           children: [
             Center(
-              child: LineChart(
-                data,
-                duration: const Duration(milliseconds: 0),
-              ),
+              child: LineChart(data, duration: const Duration(milliseconds: 0)),
             ),
             Positioned(
               top: 10,
               left: 12,
               child: Text(
                 title,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-            if (legend != null)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: legend,
-              ),
+            if (legend != null) Positioned(top: 8, right: 8, child: legend),
           ],
         ),
       ),
@@ -478,14 +458,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
         show: true,
         drawVerticalLine: true,
         drawHorizontalLine: true,
-        getDrawingVerticalLine: (value) => FlLine(
-          color: Colors.grey.withAlpha(25),
-          strokeWidth: 0.5,
-        ),
-        getDrawingHorizontalLine: (value) => FlLine(
-          color: Colors.grey.withAlpha(25),
-          strokeWidth: 0.5,
-        ),
+        getDrawingVerticalLine: (value) =>
+            FlLine(color: Colors.grey.withAlpha(25), strokeWidth: 0.5),
+        getDrawingHorizontalLine: (value) =>
+            FlLine(color: Colors.grey.withAlpha(25), strokeWidth: 0.5),
       ),
       lineTouchData: LineTouchData(
         enabled: true,
@@ -493,7 +469,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
           getTooltipItems: (touchedSpots) {
             return touchedSpots.map((LineBarSpot touchedSpot) {
               final textStyle = TextStyle(
-                color: touchedSpot.bar.gradient?.colors.first ??
+                color:
+                    touchedSpot.bar.gradient?.colors.first ??
                     touchedSpot.bar.color ??
                     Colors.white,
                 fontWeight: FontWeight.w600,
@@ -572,16 +549,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
       ],
     );
   }
@@ -623,7 +594,10 @@ class TelemetryPainter extends CustomPainter {
       Path path = Path();
       for (int i = 0; i < currentPath!.length; i++) {
         Offset offset = PathPainterUtil.pointToPixelOffset(
-            currentPath![i].translation, scale, fieldImage);
+          currentPath![i].translation,
+          scale,
+          fieldImage,
+        );
         if (i == 0) {
           path.moveTo(offset.dx, offset.dy);
         } else {
@@ -636,28 +610,30 @@ class TelemetryPainter extends CustomPainter {
 
     if (targetPose != null) {
       PathPainterUtil.paintRobotOutline(
-          targetPose!,
-          fieldImage,
-          robotSize,
-          bumperOffset,
-          scale,
-          canvas,
-          Colors.grey[600]!.withAlpha(200),
-          colorScheme.surfaceContainer,
-          robotFeatures);
+        targetPose!,
+        fieldImage,
+        robotSize,
+        bumperOffset,
+        scale,
+        canvas,
+        Colors.grey[600]!.withAlpha(200),
+        colorScheme.surfaceContainer,
+        robotFeatures,
+      );
     }
 
     if (currentPose != null) {
       PathPainterUtil.paintRobotOutline(
-          currentPose!,
-          fieldImage,
-          robotSize,
-          bumperOffset,
-          scale,
-          canvas,
-          colorScheme.primary,
-          colorScheme.surfaceContainer,
-          robotFeatures);
+        currentPose!,
+        fieldImage,
+        robotSize,
+        bumperOffset,
+        scale,
+        canvas,
+        colorScheme.primary,
+        colorScheme.surfaceContainer,
+        robotFeatures,
+      );
     }
   }
 

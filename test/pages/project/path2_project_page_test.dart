@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/pages/project/path2_project_page.dart';
@@ -35,23 +35,24 @@ void main() {
     });
     prefs = await SharedPreferences.getInstance();
     fs = MemoryFileSystem(
-      style:
-          Platform.isWindows ? FileSystemStyle.windows : FileSystemStyle.posix,
+      style: Platform.isWindows
+          ? FileSystemStyle.windows
+          : FileSystemStyle.posix,
     );
   });
 
   Widget project() => MaterialApp(
-        home: Scaffold(
-          body: Path2ProjectPage(
-            prefs: prefs,
-            fieldImage: FieldImage.defaultField,
-            pathplannerDirectory: fs.directory(deployPath),
-            fs: fs,
-            undoStack: ChangeStack(),
-            shortcuts: false,
-          ),
-        ),
-      );
+    home: Scaffold(
+      body: Path2ProjectPage(
+        prefs: prefs,
+        fieldImage: FieldImage.defaultField,
+        pathplannerDirectory: fs.directory(deployPath),
+        fs: fs,
+        undoStack: ChangeStack(),
+        shortcuts: false,
+      ),
+    ),
+  );
 
   Future<void> pumpProject(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 720));
@@ -60,8 +61,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('creates a graph example only for a physically empty directory',
-      (tester) async {
+  testWidgets('creates a graph example only for a physically empty directory', (
+    tester,
+  ) async {
     await pumpProject(tester);
 
     expect(
@@ -77,8 +79,9 @@ void main() {
     expect(json, isNot(contains('eventMarkers')));
   });
 
-  testWidgets('rejected files stay untouched and reserve their names',
-      (tester) async {
+  testWidgets('rejected files stay untouched and reserve their names', (
+    tester,
+  ) async {
     final pathsDir = fs.directory(join(deployPath, 'paths'))
       ..createSync(recursive: true);
     final autosDir = fs.directory(join(deployPath, 'autos'))
@@ -109,8 +112,9 @@ void main() {
     expect(oldAuto.readAsStringSync(), oldAutoSource);
   });
 
-  testWidgets('filters Choreo autos and creates an empty graph auto',
-      (tester) async {
+  testWidgets('filters Choreo autos and creates an empty graph auto', (
+    tester,
+  ) async {
     final autosDir = fs.directory(join(deployPath, 'autos'))
       ..createSync(recursive: true);
     final choreoFile = fs.file(join(autosDir.path, 'new auto.auto'));
@@ -134,8 +138,9 @@ void main() {
     expect(choreoFile.readAsStringSync(), source);
   });
 
-  testWidgets('condition manager renames and unsets path and auto branches',
-      (tester) async {
+  testWidgets('condition manager renames and unsets path and auto branches', (
+    tester,
+  ) async {
     final pathsDir = fs.directory(join(deployPath, 'paths'))
       ..createSync(recursive: true);
     final path = path2.Path.defaultPath(
@@ -143,8 +148,9 @@ void main() {
       fs: fs,
       name: 'Condition Path',
     );
-    path.branches.single.transition =
-        ConditionTransition(conditionName: 'ready');
+    path.branches.single.transition = ConditionTransition(
+      conditionName: 'ready',
+    );
     path.saveFile();
 
     final autosDir = fs.directory(join(deployPath, 'autos'))
@@ -226,69 +232,71 @@ void main() {
   });
 
   testWidgets(
-      'path rename propagates and deletion clears only matching references',
-      (tester) async {
-    final pathsDir = fs.directory(join(deployPath, 'paths'))
-      ..createSync(recursive: true);
-    final path = path2.Path.defaultPath(
-      pathDir: pathsDir.path,
-      fs: fs,
-      name: 'Referenced Path',
-    )..saveFile();
-    final autosDir = fs.directory(join(deployPath, 'autos'))
-      ..createSync(recursive: true);
-    final auto = Path2Auto(
-      name: 'Referencing Auto',
-      nodes: [
-        PathAutoNode(
-          pathName: path.name,
-          editorPosition: const Offset(80, 80),
-        ),
-        PathAutoNode(
-          pathName: 'Still Missing',
-          editorPosition: const Offset(80, 300),
-        ),
-      ],
-      autoDir: autosDir.path,
-      fs: fs,
-    )..saveFile();
+    'path rename propagates and deletion clears only matching references',
+    (tester) async {
+      final pathsDir = fs.directory(join(deployPath, 'paths'))
+        ..createSync(recursive: true);
+      final path = path2.Path.defaultPath(
+        pathDir: pathsDir.path,
+        fs: fs,
+        name: 'Referenced Path',
+      )..saveFile();
+      final autosDir = fs.directory(join(deployPath, 'autos'))
+        ..createSync(recursive: true);
+      final auto = Path2Auto(
+        name: 'Referencing Auto',
+        nodes: [
+          PathAutoNode(
+            pathName: path.name,
+            editorPosition: const Offset(80, 80),
+          ),
+          PathAutoNode(
+            pathName: 'Still Missing',
+            editorPosition: const Offset(80, 300),
+          ),
+        ],
+        autoDir: autosDir.path,
+        fs: fs,
+      )..saveFile();
 
-    await pumpProject(tester);
-    await tester.enterText(find.text('Referenced Path'), 'Renamed Path');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
+      await pumpProject(tester);
+      await tester.enterText(find.text('Referenced Path'), 'Renamed Path');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
 
-    var autoJson = jsonDecode(
-      fs.file(join(autosDir.path, '${auto.name}.auto')).readAsStringSync(),
-    ) as Map<String, dynamic>;
-    expect((autoJson['nodes'] as List).first['pathName'], 'Renamed Path');
-    expect((autoJson['nodes'] as List).last['pathName'], 'Still Missing');
+      var autoJson = jsonDecode(
+        fs.file(join(autosDir.path, '${auto.name}.auto')).readAsStringSync(),
+      ) as Map<String, dynamic>;
+      expect((autoJson['nodes'] as List).first['pathName'], 'Renamed Path');
+      expect((autoJson['nodes'] as List).last['pathName'], 'Still Missing');
 
-    final pathCard = find.widgetWithText(ProjectItemCard, 'Renamed Path');
-    final menu = find.descendant(
-      of: pathCard,
-      matching: find.byType(PopupMenuButton<String>),
-    );
-    await tester.tap(menu);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('DELETE'));
-    await tester.pumpAndSettle();
+      final pathCard = find.widgetWithText(ProjectItemCard, 'Renamed Path');
+      final menu = find.descendant(
+        of: pathCard,
+        matching: find.byType(PopupMenuButton<String>),
+      );
+      await tester.tap(menu);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('DELETE'));
+      await tester.pumpAndSettle();
 
-    autoJson = jsonDecode(
-      fs.file(join(autosDir.path, '${auto.name}.auto')).readAsStringSync(),
-    ) as Map<String, dynamic>;
-    expect((autoJson['nodes'] as List).first['pathName'], isNull);
-    expect((autoJson['nodes'] as List).last['pathName'], 'Still Missing');
-    expect(
-      find.widgetWithText(ProjectItemCard, 'Renamed Path'),
-      findsNothing,
-    );
-  });
+      autoJson = jsonDecode(
+        fs.file(join(autosDir.path, '${auto.name}.auto')).readAsStringSync(),
+      ) as Map<String, dynamic>;
+      expect((autoJson['nodes'] as List).first['pathName'], isNull);
+      expect((autoJson['nodes'] as List).last['pathName'], 'Still Missing');
+      expect(
+        find.widgetWithText(ProjectItemCard, 'Renamed Path'),
+        findsNothing,
+      );
+    },
+  );
 
-  testWidgets('missing path references warn without rewriting their auto',
-      (tester) async {
+  testWidgets('missing path references warn without rewriting their auto', (
+    tester,
+  ) async {
     final autosDir = fs.directory(join(deployPath, 'autos'))
       ..createSync(recursive: true);
     final auto = Path2Auto(
@@ -318,8 +326,9 @@ void main() {
     expect(autoFile.readAsStringSync(), source);
   });
 
-  testWidgets('graph thumbnails use branch segments and every path leaf',
-      (tester) async {
+  testWidgets('graph thumbnails use branch segments and every path leaf', (
+    tester,
+  ) async {
     final pathsDir = fs.directory(join(deployPath, 'paths'))
       ..createSync(recursive: true);
     final root = path2.PathNode(
@@ -350,10 +359,7 @@ void main() {
     Path2Auto(
       name: 'Graph Auto',
       nodes: [
-        PathAutoNode(
-          pathName: path.name,
-          editorPosition: const Offset(80, 80),
-        ),
+        PathAutoNode(pathName: path.name, editorPosition: const Offset(80, 80)),
       ],
       autoDir: autosDir.path,
       fs: fs,
@@ -386,8 +392,9 @@ void main() {
     );
   });
 
-  testWidgets('connectivity drafts warn and Manage Events stays usable',
-      (tester) async {
+  testWidgets('connectivity drafts warn and Manage Events stays usable', (
+    tester,
+  ) async {
     final pathsDir = fs.directory(join(deployPath, 'paths'))
       ..createSync(recursive: true);
     path2.Path(

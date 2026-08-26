@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:file/file.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:path/path.dart' as p;
 import 'package:pathplanner/pages/path2_auto_editor_page.dart';
@@ -79,7 +79,8 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
   void initState() {
     super.initState();
 
-    final leftWeight = widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ??
+    final leftWeight =
+        widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ??
         Defaults.projectLeftWeight;
     _splitController.areas = [
       Area(weight: leftWeight, minimalWeight: 0.33),
@@ -87,13 +88,17 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
     ];
     _pathGridCount = _gridCount(leftWeight);
     _autoGridCount = _gridCount(1 - leftWeight);
-    _pathSortValue = widget.prefs.getString(PrefsKeys.pathSortOption) ??
+    _pathSortValue =
+        widget.prefs.getString(PrefsKeys.pathSortOption) ??
         Defaults.pathSortOption;
-    _autoSortValue = widget.prefs.getString(PrefsKeys.autoSortOption) ??
+    _autoSortValue =
+        widget.prefs.getString(PrefsKeys.autoSortOption) ??
         Defaults.autoSortOption;
-    _pathsCompact = widget.prefs.getBool(PrefsKeys.pathsCompactView) ??
+    _pathsCompact =
+        widget.prefs.getBool(PrefsKeys.pathsCompactView) ??
         Defaults.pathsCompactView;
-    _autosCompact = widget.prefs.getBool(PrefsKeys.autosCompactView) ??
+    _autosCompact =
+        widget.prefs.getBool(PrefsKeys.autosCompactView) ??
         Defaults.autosCompactView;
     _pathFolders = List.of(
       widget.prefs.getStringList(PrefsKeys.pathFolders) ?? Defaults.pathFolders,
@@ -113,10 +118,12 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
   }
 
   Future<void> _load() async {
-    _pathsDirectory =
-        fs.directory(p.join(widget.pathplannerDirectory.path, 'paths'));
-    _autosDirectory =
-        fs.directory(p.join(widget.pathplannerDirectory.path, 'autos'));
+    _pathsDirectory = fs.directory(
+      p.join(widget.pathplannerDirectory.path, 'paths'),
+    );
+    _autosDirectory = fs.directory(
+      p.join(widget.pathplannerDirectory.path, 'autos'),
+    );
     _pathsDirectory.createSync(recursive: true);
     _autosDirectory.createSync(recursive: true);
 
@@ -211,10 +218,7 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
                 });
                 widget.prefs.setDouble(PrefsKeys.projectLeftWeight, leftWeight);
               },
-              children: [
-                _buildPathsPane(context),
-                _buildAutosPane(context),
-              ],
+              children: [_buildPathsPane(context), _buildAutosPane(context)],
             ),
           ),
         ),
@@ -354,9 +358,11 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final visibleItems = items
-        .where((item) =>
-            getFolder(item) == currentFolder &&
-            getName(item).toLowerCase().contains(searchQuery.toLowerCase()))
+        .where(
+          (item) =>
+              getFolder(item) == currentFolder &&
+              getName(item).toLowerCase().contains(searchQuery.toLowerCase()),
+        )
         .toList();
 
     return Padding(
@@ -430,7 +436,7 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
-                        for (final item in visibleItems) buildCard(item)
+                        for (final item in visibleItems) buildCard(item),
                       ],
                     ),
                   ],
@@ -481,16 +487,18 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
                               title,
                               style: TextStyle(
                                 fontSize: 20,
-                                color:
-                                    highlighted ? colorScheme.onPrimary : null,
+                                color: highlighted
+                                    ? colorScheme.onPrimary
+                                    : null,
                               ),
                             )
                           : RenamableTitle(
                               title: title,
                               textStyle: TextStyle(
                                 fontSize: 20,
-                                color:
-                                    highlighted ? colorScheme.onPrimary : null,
+                                color: highlighted
+                                    ? colorScheme.onPrimary
+                                    : null,
                               ),
                               onRename: onRenamed,
                             ),
@@ -580,8 +588,8 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
                 tooltip: currentFolder == null
                     ? 'Add new folder'
                     : isPathPane
-                        ? 'Delete path folder'
-                        : 'Delete auto folder',
+                    ? 'Delete path folder'
+                    : 'Delete auto folder',
                 onPressed: currentFolder == null ? onAddFolder : onDeleteFolder,
                 icon: Icon(
                   currentFolder == null
@@ -611,17 +619,16 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
       compact: _pathsCompact,
       fieldImage: widget.fieldImage,
       paths: _pathSegments(path),
-      startPoints: [
-        for (final node in path.rootNodes) node.waypoint.position,
-      ],
-      endPoints: [
-        for (final node in path.leafNodes) node.waypoint.position,
-      ],
+      startPoints: [for (final node in path.rootNodes) node.waypoint.position],
+      endPoints: [for (final node in path.leafNodes) node.waypoint.position],
       warningMessage: _diagnosticMessage(diagnostics),
       onOpened: () => _openPath(path),
       onDuplicated: () {
-        final name = _uniqueName('Copy of ${path.name}', _reservedPathNames,
-            prefix: 'Copy of ');
+        final name = _uniqueName(
+          'Copy of ${path.name}',
+          _reservedPathNames,
+          prefix: 'Copy of ',
+        );
         final copy = path.duplicate(name)..saveFile();
         setState(() {
           _paths.add(copy);
@@ -669,8 +676,11 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
       warningMessage: _diagnosticMessage(diagnostics),
       onOpened: () => _openAuto(auto),
       onDuplicated: () {
-        final name = _uniqueName('Copy of ${auto.name}', _reservedAutoNames,
-            prefix: 'Copy of ');
+        final name = _uniqueName(
+          'Copy of ${auto.name}',
+          _reservedAutoNames,
+          prefix: 'Copy of ',
+        );
         final copy = auto.duplicate(name)..saveFile();
         setState(() {
           _autos.add(copy);
@@ -736,8 +746,11 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
     });
   }
 
-  String _uniqueName(String initial, Set<String> reserved,
-      {String prefix = 'New '}) {
+  String _uniqueName(
+    String initial,
+    Set<String> reserved, {
+    String prefix = 'New ',
+  }) {
     var name = initial;
     while (_isReserved(reserved, name)) {
       name = '$prefix$name';

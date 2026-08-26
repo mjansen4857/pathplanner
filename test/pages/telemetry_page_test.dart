@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -39,15 +39,17 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: TelemetryPage(
-          fieldImage: FieldImage.defaultField,
-          telemetry: telemetry,
-          prefs: prefs,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TelemetryPage(
+            fieldImage: FieldImage.defaultField,
+            telemetry: telemetry,
+            prefs: prefs,
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 
@@ -90,25 +92,28 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: TelemetryPage(
-          fieldImage: FieldImage.defaultField,
-          telemetry: telemetry,
-          prefs: prefs,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TelemetryPage(
+            fieldImage: FieldImage.defaultField,
+            telemetry: telemetry,
+            prefs: prefs,
+          ),
         ),
       ),
-    ));
+    );
 
     // Add some data to the streams
     velocitiesController.add([1.0, 2.0, 0.5, 1.5]);
-    currentPoseController
-        .add(Pose2d(const Translation2d(2.1, 2.1), Rotation2d.fromDegrees(20)));
+    currentPoseController.add(
+      Pose2d(const Translation2d(2.1, 2.1), Rotation2d.fromDegrees(20)),
+    );
     targetPoseController.add(const Pose2d(Translation2d(2, 2), Rotation2d()));
     currentPathController.add([
       const Pose2d(Translation2d(1, 5), Rotation2d()),
       const Pose2d(Translation2d(2, 4), Rotation2d()),
-      const Pose2d(Translation2d(3, 5), Rotation2d())
+      const Pose2d(Translation2d(3, 5), Rotation2d()),
     ]);
 
     // Allow time for the streams to emit some values
@@ -123,8 +128,9 @@ void main() {
     expect(find.text('Path Following Error'), findsOneWidget);
   });
 
-  testWidgets('TelemetryPage handles connection status changes',
-      (WidgetTester tester) async {
+  testWidgets('TelemetryPage handles connection status changes', (
+    WidgetTester tester,
+  ) async {
     var telemetry = MockPPLibTelemetry();
 
     final connectionStatusController = StreamController<bool>.broadcast();
@@ -155,15 +161,17 @@ void main() {
 
     await tester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: TelemetryPage(
-          fieldImage: FieldImage.defaultField,
-          telemetry: telemetry,
-          prefs: prefs,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TelemetryPage(
+            fieldImage: FieldImage.defaultField,
+            telemetry: telemetry,
+            prefs: prefs,
+          ),
         ),
       ),
-    ));
+    );
 
     // Initially disconnected
     connectionStatusController.add(false);
@@ -207,15 +215,17 @@ void main() {
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: TelemetryPage(
-          fieldImage: FieldImage.defaultField,
-          telemetry: telemetry,
-          prefs: prefs,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TelemetryPage(
+            fieldImage: FieldImage.defaultField,
+            telemetry: telemetry,
+            prefs: prefs,
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 

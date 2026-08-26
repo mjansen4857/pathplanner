@@ -7,14 +7,11 @@ class IdealStartingState {
   IdealStartingState(this.velocityMPS, this.rotation);
 
   IdealStartingState.fromJson(Map<String, dynamic> json)
-      : velocityMPS = json['velocity'] ?? 0,
-        rotation = Rotation2d.fromDegrees(json['rotation'] ?? 0);
+    : velocityMPS = json['velocity'] ?? 0,
+      rotation = Rotation2d.fromDegrees(json['rotation'] ?? 0);
 
   Map<String, dynamic> toJson() {
-    return {
-      'velocity': velocityMPS,
-      'rotation': rotation.degrees,
-    };
+    return {'velocity': velocityMPS, 'rotation': rotation.degrees};
   }
 
   IdealStartingState clone() {

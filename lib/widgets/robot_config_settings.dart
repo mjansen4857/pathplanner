@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/robot_features/circle_feature.dart';
 import 'package:pathplanner/robot_features/feature.dart';
 import 'package:pathplanner/robot_features/line_feature.dart';
@@ -61,37 +61,46 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
         widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
     _bumperLength =
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
-    _bumperOffsetX = widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
+    _bumperOffsetX =
+        widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
         Defaults.bumperOffsetX;
-    _bumperOffsetY = widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
+    _bumperOffsetY =
+        widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
         Defaults.bumperOffsetY;
     _mass = widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass;
     _moi = widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI;
-    _wheelRadius = widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+    _wheelRadius =
+        widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
         Defaults.driveWheelRadius;
     _driveGearing =
         widget.prefs.getDouble(PrefsKeys.driveGearing) ?? Defaults.driveGearing;
-    _maxDriveSpeed = widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
+    _maxDriveSpeed =
+        widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
         Defaults.maxDriveSpeed;
     _wheelCOF = widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF;
     _driveMotor =
         widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor;
-    _currentLimit = widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
+    _currentLimit =
+        widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
         Defaults.driveCurrentLimit;
 
     _modulePositions = [
       Translation2d(
-          widget.prefs.getDouble(PrefsKeys.flModuleX) ?? Defaults.flModuleX,
-          widget.prefs.getDouble(PrefsKeys.flModuleY) ?? Defaults.flModuleY),
+        widget.prefs.getDouble(PrefsKeys.flModuleX) ?? Defaults.flModuleX,
+        widget.prefs.getDouble(PrefsKeys.flModuleY) ?? Defaults.flModuleY,
+      ),
       Translation2d(
-          widget.prefs.getDouble(PrefsKeys.frModuleX) ?? Defaults.frModuleX,
-          widget.prefs.getDouble(PrefsKeys.frModuleY) ?? Defaults.frModuleY),
+        widget.prefs.getDouble(PrefsKeys.frModuleX) ?? Defaults.frModuleX,
+        widget.prefs.getDouble(PrefsKeys.frModuleY) ?? Defaults.frModuleY,
+      ),
       Translation2d(
-          widget.prefs.getDouble(PrefsKeys.blModuleX) ?? Defaults.blModuleX,
-          widget.prefs.getDouble(PrefsKeys.blModuleY) ?? Defaults.blModuleY),
+        widget.prefs.getDouble(PrefsKeys.blModuleX) ?? Defaults.blModuleX,
+        widget.prefs.getDouble(PrefsKeys.blModuleY) ?? Defaults.blModuleY,
+      ),
       Translation2d(
-          widget.prefs.getDouble(PrefsKeys.brModuleX) ?? Defaults.brModuleX,
-          widget.prefs.getDouble(PrefsKeys.brModuleY) ?? Defaults.brModuleY),
+        widget.prefs.getDouble(PrefsKeys.brModuleX) ?? Defaults.brModuleX,
+        widget.prefs.getDouble(PrefsKeys.brModuleY) ?? Defaults.brModuleY,
+      ),
     ];
 
     for (String featureJson
@@ -141,7 +150,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.robotMass, value.toDouble());
+                                  PrefsKeys.robotMass,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _mass = value;
                                   _optimalCurrentLimit =
@@ -163,7 +174,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.robotMOI, value.toDouble());
+                                  PrefsKeys.robotMOI,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _moi = value;
                                   _maxAngAccel = _calculateMaxAngAccel();
@@ -188,7 +201,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.robotWidth, value.toDouble());
+                                  PrefsKeys.robotWidth,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _bumperWidth = value;
                                 });
@@ -206,7 +221,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.robotLength, value.toDouble());
+                                  PrefsKeys.robotLength,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _bumperLength = value;
                                 });
@@ -227,7 +244,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.bumperOffsetX, value.toDouble());
+                                  PrefsKeys.bumperOffsetX,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _bumperOffsetX = value;
                                 });
@@ -244,7 +263,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.bumperOffsetY, value.toDouble());
+                                  PrefsKeys.bumperOffsetY,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _bumperOffsetY = value;
                                 });
@@ -268,8 +289,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.driveWheelRadius,
-                                    value.toDouble());
+                                  PrefsKeys.driveWheelRadius,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _wheelRadius = value;
                                   _optimalCurrentLimit =
@@ -291,7 +313,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.driveGearing, value.toDouble());
+                                  PrefsKeys.driveGearing,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _driveGearing = value;
                                   _optimalCurrentLimit =
@@ -317,7 +341,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.maxDriveSpeed, value.toDouble());
+                                  PrefsKeys.maxDriveSpeed,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _maxDriveSpeed = value;
                                   _optimalCurrentLimit =
@@ -339,7 +365,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.wheelCOF, value.toDouble());
+                                  PrefsKeys.wheelCOF,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _wheelCOF = value;
                                   _optimalCurrentLimit =
@@ -370,13 +398,15 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                                         height: 49,
                                         child: Padding(
                                           padding: const EdgeInsets.symmetric(
-                                              vertical: 4),
+                                            vertical: 4,
+                                          ),
                                           child: Container(
                                             decoration: BoxDecoration(
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                               border: Border.all(
-                                                  color: colorScheme.outline),
+                                                color: colorScheme.outline,
+                                              ),
                                             ),
                                             child: ExcludeFocus(
                                               child: ButtonTheme(
@@ -389,13 +419,14 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                                                   underline: Container(),
                                                   menuMaxHeight: 250,
                                                   icon: const Icon(
-                                                      Icons.arrow_drop_down),
+                                                    Icons.arrow_drop_down,
+                                                  ),
                                                   style: TextStyle(
-                                                      fontSize: 14,
-                                                      color: colorScheme
-                                                          .onSurface),
-                                                  onChanged:
-                                                      (String? newValue) {
+                                                    fontSize: 14,
+                                                    color:
+                                                        colorScheme.onSurface,
+                                                  ),
+                                                  onChanged: (String? newValue) {
                                                     if (newValue != null) {
                                                       setState(() {
                                                         _driveMotor = newValue;
@@ -407,8 +438,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                                                             _calculateMaxAngAccel();
                                                       });
                                                       widget.prefs.setString(
-                                                          PrefsKeys.driveMotor,
-                                                          _driveMotor);
+                                                        PrefsKeys.driveMotor,
+                                                        _driveMotor,
+                                                      );
                                                       widget
                                                           .onSettingsChanged();
                                                     }
@@ -421,7 +453,8 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                                                     DropdownMenuItem<String>(
                                                       value: 'krakenX60FOC',
                                                       child: Text(
-                                                          'Kraken X60 FOC'),
+                                                        'Kraken X60 FOC',
+                                                      ),
                                                     ),
                                                     DropdownMenuItem<String>(
                                                       value: 'falcon500',
@@ -430,7 +463,8 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                                                     DropdownMenuItem<String>(
                                                       value: 'falcon500FOC',
                                                       child: Text(
-                                                          'Falcon 500 FOC'),
+                                                        'Falcon 500 FOC',
+                                                      ),
                                                     ),
                                                     DropdownMenuItem<String>(
                                                       value: 'vortex',
@@ -458,8 +492,10 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                                     ],
                                   ),
                                   Padding(
-                                    padding:
-                                        const EdgeInsets.only(left: 2, top: 12),
+                                    padding: const EdgeInsets.only(
+                                      left: 2,
+                                      top: 12,
+                                    ),
                                     child: Container(
                                       width: 78,
                                       height: 3,
@@ -467,8 +503,10 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                                     ),
                                   ),
                                   Padding(
-                                    padding:
-                                        const EdgeInsets.only(left: 8, top: 3),
+                                    padding: const EdgeInsets.only(
+                                      left: 8,
+                                      top: 3,
+                                    ),
                                     child: Text(
                                       'Drive Motor',
                                       style: TextStyle(
@@ -494,8 +532,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                               onSubmitted: (value) {
                                 if (value != null) {
                                   widget.prefs.setDouble(
-                                      PrefsKeys.driveCurrentLimit,
-                                      value.roundToDouble());
+                                    PrefsKeys.driveCurrentLimit,
+                                    value.roundToDouble(),
+                                  );
                                   setState(() {
                                     _currentLimit = value.roundToDouble();
                                     _maxAccel = _calculateMaxAccel();
@@ -522,10 +561,14 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.flModuleX, value.toDouble());
+                                  PrefsKeys.flModuleX,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _modulePositions[0] = Translation2d(
-                                      value, _modulePositions[0].y);
+                                    value,
+                                    _modulePositions[0].y,
+                                  );
                                   _maxAngAccel = _calculateMaxAngAccel();
                                 });
                               }
@@ -542,10 +585,14 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.flModuleY, value.toDouble());
+                                  PrefsKeys.flModuleY,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _modulePositions[0] = Translation2d(
-                                      _modulePositions[0].x, value);
+                                    _modulePositions[0].x,
+                                    value,
+                                  );
                                   _maxAngAccel = _calculateMaxAngAccel();
                                 });
                               }
@@ -566,10 +613,14 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.frModuleX, value.toDouble());
+                                  PrefsKeys.frModuleX,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _modulePositions[1] = Translation2d(
-                                      value, _modulePositions[1].y);
+                                    value,
+                                    _modulePositions[1].y,
+                                  );
                                   _maxAngAccel = _calculateMaxAngAccel();
                                 });
                               }
@@ -586,10 +637,14 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.frModuleY, value.toDouble());
+                                  PrefsKeys.frModuleY,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _modulePositions[1] = Translation2d(
-                                      _modulePositions[1].x, value);
+                                    _modulePositions[1].x,
+                                    value,
+                                  );
                                   _maxAngAccel = _calculateMaxAngAccel();
                                 });
                               }
@@ -610,10 +665,14 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.blModuleX, value.toDouble());
+                                  PrefsKeys.blModuleX,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _modulePositions[2] = Translation2d(
-                                      value, _modulePositions[2].y);
+                                    value,
+                                    _modulePositions[2].y,
+                                  );
                                   _maxAngAccel = _calculateMaxAngAccel();
                                 });
                               }
@@ -630,10 +689,14 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.blModuleY, value.toDouble());
+                                  PrefsKeys.blModuleY,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _modulePositions[2] = Translation2d(
-                                      _modulePositions[2].x, value);
+                                    _modulePositions[2].x,
+                                    value,
+                                  );
                                   _maxAngAccel = _calculateMaxAngAccel();
                                 });
                               }
@@ -654,10 +717,14 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.brModuleX, value.toDouble());
+                                  PrefsKeys.brModuleX,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _modulePositions[3] = Translation2d(
-                                      value, _modulePositions[3].y);
+                                    value,
+                                    _modulePositions[3].y,
+                                  );
                                   _maxAngAccel = _calculateMaxAngAccel();
                                 });
                               }
@@ -674,10 +741,14 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                    PrefsKeys.brModuleY, value.toDouble());
+                                  PrefsKeys.brModuleY,
+                                  value.toDouble(),
+                                );
                                 setState(() {
                                   _modulePositions[3] = Translation2d(
-                                      _modulePositions[3].x, value);
+                                    _modulePositions[3].x,
+                                    value,
+                                  );
                                   _maxAngAccel = _calculateMaxAngAccel();
                                 });
                               }
@@ -707,17 +778,15 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                               value: 'circle',
                               child: Text('Circle'),
                             ),
-                            PopupMenuItem(
-                              value: 'line',
-                              child: Text('Line'),
-                            ),
+                            PopupMenuItem(value: 'line', child: Text('Line')),
                           ],
                           onSelected: (value) {
                             setState(() {
                               switch (value) {
                                 case 'rounded_rect':
                                   _features.add(
-                                      RoundedRectFeature(name: 'Rectangle'));
+                                    RoundedRectFeature(name: 'Rectangle'),
+                                  );
                                   break;
                                 case 'circle':
                                   _features.add(CircleFeature(name: 'Circle'));
@@ -774,9 +843,7 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                     constraints: const BoxConstraints(maxWidth: 250),
                     child: Text(
                       'The real max acceleration of the robot, calculated from the config values. If this is too slow, ensure that your True Max Drive Speed is correct. This should be the actual measured max speed of the robot under load.',
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -815,9 +882,7 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                     constraints: const BoxConstraints(maxWidth: 250),
                     child: Text(
                       'The real max angular acceleration of the robot, calculated from the config values.',
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -838,9 +903,7 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                       padding: const EdgeInsets.only(bottom: 2),
                       child: Text(
                         'Max Angular Acceleration: ${_maxAngAccel.toStringAsFixed(0)}°/S²',
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                        ),
+                        style: TextStyle(color: colorScheme.onSurface),
                       ),
                     ),
                   ],
@@ -854,9 +917,7 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                     constraints: const BoxConstraints(maxWidth: 250),
                     child: Text(
                       'The maximum current limit that would still prevent the wheels from slipping under maximum acceleration.',
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -878,7 +939,8 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                       child: Text(
                         'Max Optimal Current Limit: ${_optimalCurrentLimit.toStringAsFixed(0)}A',
                         style: TextStyle(
-                          color: (_optimalCurrentLimit.round() <
+                          color:
+                              (_optimalCurrentLimit.round() <
                                   _currentLimit.round())
                               ? colorScheme.error
                               : colorScheme.onSurface,
@@ -1332,11 +1394,14 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
   num _calculateOptimalCurrentLimit() {
     final int numModules = _modulePositions.length;
     const int numMotors = 1;
-    final DCMotor driveMotor =
-        DCMotor.fromString(_driveMotor, numMotors).withReduction(_driveGearing);
+    final DCMotor driveMotor = DCMotor.fromString(
+      _driveMotor,
+      numMotors,
+    ).withReduction(_driveGearing);
     final maxVelCurrent = min(
-        driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
-        _currentLimit * numMotors);
+      driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
+      _currentLimit * numMotors,
+    );
     final torqueLoss = max(driveMotor.getTorque(maxVelCurrent), 0.0);
     final num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
     final num maxFrictionTorque = moduleFrictionForce * _wheelRadius;
@@ -1347,16 +1412,21 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
   num _calculateMaxAccel() {
     final int numModules = _modulePositions.length;
     const int numMotors = 1;
-    final DCMotor driveMotor =
-        DCMotor.fromString(_driveMotor, numMotors).withReduction(_driveGearing);
+    final DCMotor driveMotor = DCMotor.fromString(
+      _driveMotor,
+      numMotors,
+    ).withReduction(_driveGearing);
 
     final maxVelCurrent = min(
-        driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
-        _currentLimit * numMotors);
+      driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
+      _currentLimit * numMotors,
+    );
     final torqueLoss = max(driveMotor.getTorque(maxVelCurrent), 0.0);
     final num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
-    final maxCurrent =
-        min(driveMotor.getCurrent(0.0, 12.0), (_currentLimit * numMotors));
+    final maxCurrent = min(
+      driveMotor.getCurrent(0.0, 12.0),
+      (_currentLimit * numMotors),
+    );
     final maxTorque = ((maxCurrent * driveMotor.kTNMPerAmp) - torqueLoss);
     final maxForce = min(maxTorque / _wheelRadius, moduleFrictionForce);
 
@@ -1370,16 +1440,21 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
   num _calculateMaxAngAccel() {
     final int numModules = _modulePositions.length;
     const int numMotors = 1;
-    final DCMotor driveMotor =
-        DCMotor.fromString(_driveMotor, numMotors).withReduction(_driveGearing);
+    final DCMotor driveMotor = DCMotor.fromString(
+      _driveMotor,
+      numMotors,
+    ).withReduction(_driveGearing);
 
     final maxVelCurrent = min(
-        driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
-        _currentLimit * numMotors);
+      driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
+      _currentLimit * numMotors,
+    );
     final torqueLoss = max(driveMotor.getTorque(maxVelCurrent), 0.0);
     final num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
-    final maxCurrent =
-        min(driveMotor.getCurrent(0.0, 12.0), (_currentLimit * numMotors));
+    final maxCurrent = min(
+      driveMotor.getCurrent(0.0, 12.0),
+      (_currentLimit * numMotors),
+    );
     final maxTorque = ((maxCurrent * driveMotor.kTNMPerAmp) - torqueLoss);
     final maxForce = min(maxTorque / _wheelRadius, moduleFrictionForce);
 
@@ -1421,12 +1496,16 @@ class _RobotPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..color = colorScheme.secondary;
 
-    double pixelsPerMeter =
-        min((size.width - 64) / bumperWidth, (size.height - 64) / bumperLength);
+    double pixelsPerMeter = min(
+      (size.width - 64) / bumperWidth,
+      (size.height - 64) / bumperLength,
+    );
 
     Offset center = Offset(size.width / 2.0, size.height / 2.0);
-    Offset bumperOffsetPixels =
-        Offset(bumperOffsetX * pixelsPerMeter, -bumperOffsetY * pixelsPerMeter);
+    Offset bumperOffsetPixels = Offset(
+      bumperOffsetX * pixelsPerMeter,
+      -bumperOffsetY * pixelsPerMeter,
+    );
 
     canvas.save();
     canvas.translate(center.dx, center.dy);
@@ -1454,7 +1533,7 @@ class _RobotPainter extends CustomPainter {
 
     List<Offset> modulePositionsPixels = [
       for (Translation2d p in modulePositions)
-        Offset(p.x * pixelsPerMeter, -p.y * pixelsPerMeter)
+        Offset(p.x * pixelsPerMeter, -p.y * pixelsPerMeter),
     ];
 
     // PathPainterUtil.paintRobotModules(modulePoses, fieldImage, scale, canvas, color)

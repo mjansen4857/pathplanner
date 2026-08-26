@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:file/file.dart';
 import 'package:file/local.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -12,6 +12,7 @@ import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/services/update_checker.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/error_popup.dart';
+import 'package:pathplanner/widgets/legacy_material_bridge.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 import 'package:window_manager/window_manager.dart';
@@ -19,40 +20,43 @@ import 'package:pathplanner/pages/home_page.dart';
 
 void main() async {
   final zone = Zone.current.fork(
-    specification: ZoneSpecification(handleUncaughtError: (Zone self,
-        ZoneDelegate parent,
-        Zone zone,
-        Object error,
-        StackTrace stackTrace) async {
-      zone.run(() async {
-        Log.error('Uncaught Error', error, stackTrace);
+    specification: ZoneSpecification(
+      handleUncaughtError:
+          (
+            Zone self,
+            ZoneDelegate parent,
+            Zone zone,
+            Object error,
+            StackTrace stackTrace,
+          ) async {
+            zone.run(() async {
+              Log.error('Uncaught Error', error, stackTrace);
 
-        await windowManager.hide();
+              await windowManager.hide();
 
-        WindowOptions windowOptions = const WindowOptions(
-          size: Size(400, 280),
-          minimumSize: Size(400, 280),
-          maximumSize: Size(400, 280),
-          center: true,
-          title: 'PathPlanner Error',
-          titleBarStyle: TitleBarStyle.normal,
-        );
+              WindowOptions windowOptions = const WindowOptions(
+                size: Size(400, 280),
+                minimumSize: Size(400, 280),
+                maximumSize: Size(400, 280),
+                center: true,
+                title: 'PathPlanner Error',
+                titleBarStyle: TitleBarStyle.normal,
+              );
 
-        windowManager.waitUntilReadyToShow(windowOptions, () async {
-          await windowManager.setSize(const Size(400, 280));
-          await windowManager.show();
-          await windowManager.focus();
-        });
+              windowManager.waitUntilReadyToShow(windowOptions, () async {
+                await windowManager.setSize(const Size(400, 280));
+                await windowManager.show();
+                await windowManager.focus();
+              });
 
-        SharedPreferences prefs = await SharedPreferences.getInstance();
+              SharedPreferences prefs = await SharedPreferences.getInstance();
 
-        runApp(ErrorPopup(
-          prefs: prefs,
-          error: error,
-          stackTrace: stackTrace,
-        ));
-      });
-    }),
+              runApp(
+                ErrorPopup(prefs: prefs, error: error, stackTrace: stackTrace),
+              );
+            });
+          },
+    ),
   );
 
   zone.run(() async {
@@ -77,8 +81,9 @@ void main() async {
       minimumSize: const Size(640, 360),
       center: true,
       title: 'PathPlanner',
-      titleBarStyle:
-          Platform.isMacOS ? TitleBarStyle.normal : TitleBarStyle.hidden,
+      titleBarStyle: Platform.isMacOS
+          ? TitleBarStyle.normal
+          : TitleBarStyle.hidden,
     );
 
     windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -104,18 +109,21 @@ void main() async {
     String telemetryAddress = useSim
         ? '127.0.0.1'
         : (prefs.getString(PrefsKeys.ntServerAddress) ??
-            Defaults.ntServerAddress);
+              Defaults.ntServerAddress);
 
-    PPLibTelemetry telemetry =
-        PPLibTelemetry(serverBaseAddress: telemetryAddress);
+    PPLibTelemetry telemetry = PPLibTelemetry(
+      serverBaseAddress: telemetryAddress,
+    );
 
-    runApp(PathPlanner(
-      appVersion: packageInfo.version,
-      prefs: prefs,
-      undoStack: ChangeStack(),
-      telemetry: telemetry,
-      updateChecker: UpdateChecker(),
-    ));
+    runApp(
+      PathPlanner(
+        appVersion: packageInfo.version,
+        prefs: prefs,
+        undoStack: ChangeStack(),
+        telemetry: telemetry,
+        updateChecker: UpdateChecker(),
+      ),
+    );
   });
 }
 
@@ -142,8 +150,9 @@ class PathPlanner extends StatefulWidget {
 }
 
 class _PathPlannerState extends State<PathPlanner> {
-  late Color _teamColor =
-      Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
+  late Color _teamColor = Color(
+    widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +163,7 @@ class _PathPlannerState extends State<PathPlanner> {
         colorSchemeSeed: _teamColor,
         brightness: Brightness.dark,
       ),
+      builder: legacyMaterialAppBuilder,
       home: HomePage(
         appVersion: widget.appVersion,
         prefs: widget.prefs,
@@ -164,8 +174,10 @@ class _PathPlannerState extends State<PathPlanner> {
         onTeamColorChanged: (Color color) {
           setState(() {
             _teamColor = color;
-            widget.prefs.setInt(PrefsKeys.teamColor,
-                int.parse(_teamColor.toHexString(), radix: 16));
+            widget.prefs.setInt(
+              PrefsKeys.teamColor,
+              int.parse(_teamColor.toHexString(), radix: 16),
+            );
           });
         },
       ),

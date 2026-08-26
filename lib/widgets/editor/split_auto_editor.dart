@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/choreo_path.dart';
@@ -63,7 +63,8 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
 
-    double treeWeight = widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
+    double treeWeight =
+        widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
     _controller.areas = [
       Area(
@@ -101,19 +102,21 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                   widget.fieldImage.getWidget(),
                   Positioned.fill(
                     child: CustomPaint(
-                        painter: PathPainter(
-                            colorScheme: colorScheme,
-                            paths: widget.autoPaths,
-                            choreoPaths: widget.autoChoreoPaths,
-                            simple: true,
-                            hideOtherPathsOnHover: widget.prefs
-                                    .getBool(PrefsKeys.hidePathsOnHover) ??
-                                Defaults.hidePathsOnHover,
-                            hoveredPath: _hoveredPath,
-                            fieldImage: widget.fieldImage,
-                            simulatedPath: _simTraj,
-                            animation: _previewController.view,
-                            prefs: widget.prefs)),
+                      painter: PathPainter(
+                        colorScheme: colorScheme,
+                        paths: widget.autoPaths,
+                        choreoPaths: widget.autoChoreoPaths,
+                        simple: true,
+                        hideOtherPathsOnHover:
+                            widget.prefs.getBool(PrefsKeys.hidePathsOnHover) ??
+                            Defaults.hidePathsOnHover,
+                        hoveredPath: _hoveredPath,
+                        fieldImage: widget.fieldImage,
+                        simulatedPath: _simTraj,
+                        animation: _previewController.view,
+                        prefs: widget.prefs,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -134,8 +137,10 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
               double? newWeight = _treeOnRight
                   ? _controller.areas[1].weight
                   : _controller.areas[0].weight;
-              widget.prefs
-                  .setDouble(PrefsKeys.editorTreeWeight, newWeight ?? 0.5);
+              widget.prefs.setDouble(
+                PrefsKeys.editorTreeWeight,
+                newWeight ?? 0.5,
+              );
             },
             children: [
               if (_treeOnRight)
@@ -151,14 +156,18 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                 surfaceTintColor: colorScheme.surfaceTint,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.only(
-                    topLeft:
-                        _treeOnRight ? const Radius.circular(12) : Radius.zero,
-                    topRight:
-                        _treeOnRight ? Radius.zero : const Radius.circular(12),
-                    bottomLeft:
-                        _treeOnRight ? const Radius.circular(12) : Radius.zero,
-                    bottomRight:
-                        _treeOnRight ? Radius.zero : const Radius.circular(12),
+                    topLeft: _treeOnRight
+                        ? const Radius.circular(12)
+                        : Radius.zero,
+                    topRight: _treeOnRight
+                        ? Radius.zero
+                        : const Radius.circular(12),
+                    bottomLeft: _treeOnRight
+                        ? const Radius.circular(12)
+                        : Radius.zero,
+                    bottomRight: _treeOnRight
+                        ? Radius.zero
+                        : const Radius.circular(12),
                   ),
                 ),
                 child: Padding(
@@ -170,14 +179,15 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                     onRenderAuto: () {
                       if (_simTraj != null) {
                         showDialog(
-                            context: context,
-                            builder: (context) {
-                              return TrajectoryRenderDialog(
-                                fieldImage: widget.fieldImage,
-                                prefs: widget.prefs,
-                                trajectory: _simTraj!,
-                              );
-                            });
+                          context: context,
+                          builder: (context) {
+                            return TrajectoryRenderDialog(
+                              fieldImage: widget.fieldImage,
+                              prefs: widget.prefs,
+                              trajectory: _simTraj!,
+                            );
+                          },
+                        );
                       }
                     },
                     onPathHovered: (value) {
@@ -190,8 +200,8 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                       // Delay this because it needs the parent widget to rebuild first
                       Future.delayed(const Duration(milliseconds: 100))
                           .then((_) {
-                        _simulateAuto();
-                      });
+                            _simulateAuto();
+                          });
                     },
                     onSideSwapped: () => setState(() {
                       _treeOnRight = !_treeOnRight;
@@ -252,10 +262,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       RobotConfig config = RobotConfig.fromPrefs(widget.prefs);
 
       try {
-        simPath = AutoSimulator.simulateAuto(
-          widget.autoPaths,
-          config,
-        );
+        simPath = AutoSimulator.simulateAuto(widget.autoPaths, config);
         if (!(simPath?.getTotalTimeSeconds().isFinite ?? false)) {
           simPath = null;
         }
@@ -276,13 +283,16 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
           _previewController.stop();
           _previewController.reset();
           _previewController.duration = Duration(
-              milliseconds: (simPath.states.last.timeSeconds * 1000).toInt());
+            milliseconds: (simPath.states.last.timeSeconds * 1000).toInt(),
+          );
           _previewController.repeat();
         } else {
-          double prevTime = _previewController.value *
+          double prevTime =
+              _previewController.value *
               (_previewController.duration!.inMilliseconds / 1000.0);
           _previewController.duration = Duration(
-              milliseconds: (simPath.states.last.timeSeconds * 1000).toInt());
+            milliseconds: (simPath.states.last.timeSeconds * 1000).toInt(),
+          );
           double newPos = prevTime / simPath.states.last.timeSeconds;
           _previewController.forward(from: newPos);
           _previewController.stop();
@@ -303,14 +313,13 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       SnackBar(
         content: Text(
           'Failed to generate trajectory for ${widget.auto.name}. This is likely due to bad control point placement. Please adjust your control points to avoid kinks in the path.',
-          style:
-              TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onErrorContainer,
+          ),
         ),
         backgroundColor: Theme.of(context).colorScheme.errorContainer,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         action: SnackBarAction(
           label: 'Dismiss',
           textColor: Theme.of(context).colorScheme.onErrorContainer,

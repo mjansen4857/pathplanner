@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -26,12 +26,15 @@ class _EditFieldDialogState extends State<EditFieldDialog> {
 
     _nameController = TextEditingController(text: widget.fieldImage.name);
     _nameController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _nameController.text.length));
+      TextPosition(offset: _nameController.text.length),
+    );
 
     _ppmController = TextEditingController(
-        text: widget.fieldImage.pixelsPerMeter.toStringAsFixed(2));
+      text: widget.fieldImage.pixelsPerMeter.toStringAsFixed(2),
+    );
     _ppmController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _ppmController.text.length));
+      TextPosition(offset: _ppmController.text.length),
+    );
   }
 
   @override
@@ -56,14 +59,16 @@ class _EditFieldDialogState extends State<EditFieldDialog> {
                     controller: _nameController,
                     inputFormatters: [
                       FilteringTextInputFormatter.deny(
-                          RegExp('["*<>?|/:\\\\]')),
+                        RegExp('["*<>?|/:\\\\]'),
+                      ),
                     ],
                     style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
                       contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                       labelText: 'Field Name',
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                 ),
@@ -75,14 +80,16 @@ class _EditFieldDialogState extends State<EditFieldDialog> {
                     controller: _ppmController,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(
-                          RegExp(r'(^\d*\.?\d*)')),
+                        RegExp(r'(^\d*\.?\d*)'),
+                      ),
                     ],
                     style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
                       contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                       labelText: 'Pixels Per Meter',
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                 ),
@@ -115,11 +122,19 @@ class _EditFieldDialogState extends State<EditFieldDialog> {
 
       Directory appDir = await getApplicationSupportDirectory();
       Directory imagesDir = Directory(join(appDir.path, 'custom_fields'));
-      File imageFile = File(join(imagesDir.path,
-          '${widget.fieldImage.name}_${widget.fieldImage.pixelsPerMeter.toStringAsFixed(2)}.${widget.fieldImage.extension}'));
+      File imageFile = File(
+        join(
+          imagesDir.path,
+          '${widget.fieldImage.name}_${widget.fieldImage.pixelsPerMeter.toStringAsFixed(2)}.${widget.fieldImage.extension}',
+        ),
+      );
 
-      await imageFile.rename(join(imagesDir.path,
-          '${name}_${ppm.toStringAsFixed(2)}.${widget.fieldImage.extension}'));
+      await imageFile.rename(
+        join(
+          imagesDir.path,
+          '${name}_${ppm.toStringAsFixed(2)}.${widget.fieldImage.extension}',
+        ),
+      );
 
       widget.fieldImage.name = name;
       widget.fieldImage.pixelsPerMeter = ppm;

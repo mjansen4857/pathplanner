@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -18,21 +18,26 @@ void main() {
 
     var updateChecker = MockUpdateChecker();
 
-    when(updateChecker.isPPLibUpdateAvailable(
-            projectDir: anyNamed('projectDir'), fs: anyNamed('fs')))
-        .thenAnswer((realInvocation) => Future.value(true));
+    when(
+      updateChecker.isPPLibUpdateAvailable(
+        projectDir: anyNamed('projectDir'),
+        fs: anyNamed('fs'),
+      ),
+    ).thenAnswer((realInvocation) => Future.value(true));
 
     var fs = MemoryFileSystem();
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PPLibUpdateCard(
-          projectDir: fs.directory('/project'),
-          fs: fs,
-          updateChecker: updateChecker,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PPLibUpdateCard(
+            projectDir: fs.directory('/project'),
+            fs: fs,
+            updateChecker: updateChecker,
+          ),
         ),
       ),
-    ));
+    );
 
     // Card initially hidden
     expect(find.text('PathPlannerLib update available!'), findsNothing);

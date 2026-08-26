@@ -16,12 +16,12 @@ class PathConstraints {
   });
 
   PathConstraints.fromJson(Map<String, dynamic> json)
-      : maxVelocityMPS = json['maxVelocity'] ?? 3,
-        maxAccelerationMPSSq = json['maxAcceleration'] ?? 3,
-        maxAngularVelocityDeg = json['maxAngularVelocity'] ?? 540,
-        maxAngularAccelerationDeg = json['maxAngularAcceleration'] ?? 720,
-        nominalVoltage = json['nominalVoltage'] ?? 12.0,
-        unlimited = json['unlimited'] ?? false;
+    : maxVelocityMPS = json['maxVelocity'] ?? 3,
+      maxAccelerationMPSSq = json['maxAcceleration'] ?? 3,
+      maxAngularVelocityDeg = json['maxAngularVelocity'] ?? 540,
+      maxAngularAccelerationDeg = json['maxAngularAcceleration'] ?? 720,
+      nominalVoltage = json['nominalVoltage'] ?? 12.0,
+      unlimited = json['unlimited'] ?? false;
 
   PathConstraints clone() {
     return PathConstraints(
@@ -58,10 +58,11 @@ class PathConstraints {
 
   @override
   int get hashCode => Object.hash(
-      maxVelocityMPS,
-      maxAccelerationMPSSq,
-      maxAngularVelocityDeg,
-      maxAngularAccelerationDeg,
-      nominalVoltage,
-      unlimited);
+    maxVelocityMPS,
+    maxAccelerationMPSSq,
+    maxAngularVelocityDeg,
+    maxAngularAccelerationDeg,
+    nominalVoltage,
+    unlimited,
+  );
 }

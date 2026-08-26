@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
@@ -29,8 +29,9 @@ class IdealStartingStateTree extends StatelessWidget {
         children: [
           const Text('Ideal Starting State'),
           InfoCard(
-              value:
-                  '${path.idealStartingState.rotation.degrees.toStringAsFixed(2)}° starting with ${path.idealStartingState.velocityMPS.toStringAsFixed(2)} M/S'),
+            value:
+                '${path.idealStartingState.rotation.degrees.toStringAsFixed(2)}° starting with ${path.idealStartingState.velocityMPS.toStringAsFixed(2)} M/S',
+          ),
         ],
       ),
       leading: const Icon(Icons.start_rounded),
@@ -55,7 +56,8 @@ class IdealStartingStateTree extends StatelessWidget {
                   onSubmitted: (value) {
                     if (value != null) {
                       _addChange(
-                          () => path.idealStartingState.velocityMPS = value);
+                        () => path.idealStartingState.velocityMPS = value,
+                      );
                     }
                   },
                 ),
@@ -68,9 +70,12 @@ class IdealStartingStateTree extends StatelessWidget {
                     label: 'Rotation (Deg)',
                     onSubmitted: (value) {
                       if (value != null) {
-                        _addChange(() => path.idealStartingState.rotation =
-                            Rotation2d.fromDegrees(
-                                MathUtil.inputModulus(value, -180, 180)));
+                        _addChange(
+                          () => path.idealStartingState.rotation =
+                              Rotation2d.fromDegrees(
+                                MathUtil.inputModulus(value, -180, 180),
+                              ),
+                        );
                       }
                     },
                   ),
@@ -83,16 +88,18 @@ class IdealStartingStateTree extends StatelessWidget {
   }
 
   void _addChange(VoidCallback execute) {
-    undoStack.add(Change(
-      path.idealStartingState.clone(),
-      () {
-        execute.call();
-        onPathChanged?.call();
-      },
-      (oldValue) {
-        path.idealStartingState = oldValue.clone();
-        onPathChanged?.call();
-      },
-    ));
+    undoStack.add(
+      Change(
+        path.idealStartingState.clone(),
+        () {
+          execute.call();
+          onPathChanged?.call();
+        },
+        (oldValue) {
+          path.idealStartingState = oldValue.clone();
+          onPathChanged?.call();
+        },
+      ),
+    );
   }
 }

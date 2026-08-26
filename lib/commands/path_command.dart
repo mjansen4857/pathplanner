@@ -6,13 +6,11 @@ class PathCommand extends Command {
   PathCommand({this.pathName}) : super(type: 'path');
 
   PathCommand.fromDataJson(Map<String, dynamic> json)
-      : this(pathName: json['pathName']);
+    : this(pathName: json['pathName']);
 
   @override
   Map<String, dynamic> dataToJson() {
-    return {
-      'pathName': pathName,
-    };
+    return {'pathName': pathName};
   }
 
   @override

@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
@@ -33,14 +33,13 @@ void main() {
       goalEndState: GoalEndState(0.0, const Rotation2d()),
       constraintZones: [
         ConstraintsZone(
-            constraints: PathConstraints(),
-            minWaypointRelativePos: 0.2,
-            maxWaypointRelativePos: 0.4),
+          constraints: PathConstraints(),
+          minWaypointRelativePos: 0.2,
+          maxWaypointRelativePos: 0.4,
+        ),
       ],
       pointTowardsZones: [PointTowardsZone()],
-      rotationTargets: [
-        RotationTarget(0.5, Rotation2d.fromDegrees(45)),
-      ],
+      rotationTargets: [RotationTarget(0.5, Rotation2d.fromDegrees(45))],
       eventMarkers: [],
       pathDir: '',
       fs: MemoryFileSystem(),
@@ -66,14 +65,13 @@ void main() {
       goalEndState: GoalEndState(0.0, const Rotation2d()),
       constraintZones: [
         ConstraintsZone(
-            constraints: PathConstraints(),
-            minWaypointRelativePos: 0.2,
-            maxWaypointRelativePos: 0.4),
+          constraints: PathConstraints(),
+          minWaypointRelativePos: 0.2,
+          maxWaypointRelativePos: 0.4,
+        ),
       ],
       pointTowardsZones: [PointTowardsZone()],
-      rotationTargets: [
-        RotationTarget(0.5, Rotation2d.fromDegrees(45)),
-      ],
+      rotationTargets: [RotationTarget(0.5, Rotation2d.fromDegrees(45))],
       eventMarkers: [],
       pathDir: '',
       fs: MemoryFileSystem(),

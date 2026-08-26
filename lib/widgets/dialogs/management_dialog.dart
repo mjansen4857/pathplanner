@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/waypoint.dart';
 
@@ -69,10 +69,7 @@ class _ManagementDialogState extends State<ManagementDialog> {
                     backgroundColor: Colors.transparent,
                   ),
                   body: TabBarView(
-                    children: [
-                      _buildEventsTab(),
-                      _buildLinkedTab(),
-                    ],
+                    children: [_buildEventsTab(), _buildLinkedTab()],
                   ),
                 ),
               ),
@@ -131,35 +128,37 @@ class _ManagementDialogState extends State<ManagementDialog> {
                       child: IconButton(
                         onPressed: () {
                           showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                ColorScheme colorScheme =
-                                    Theme.of(context).colorScheme;
-                                return AlertDialog(
-                                  backgroundColor: colorScheme.surface,
-                                  surfaceTintColor: colorScheme.surfaceTint,
-                                  title: const Text('Remove Event'),
-                                  content: Text(
-                                      'Are you sure you want to remove the event "$eventName"? This cannot be undone.'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: Navigator.of(context).pop,
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          widget.onEventDeleted(eventName);
-                                          ProjectPage.events.remove(eventName);
-                                        });
+                            context: context,
+                            builder: (BuildContext context) {
+                              ColorScheme colorScheme = Theme.of(context)
+                                  .colorScheme;
+                              return AlertDialog(
+                                backgroundColor: colorScheme.surface,
+                                surfaceTintColor: colorScheme.surfaceTint,
+                                title: const Text('Remove Event'),
+                                content: Text(
+                                  'Are you sure you want to remove the event "$eventName"? This cannot be undone.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: Navigator.of(context).pop,
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        widget.onEventDeleted(eventName);
+                                        ProjectPage.events.remove(eventName);
+                                      });
 
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text('Confirm'),
-                                    ),
-                                  ],
-                                );
-                              });
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Confirm'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
                         },
                         icon: Icon(
                           Icons.delete_forever_rounded,
@@ -207,34 +206,36 @@ class _ManagementDialogState extends State<ManagementDialog> {
                     child: IconButton(
                       onPressed: () {
                         showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              ColorScheme colorScheme =
-                                  Theme.of(context).colorScheme;
-                              return AlertDialog(
-                                backgroundColor: colorScheme.surface,
-                                surfaceTintColor: colorScheme.surfaceTint,
-                                title: const Text('Remove Linked Waypoint'),
-                                content: Text(
-                                    'Are you sure you want to remove the linked waypoint "$waypointName"? This cannot be undone.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: Navigator.of(context).pop,
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        widget.onLinkedDeleted(waypointName);
-                                      });
+                          context: context,
+                          builder: (BuildContext context) {
+                            ColorScheme colorScheme = Theme.of(context)
+                                .colorScheme;
+                            return AlertDialog(
+                              backgroundColor: colorScheme.surface,
+                              surfaceTintColor: colorScheme.surfaceTint,
+                              title: const Text('Remove Linked Waypoint'),
+                              content: Text(
+                                'Are you sure you want to remove the linked waypoint "$waypointName"? This cannot be undone.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: Navigator.of(context).pop,
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      widget.onLinkedDeleted(waypointName);
+                                    });
 
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text('Confirm'),
-                                  ),
-                                ],
-                              );
-                            });
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Confirm'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       },
                       icon: Icon(
                         Icons.delete_forever_rounded,
@@ -251,8 +252,9 @@ class _ManagementDialogState extends State<ManagementDialog> {
   }
 
   void _showRenameEventDialog(String originalName) {
-    TextEditingController controller =
-        TextEditingController(text: originalName);
+    TextEditingController controller = TextEditingController(
+      text: originalName,
+    );
 
     showDialog(
       context: context,
@@ -271,8 +273,9 @@ class _ManagementDialogState extends State<ManagementDialog> {
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                 labelText: 'Event Name',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
@@ -310,8 +313,9 @@ class _ManagementDialogState extends State<ManagementDialog> {
   }
 
   void _showRenameLinkedDialog(String originalName) {
-    TextEditingController controller =
-        TextEditingController(text: originalName);
+    TextEditingController controller = TextEditingController(
+      text: originalName,
+    );
 
     showDialog(
       context: context,
@@ -330,8 +334,9 @@ class _ManagementDialogState extends State<ManagementDialog> {
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                 labelText: 'Waypoint Name',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
@@ -349,7 +354,8 @@ class _ManagementDialogState extends State<ManagementDialog> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                          'A linked waypoint with that name already exists'),
+                        'A linked waypoint with that name already exists',
+                      ),
                     ),
                   );
                 } else {

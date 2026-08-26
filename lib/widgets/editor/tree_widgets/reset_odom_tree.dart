@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:undo/undo.dart';
 
@@ -32,29 +32,25 @@ class ResetOdomTree extends StatelessWidget {
                 value: auto.resetOdom,
                 onChanged: (val) {
                   if (val != null) {
-                    undoStack.add(Change(
-                      auto.resetOdom,
-                      () {
-                        auto.resetOdom = val;
-                        onAutoChanged?.call();
-                      },
-                      (oldValue) {
-                        auto.resetOdom = oldValue;
-                        onAutoChanged?.call();
-                      },
-                    ));
+                    undoStack.add(
+                      Change(
+                        auto.resetOdom,
+                        () {
+                          auto.resetOdom = val;
+                          onAutoChanged?.call();
+                        },
+                        (oldValue) {
+                          auto.resetOdom = oldValue;
+                          onAutoChanged?.call();
+                        },
+                      ),
+                    );
                   }
                 },
               ),
               const Padding(
-                padding: EdgeInsets.only(
-                  bottom: 3.0,
-                  left: 4.0,
-                ),
-                child: Text(
-                  'Reset Odometry',
-                  style: TextStyle(fontSize: 16),
-                ),
+                padding: EdgeInsets.only(bottom: 3.0, left: 4.0),
+                child: Text('Reset Odometry', style: TextStyle(fontSize: 16)),
               ),
             ],
           ),

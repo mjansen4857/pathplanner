@@ -1,17 +1,15 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 void main() {
   testWidgets('welcome page', (widgetTester) async {
-    await widgetTester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: WelcomePage(
-          appVersion: '1.2.3',
-        ),
+    await widgetTester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: WelcomePage(appVersion: '1.2.3')),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     var versionText = find.text('v1.2.3');

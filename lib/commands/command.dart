@@ -7,9 +7,7 @@ import 'package:pathplanner/commands/wait_command.dart';
 abstract class Command {
   final String type;
 
-  const Command({
-    required this.type,
-  });
+  const Command({required this.type});
 
   Map<String, dynamic> dataToJson();
 
@@ -17,10 +15,7 @@ abstract class Command {
 
   @nonVirtual
   Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'data': dataToJson(),
-    };
+    return {'type': type, 'data': dataToJson()};
   }
 
   static Command? fromJson(Map<String, dynamic> json) {

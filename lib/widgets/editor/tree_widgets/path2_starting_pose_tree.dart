@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path2/pathplanner_auto.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
@@ -53,10 +53,12 @@ class Path2StartingPoseTree extends StatelessWidget {
                   label: 'X Position (M)',
                   onSubmitted: (value) {
                     if (value != null && value.isFinite) {
-                      _addChange(Pose2d(
-                        Translation2d(value, auto.startingPose.y),
-                        auto.startingPose.rotation,
-                      ));
+                      _addChange(
+                        Pose2d(
+                          Translation2d(value, auto.startingPose.y),
+                          auto.startingPose.rotation,
+                        ),
+                      );
                     }
                   },
                 ),
@@ -69,10 +71,12 @@ class Path2StartingPoseTree extends StatelessWidget {
                   label: 'Y Position (M)',
                   onSubmitted: (value) {
                     if (value != null && value.isFinite) {
-                      _addChange(Pose2d(
-                        Translation2d(auto.startingPose.x, value),
-                        auto.startingPose.rotation,
-                      ));
+                      _addChange(
+                        Pose2d(
+                          Translation2d(auto.startingPose.x, value),
+                          auto.startingPose.rotation,
+                        ),
+                      );
                     }
                   },
                 ),
@@ -86,12 +90,14 @@ class Path2StartingPoseTree extends StatelessWidget {
                   arrowKeyIncrement: 1,
                   onSubmitted: (value) {
                     if (value != null && value.isFinite) {
-                      _addChange(Pose2d(
-                        auto.startingPose.translation,
-                        Rotation2d.fromDegrees(
-                          MathUtil.inputModulus(value, -180, 180),
+                      _addChange(
+                        Pose2d(
+                          auto.startingPose.translation,
+                          Rotation2d.fromDegrees(
+                            MathUtil.inputModulus(value, -180, 180),
+                          ),
                         ),
-                      ));
+                      );
                     }
                   },
                 ),
@@ -109,18 +115,20 @@ class Path2StartingPoseTree extends StatelessWidget {
       auto.startingPoseInitialized,
     );
 
-    undoStack.add(Change<_StartingPoseState>(
-      oldValue,
-      () {
-        auto.setStartingPose(newPose);
-        onAutoChanged?.call();
-      },
-      (previous) {
-        auto.setStartingPose(previous.pose);
-        auto.startingPoseInitialized = previous.initialized;
-        onAutoChanged?.call();
-      },
-    ));
+    undoStack.add(
+      Change<_StartingPoseState>(
+        oldValue,
+        () {
+          auto.setStartingPose(newPose);
+          onAutoChanged?.call();
+        },
+        (previous) {
+          auto.setStartingPose(previous.pose);
+          auto.startingPoseInitialized = previous.initialized;
+          onAutoChanged?.call();
+        },
+      ),
+    );
   }
 }
 

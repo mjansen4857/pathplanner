@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/services/project_event_registry.dart';
 
 /// Manages named commands for the active project.
@@ -23,20 +23,15 @@ class _ProjectEventsDialogState extends State<ProjectEventsDialog> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final events = ProjectEventRegistry.events
-        .where((event) => event.isNotEmpty)
-        .toList()
-      ..sort();
+    final events =
+        ProjectEventRegistry.events.where((event) => event.isNotEmpty).toList()
+          ..sort();
 
     return AlertDialog(
       backgroundColor: colorScheme.surface,
       surfaceTintColor: colorScheme.surfaceTint,
       title: const Row(
-        children: [
-          Icon(Icons.abc),
-          SizedBox(width: 8),
-          Text('Manage Events'),
-        ],
+        children: [Icon(Icons.abc), SizedBox(width: 8), Text('Manage Events')],
       ),
       content: SizedBox(
         width: 560,
@@ -139,9 +134,8 @@ class _ProjectEventsDialogState extends State<ProjectEventsDialog> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

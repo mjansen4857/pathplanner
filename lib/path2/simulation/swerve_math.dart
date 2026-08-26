@@ -9,21 +9,15 @@ class Path2Twist2d {
   final double dy;
   final double dtheta;
 
-  const Path2Twist2d({
-    this.dx = 0.0,
-    this.dy = 0.0,
-    this.dtheta = 0.0,
-  });
+  const Path2Twist2d({this.dx = 0.0, this.dy = 0.0, this.dtheta = 0.0});
 }
 
 /// WPILib-compatible math operations needed by the Path2 simulator.
 abstract final class Path2SimulationMath {
   static const double epsilon = 1e-6;
 
-  static double angleModulus(double radians) => math.atan2(
-        math.sin(radians),
-        math.cos(radians),
-      );
+  static double angleModulus(double radians) =>
+      math.atan2(math.sin(radians), math.cos(radians));
 
   static bool epsilonEquals(double a, double b, [double tolerance = epsilon]) {
     return (a - b).abs() <= tolerance;
@@ -36,11 +30,7 @@ abstract final class Path2SimulationMath {
   ]) {
     return epsilonEquals(a.vx.toDouble(), b.vx.toDouble(), tolerance) &&
         epsilonEquals(a.vy.toDouble(), b.vy.toDouble(), tolerance) &&
-        epsilonEquals(
-          a.omega.toDouble(),
-          b.omega.toDouble(),
-          tolerance,
-        );
+        epsilonEquals(a.omega.toDouble(), b.omega.toDouble(), tolerance);
   }
 
   /// WPILib's chassis-speed discretization operation.
@@ -62,8 +52,10 @@ abstract final class Path2SimulationMath {
       ),
       Rotation2d.fromRadians(continuousSpeeds.omega * dtSeconds),
     );
-    final twist =
-        poseLog(const Pose2d(Translation2d(), Rotation2d()), desiredDelta);
+    final twist = poseLog(
+      const Pose2d(Translation2d(), Rotation2d()),
+      desiredDelta,
+    );
     return wpilib.ChassisSpeeds(
       vx: twist.dx / dtSeconds,
       vy: twist.dy / dtSeconds,
@@ -115,8 +107,9 @@ abstract final class Path2SimulationMath {
 
   /// Returns the robot-relative twist taking [start] to [end].
   static Path2Twist2d poseLog(Pose2d start, Pose2d end) {
-    final relativeTranslation =
-        (end.translation - start.translation).rotateBy(-start.rotation);
+    final relativeTranslation = (end.translation - start.translation).rotateBy(
+      -start.rotation,
+    );
     final dtheta = (end.rotation - start.rotation).radians.toDouble();
 
     late final double sinThetaOverTheta;
@@ -129,14 +122,17 @@ abstract final class Path2SimulationMath {
       sinThetaOverTheta = math.sin(dtheta) / dtheta;
       oneMinusCosThetaOverTheta = (1.0 - math.cos(dtheta)) / dtheta;
     }
-    final determinant = sinThetaOverTheta * sinThetaOverTheta +
+    final determinant =
+        sinThetaOverTheta * sinThetaOverTheta +
         oneMinusCosThetaOverTheta * oneMinusCosThetaOverTheta;
 
     return Path2Twist2d(
-      dx: (sinThetaOverTheta * relativeTranslation.x +
+      dx:
+          (sinThetaOverTheta * relativeTranslation.x +
               oneMinusCosThetaOverTheta * relativeTranslation.y) /
           determinant,
-      dy: (-oneMinusCosThetaOverTheta * relativeTranslation.x +
+      dy:
+          (-oneMinusCosThetaOverTheta * relativeTranslation.x +
               sinThetaOverTheta * relativeTranslation.y) /
           determinant,
       dtheta: dtheta,
@@ -191,8 +187,8 @@ class Path2SwerveKinematics {
   final int numModules;
 
   Path2SwerveKinematics(List<Translation2d> moduleLocations)
-      : numModules = moduleLocations.length,
-        _kinematics = wpilib.SwerveDriveKinematics(moduleLocations);
+    : numModules = moduleLocations.length,
+      _kinematics = wpilib.SwerveDriveKinematics(moduleLocations);
 
   List<Path2SimulationModuleState> toModuleStates(
     wpilib.ChassisSpeeds chassisSpeeds,
@@ -216,12 +212,14 @@ class Path2SwerveKinematics {
         'Expected $numModules module states, got ${moduleStates.length}',
       );
     }
-    final compatibilityStates = moduleStates.map((state) {
-      final converted = wpilib.SwerveModuleState();
-      converted.speedMetersPerSecond = state.speedMetersPerSecond;
-      converted.angle = state.angle;
-      return converted;
-    }).toList(growable: false);
+    final compatibilityStates = moduleStates
+        .map((state) {
+          final converted = wpilib.SwerveModuleState();
+          converted.speedMetersPerSecond = state.speedMetersPerSecond;
+          converted.angle = state.angle;
+          return converted;
+        })
+        .toList(growable: false);
     return _kinematics.toChassisSpeeds(compatibilityStates);
   }
 }

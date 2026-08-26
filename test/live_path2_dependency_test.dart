@@ -39,7 +39,8 @@ void main() {
       expect(
         forbiddenSuffixes.any(relativePath.endsWith),
         isFalse,
-        reason: 'The live import graph reached legacy UI/simulation code: '
+        reason:
+            'The live import graph reached legacy UI/simulation code: '
             '$relativePath',
       );
       expect(
@@ -58,8 +59,10 @@ void main() {
         final uri = match.group(1)!;
         String? importedPath;
         if (uri.startsWith('package:pathplanner/')) {
-          importedPath =
-              p.join(libRoot, uri.substring('package:pathplanner/'.length));
+          importedPath = p.join(
+            libRoot,
+            uri.substring('package:pathplanner/'.length),
+          );
         } else if (!uri.contains(':')) {
           importedPath = p.normalize(p.join(p.dirname(filePath), uri));
         }

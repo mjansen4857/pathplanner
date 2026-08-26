@@ -46,8 +46,8 @@ class Path2RobotConfigSnapshot {
       massKg: config.massKG.toDouble(),
       momentOfInertiaKgMetersSquared: config.moi.toDouble(),
       wheelRadiusMeters: config.moduleConfig.wheelRadiusMeters.toDouble(),
-      maxDriveVelocityMetersPerSecond:
-          config.moduleConfig.maxDriveVelocityMPS.toDouble(),
+      maxDriveVelocityMetersPerSecond: config.moduleConfig.maxDriveVelocityMPS
+          .toDouble(),
       driveCurrentLimitAmps: config.moduleConfig.driveCurrentLimit.toDouble(),
       wheelCoefficientOfFriction: config.moduleConfig.wheelCOF.toDouble(),
       motorNominalVoltage: motor.nominalVoltageVolts.toDouble(),
@@ -68,11 +68,11 @@ class Path2RobotConfigSnapshot {
       maxDriveVelocityMetersPerSecond:
           (map['maxDriveVelocityMetersPerSecond'] as num).toDouble(),
       driveCurrentLimitAmps: (map['driveCurrentLimitAmps'] as num).toDouble(),
-      wheelCoefficientOfFriction:
-          (map['wheelCoefficientOfFriction'] as num).toDouble(),
+      wheelCoefficientOfFriction: (map['wheelCoefficientOfFriction'] as num)
+          .toDouble(),
       motorNominalVoltage: (map['motorNominalVoltage'] as num).toDouble(),
-      motorStallTorqueNewtonMeters:
-          (map['motorStallTorqueNewtonMeters'] as num).toDouble(),
+      motorStallTorqueNewtonMeters: (map['motorStallTorqueNewtonMeters'] as num)
+          .toDouble(),
       motorStallCurrentAmps: (map['motorStallCurrentAmps'] as num).toDouble(),
       motorFreeCurrentAmps: (map['motorFreeCurrentAmps'] as num).toDouble(),
       motorFreeSpeedRadiansPerSecond:
@@ -112,10 +112,7 @@ class Path2RobotConfigSnapshot {
 
   double get torqueLoss {
     final current = motorCurrent(maxDriveVelocityRadiansPerSecond, 12.0);
-    return math.max(
-      motorTorque(math.min(current, driveCurrentLimitAmps)),
-      0.0,
-    );
+    return math.max(motorTorque(math.min(current, driveCurrentLimitAmps)), 0.0);
   }
 
   double motorCurrent(double speedRadiansPerSecond, double voltage) {
@@ -129,21 +126,21 @@ class Path2RobotConfigSnapshot {
       currentAmps * motorTorqueConstantNewtonMetersPerAmp;
 
   Map<String, dynamic> toMap() => {
-        'massKg': massKg,
-        'momentOfInertiaKgMetersSquared': momentOfInertiaKgMetersSquared,
-        'wheelRadiusMeters': wheelRadiusMeters,
-        'maxDriveVelocityMetersPerSecond': maxDriveVelocityMetersPerSecond,
-        'driveCurrentLimitAmps': driveCurrentLimitAmps,
-        'wheelCoefficientOfFriction': wheelCoefficientOfFriction,
-        'motorNominalVoltage': motorNominalVoltage,
-        'motorStallTorqueNewtonMeters': motorStallTorqueNewtonMeters,
-        'motorStallCurrentAmps': motorStallCurrentAmps,
-        'motorFreeCurrentAmps': motorFreeCurrentAmps,
-        'motorFreeSpeedRadiansPerSecond': motorFreeSpeedRadiansPerSecond,
-        'moduleLocations': moduleLocations
-            .map((location) => location.toJson())
-            .toList(growable: false),
-      };
+    'massKg': massKg,
+    'momentOfInertiaKgMetersSquared': momentOfInertiaKgMetersSquared,
+    'wheelRadiusMeters': wheelRadiusMeters,
+    'maxDriveVelocityMetersPerSecond': maxDriveVelocityMetersPerSecond,
+    'driveCurrentLimitAmps': driveCurrentLimitAmps,
+    'wheelCoefficientOfFriction': wheelCoefficientOfFriction,
+    'motorNominalVoltage': motorNominalVoltage,
+    'motorStallTorqueNewtonMeters': motorStallTorqueNewtonMeters,
+    'motorStallCurrentAmps': motorStallCurrentAmps,
+    'motorFreeCurrentAmps': motorFreeCurrentAmps,
+    'motorFreeSpeedRadiansPerSecond': motorFreeSpeedRadiansPerSecond,
+    'moduleLocations': moduleLocations
+        .map((location) => location.toJson())
+        .toList(growable: false),
+  };
 
   void _validate() {
     final positiveValues = <double>[
@@ -160,7 +157,8 @@ class Path2RobotConfigSnapshot {
     ];
     if (positiveValues.any((value) => !value.isFinite || value <= 0.0)) {
       throw ArgumentError(
-          'Path2 robot configuration must be finite and positive');
+        'Path2 robot configuration must be finite and positive',
+      );
     }
     if (!motorFreeCurrentAmps.isFinite || motorFreeCurrentAmps < 0.0) {
       throw ArgumentError('Motor free current must be finite and non-negative');
@@ -173,7 +171,8 @@ class Path2RobotConfigSnapshot {
               location.norm <= 0.0,
         )) {
       throw ArgumentError(
-          'Path2 simulation requires four valid swerve modules');
+        'Path2 simulation requires four valid swerve modules',
+      );
     }
     if (!motorVelocityConstantRadiansPerSecondPerVolt.isFinite ||
         motorVelocityConstantRadiansPerSecondPerVolt <= 0.0) {
@@ -215,15 +214,11 @@ class Path2SimulationState {
     final translation = Map<String, dynamic>.from(
       poseMap['translation'] as Map,
     );
-    final speeds = Map<String, dynamic>.from(
-      map['robotRelativeSpeeds'] as Map,
-    );
+    final speeds = Map<String, dynamic>.from(map['robotRelativeSpeeds'] as Map);
     return Path2SimulationState(
       pose: Pose2d(
         Translation2d.fromJson(translation),
-        Rotation2d.fromRadians(
-          (poseMap['rotationRadians'] as num).toDouble(),
-        ),
+        Rotation2d.fromRadians((poseMap['rotationRadians'] as num).toDouble()),
       ),
       robotRelativeSpeeds: ChassisSpeeds(
         vx: (speeds['vx'] as num).toDouble(),
@@ -248,13 +243,16 @@ class Path2SimulationState {
     return Path2SimulationState(
       pose: pose.interpolate(endValue.pose, clampedT),
       robotRelativeSpeeds: ChassisSpeeds(
-        vx: robotRelativeSpeeds.vx +
+        vx:
+            robotRelativeSpeeds.vx +
             (endValue.robotRelativeSpeeds.vx - robotRelativeSpeeds.vx) *
                 clampedT,
-        vy: robotRelativeSpeeds.vy +
+        vy:
+            robotRelativeSpeeds.vy +
             (endValue.robotRelativeSpeeds.vy - robotRelativeSpeeds.vy) *
                 clampedT,
-        omega: robotRelativeSpeeds.omega +
+        omega:
+            robotRelativeSpeeds.omega +
             (endValue.robotRelativeSpeeds.omega - robotRelativeSpeeds.omega) *
                 clampedT,
       ),
@@ -270,28 +268,26 @@ class Path2SimulationState {
   }
 
   Map<String, dynamic> toMap() => {
-        'pose': {
-          'translation': pose.translation.toJson(),
-          'rotationRadians': pose.rotation.radians.toDouble(),
-        },
-        'robotRelativeSpeeds': {
-          'vx': robotRelativeSpeeds.vx.toDouble(),
-          'vy': robotRelativeSpeeds.vy.toDouble(),
-          'omega': robotRelativeSpeeds.omega.toDouble(),
-        },
-        'moduleStates':
-            moduleStates.map((state) => state.toMap()).toList(growable: false),
-      };
+    'pose': {
+      'translation': pose.translation.toJson(),
+      'rotationRadians': pose.rotation.radians.toDouble(),
+    },
+    'robotRelativeSpeeds': {
+      'vx': robotRelativeSpeeds.vx.toDouble(),
+      'vy': robotRelativeSpeeds.vy.toDouble(),
+      'omega': robotRelativeSpeeds.omega.toDouble(),
+    },
+    'moduleStates': moduleStates
+        .map((state) => state.toMap())
+        .toList(growable: false),
+  };
 }
 
 class Path2SimulationSample {
   final double timeSeconds;
   final Path2SimulationState state;
 
-  const Path2SimulationSample({
-    required this.timeSeconds,
-    required this.state,
-  });
+  const Path2SimulationSample({required this.timeSeconds, required this.state});
 
   factory Path2SimulationSample.fromMap(Map<String, dynamic> map) {
     return Path2SimulationSample(
@@ -307,9 +303,9 @@ class Path2SimulationSample {
   List<Path2SimulationModuleState> get moduleStates => state.moduleStates;
 
   Map<String, dynamic> toMap() => {
-        'timeSeconds': timeSeconds,
-        'state': state.toMap(),
-      };
+    'timeSeconds': timeSeconds,
+    'state': state.toMap(),
+  };
 }
 
 /// The interval in a simulated auto where an event marker is active.
@@ -330,9 +326,7 @@ class Path2SimulationMarkerActivation {
     this.endTimeSeconds,
   });
 
-  factory Path2SimulationMarkerActivation.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory Path2SimulationMarkerActivation.fromMap(Map<String, dynamic> map) {
     final endTime = map['endTimeSeconds'];
     return Path2SimulationMarkerActivation(
       pathIndex: (map['pathIndex'] as num).toInt(),
@@ -352,17 +346,18 @@ class Path2SimulationMarkerActivation {
       pathIndex: pathIndex,
       markerIndex: markerIndex,
       startTimeSeconds: startTimeSeconds + timeOffsetSeconds,
-      endTimeSeconds:
-          endTimeSeconds == null ? null : endTimeSeconds! + timeOffsetSeconds,
+      endTimeSeconds: endTimeSeconds == null
+          ? null
+          : endTimeSeconds! + timeOffsetSeconds,
     );
   }
 
   Map<String, dynamic> toMap() => {
-        'pathIndex': pathIndex,
-        'markerIndex': markerIndex,
-        'startTimeSeconds': startTimeSeconds,
-        'endTimeSeconds': endTimeSeconds,
-      };
+    'pathIndex': pathIndex,
+    'markerIndex': markerIndex,
+    'startTimeSeconds': startTimeSeconds,
+    'endTimeSeconds': endTimeSeconds,
+  };
 }
 
 class Path2SimulationResult {
@@ -372,8 +367,8 @@ class Path2SimulationResult {
   Path2SimulationResult(
     List<Path2SimulationSample> samples, {
     List<Path2SimulationMarkerActivation> markerActivations = const [],
-  })  : samples = List.unmodifiable(samples),
-        markerActivations = List.unmodifiable(markerActivations) {
+  }) : samples = List.unmodifiable(samples),
+       markerActivations = List.unmodifiable(markerActivations) {
     if (samples.isEmpty) {
       throw ArgumentError('A simulation result requires at least one sample');
     }
@@ -385,7 +380,8 @@ class Path2SimulationResult {
       }
       if (i > 0 && samples[i].timeSeconds <= samples[i - 1].timeSeconds) {
         throw ArgumentError(
-            'Simulation sample times must be strictly increasing');
+          'Simulation sample times must be strictly increasing',
+        );
       }
     }
     for (final activation in markerActivations) {
@@ -453,7 +449,8 @@ class Path2SimulationResult {
 
     final start = samples[low];
     final end = samples[high];
-    final t = (timeSeconds - start.timeSeconds) /
+    final t =
+        (timeSeconds - start.timeSeconds) /
         (end.timeSeconds - start.timeSeconds);
     return Path2SimulationSample(
       timeSeconds: timeSeconds,
@@ -462,12 +459,11 @@ class Path2SimulationResult {
   }
 
   Map<String, dynamic> toMap() => {
-        'samples':
-            samples.map((sample) => sample.toMap()).toList(growable: false),
-        'markerActivations': markerActivations
-            .map((activation) => activation.toMap())
-            .toList(growable: false),
-      };
+    'samples': samples.map((sample) => sample.toMap()).toList(growable: false),
+    'markerActivations': markerActivations
+        .map((activation) => activation.toMap())
+        .toList(growable: false),
+  };
 }
 
 enum Path2SimulationFailureKind {

@@ -1,8 +1,9 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/path_command_widget.dart';
+import 'package:pathplanner/widgets/legacy_material_bridge.dart';
 import 'package:undo/undo.dart';
 
 void main() {
@@ -19,17 +20,20 @@ void main() {
   });
 
   testWidgets('path dropdown', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathCommandWidget(
-          command: cmd,
-          undoStack: undoStack,
-          allPathNames: const ['path1', 'path2'],
-          onRemoved: () => removed = true,
-          // onUpdated: () => updated = true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        builder: legacyMaterialAppBuilder,
+        home: Scaffold(
+          body: PathCommandWidget(
+            command: cmd,
+            undoStack: undoStack,
+            allPathNames: const ['path1', 'path2'],
+            onRemoved: () => removed = true,
+            // onUpdated: () => updated = true,
+          ),
         ),
       ),
-    ));
+    );
 
     final dropdown = find.byType(DropdownButton2<String>);
 
@@ -46,17 +50,19 @@ void main() {
   });
 
   testWidgets('remove button', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathCommandWidget(
-          command: cmd,
-          allPathNames: const [],
-          undoStack: undoStack,
-          onRemoved: () => removed = true,
-          // onUpdated: () => updated = true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathCommandWidget(
+            command: cmd,
+            allPathNames: const [],
+            undoStack: undoStack,
+            onRemoved: () => removed = true,
+            // onUpdated: () => updated = true,
+          ),
         ),
       ),
-    ));
+    );
 
     final removeButton = find.byTooltip('Remove Command');
 

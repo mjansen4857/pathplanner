@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:function_tree/function_tree.dart';
 
@@ -59,14 +59,16 @@ class NumberTextField extends StatelessWidget {
             controller: _controller,
             inputFormatters: [
               FilteringTextInputFormatter.allow(
-                  RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
+                RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*'),
+              ),
             ],
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
               labelText: label,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ),
@@ -79,8 +81,10 @@ class NumberTextField extends StatelessWidget {
       onSubmitted?.call(null);
     } else {
       num parsed = val.interpret();
-      num clamped = min(max(parsed, minValue ?? double.negativeInfinity),
-          maxValue ?? double.infinity);
+      num clamped = min(
+        max(parsed, minValue ?? double.negativeInfinity),
+        maxValue ?? double.infinity,
+      );
       onSubmitted?.call(clamped);
     }
   }
@@ -97,20 +101,23 @@ class NumberTextField extends StatelessWidget {
       if (remainder.abs() > 1E-3) {
         if (remainder < 0) {
           clamped = min(
-              max(parsed + remainder.abs(),
-                  minValue ?? double.negativeInfinity),
-              maxValue ?? double.infinity);
+            max(parsed + remainder.abs(), minValue ?? double.negativeInfinity),
+            maxValue ?? double.infinity,
+          );
         } else {
           clamped = min(
-              max(parsed + (arrowKeyIncrement - remainder.abs()),
-                  minValue ?? double.negativeInfinity),
-              maxValue ?? double.infinity);
+            max(
+              parsed + (arrowKeyIncrement - remainder.abs()),
+              minValue ?? double.negativeInfinity,
+            ),
+            maxValue ?? double.infinity,
+          );
         }
       } else {
         clamped = min(
-            max(parsed + arrowKeyIncrement,
-                minValue ?? double.negativeInfinity),
-            maxValue ?? double.infinity);
+          max(parsed + arrowKeyIncrement, minValue ?? double.negativeInfinity),
+          maxValue ?? double.infinity,
+        );
       }
       onSubmitted?.call(clamped);
     }
@@ -128,20 +135,23 @@ class NumberTextField extends StatelessWidget {
       if (remainder.abs() > 1E-3) {
         if (remainder < 0) {
           clamped = min(
-              max(parsed - (arrowKeyIncrement - remainder.abs()),
-                  minValue ?? double.negativeInfinity),
-              maxValue ?? double.infinity);
+            max(
+              parsed - (arrowKeyIncrement - remainder.abs()),
+              minValue ?? double.negativeInfinity,
+            ),
+            maxValue ?? double.infinity,
+          );
         } else {
           clamped = min(
-              max(parsed - remainder.abs(),
-                  minValue ?? double.negativeInfinity),
-              maxValue ?? double.infinity);
+            max(parsed - remainder.abs(), minValue ?? double.negativeInfinity),
+            maxValue ?? double.infinity,
+          );
         }
       } else {
         clamped = min(
-            max(parsed - arrowKeyIncrement,
-                minValue ?? double.negativeInfinity),
-            maxValue ?? double.infinity);
+          max(parsed - arrowKeyIncrement, minValue ?? double.negativeInfinity),
+          maxValue ?? double.infinity,
+        );
       }
       onSubmitted?.call(clamped);
     }

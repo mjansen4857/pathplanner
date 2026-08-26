@@ -14,13 +14,14 @@ class EventMarker {
   });
 
   EventMarker.fromJson(Map<String, dynamic> json)
-      : this(
-            name: json['name'],
-            waypointRelativePos: json['waypointRelativePos'],
-            endWaypointRelativePos: json['endWaypointRelativePos'],
-            command: json['command'] != null
-                ? Command.fromJson(json['command'])
-                : null);
+    : this(
+        name: json['name'],
+        waypointRelativePos: json['waypointRelativePos'],
+        endWaypointRelativePos: json['endWaypointRelativePos'],
+        command: json['command'] != null
+            ? Command.fromJson(json['command'])
+            : null,
+      );
 
   bool get isZoned => endWaypointRelativePos != null;
 

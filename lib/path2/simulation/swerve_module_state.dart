@@ -46,16 +46,17 @@ class Path2SimulationModuleState {
   ) {
     final clampedT = t.clamp(0.0, 1.0);
     return Path2SimulationModuleState(
-      speedMetersPerSecond: speedMetersPerSecond +
+      speedMetersPerSecond:
+          speedMetersPerSecond +
           (endValue.speedMetersPerSecond - speedMetersPerSecond) * clampedT,
       angle: angle.interpolate(endValue.angle, clampedT),
     );
   }
 
   Map<String, dynamic> toMap() => {
-        'speedMetersPerSecond': speedMetersPerSecond,
-        'angleRadians': angle.radians.toDouble(),
-      };
+    'speedMetersPerSecond': speedMetersPerSecond,
+    'angleRadians': angle.radians.toDouble(),
+  };
 
   @override
   bool operator ==(Object other) {

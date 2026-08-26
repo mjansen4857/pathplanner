@@ -19,10 +19,12 @@ class Path2SimulationConstraints {
   factory Path2SimulationConstraints.fromWaypoint(Waypoint waypoint) {
     return Path2SimulationConstraints(
       maxVelocity: waypoint.maxVelocity.toDouble(),
-      maxAngularVelocityRadiansPerSecond:
-          _degreesToRadians(waypoint.maxAngularVelocity.toDouble()),
-      maxAngularAccelerationRadiansPerSecondSquared:
-          _degreesToRadians(waypoint.maxAngularAcceleration.toDouble()),
+      maxAngularVelocityRadiansPerSecond: _degreesToRadians(
+        waypoint.maxAngularVelocity.toDouble(),
+      ),
+      maxAngularAccelerationRadiansPerSecondSquared: _degreesToRadians(
+        waypoint.maxAngularAcceleration.toDouble(),
+      ),
     );
   }
 
@@ -38,12 +40,11 @@ class Path2SimulationConstraints {
   }
 
   Map<String, dynamic> toMap() => {
-        'maxVelocity': maxVelocity,
-        'maxAngularVelocityRadiansPerSecond':
-            maxAngularVelocityRadiansPerSecond,
-        'maxAngularAccelerationRadiansPerSecondSquared':
-            maxAngularAccelerationRadiansPerSecondSquared,
-      };
+    'maxVelocity': maxVelocity,
+    'maxAngularVelocityRadiansPerSecond': maxAngularVelocityRadiansPerSecond,
+    'maxAngularAccelerationRadiansPerSecondSquared':
+        maxAngularAccelerationRadiansPerSecondSquared,
+  };
 }
 
 /// A file-system-free waypoint used by the deterministic Path2 simulator.
@@ -65,11 +66,11 @@ class Path2SimulationWaypoint {
   });
 
   Path2SimulationConstraints get constraints => Path2SimulationConstraints(
-        maxVelocity: maxVelocity,
-        maxAngularVelocityRadiansPerSecond: maxAngularVelocityRadiansPerSecond,
-        maxAngularAccelerationRadiansPerSecondSquared:
-            maxAngularAccelerationRadiansPerSecondSquared,
-      );
+    maxVelocity: maxVelocity,
+    maxAngularVelocityRadiansPerSecond: maxAngularVelocityRadiansPerSecond,
+    maxAngularAccelerationRadiansPerSecondSquared:
+        maxAngularAccelerationRadiansPerSecondSquared,
+  );
 
   factory Path2SimulationWaypoint.fromWaypoint(
     Waypoint waypoint, {
@@ -80,10 +81,12 @@ class Path2SimulationWaypoint {
       rotation: waypoint is PoseWaypoint ? waypoint.rotation : null,
       maxVelocity: waypoint.maxVelocity.toDouble(),
       handoffDistance: handoffDistance.toDouble(),
-      maxAngularVelocityRadiansPerSecond:
-          _degreesToRadians(waypoint.maxAngularVelocity.toDouble()),
-      maxAngularAccelerationRadiansPerSecondSquared:
-          _degreesToRadians(waypoint.maxAngularAcceleration.toDouble()),
+      maxAngularVelocityRadiansPerSecond: _degreesToRadians(
+        waypoint.maxAngularVelocity.toDouble(),
+      ),
+      maxAngularAccelerationRadiansPerSecondSquared: _degreesToRadians(
+        waypoint.maxAngularAcceleration.toDouble(),
+      ),
     );
   }
 
@@ -94,8 +97,9 @@ class Path2SimulationWaypoint {
         (map['x'] as num).toDouble(),
         (map['y'] as num).toDouble(),
       ),
-      rotation:
-          rotation is num ? Rotation2d.fromRadians(rotation.toDouble()) : null,
+      rotation: rotation is num
+          ? Rotation2d.fromRadians(rotation.toDouble())
+          : null,
       maxVelocity: (map['maxVelocity'] as num).toDouble(),
       handoffDistance: (map['handoffDistance'] as num).toDouble(),
       maxAngularVelocityRadiansPerSecond:
@@ -107,16 +111,15 @@ class Path2SimulationWaypoint {
   }
 
   Map<String, dynamic> toMap() => {
-        'x': position.x.toDouble(),
-        'y': position.y.toDouble(),
-        'rotationRadians': rotation?.radians.toDouble(),
-        'maxVelocity': maxVelocity,
-        'handoffDistance': handoffDistance,
-        'maxAngularVelocityRadiansPerSecond':
-            maxAngularVelocityRadiansPerSecond,
-        'maxAngularAccelerationRadiansPerSecondSquared':
-            maxAngularAccelerationRadiansPerSecondSquared,
-      };
+    'x': position.x.toDouble(),
+    'y': position.y.toDouble(),
+    'rotationRadians': rotation?.radians.toDouble(),
+    'maxVelocity': maxVelocity,
+    'handoffDistance': handoffDistance,
+    'maxAngularVelocityRadiansPerSecond': maxAngularVelocityRadiansPerSecond,
+    'maxAngularAccelerationRadiansPerSecondSquared':
+        maxAngularAccelerationRadiansPerSecondSquared,
+  };
 }
 
 /// The controller portion of the supplied `FollowDynamicPath` command.
@@ -132,10 +135,14 @@ class Path2PathFollower {
   final double endToleranceMeters;
   final double endAngleToleranceRadians;
 
-  final _PidController _translationController =
-      _PidController(4.0, periodSeconds);
-  final _PidController _crossTrackController =
-      _PidController(2.0, periodSeconds);
+  final _PidController _translationController = _PidController(
+    4.0,
+    periodSeconds,
+  );
+  final _PidController _crossTrackController = _PidController(
+    2.0,
+    periodSeconds,
+  );
   late final _ProfiledPidController _rotationController;
 
   late int _targetWaypointIndex;
@@ -164,15 +171,14 @@ class Path2PathFollower {
     final constraints = _trapezoidConstraints(
       waypoints[_targetWaypointIndex].constraints,
     );
-    _rotationController = _ProfiledPidController(
-      5.0,
-      periodSeconds,
-      constraints,
-    )
-      ..enableContinuousInput(-math.pi, math.pi)
-      ..setTolerance(endAngleToleranceRadians)
-      ..reset(initialPose.rotation.radians.toDouble(),
-          initialRobotRelativeSpeeds.omega.toDouble());
+    _rotationController =
+        _ProfiledPidController(5.0, periodSeconds, constraints)
+          ..enableContinuousInput(-math.pi, math.pi)
+          ..setTolerance(endAngleToleranceRadians)
+          ..reset(
+            initialPose.rotation.radians.toDouble(),
+            initialRobotRelativeSpeeds.omega.toDouble(),
+          );
 
     _translationController
       ..setTolerance(endToleranceMeters)
@@ -205,17 +211,22 @@ class Path2PathFollower {
     final toTarget = _segmentEnd - currentPose.translation;
     final angleToTarget = toTarget.angle;
 
-    var translationOutput =
-        -_translationController.calculate(remainingDistance, 0.0);
+    var translationOutput = -_translationController.calculate(
+      remainingDistance,
+      0.0,
+    );
     final maxVelocity = activeConstraints.maxVelocity;
-    translationOutput =
-        translationOutput.clamp(-maxVelocity, maxVelocity).toDouble();
+    translationOutput = translationOutput
+        .clamp(-maxVelocity, maxVelocity)
+        .toDouble();
 
     var vx = translationOutput * angleToTarget.cosine;
     var vy = translationOutput * angleToTarget.sine;
 
     final crossTrackOutput = -_crossTrackController.calculate(
-        _calculateCrossTrackError(currentPose), 0.0);
+      _calculateCrossTrackError(currentPose),
+      0.0,
+    );
     final perpendicular = angleToTarget - Rotation2d.fromRadians(math.pi / 2.0);
     vx += crossTrackOutput * perpendicular.cosine;
     vy += crossTrackOutput * perpendicular.sine;
@@ -247,7 +258,8 @@ class Path2PathFollower {
     final handoffThreshold = segmentLength >= 1e-6
         ? (1.0 - target.handoffDistance / segmentLength).clamp(0.0, 1.0)
         : 1.0;
-    final closeEnough = target.position.getDistance(currentPose.translation) <=
+    final closeEnough =
+        target.position.getDistance(currentPose.translation) <=
         target.handoffDistance;
 
     if ((segmentLength >= 1e-6 && progress > handoffThreshold) || closeEnough) {
@@ -288,8 +300,9 @@ class Path2PathFollower {
     var currentPosition = currentPose.translation;
     var remainingDistance = 0.0;
     for (var i = _targetWaypointIndex; i < waypoints.length; i++) {
-      remainingDistance +=
-          currentPosition.getDistance(waypoints[i].position).toDouble();
+      remainingDistance += currentPosition
+          .getDistance(waypoints[i].position)
+          .toDouble();
       currentPosition = waypoints[i].position;
     }
     return remainingDistance;
@@ -309,8 +322,9 @@ class Path2PathFollower {
     final crossProduct =
         pathVectorX * robotVectorY - pathVectorY * robotVectorX;
 
-    var signedError =
-        currentPose.translation.getDistance(closestPoint).toDouble();
+    var signedError = currentPose.translation
+        .getDistance(closestPoint)
+        .toDouble();
     if (crossProduct < 0) {
       signedError = -signedError;
     }
@@ -352,8 +366,10 @@ class _PidController {
 
   _PidController(this.proportionalGain, this.period);
 
-  void setTolerance(double positionTolerance,
-      [double velocityTolerance = double.infinity]) {
+  void setTolerance(
+    double positionTolerance, [
+    double velocityTolerance = double.infinity,
+  ]) {
     _positionTolerance = positionTolerance;
     _velocityTolerance = velocityTolerance;
   }
@@ -375,14 +391,11 @@ class _PidController {
     _positionError = setpoint - measurement;
     if (_continuous) {
       final errorBound = (_maximumInput - _minimumInput) / 2.0;
-      _positionError = _inputModulus(
-        _positionError,
-        -errorBound,
-        errorBound,
-      );
+      _positionError = _inputModulus(_positionError, -errorBound, errorBound);
     }
-    _velocityError =
-        _hasMeasurement ? (_positionError - _previousError) / period : 0.0;
+    _velocityError = _hasMeasurement
+        ? (_positionError - _previousError) / period
+        : 0.0;
     _previousError = _positionError;
     _hasMeasurement = true;
     return proportionalGain * _positionError;
@@ -419,8 +432,10 @@ class _ProfiledPidController {
     _constraints = constraints;
   }
 
-  void setTolerance(double positionTolerance,
-      [double velocityTolerance = double.infinity]) {
+  void setTolerance(
+    double positionTolerance, [
+    double velocityTolerance = double.infinity,
+  ]) {
     _controller.setTolerance(positionTolerance, velocityTolerance);
   }
 
@@ -440,14 +455,17 @@ class _ProfiledPidController {
       );
       _setpoint = _TrapezoidState(
         _inputModulus(
-                _setpoint.position - measurement, -errorBound, errorBound) +
+              _setpoint.position - measurement,
+              -errorBound,
+              errorBound,
+            ) +
             measurement,
         _setpoint.velocity,
       );
     }
 
-    _setpoint =
-        _TrapezoidProfile(_constraints).calculate(period, _setpoint, goal);
+    _setpoint = _TrapezoidProfile(_constraints)
+        .calculate(period, _setpoint, goal);
     return _controller.calculate(measurement, _setpoint.position);
   }
 
@@ -483,8 +501,10 @@ class _TrapezoidProfile {
     current = _direct(current, direction);
     goal = _direct(goal, direction);
 
-    final currentVelocity = current.velocity
-        .clamp(-constraints.maxVelocity, constraints.maxVelocity);
+    final currentVelocity = current.velocity.clamp(
+      -constraints.maxVelocity,
+      constraints.maxVelocity,
+    );
     current = _TrapezoidState(current.position, currentVelocity.toDouble());
 
     final cutoffBegin = current.velocity / constraints.maxAcceleration;
@@ -494,16 +514,19 @@ class _TrapezoidProfile {
     final cutoffDistanceEnd =
         cutoffEnd * cutoffEnd * constraints.maxAcceleration / 2.0;
 
-    final fullTrapezoidDistance = cutoffDistanceBegin +
+    final fullTrapezoidDistance =
+        cutoffDistanceBegin +
         (goal.position - current.position) +
         cutoffDistanceEnd;
     var accelerationTime =
         constraints.maxVelocity / constraints.maxAcceleration;
-    var fullSpeedDistance = fullTrapezoidDistance -
+    var fullSpeedDistance =
+        fullTrapezoidDistance -
         accelerationTime * accelerationTime * constraints.maxAcceleration;
     if (fullSpeedDistance < 0.0) {
       accelerationTime = math.sqrt(
-          math.max(0.0, fullTrapezoidDistance) / constraints.maxAcceleration);
+        math.max(0.0, fullTrapezoidDistance) / constraints.maxAcceleration,
+      );
       fullSpeedDistance = 0.0;
     }
 
@@ -545,10 +568,7 @@ class _TrapezoidProfile {
   }
 
   static _TrapezoidState _direct(_TrapezoidState state, double direction) =>
-      _TrapezoidState(
-        state.position * direction,
-        state.velocity * direction,
-      );
+      _TrapezoidState(state.position * direction, state.velocity * direction);
 }
 
 double _inputModulus(double input, double minimumInput, double maximumInput) {

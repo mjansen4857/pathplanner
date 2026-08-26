@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/point_towards_zone.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -49,8 +49,10 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
 
     _selectedZone = widget.initiallySelectedZone;
 
-    _controllers =
-        List.generate(zones.length, (index) => ExpansibleController());
+    _controllers = List.generate(
+      zones.length,
+      (index) => ExpansibleController(),
+    );
   }
 
   @override
@@ -64,21 +66,23 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
           IconButton(
             icon: const Icon(Icons.add, size: 20),
             onPressed: () {
-              widget.undoStack.add(Change(
-                PathPlannerPath.clonePointTowardsZones(zones),
-                () {
-                  zones.add(PointTowardsZone());
-                  widget.onPathChanged?.call();
-                },
-                (oldValue) {
-                  _selectedZone = null;
-                  widget.onZoneHovered?.call(null);
-                  widget.onZoneSelected?.call(null);
-                  widget.path.pointTowardsZones =
-                      PathPlannerPath.clonePointTowardsZones(oldValue);
-                  widget.onPathChanged?.call();
-                },
-              ));
+              widget.undoStack.add(
+                Change(
+                  PathPlannerPath.clonePointTowardsZones(zones),
+                  () {
+                    zones.add(PointTowardsZone());
+                    widget.onPathChanged?.call();
+                  },
+                  (oldValue) {
+                    _selectedZone = null;
+                    widget.onZoneHovered?.call(null);
+                    widget.onZoneSelected?.call(null);
+                    widget.path.pointTowardsZones =
+                        PathPlannerPath.clonePointTowardsZones(oldValue);
+                    widget.onPathChanged?.call();
+                  },
+                ),
+              );
             },
             tooltip: 'Add New Point Towards Zone',
           ),
@@ -133,17 +137,19 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
           RenamableTitle(
             title: zones[zoneIdx].name,
             onRename: (value) {
-              widget.undoStack.add(Change(
-                zones[zoneIdx].name,
-                () {
-                  zones[zoneIdx].name = value;
-                  widget.onPathChangedNoSim?.call();
-                },
-                (oldValue) {
-                  zones[zoneIdx].name = oldValue;
-                  widget.onPathChangedNoSim?.call();
-                },
-              ));
+              widget.undoStack.add(
+                Change(
+                  zones[zoneIdx].name,
+                  () {
+                    zones[zoneIdx].name = value;
+                    widget.onPathChangedNoSim?.call();
+                  },
+                  (oldValue) {
+                    zones[zoneIdx].name = oldValue;
+                    widget.onPathChangedNoSim?.call();
+                  },
+                ),
+              );
             },
           ),
           Expanded(child: Container()),
@@ -202,22 +208,24 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
               icon: const Icon(Icons.delete_forever),
               color: colorScheme.error,
               onPressed: () {
-                widget.undoStack.add(Change(
-                  PathPlannerPath.clonePointTowardsZones(zones),
-                  () {
-                    zones.removeAt(zoneIdx);
-                    widget.onZoneSelected?.call(null);
-                    widget.onZoneHovered?.call(null);
-                    widget.onPathChanged?.call();
-                  },
-                  (oldValue) {
-                    widget.path.pointTowardsZones =
-                        PathPlannerPath.clonePointTowardsZones(oldValue);
-                    widget.onZoneSelected?.call(null);
-                    widget.onZoneHovered?.call(null);
-                    widget.onPathChanged?.call();
-                  },
-                ));
+                widget.undoStack.add(
+                  Change(
+                    PathPlannerPath.clonePointTowardsZones(zones),
+                    () {
+                      zones.removeAt(zoneIdx);
+                      widget.onZoneSelected?.call(null);
+                      widget.onZoneHovered?.call(null);
+                      widget.onPathChanged?.call();
+                    },
+                    (oldValue) {
+                      widget.path.pointTowardsZones =
+                          PathPlannerPath.clonePointTowardsZones(oldValue);
+                      widget.onZoneSelected?.call(null);
+                      widget.onZoneHovered?.call(null);
+                      widget.onPathChanged?.call();
+                    },
+                  ),
+                );
               },
             ),
           ),
@@ -237,9 +245,12 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
                   onSubmitted: (value) {
                     if (value != null) {
                       _addChange(
-                          zoneIdx,
-                          () => zones[zoneIdx].fieldPosition = Translation2d(
-                              value, zones[zoneIdx].fieldPosition.y));
+                        zoneIdx,
+                        () => zones[zoneIdx].fieldPosition = Translation2d(
+                          value,
+                          zones[zoneIdx].fieldPosition.y,
+                        ),
+                      );
                     }
                   },
                 ),
@@ -252,9 +263,12 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
                   onSubmitted: (value) {
                     if (value != null) {
                       _addChange(
-                          zoneIdx,
-                          () => zones[zoneIdx].fieldPosition = Translation2d(
-                              zones[zoneIdx].fieldPosition.x, value));
+                        zoneIdx,
+                        () => zones[zoneIdx].fieldPosition = Translation2d(
+                          zones[zoneIdx].fieldPosition.x,
+                          value,
+                        ),
+                      );
                     }
                   },
                 ),
@@ -274,10 +288,12 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
                   onSubmitted: (value) {
                     if (value != null) {
                       _addChange(
-                          zoneIdx,
-                          () => zones[zoneIdx].rotationOffset =
-                              Rotation2d.fromDegrees(
-                                  MathUtil.inputModulus(value, -180, 180)));
+                        zoneIdx,
+                        () => zones[zoneIdx].rotationOffset =
+                            Rotation2d.fromDegrees(
+                              MathUtil.inputModulus(value, -180, 180),
+                            ),
+                      );
                     }
                   },
                 ),
@@ -291,8 +307,8 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
             Expanded(
               child: Slider(
                 value: zones[zoneIdx].minWaypointRelativePos.toDouble(),
-                secondaryTrackValue:
-                    zones[zoneIdx].maxWaypointRelativePos.toDouble(),
+                secondaryTrackValue: zones[zoneIdx].maxWaypointRelativePos
+                    .toDouble(),
                 min: 0.0,
                 max: waypoints.length - 1.0,
                 label: zones[zoneIdx].minWaypointRelativePos.toStringAsFixed(2),
@@ -300,17 +316,19 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
                   _sliderChangeStart = value;
                 },
                 onChangeEnd: (value) {
-                  widget.undoStack.add(Change(
-                    _sliderChangeStart,
-                    () {
-                      zones[zoneIdx].minWaypointRelativePos = value;
-                      widget.onPathChanged?.call();
-                    },
-                    (oldValue) {
-                      zones[zoneIdx].minWaypointRelativePos = oldValue;
-                      widget.onPathChanged?.call();
-                    },
-                  ));
+                  widget.undoStack.add(
+                    Change(
+                      _sliderChangeStart,
+                      () {
+                        zones[zoneIdx].minWaypointRelativePos = value;
+                        widget.onPathChanged?.call();
+                      },
+                      (oldValue) {
+                        zones[zoneIdx].minWaypointRelativePos = oldValue;
+                        widget.onPathChanged?.call();
+                      },
+                    ),
+                  );
                 },
                 onChanged: (value) {
                   if (value <= zones[zoneIdx].maxWaypointRelativePos) {
@@ -330,17 +348,19 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
                   if (value != null) {
                     final maxVal = zones[zoneIdx].maxWaypointRelativePos;
                     final val = MathUtil.clamp(value, 0.0, maxVal);
-                    widget.undoStack.add(Change(
-                      zones[zoneIdx].minWaypointRelativePos,
-                      () {
-                        zones[zoneIdx].minWaypointRelativePos = val;
-                        widget.onPathChanged?.call();
-                      },
-                      (oldValue) {
-                        zones[zoneIdx].minWaypointRelativePos = oldValue;
-                        widget.onPathChanged?.call();
-                      },
-                    ));
+                    widget.undoStack.add(
+                      Change(
+                        zones[zoneIdx].minWaypointRelativePos,
+                        () {
+                          zones[zoneIdx].minWaypointRelativePos = val;
+                          widget.onPathChanged?.call();
+                        },
+                        (oldValue) {
+                          zones[zoneIdx].minWaypointRelativePos = oldValue;
+                          widget.onPathChanged?.call();
+                        },
+                      ),
+                    );
                   }
                 },
               ),
@@ -361,17 +381,19 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
                   _sliderChangeStart = value;
                 },
                 onChangeEnd: (value) {
-                  widget.undoStack.add(Change(
-                    _sliderChangeStart,
-                    () {
-                      zones[zoneIdx].maxWaypointRelativePos = value;
-                      widget.onPathChanged?.call();
-                    },
-                    (oldValue) {
-                      zones[zoneIdx].maxWaypointRelativePos = oldValue;
-                      widget.onPathChanged?.call();
-                    },
-                  ));
+                  widget.undoStack.add(
+                    Change(
+                      _sliderChangeStart,
+                      () {
+                        zones[zoneIdx].maxWaypointRelativePos = value;
+                        widget.onPathChanged?.call();
+                      },
+                      (oldValue) {
+                        zones[zoneIdx].maxWaypointRelativePos = oldValue;
+                        widget.onPathChanged?.call();
+                      },
+                    ),
+                  );
                 },
                 onChanged: (value) {
                   if (value >= zones[zoneIdx].minWaypointRelativePos) {
@@ -390,19 +412,24 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
                 onSubmitted: (value) {
                   if (value != null) {
                     final minVal = zones[zoneIdx].minWaypointRelativePos;
-                    final val =
-                        MathUtil.clamp(value, minVal, waypoints.length - 1.0);
-                    widget.undoStack.add(Change(
-                      zones[zoneIdx].maxWaypointRelativePos,
-                      () {
-                        zones[zoneIdx].maxWaypointRelativePos = val;
-                        widget.onPathChanged?.call();
-                      },
-                      (oldValue) {
-                        zones[zoneIdx].maxWaypointRelativePos = oldValue;
-                        widget.onPathChanged?.call();
-                      },
-                    ));
+                    final val = MathUtil.clamp(
+                      value,
+                      minVal,
+                      waypoints.length - 1.0,
+                    );
+                    widget.undoStack.add(
+                      Change(
+                        zones[zoneIdx].maxWaypointRelativePos,
+                        () {
+                          zones[zoneIdx].maxWaypointRelativePos = val;
+                          widget.onPathChanged?.call();
+                        },
+                        (oldValue) {
+                          zones[zoneIdx].maxWaypointRelativePos = oldValue;
+                          widget.onPathChanged?.call();
+                        },
+                      ),
+                    );
                   }
                 },
               ),
@@ -415,16 +442,18 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
   }
 
   void _addChange(int zoneIdx, VoidCallback execute) {
-    widget.undoStack.add(Change(
-      zones[zoneIdx].clone(),
-      () {
-        execute.call();
-        widget.onPathChanged?.call();
-      },
-      (oldValue) {
-        zones[zoneIdx] = oldValue.clone();
-        widget.onPathChanged?.call();
-      },
-    ));
+    widget.undoStack.add(
+      Change(
+        zones[zoneIdx].clone(),
+        () {
+          execute.call();
+          widget.onPathChanged?.call();
+        },
+        (oldValue) {
+          zones[zoneIdx] = oldValue.clone();
+          widget.onPathChanged?.call();
+        },
+      ),
+    );
   }
 }

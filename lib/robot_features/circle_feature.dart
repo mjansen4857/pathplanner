@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/robot_features/feature.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 
@@ -17,13 +17,13 @@ class CircleFeature extends Feature {
   }) : super(type: 'circle');
 
   CircleFeature.fromDataJson(Map<String, dynamic> dataJson, String name)
-      : this(
-          center: Translation2d.fromJson(dataJson['center']),
-          radius: dataJson['radius'],
-          strokeWidth: dataJson['strokeWidth'],
-          filled: dataJson['filled'],
-          name: name,
-        );
+    : this(
+        center: Translation2d.fromJson(dataJson['center']),
+        radius: dataJson['radius'],
+        strokeWidth: dataJson['strokeWidth'],
+        filled: dataJson['filled'],
+        name: name,
+      );
 
   @override
   Map<String, dynamic> dataToJson() {
@@ -42,8 +42,10 @@ class CircleFeature extends Feature {
       ..strokeWidth = strokeWidth * pixelsPerMeter
       ..color = color;
 
-    Offset centerPixels =
-        Offset(center.x * pixelsPerMeter, -center.y * pixelsPerMeter);
+    Offset centerPixels = Offset(
+      center.x * pixelsPerMeter,
+      -center.y * pixelsPerMeter,
+    );
     double radiusPixels = radius * pixelsPerMeter;
 
     canvas.drawCircle(centerPixels, radiusPixels, paint);

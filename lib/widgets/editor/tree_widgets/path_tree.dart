@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/constraint_zones_tree.dart';
@@ -285,17 +285,19 @@ class _PathTreeState extends State<PathTree> {
         onTap: () {
           bool newReversed = !widget.path.reversed;
 
-          widget.undoStack.add(Change(
-            widget.path.reversed,
-            () {
-              widget.path.reversed = newReversed;
-              widget.onPathChanged?.call();
-            },
-            (oldValue) {
-              widget.path.reversed = oldValue;
-              widget.onPathChanged?.call();
-            },
-          ));
+          widget.undoStack.add(
+            Change(
+              widget.path.reversed,
+              () {
+                widget.path.reversed = newReversed;
+                widget.onPathChanged?.call();
+              },
+              (oldValue) {
+                widget.path.reversed = oldValue;
+                widget.onPathChanged?.call();
+              },
+            ),
+          );
         },
         child: Container(
           padding: const EdgeInsets.all(8),
@@ -331,24 +333,23 @@ class _PathTreeState extends State<PathTree> {
               onChanged: (value) {
                 bool reversed = value ?? false;
 
-                widget.undoStack.add(Change(
-                  widget.path.reversed,
-                  () {
-                    widget.path.reversed = reversed;
-                    widget.onPathChanged?.call();
-                  },
-                  (oldValue) {
-                    widget.path.reversed = oldValue;
-                    widget.onPathChanged?.call();
-                  },
-                ));
+                widget.undoStack.add(
+                  Change(
+                    widget.path.reversed,
+                    () {
+                      widget.path.reversed = reversed;
+                      widget.onPathChanged?.call();
+                    },
+                    (oldValue) {
+                      widget.path.reversed = oldValue;
+                      widget.onPathChanged?.call();
+                    },
+                  ),
+                );
               },
             ),
             const SizedBox(width: 4),
-            const Text(
-              'Reversed',
-              style: TextStyle(fontSize: 16),
-            ),
+            const Text('Reversed', style: TextStyle(fontSize: 16)),
           ],
         ),
       ),

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 
@@ -25,11 +25,13 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
 
     _nameController = TextEditingController(text: 'Custom Field');
     _nameController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _nameController.text.length));
+      TextPosition(offset: _nameController.text.length),
+    );
 
     _ppmController = TextEditingController(text: '100');
     _ppmController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _ppmController.text.length));
+      TextPosition(offset: _ppmController.text.length),
+    );
   }
 
   @override
@@ -55,14 +57,16 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                     controller: _nameController,
                     inputFormatters: [
                       FilteringTextInputFormatter.deny(
-                          RegExp('["*<>?|/:\\\\]')),
+                        RegExp('["*<>?|/:\\\\]'),
+                      ),
                     ],
                     style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
                       contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                       labelText: 'Field Name',
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                 ),
@@ -74,14 +78,16 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                     controller: _ppmController,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(
-                          RegExp(r'(^\d*\.?\d*)')),
+                        RegExp(r'(^\d*\.?\d*)'),
+                      ),
                     ],
                     style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
                       contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                       labelText: 'Pixels Per Meter',
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                 ),
@@ -94,9 +100,7 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
               children: [
                 Row(
                   children: [
-                    const Text(
-                      'Image: ',
-                    ),
+                    const Text('Image: '),
                     (_selectedFile == null)
                         ? Text(
                             'None Selected',
@@ -112,11 +116,14 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    const typeGroup =
-                        XTypeGroup(label: 'images', extensions: ['jpg', 'png']);
+                    const typeGroup = XTypeGroup(
+                      label: 'images',
+                      extensions: ['jpg', 'png'],
+                    );
                     final file = await openFile(
-                        acceptedTypeGroups: [typeGroup],
-                        initialDirectory: Directory.current.path);
+                      acceptedTypeGroups: [typeGroup],
+                      initialDirectory: Directory.current.path,
+                    );
 
                     if (file != null) {
                       setState(() {
@@ -151,8 +158,11 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
         _nameController.text.isNotEmpty &&
         _selectedFile != null) {
       Navigator.of(context).pop();
-      widget.onImport.call(_nameController.text,
-          double.parse(_ppmController.text), _selectedFile!);
+      widget.onImport.call(
+        _nameController.text,
+        double.parse(_ppmController.text),
+        _selectedFile!,
+      );
     }
   }
 }

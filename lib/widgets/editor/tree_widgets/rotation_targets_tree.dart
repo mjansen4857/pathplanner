@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -49,8 +49,10 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
 
     _selectedTarget = widget.initiallySelectedTarget;
 
-    _controllers =
-        List.generate(rotations.length, (index) => ExpansibleController());
+    _controllers = List.generate(
+      rotations.length,
+      (index) => ExpansibleController(),
+    );
   }
 
   @override
@@ -64,21 +66,23 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
           IconButton(
             icon: const Icon(Icons.add, size: 20),
             onPressed: () {
-              widget.undoStack.add(Change(
-                PathPlannerPath.cloneRotationTargets(rotations),
-                () {
-                  rotations.add(RotationTarget(0.5, const Rotation2d()));
-                  widget.onPathChanged?.call();
-                },
-                (oldValue) {
-                  _selectedTarget = null;
-                  widget.onTargetHovered?.call(null);
-                  widget.onTargetSelected?.call(null);
-                  widget.path.rotationTargets =
-                      PathPlannerPath.cloneRotationTargets(oldValue);
-                  widget.onPathChanged?.call();
-                },
-              ));
+              widget.undoStack.add(
+                Change(
+                  PathPlannerPath.cloneRotationTargets(rotations),
+                  () {
+                    rotations.add(RotationTarget(0.5, const Rotation2d()));
+                    widget.onPathChanged?.call();
+                  },
+                  (oldValue) {
+                    _selectedTarget = null;
+                    widget.onTargetHovered?.call(null);
+                    widget.onTargetSelected?.call(null);
+                    widget.path.rotationTargets =
+                        PathPlannerPath.cloneRotationTargets(oldValue);
+                    widget.onPathChanged?.call();
+                  },
+                ),
+              );
             },
             tooltip: 'Add New Rotation Target',
           ),
@@ -127,9 +131,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
       },
       title: Row(
         children: [
-          Expanded(
-            child: Text('Rotation Target ${targetIdx + 1}'),
-          ),
+          Expanded(child: Text('Rotation Target ${targetIdx + 1}')),
           const SizedBox(width: 8),
           InfoCard(
             value:
@@ -143,23 +145,26 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
               icon: const Icon(Icons.delete_forever),
               color: colorScheme.error,
               onPressed: () {
-                widget.undoStack.add(Change(
-                  PathPlannerPath.cloneRotationTargets(
-                      widget.path.rotationTargets),
-                  () {
-                    rotations.removeAt(targetIdx);
-                    widget.onTargetSelected?.call(null);
-                    widget.onTargetHovered?.call(null);
-                    widget.onPathChanged?.call();
-                  },
-                  (oldValue) {
-                    widget.path.rotationTargets =
-                        PathPlannerPath.cloneRotationTargets(oldValue);
-                    widget.onTargetSelected?.call(null);
-                    widget.onTargetHovered?.call(null);
-                    widget.onPathChanged?.call();
-                  },
-                ));
+                widget.undoStack.add(
+                  Change(
+                    PathPlannerPath.cloneRotationTargets(
+                      widget.path.rotationTargets,
+                    ),
+                    () {
+                      rotations.removeAt(targetIdx);
+                      widget.onTargetSelected?.call(null);
+                      widget.onTargetHovered?.call(null);
+                      widget.onPathChanged?.call();
+                    },
+                    (oldValue) {
+                      widget.path.rotationTargets =
+                          PathPlannerPath.cloneRotationTargets(oldValue);
+                      widget.onTargetSelected?.call(null);
+                      widget.onTargetHovered?.call(null);
+                      widget.onPathChanged?.call();
+                    },
+                  ),
+                );
               },
             ),
           ),
@@ -179,19 +184,22 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                   arrowKeyIncrement: 45,
                   onSubmitted: (value) {
                     if (value != null) {
-                      widget.undoStack.add(Change(
-                        rotations[targetIdx].clone(),
-                        () {
-                          rotations[targetIdx].rotation =
-                              Rotation2d.fromDegrees(
-                                  MathUtil.inputModulus(value, -180, 180));
-                          widget.onPathChanged?.call();
-                        },
-                        (oldValue) {
-                          rotations[targetIdx].rotation = oldValue.rotation;
-                          widget.onPathChanged?.call();
-                        },
-                      ));
+                      widget.undoStack.add(
+                        Change(
+                          rotations[targetIdx].clone(),
+                          () {
+                            rotations[targetIdx].rotation =
+                                Rotation2d.fromDegrees(
+                                  MathUtil.inputModulus(value, -180, 180),
+                                );
+                            widget.onPathChanged?.call();
+                          },
+                          (oldValue) {
+                            rotations[targetIdx].rotation = oldValue.rotation;
+                            widget.onPathChanged?.call();
+                          },
+                        ),
+                      );
                     }
                   },
                 ),
@@ -229,17 +237,19 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             _sliderChangeStart = value;
           },
           onChangeEnd: (value) {
-            widget.undoStack.add(Change(
-              _sliderChangeStart,
-              () {
-                rotations[targetIdx].waypointRelativePos = value;
-                widget.onPathChanged?.call();
-              },
-              (oldValue) {
-                rotations[targetIdx].waypointRelativePos = oldValue;
-                widget.onPathChanged?.call();
-              },
-            ));
+            widget.undoStack.add(
+              Change(
+                _sliderChangeStart,
+                () {
+                  rotations[targetIdx].waypointRelativePos = value;
+                  widget.onPathChanged?.call();
+                },
+                (oldValue) {
+                  rotations[targetIdx].waypointRelativePos = oldValue;
+                  widget.onPathChanged?.call();
+                },
+              ),
+            );
           },
           onChanged: (value) {
             setState(() {

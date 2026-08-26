@@ -1,7 +1,7 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
@@ -14,6 +14,7 @@ import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_w
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
+import 'package:pathplanner/widgets/legacy_material_bridge.dart';
 import 'package:undo/undo.dart';
 
 void main() {
@@ -32,12 +33,11 @@ void main() {
     path.eventMarkersExpanded = true;
     path.eventMarkers = [
       EventMarker(
-          command: SequentialCommandGroup(
-            commands: [],
-          ),
-          waypointRelativePos: 0.2,
-          endWaypointRelativePos: 0.8,
-          name: '0'),
+        command: SequentialCommandGroup(commands: []),
+        waypointRelativePos: 0.2,
+        endWaypointRelativePos: 0.8,
+        name: '0',
+      ),
       EventMarker(name: '1'),
     ];
     pathChanged = false;
@@ -49,17 +49,20 @@ void main() {
   });
 
   testWidgets('name dropdown', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        builder: legacyMaterialAppBuilder,
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     final dropdown = find.widgetWithText(DropdownButton2<String>, '0');
 
@@ -77,22 +80,27 @@ void main() {
 
   testWidgets('tapping expands/collapses tree', (widgetTester) async {
     path.eventMarkersExpanded = false;
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(
-        find.descendant(
-            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
-        findsNothing);
+      find.descendant(
+        of: find.byType(TreeCardNode),
+        matching: find.byType(TreeCardNode),
+      ),
+      findsNothing,
+    );
 
     await widgetTester.tap(find.byType(EventMarkersTree));
     await widgetTester.pumpAndSettle();
@@ -105,44 +113,54 @@ void main() {
   });
 
   testWidgets('Marker card for each marker', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(
-        find.descendant(
-            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
-        findsNWidgets(2));
+      find.descendant(
+        of: find.byType(TreeCardNode),
+        matching: find.byType(TreeCardNode),
+      ),
+      findsNWidgets(2),
+    );
   });
 
   testWidgets('Marker card hover', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
     var markerCards = find.descendant(
-        of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode));
+      of: find.byType(TreeCardNode),
+      matching: find.byType(TreeCardNode),
+    );
 
     await gesture.moveTo(widgetTester.getCenter(markerCards.at(0)));
     await widgetTester.pump();
@@ -156,20 +174,24 @@ void main() {
   });
 
   testWidgets('tapping expands/collapses marker cards', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     var markerCardTapSpots = find.descendant(
-        of: find.byType(TreeCardNode), matching: find.byType(InfoCard));
+      of: find.byType(TreeCardNode),
+      matching: find.byType(InfoCard),
+    );
 
     expect(find.byType(Slider), findsNothing);
 
@@ -188,18 +210,20 @@ void main() {
   });
 
   testWidgets('position slider', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-          initiallySelectedMarker: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+            initiallySelectedMarker: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var slider = find.byType(Slider);
 
@@ -218,18 +242,20 @@ void main() {
   });
 
   testWidgets('end position slider', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-          initiallySelectedMarker: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+            initiallySelectedMarker: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var slider = find.byType(Slider);
 
@@ -248,18 +274,20 @@ void main() {
   });
 
   testWidgets('zoned checkbox', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-          initiallySelectedMarker: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+            initiallySelectedMarker: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var zonedCheck = find.byType(Checkbox);
 
@@ -282,27 +310,29 @@ void main() {
     await widgetTester.tap(zonedCheck);
     await widgetTester.pumpAndSettle();
 
-    expect(path.eventMarkers[0].endWaypointRelativePos,
-        path.eventMarkers[0].waypointRelativePos);
+    expect(
+      path.eventMarkers[0].endWaypointRelativePos,
+      path.eventMarkers[0].waypointRelativePos,
+    );
   });
 
   testWidgets('add command button', (widgetTester) async {
-    path.eventMarkers = [
-      EventMarker(),
-    ];
+    path.eventMarkers = [EventMarker()];
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-          initiallySelectedMarker: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+            initiallySelectedMarker: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     final button = find.byType(AddCommandButton);
 
@@ -328,18 +358,20 @@ void main() {
   });
 
   testWidgets('change command group type', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-          initiallySelectedMarker: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+            initiallySelectedMarker: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(CommandGroupWidget), findsOneWidget);
 
@@ -360,28 +392,28 @@ void main() {
     await widgetTester.pump();
 
     expect(
-        path.eventMarkers[0].command, isInstanceOf<SequentialCommandGroup>());
+      path.eventMarkers[0].command,
+      isInstanceOf<SequentialCommandGroup>(),
+    );
   });
 
   testWidgets('remove command', (widgetTester) async {
-    path.eventMarkers = [
-      EventMarker(
-        command: NamedCommand(),
-      ),
-    ];
+    path.eventMarkers = [EventMarker(command: NamedCommand())];
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-          initiallySelectedMarker: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+            initiallySelectedMarker: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     final removeButton = find.byTooltip('Remove Command');
     expect(removeButton, findsOneWidget);
@@ -398,18 +430,20 @@ void main() {
   });
 
   testWidgets('Delete marker button', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-          initiallySelectedMarker: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+            initiallySelectedMarker: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var deleteButtons = find.byIcon(Icons.delete_forever);
 
@@ -428,18 +462,20 @@ void main() {
   });
 
   testWidgets('add new marker', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-          initiallySelectedMarker: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+            initiallySelectedMarker: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     // Find the specific add button for event markers
     var newMarkerButton = find.descendant(
@@ -469,18 +505,20 @@ void main() {
       ),
     ];
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-          initiallySelectedMarker: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+            initiallySelectedMarker: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.widgetWithText(NumberTextField, 'Start Pos');
 
@@ -507,18 +545,20 @@ void main() {
       ),
     ];
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-          initiallySelectedMarker: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventMarkersTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onMarkerHovered: (value) => hoveredMarker = value,
+            onMarkerSelected: (value) => selectedMarker = value,
+            undoStack: undoStack,
+            initiallySelectedMarker: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.widgetWithText(NumberTextField, 'End Pos');
 
@@ -534,6 +574,8 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(
-        path.eventMarkers.first.endWaypointRelativePos, closeTo(0.75, 0.001));
+      path.eventMarkers.first.endWaypointRelativePos,
+      closeTo(0.75, 0.001),
+    );
   });
 }

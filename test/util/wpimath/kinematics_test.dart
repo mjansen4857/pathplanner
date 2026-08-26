@@ -22,8 +22,10 @@ void main() {
 
     test('toString', () {
       var speeds = const ChassisSpeeds(vx: 1.0, vy: 2.0, omega: 3.0);
-      expect(speeds.toString(),
-          equals('ChassisSpeeds(vx: 1.00, vy: 2.00, omega: 3.00)'));
+      expect(
+        speeds.toString(),
+        equals('ChassisSpeeds(vx: 1.00, vy: 2.00, omega: 3.00)'),
+      );
     });
 
     test('fromFieldRelativeSpeeds', () {
@@ -54,8 +56,10 @@ void main() {
         Translation2d(-0.4, -0.4),
       ];
       var kinematics = SwerveDriveKinematics(modules);
-      expect(kinematics.toSwerveModuleStates(const ChassisSpeeds()).length,
-          equals(4));
+      expect(
+        kinematics.toSwerveModuleStates(const ChassisSpeeds()).length,
+        equals(4),
+      );
     });
 
     test('toSwerveModuleStates', () {

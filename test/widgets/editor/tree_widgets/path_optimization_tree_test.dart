@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_optimization_tree.dart';
@@ -25,16 +25,18 @@ void main() {
 
   testWidgets('tapping expands/collapses tree', (widgetTester) async {
     path.pathOptimizationExpanded = false;
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathOptimizationTree(
-          path: path,
-          undoStack: undoStack,
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathOptimizationTree(
+            path: path,
+            undoStack: undoStack,
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(TreeCardNode), findsOneWidget);
     expect(find.text('Path Optimizer'), findsOneWidget);
@@ -51,16 +53,18 @@ void main() {
 
   testWidgets('widget builds and displays correctly', (widgetTester) async {
     path.pathOptimizationExpanded = true;
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathOptimizationTree(
-          path: path,
-          undoStack: undoStack,
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathOptimizationTree(
+            path: path,
+            undoStack: undoStack,
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
     await widgetTester.pumpAndSettle();
 
     expect(find.text('Path Optimizer'), findsOneWidget);

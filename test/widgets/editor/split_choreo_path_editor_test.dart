@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
@@ -22,10 +22,16 @@ void main() {
     path = ChoreoPath(
       name: 'test',
       trajectory: PathPlannerTrajectory.fromStates([
-        TrajectoryState.pregen(0.0, const ChassisSpeeds(),
-            const Pose2d(Translation2d(), Rotation2d())),
-        TrajectoryState.pregen(1.0, const ChassisSpeeds(),
-            const Pose2d(Translation2d(), Rotation2d())),
+        TrajectoryState.pregen(
+          0.0,
+          const ChassisSpeeds(),
+          const Pose2d(Translation2d(), Rotation2d()),
+        ),
+        TrajectoryState.pregen(
+          1.0,
+          const ChassisSpeeds(),
+          const Pose2d(Translation2d(), Rotation2d()),
+        ),
       ]),
       fs: MemoryFileSystem(),
       choreoDir: '/choreo',
@@ -46,16 +52,18 @@ void main() {
   testWidgets('has painter and tree', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitChoreoPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitChoreoPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     var painters = find.byType(CustomPaint);
     bool foundPathPainter = false;
@@ -71,16 +79,18 @@ void main() {
   testWidgets('swap tree side', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitChoreoPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitChoreoPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     final swapButton = find.byTooltip('Move to Other Side');
 
@@ -100,20 +110,23 @@ void main() {
   testWidgets('change tree size', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitChoreoPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitChoreoPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.dragFrom(
-        widgetTester.getCenter(find.byType(SplitChoreoPathEditor)),
-        const Offset(-100, 0));
+      widgetTester.getCenter(find.byType(SplitChoreoPathEditor)),
+      const Offset(-100, 0),
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 
@@ -123,9 +136,10 @@ void main() {
     await widgetTester.pump();
 
     await widgetTester.dragFrom(
-        widgetTester.getCenter(find.byType(SplitChoreoPathEditor)) +
-            const Offset(100, 0),
-        const Offset(-100, 0));
+      widgetTester.getCenter(find.byType(SplitChoreoPathEditor)) +
+          const Offset(100, 0),
+      const Offset(-100, 0),
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 

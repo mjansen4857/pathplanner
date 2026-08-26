@@ -1,5 +1,5 @@
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
@@ -30,19 +30,21 @@ void main() {
   });
 
   testWidgets('change group type', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: CommandGroupWidget(
-          command: command,
-          undoStack: undoStack,
-          onGroupTypeChanged: (value) => groupType = value,
-          onPathCommandHovered: (value) => hoveredPathCommand = value,
-          onRemoved: () => removed = true,
-          onUpdated: () => updated = true,
-          allPathNames: const ['path1', 'path2'],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CommandGroupWidget(
+            command: command,
+            undoStack: undoStack,
+            onGroupTypeChanged: (value) => groupType = value,
+            onPathCommandHovered: (value) => hoveredPathCommand = value,
+            onRemoved: () => removed = true,
+            onUpdated: () => updated = true,
+            allPathNames: const ['path1', 'path2'],
+          ),
         ),
       ),
-    ));
+    );
 
     var typeDropdown = find.text('Sequential Group');
 
@@ -63,19 +65,21 @@ void main() {
   });
 
   testWidgets('add command to group', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: CommandGroupWidget(
-          command: command,
-          undoStack: undoStack,
-          onGroupTypeChanged: (value) => groupType = value,
-          onPathCommandHovered: (value) => hoveredPathCommand = value,
-          onRemoved: () => removed = true,
-          onUpdated: () => updated = true,
-          allPathNames: const ['path1', 'path2'],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CommandGroupWidget(
+            command: command,
+            undoStack: undoStack,
+            onGroupTypeChanged: (value) => groupType = value,
+            onPathCommandHovered: (value) => hoveredPathCommand = value,
+            onRemoved: () => removed = true,
+            onUpdated: () => updated = true,
+            allPathNames: const ['path1', 'path2'],
+          ),
         ),
       ),
-    ));
+    );
 
     var addButton = find.byType(AddCommandButton);
 
@@ -97,19 +101,21 @@ void main() {
   });
 
   testWidgets('remove button', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: CommandGroupWidget(
-          command: command,
-          undoStack: undoStack,
-          onGroupTypeChanged: (value) => groupType = value,
-          onPathCommandHovered: (value) => hoveredPathCommand = value,
-          onRemoved: () => removed = true,
-          onUpdated: () => updated = true,
-          allPathNames: const ['path1', 'path2'],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CommandGroupWidget(
+            command: command,
+            undoStack: undoStack,
+            onGroupTypeChanged: (value) => groupType = value,
+            onPathCommandHovered: (value) => hoveredPathCommand = value,
+            onRemoved: () => removed = true,
+            onUpdated: () => updated = true,
+            allPathNames: const ['path1', 'path2'],
+          ),
         ),
       ),
-    ));
+    );
 
     var removeButton = find.byTooltip('Remove Command');
 
@@ -128,19 +134,21 @@ void main() {
       PathCommand(),
       ParallelCommandGroup(commands: []),
     ];
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: CommandGroupWidget(
-          command: command,
-          undoStack: undoStack,
-          onGroupTypeChanged: (value) => groupType = value,
-          onPathCommandHovered: (value) => hoveredPathCommand = value,
-          onRemoved: () => removed = true,
-          onUpdated: () => updated = true,
-          allPathNames: const ['path1', 'path2'],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CommandGroupWidget(
+            command: command,
+            undoStack: undoStack,
+            onGroupTypeChanged: (value) => groupType = value,
+            onPathCommandHovered: (value) => hoveredPathCommand = value,
+            onRemoved: () => removed = true,
+            onUpdated: () => updated = true,
+            allPathNames: const ['path1', 'path2'],
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(WaitCommandWidget), findsOneWidget);
     expect(find.byType(NamedCommandWidget), findsOneWidget);
@@ -155,18 +163,20 @@ void main() {
       PathCommand(),
       ParallelCommandGroup(commands: []),
     ];
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: CommandGroupWidget(
-          command: command,
-          undoStack: undoStack,
-          onGroupTypeChanged: (value) => groupType = value,
-          onPathCommandHovered: (value) => hoveredPathCommand = value,
-          onUpdated: () => updated = true,
-          allPathNames: const ['path1', 'path2'],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CommandGroupWidget(
+            command: command,
+            undoStack: undoStack,
+            onGroupTypeChanged: (value) => groupType = value,
+            onPathCommandHovered: (value) => hoveredPathCommand = value,
+            onUpdated: () => updated = true,
+            allPathNames: const ['path1', 'path2'],
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.tap(find.byTooltip('Remove Command').first);
     await widgetTester.pump();
@@ -214,19 +224,21 @@ void main() {
 
   testWidgets('change sub group type', (widgetTester) async {
     command.commands = [ParallelCommandGroup(commands: [])];
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: CommandGroupWidget(
-          command: command,
-          undoStack: undoStack,
-          onGroupTypeChanged: (value) => groupType = value,
-          onPathCommandHovered: (value) => hoveredPathCommand = value,
-          onRemoved: () => removed = true,
-          onUpdated: () => updated = true,
-          allPathNames: const ['path1', 'path2'],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CommandGroupWidget(
+            command: command,
+            undoStack: undoStack,
+            onGroupTypeChanged: (value) => groupType = value,
+            onPathCommandHovered: (value) => hoveredPathCommand = value,
+            onRemoved: () => removed = true,
+            onUpdated: () => updated = true,
+            allPathNames: const ['path1', 'path2'],
+          ),
         ),
       ),
-    ));
+    );
 
     var typeDropdown = find.text('Parallel Group');
 
@@ -248,27 +260,31 @@ void main() {
 
   testWidgets('path command hover', (widgetTester) async {
     command.commands = [PathCommand(pathName: 'path1')];
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: CommandGroupWidget(
-          command: command,
-          undoStack: undoStack,
-          onGroupTypeChanged: (value) => groupType = value,
-          onPathCommandHovered: (value) => hoveredPathCommand = value,
-          onRemoved: () => removed = true,
-          onUpdated: () => updated = true,
-          allPathNames: const ['path1', 'path2'],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CommandGroupWidget(
+            command: command,
+            undoStack: undoStack,
+            onGroupTypeChanged: (value) => groupType = value,
+            onPathCommandHovered: (value) => hoveredPathCommand = value,
+            onRemoved: () => removed = true,
+            onUpdated: () => updated = true,
+            allPathNames: const ['path1', 'path2'],
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
-    await gesture
-        .moveTo(widgetTester.getCenter(find.byType(PathCommandWidget)));
+    await gesture.moveTo(
+      widgetTester.getCenter(find.byType(PathCommandWidget)),
+    );
     await widgetTester.pump();
 
     expect(hoveredPathCommand, 'path1');

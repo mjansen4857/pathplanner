@@ -52,9 +52,7 @@ void main() {
 
     test('invalid numeric values and unknown types are rejected', () {
       expect(
-        () => TranslationWaypoint(
-          position: const Translation2d(double.nan, 0),
-        ),
+        () => TranslationWaypoint(position: const Translation2d(double.nan, 0)),
         throwsArgumentError,
       );
       expect(

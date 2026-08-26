@@ -1,15 +1,16 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ConditionalWidget extends StatelessWidget {
   final bool condition;
   final Widget trueChild;
   final Widget falseChild;
 
-  const ConditionalWidget(
-      {required this.condition,
-      required this.trueChild,
-      required this.falseChild,
-      super.key});
+  const ConditionalWidget({
+    required this.condition,
+    required this.trueChild,
+    required this.falseChild,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/robot_features/circle_feature.dart';
 import 'package:pathplanner/robot_features/line_feature.dart';
 import 'package:pathplanner/robot_features/rounded_rect_feature.dart';
@@ -19,11 +19,7 @@ abstract class Feature {
 
   @nonVirtual
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'type': type,
-      'data': dataToJson(),
-    };
+    return {'name': name, 'type': type, 'data': dataToJson()};
   }
 
   static Feature? fromJson(Map<String, dynamic> json) {

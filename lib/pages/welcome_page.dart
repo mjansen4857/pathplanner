@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:file_selector/file_selector.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -44,40 +44,45 @@ class WelcomePage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        width: 250,
-                        height: 250,
-                        child: Image.asset('images/icon.png'),
-                      )
+                            width: 250,
+                            height: 250,
+                            child: Image.asset('images/icon.png'),
+                          )
                           .animate()
                           .fadeIn(
-                              delay: 400.ms,
-                              duration: 200.ms,
-                              curve: Curves.easeInOut)
+                            delay: 400.ms,
+                            duration: 200.ms,
+                            curve: Curves.easeInOut,
+                          )
                           .scaleXY()
                           .shimmer(delay: 2.seconds, duration: 300.ms),
                       Text(
-                        'PathPlanner',
-                        style: TextStyle(
-                            fontSize: 48, color: colorScheme.onSurface),
-                      )
+                            'PathPlanner',
+                            style: TextStyle(
+                              fontSize: 48,
+                              color: colorScheme.onSurface,
+                            ),
+                          )
                           .animate()
                           .fadeIn(
-                              delay: 600.ms,
-                              duration: 400.ms,
-                              curve: Curves.easeInOut)
+                            delay: 600.ms,
+                            duration: 400.ms,
+                            curve: Curves.easeInOut,
+                          )
                           .slide(begin: const Offset(0, 0.3)),
                       Text(
-                        'v$appVersion',
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: colorScheme.secondary,
-                        ),
-                      )
+                            'v$appVersion',
+                            style: TextStyle(
+                              fontSize: 24,
+                              color: colorScheme.secondary,
+                            ),
+                          )
                           .animate()
                           .fadeIn(
-                              delay: 800.ms,
-                              duration: 400.ms,
-                              curve: Curves.easeInOut)
+                            delay: 800.ms,
+                            duration: 400.ms,
+                            curve: Curves.easeInOut,
+                          )
                           .slide(begin: const Offset(0, 0.3)),
                       const SizedBox(height: 64),
                       ElevatedButton(
@@ -97,9 +102,10 @@ class WelcomePage extends StatelessWidget {
                           ),
                         ),
                       ).animate().fadeIn(
-                          delay: 1.5.seconds,
-                          duration: 500.ms,
-                          curve: Curves.easeInOut),
+                        delay: 1.5.seconds,
+                        duration: 500.ms,
+                        curve: Curves.easeInOut,
+                      ),
                     ],
                   ),
                 ],

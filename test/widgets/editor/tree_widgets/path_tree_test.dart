@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -37,40 +37,44 @@ void main() {
   });
 
   testWidgets('has runtime display', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          runtimeDisplay: const RuntimeDisplay(
-            currentRuntime: 5.0,
-            previousRuntime: null,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            runtimeDisplay: const RuntimeDisplay(
+              currentRuntime: 5.0,
+              previousRuntime: null,
+            ),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
           ),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(RuntimeDisplay), findsOneWidget);
   });
 
   testWidgets('swap side button', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          onSideSwapped: () => sideSwapped = true,
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            onSideSwapped: () => sideSwapped = true,
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     var btn = find.byTooltip('Move to Other Side');
 
@@ -82,154 +86,172 @@ void main() {
   });
 
   testWidgets('has waypoints tree', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(WaypointsTree), findsOneWidget);
   });
 
   testWidgets('has constraint zones tree', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(ConstraintZonesTree), findsOneWidget);
   });
 
   testWidgets('has event markers tree', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(EventMarkersTree), findsOneWidget);
   });
 
   testWidgets('has global constraints tree', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(GlobalConstraintsTree), findsOneWidget);
   });
 
   testWidgets('has goal end state tree', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(GoalEndStateTree), findsOneWidget);
   });
 
   testWidgets('has rotation targets tree', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(RotationTargetsTree), findsOneWidget);
   });
 
   testWidgets('has point zones tree', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(PointTowardsZonesTree), findsOneWidget);
   });
 
   testWidgets('has optimizer tree', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(PathOptimizationTree), findsOneWidget);
   });
 
   testWidgets('has optimizer tree', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: ChangeStack(),
-          holonomicMode: true,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: ChangeStack(),
+            holonomicMode: true,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(PathOptimizationTree), findsOneWidget);
   });
@@ -237,18 +259,20 @@ void main() {
   testWidgets('Reversed button', (widgetTester) async {
     final ChangeStack undoStack = ChangeStack();
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PathTree(
-          path: path,
-          undoStack: undoStack,
-          holonomicMode: false,
-          defaultConstraints: PathConstraints(),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PathTree(
+            path: path,
+            undoStack: undoStack,
+            holonomicMode: false,
+            defaultConstraints: PathConstraints(),
+            prefs: prefs,
+            fieldSizeMeters: const Size(16.54, 8.21),
+          ),
         ),
       ),
-    ));
+    );
 
     final reversedButton = find.byTooltip('Reverse Path');
 

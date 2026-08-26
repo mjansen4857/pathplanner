@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:pathplanner/widgets/window_buttons.dart';
 
@@ -13,28 +13,28 @@ class CustomAppBar extends AppBar {
     super.leading,
     super.automaticallyImplyLeading,
   }) : super(
-          actions: [
-            if (!Platform.isMacOS) MinimizeWindowButton(),
-            if (!Platform.isMacOS) MaximizeWindowButton(),
-            if (!Platform.isMacOS) CloseWindowButton(),
-          ],
-          title: SizedBox(
-            height: 48,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _MoveWindowArea(
-                    child: Container(
-                      alignment: Alignment.centerLeft,
-                      child: titleWidget,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          elevation: 1,
-        );
+         actions: [
+           if (!Platform.isMacOS) MinimizeWindowButton(),
+           if (!Platform.isMacOS) MaximizeWindowButton(),
+           if (!Platform.isMacOS) CloseWindowButton(),
+         ],
+         title: SizedBox(
+           height: 48,
+           child: Row(
+             children: [
+               Expanded(
+                 child: _MoveWindowArea(
+                   child: Container(
+                     alignment: Alignment.centerLeft,
+                     child: titleWidget,
+                   ),
+                 ),
+               ),
+             ],
+           ),
+         ),
+         elevation: 1,
+       );
 }
 
 class _MoveWindowArea extends StatelessWidget {

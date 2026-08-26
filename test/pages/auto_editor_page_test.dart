@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/pages/auto_editor_page.dart';
@@ -27,14 +27,23 @@ void main() {
     await fs.directory('/autos').create();
     auto = PathPlannerAuto.defaultAuto(autoDir: '/autos', fs: fs);
     testPath = PathPlannerPath.defaultPath(
-        pathDir: '/paths', fs: fs, name: 'testPath');
+      pathDir: '/paths',
+      fs: fs,
+      name: 'testPath',
+    );
     testChoreoPath = ChoreoPath(
       name: 'test',
       trajectory: PathPlannerTrajectory.fromStates([
-        TrajectoryState.pregen(0.0, const ChassisSpeeds(),
-            const Pose2d(Translation2d(), Rotation2d())),
-        TrajectoryState.pregen(1.0, const ChassisSpeeds(),
-            const Pose2d(Translation2d(), Rotation2d())),
+        TrajectoryState.pregen(
+          0.0,
+          const ChassisSpeeds(),
+          const Pose2d(Translation2d(), Rotation2d()),
+        ),
+        TrajectoryState.pregen(
+          1.0,
+          const ChassisSpeeds(),
+          const Pose2d(Translation2d(), Rotation2d()),
+        ),
       ]),
       fs: fs,
       choreoDir: '/choreo',
@@ -49,19 +58,21 @@ void main() {
   testWidgets('shows editor', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: AutoEditorPage(
-        prefs: prefs,
-        auto: auto,
-        allPaths: [testPath],
-        allChoreoPaths: [testChoreoPath],
-        allPathNames: const ['testPath'],
-        fieldImage: FieldImage.defaultField,
-        onRenamed: (value) => name = value,
-        undoStack: undoStack,
-        shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: AutoEditorPage(
+          prefs: prefs,
+          auto: auto,
+          allPaths: [testPath],
+          allChoreoPaths: [testChoreoPath],
+          allPathNames: const ['testPath'],
+          fieldImage: FieldImage.defaultField,
+          onRenamed: (value) => name = value,
+          undoStack: undoStack,
+          shortcuts: false,
+        ),
       ),
-    ));
+    );
 
     expect(find.byType(SplitAutoEditor), findsOneWidget);
   });
@@ -69,19 +80,21 @@ void main() {
   testWidgets('rename', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: AutoEditorPage(
-        prefs: prefs,
-        auto: auto,
-        allPaths: [testPath],
-        allChoreoPaths: [testChoreoPath],
-        allPathNames: const ['testPath'],
-        fieldImage: FieldImage.defaultField,
-        onRenamed: (value) => name = value,
-        undoStack: undoStack,
-        shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: AutoEditorPage(
+          prefs: prefs,
+          auto: auto,
+          allPaths: [testPath],
+          allChoreoPaths: [testChoreoPath],
+          allPathNames: const ['testPath'],
+          fieldImage: FieldImage.defaultField,
+          onRenamed: (value) => name = value,
+          undoStack: undoStack,
+          shortcuts: false,
+        ),
       ),
-    ));
+    );
 
     final nameField = find.byType(RenamableTitle);
 
@@ -97,19 +110,21 @@ void main() {
   testWidgets('back button', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: AutoEditorPage(
-        prefs: prefs,
-        auto: auto,
-        allPaths: [testPath],
-        allChoreoPaths: [testChoreoPath],
-        allPathNames: const ['testPath'],
-        fieldImage: FieldImage.defaultField,
-        onRenamed: (value) => name = value,
-        undoStack: undoStack,
-        shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: AutoEditorPage(
+          prefs: prefs,
+          auto: auto,
+          allPaths: [testPath],
+          allChoreoPaths: [testChoreoPath],
+          allPathNames: const ['testPath'],
+          fieldImage: FieldImage.defaultField,
+          onRenamed: (value) => name = value,
+          undoStack: undoStack,
+          shortcuts: false,
+        ),
       ),
-    ));
+    );
 
     final backButton = find.byType(BackButton);
 

@@ -21,7 +21,9 @@ class Pose2d {
     double angleRadians = view.getFloat64(16, Endian.little);
 
     return Pose2d(
-        Translation2d(xMeters, yMeters), Rotation2d.fromRadians(angleRadians));
+      Translation2d(xMeters, yMeters),
+      Rotation2d.fromRadians(angleRadians),
+    );
   }
 
   static List<Pose2d> listFromBytes(Uint8List bytes) {
@@ -38,8 +40,10 @@ class Pose2d {
     } else if (t > 1) {
       return endValue;
     } else {
-      return Pose2d(translation.interpolate(endValue.translation, t),
-          rotation.interpolate(endValue.rotation, t));
+      return Pose2d(
+        translation.interpolate(endValue.translation, t),
+        rotation.interpolate(endValue.rotation, t),
+      );
     }
   }
 
@@ -53,17 +57,14 @@ class Translation2d {
   final num x;
   final num y;
 
-  const Translation2d([
-    this.x = 0.0,
-    this.y = 0.0,
-  ]);
+  const Translation2d([this.x = 0.0, this.y = 0.0]);
 
   Translation2d.fromAngle(num distance, Rotation2d angle)
-      : x = distance * angle.cosine,
-        y = distance * angle.sine;
+    : x = distance * angle.cosine,
+      y = distance * angle.sine;
 
   Translation2d.fromJson(Map<String, dynamic> json)
-      : this(json['x'] ?? 0, json['y'] ?? 0);
+    : this(json['x'] ?? 0, json['y'] ?? 0);
 
   num getDistance(Translation2d other) {
     return sqrt(pow(other.x - x, 2) + pow(other.y - y, 2));
@@ -81,10 +82,7 @@ class Translation2d {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'x': x,
-      'y': y,
-    };
+    return {'x': x, 'y': y};
   }
 
   Translation2d operator +(Translation2d other) {
@@ -161,7 +159,9 @@ class Rotation2d {
     num otherS = other.sine;
 
     return Rotation2d.fromComponents(
-        c * otherC - s * otherS, c * otherS + s * otherC);
+      c * otherC - s * otherS,
+      c * otherS + s * otherC,
+    );
   }
 
   Rotation2d operator +(Rotation2d other) {
@@ -215,8 +215,6 @@ class Rotation2d {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'value': _value,
-    };
+    return {'value': _value};
   }
 }

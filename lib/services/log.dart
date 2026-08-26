@@ -20,10 +20,7 @@ class Log {
       ),
       output: MultiOutput([
         ConsoleOutput(),
-        if (kReleaseMode)
-          FileOutput(
-            file: logFile,
-          ),
+        if (kReleaseMode) FileOutput(file: logFile),
       ]),
       level: kDebugMode ? Level.trace : Level.info,
       filter: ProductionFilter(),
@@ -32,15 +29,22 @@ class Log {
     Log.verbose('Log file location: ${logFile.path}');
   }
 
-  static void log(Level level, dynamic message,
-      [dynamic error, StackTrace? stackTrace]) {
+  static void log(
+    Level level,
+    dynamic message, [
+    dynamic error,
+    StackTrace? stackTrace,
+  ]) {
     if (logger != null) {
       logger!.log(level, message, error: error, stackTrace: stackTrace);
     }
   }
 
-  static void verbose(dynamic message,
-      [dynamic error, StackTrace? stackTrace]) {
+  static void verbose(
+    dynamic message, [
+    dynamic error,
+    StackTrace? stackTrace,
+  ]) {
     log(Level.trace, message, error, stackTrace);
   }
 
@@ -52,8 +56,11 @@ class Log {
     log(Level.info, message, error, stackTrace);
   }
 
-  static void warning(dynamic message,
-      [dynamic error, StackTrace? stackTrace]) {
+  static void warning(
+    dynamic message, [
+    dynamic error,
+    StackTrace? stackTrace,
+  ]) {
     log(Level.warning, message, error, stackTrace);
   }
 

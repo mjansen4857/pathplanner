@@ -1,6 +1,6 @@
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
@@ -35,90 +35,108 @@ void main() {
 
   testWidgets('tapping expands/collapses tree', (widgetTester) async {
     path.rotationTargetsExpanded = false;
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RotationTargetsTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onTargetHovered: (value) => hoveredTarget = value,
+            onTargetSelected: (value) => selectedTarget = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     // Tree initially collapsed, expect to find nothing
     expect(
-        find.descendant(
-            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
-        findsNothing);
+      find.descendant(
+        of: find.byType(TreeCardNode),
+        matching: find.byType(TreeCardNode),
+      ),
+      findsNothing,
+    );
 
     await widgetTester.tap(find.byType(RotationTargetsTree));
     await widgetTester.pumpAndSettle();
 
     expect(path.rotationTargetsExpanded, true);
 
-    await widgetTester.tap(find.text(
-        'Rotation Targets')); // Use text so it doesn't tap middle of expanded card
+    await widgetTester.tap(
+      find.text('Rotation Targets'),
+    ); // Use text so it doesn't tap middle of expanded card
     await widgetTester.pumpAndSettle();
     expect(path.rotationTargetsExpanded, false);
   });
 
   testWidgets('Target card for each zone', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RotationTargetsTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onTargetHovered: (value) => hoveredTarget = value,
+            onTargetSelected: (value) => selectedTarget = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(
-        find.descendant(
-            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
-        findsNWidgets(2));
+      find.descendant(
+        of: find.byType(TreeCardNode),
+        matching: find.byType(TreeCardNode),
+      ),
+      findsNWidgets(2),
+    );
   });
 
   testWidgets('Target card titles', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RotationTargetsTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onTargetHovered: (value) => hoveredTarget = value,
+            onTargetSelected: (value) => selectedTarget = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.text('Rotation Target 1'), findsOneWidget);
   });
 
   testWidgets('Target card hover', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RotationTargetsTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onTargetHovered: (value) => hoveredTarget = value,
+            onTargetSelected: (value) => selectedTarget = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
     var targetCards = find.descendant(
-        of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode));
+      of: find.byType(TreeCardNode),
+      matching: find.byType(TreeCardNode),
+    );
 
     await gesture.moveTo(widgetTester.getCenter(targetCards.at(0)));
     await widgetTester.pump();
@@ -132,20 +150,24 @@ void main() {
   });
 
   testWidgets('tapping expands/collapses zone cards', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RotationTargetsTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onTargetHovered: (value) => hoveredTarget = value,
+            onTargetSelected: (value) => selectedTarget = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     var targetCards = find.descendant(
-        of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode));
+      of: find.byType(TreeCardNode),
+      matching: find.byType(TreeCardNode),
+    );
 
     expect(find.byType(NumberTextField), findsNothing);
 
@@ -164,18 +186,20 @@ void main() {
   });
 
   testWidgets('Rotation text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
-          initiallySelectedTarget: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RotationTargetsTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onTargetHovered: (value) => hoveredTarget = value,
+            onTargetSelected: (value) => selectedTarget = value,
+            undoStack: undoStack,
+            initiallySelectedTarget: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.widgetWithText(NumberTextField, 'Rotation (Deg)');
 
@@ -194,18 +218,20 @@ void main() {
   });
 
   testWidgets('pos slider', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
-          initiallySelectedTarget: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RotationTargetsTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onTargetHovered: (value) => hoveredTarget = value,
+            onTargetSelected: (value) => selectedTarget = value,
+            undoStack: undoStack,
+            initiallySelectedTarget: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var slider = find.byType(Slider);
 
@@ -224,18 +250,20 @@ void main() {
   });
 
   testWidgets('Delete target button', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
-          initiallySelectedTarget: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RotationTargetsTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onTargetHovered: (value) => hoveredTarget = value,
+            onTargetSelected: (value) => selectedTarget = value,
+            undoStack: undoStack,
+            initiallySelectedTarget: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var deleteButtons = find.byTooltip('Delete Target');
 
@@ -254,18 +282,20 @@ void main() {
   });
 
   testWidgets('add new target', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
-          initiallySelectedTarget: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RotationTargetsTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onTargetHovered: (value) => hoveredTarget = value,
+            onTargetSelected: (value) => selectedTarget = value,
+            undoStack: undoStack,
+            initiallySelectedTarget: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     final addIcon = find.byIcon(Icons.add);
     expect(addIcon, findsOneWidget);
@@ -278,8 +308,10 @@ void main() {
     expect(addButton, findsOneWidget);
 
     // Check the tooltip of the IconButton
-    expect((widgetTester.widget(addButton) as IconButton).tooltip,
-        'Add New Rotation Target');
+    expect(
+      (widgetTester.widget(addButton) as IconButton).tooltip,
+      'Add New Rotation Target',
+    );
 
     await widgetTester.tap(addButton);
     await widgetTester.pump();
@@ -294,21 +326,24 @@ void main() {
   });
 
   testWidgets('position text field input', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
-          initiallySelectedTarget: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RotationTargetsTree(
+            path: path,
+            onPathChangedNoSim: () => pathChanged = true,
+            onTargetHovered: (value) => hoveredTarget = value,
+            onTargetSelected: (value) => selectedTarget = value,
+            undoStack: undoStack,
+            initiallySelectedTarget: 0,
+          ),
         ),
       ),
-    ));
+    );
 
-    var numberTextField =
-        find.byType(NumberTextField).last; // Get the position text field
+    var numberTextField = find
+        .byType(NumberTextField)
+        .last; // Get the position text field
     expect(numberTextField, findsOneWidget);
 
     // Verify initial value

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:file/file.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:function_tree/function_tree.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/pathfinding/nav_grid.dart';
@@ -35,8 +35,11 @@ class _NavGridPageState extends State<NavGridPage> {
   void initState() {
     super.initState();
 
-    File gridFile =
-        widget.fs.file(join(widget.deployDirectory.path, 'navgrid.json'));
+    File gridFile = widget.fs.file(
+      join(widget.deployDirectory.path, 'navgrid.json'),
+    );
+    // Keep project file access off the UI thread.
+    // ignore: avoid_slow_async_io
     gridFile.exists().then((value) async {
       if (value) {
         String fileContent = gridFile.readAsStringSync();
@@ -52,9 +55,7 @@ class _NavGridPageState extends State<NavGridPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Stack(
@@ -170,40 +171,45 @@ class _NavGridPageState extends State<NavGridPage> {
                 Row(
                   children: [
                     Expanded(
-                        child: NumberTextField(
-                      initialValue: _grid.nodeSizeMeters,
-                      label: 'Node Size (M)',
-                      arrowKeyIncrement: 0.05,
-                      minValue: 0.01,
-                      controller: nodeSizeController,
-                    )),
+                      child: NumberTextField(
+                        initialValue: _grid.nodeSizeMeters,
+                        label: 'Node Size (M)',
+                        arrowKeyIncrement: 0.05,
+                        minValue: 0.01,
+                        controller: nodeSizeController,
+                      ),
+                    ),
                   ],
                 ),
                 const Text(
-                    'Larger node size = more performance, but less accuracy'),
+                  'Larger node size = more performance, but less accuracy',
+                ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
-                        child: NumberTextField(
-                      initialValue: _grid.fieldSize.width,
-                      label: 'Field Length (M)',
-                      minValue: 0.01,
-                      controller: fieldLengthController,
-                    )),
+                      child: NumberTextField(
+                        initialValue: _grid.fieldSize.width,
+                        label: 'Field Length (M)',
+                        minValue: 0.01,
+                        controller: fieldLengthController,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
-                        child: NumberTextField(
-                      initialValue: _grid.fieldSize.height,
-                      label: 'Field Width (M)',
-                      minValue: 0.01,
-                      controller: fieldWidthController,
-                    )),
+                      child: NumberTextField(
+                        initialValue: _grid.fieldSize.height,
+                        label: 'Field Width (M)',
+                        minValue: 0.01,
+                        controller: fieldWidthController,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                    'Note: Changing these attributes will clear the navgrid. This cannot be undone.'),
+                  'Note: Changing these attributes will clear the navgrid. This cannot be undone.',
+                ),
               ],
             ),
           ),
@@ -236,8 +242,10 @@ class _NavGridPageState extends State<NavGridPage> {
                   setState(() {
                     _grid = NavGrid.blankGrid(
                       nodeSizeMeters: nodeSize,
-                      fieldSize:
-                          Size(fieldLength.toDouble(), fieldWidth.toDouble()),
+                      fieldSize: Size(
+                        fieldLength.toDouble(),
+                        fieldWidth.toDouble(),
+                      ),
                     );
                   });
                   _saveNavGrid();
@@ -301,14 +309,15 @@ class _NavigationPainter extends CustomPainter {
     for (int row = 0; row < grid.length; row++) {
       for (int col = 0; col < grid[row].length; col++) {
         Offset tl = PathPainterUtil.pointToPixelOffset(
-            Translation2d(col * nodeSizeMeters, row * nodeSizeMeters),
-            scale,
-            fieldImage);
+          Translation2d(col * nodeSizeMeters, row * nodeSizeMeters),
+          scale,
+          fieldImage,
+        );
         Offset br = PathPainterUtil.pointToPixelOffset(
-            Translation2d(
-                (col + 1) * nodeSizeMeters, (row + 1) * nodeSizeMeters),
-            scale,
-            fieldImage);
+          Translation2d((col + 1) * nodeSizeMeters, (row + 1) * nodeSizeMeters),
+          scale,
+          fieldImage,
+        );
 
         if (grid[row][col]) {
           canvas.drawRect(Rect.fromPoints(tl, br), fillPaint);

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/duplicate_command_button.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -22,17 +22,19 @@ class WaitCommandWidget extends StatelessWidget {
 
   void _updateWaitTime(num newValue) {
     if (newValue >= 0) {
-      undoStack.add(Change(
-        command.waitTime,
-        () {
-          command.waitTime = newValue;
-          onUpdated?.call();
-        },
-        (oldValue) {
-          command.waitTime = oldValue;
-          onUpdated?.call();
-        },
-      ));
+      undoStack.add(
+        Change(
+          command.waitTime,
+          () {
+            command.waitTime = newValue;
+            onUpdated?.call();
+          },
+          (oldValue) {
+            command.waitTime = oldValue;
+            onUpdated?.call();
+          },
+        ),
+      );
     }
   }
 
@@ -57,17 +59,16 @@ class WaitCommandWidget extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        DuplicateCommandButton(
-          onPressed: onDuplicateCommand,
-        ),
+        DuplicateCommandButton(onPressed: onDuplicateCommand),
         Tooltip(
           message: 'Remove Command',
           waitDuration: const Duration(milliseconds: 500),
           child: IconButton(
             onPressed: onRemoved,
             visualDensity: const VisualDensity(
-                horizontal: VisualDensity.minimumDensity,
-                vertical: VisualDensity.minimumDensity),
+              horizontal: VisualDensity.minimumDensity,
+              vertical: VisualDensity.minimumDensity,
+            ),
             icon: Icon(Icons.delete, color: colorScheme.error),
           ),
         ),

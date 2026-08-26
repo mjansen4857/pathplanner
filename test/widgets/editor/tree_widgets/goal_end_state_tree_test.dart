@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -26,16 +26,18 @@ void main() {
 
   testWidgets('tapping expands/collapses tree', (widgetTester) async {
     path.goalEndStateExpanded = false;
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: GoalEndStateTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          undoStack: undoStack,
-          holonomicMode: true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GoalEndStateTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            undoStack: undoStack,
+            holonomicMode: true,
+          ),
         ),
       ),
-    ));
+    );
 
     // Tree initially collapsed, expect to find nothing
     expect(find.byType(NumberTextField), findsNothing);
@@ -56,16 +58,18 @@ void main() {
   });
 
   testWidgets('vel text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: GoalEndStateTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          undoStack: undoStack,
-          holonomicMode: true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GoalEndStateTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            undoStack: undoStack,
+            holonomicMode: true,
+          ),
         ),
       ),
-    ));
+    );
 
     final textField = find.widgetWithText(NumberTextField, 'Velocity (M/S)');
 
@@ -84,16 +88,18 @@ void main() {
   });
 
   testWidgets('rotation text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: GoalEndStateTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          undoStack: undoStack,
-          holonomicMode: true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GoalEndStateTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            undoStack: undoStack,
+            holonomicMode: true,
+          ),
         ),
       ),
-    ));
+    );
 
     final textField = find.widgetWithText(NumberTextField, 'Rotation (Deg)');
 

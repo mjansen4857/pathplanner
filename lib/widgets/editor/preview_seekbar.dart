@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class PreviewSeekbar extends StatefulWidget {
   final AnimationController previewController;
@@ -84,8 +84,9 @@ class _PreviewSeekbarState extends State<PreviewSeekbar> {
                         : const Icon(Icons.play_arrow),
                   ),
                   visualDensity: VisualDensity.compact,
-                  tooltip:
-                      widget.previewController.isAnimating ? 'Pause' : 'Play',
+                  tooltip: widget.previewController.isAnimating
+                      ? 'Pause'
+                      : 'Play',
                 ),
                 IconButton(
                   onPressed: !widget.enabled
@@ -120,9 +121,10 @@ class _PreviewSeekbarState extends State<PreviewSeekbar> {
                         ),
                         child: Slider(
                           value: widget.previewController.value,
-                          label: (widget.previewController.value *
-                                  widget.totalPathTime)
-                              .toStringAsFixed(2),
+                          label:
+                              (widget.previewController.value *
+                                      widget.totalPathTime)
+                                  .toStringAsFixed(2),
                           onChanged: !widget.enabled
                               ? null
                               : (value) {

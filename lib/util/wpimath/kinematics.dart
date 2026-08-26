@@ -7,11 +7,7 @@ class ChassisSpeeds {
   final num vy;
   final num omega;
 
-  const ChassisSpeeds({
-    this.vx = 0,
-    this.vy = 0,
-    this.omega = 0,
-  });
+  const ChassisSpeeds({this.vx = 0, this.vy = 0, this.omega = 0});
 
   @override
   bool operator ==(Object other) =>
@@ -30,16 +26,24 @@ class ChassisSpeeds {
   }
 
   factory ChassisSpeeds.fromFieldRelativeSpeeds(
-      ChassisSpeeds speeds, Rotation2d robotAngle) {
-    Translation2d rotated =
-        Translation2d(speeds.vx, speeds.vy).rotateBy(-robotAngle);
+    ChassisSpeeds speeds,
+    Rotation2d robotAngle,
+  ) {
+    Translation2d rotated = Translation2d(
+      speeds.vx,
+      speeds.vy,
+    ).rotateBy(-robotAngle);
     return ChassisSpeeds(vx: rotated.x, vy: rotated.y, omega: speeds.omega);
   }
 
   factory ChassisSpeeds.fromRobotRelativeSpeeds(
-      ChassisSpeeds speeds, Rotation2d robotAngle) {
-    Translation2d rotated =
-        Translation2d(speeds.vx, speeds.vy).rotateBy(robotAngle);
+    ChassisSpeeds speeds,
+    Rotation2d robotAngle,
+  ) {
+    Translation2d rotated = Translation2d(
+      speeds.vx,
+      speeds.vy,
+    ).rotateBy(robotAngle);
     return ChassisSpeeds(vx: rotated.x, vy: rotated.y, omega: speeds.omega);
   }
 
@@ -83,10 +87,14 @@ class SwerveDriveKinematics {
     }
   }
 
-  List<SwerveModuleState> toSwerveModuleStates(ChassisSpeeds chassisSpeeds,
-      {Translation2d centerOfRotationMeters = const Translation2d()}) {
-    var moduleStates =
-        List.generate(_numModules, (index) => SwerveModuleState());
+  List<SwerveModuleState> toSwerveModuleStates(
+    ChassisSpeeds chassisSpeeds, {
+    Translation2d centerOfRotationMeters = const Translation2d(),
+  }) {
+    var moduleStates = List.generate(
+      _numModules,
+      (index) => SwerveModuleState(),
+    );
 
     if (chassisSpeeds.vx == 0 &&
         chassisSpeeds.vy == 0 &&
@@ -100,12 +108,16 @@ class SwerveDriveKinematics {
 
     if (centerOfRotationMeters != _prevCoR) {
       for (int i = 0; i < _numModules; i++) {
-        _inverseKinematics.setRow(
-            [1, 0, -_modules[i].y.toDouble() + centerOfRotationMeters.y],
-            i * 2);
-        _inverseKinematics.setRow(
-            [0, 1, _modules[i].x.toDouble() - centerOfRotationMeters.x],
-            i * 2 + 1);
+        _inverseKinematics.setRow([
+          1,
+          0,
+          -_modules[i].y.toDouble() + centerOfRotationMeters.y,
+        ], i * 2);
+        _inverseKinematics.setRow([
+          0,
+          1,
+          _modules[i].x.toDouble() - centerOfRotationMeters.x,
+        ], i * 2 + 1);
       }
       _prevCoR = centerOfRotationMeters;
     }
@@ -114,7 +126,7 @@ class SwerveDriveKinematics {
     chassisSpeedsVector.setColumn([
       chassisSpeeds.vx.toDouble(),
       chassisSpeeds.vy.toDouble(),
-      chassisSpeeds.omega.toDouble()
+      chassisSpeeds.omega.toDouble(),
     ], 0);
 
     var moduleStatesMatrix = _inverseKinematics * chassisSpeedsVector;
@@ -136,7 +148,8 @@ class SwerveDriveKinematics {
   ChassisSpeeds toChassisSpeeds(List<SwerveModuleState> moduleStates) {
     if (moduleStates.length != _numModules) {
       throw ArgumentError(
-          'Number of modules is not consistent with number of module locations');
+        'Number of modules is not consistent with number of module locations',
+      );
     }
 
     var moduleStatesMatrix = Matrix.zero(_numModules * 2, 1);
@@ -144,11 +157,11 @@ class SwerveDriveKinematics {
     for (int i = 0; i < _numModules; i++) {
       moduleStatesMatrix.setRow([
         moduleStates[i].speedMetersPerSecond.toDouble() *
-            moduleStates[i].angle.cosine
+            moduleStates[i].angle.cosine,
       ], i * 2);
       moduleStatesMatrix.setRow([
         moduleStates[i].speedMetersPerSecond.toDouble() *
-            moduleStates[i].angle.sine
+            moduleStates[i].angle.sine,
       ], i * 2 + 1);
     }
 

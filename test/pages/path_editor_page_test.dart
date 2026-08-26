@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/pages/path_editor_page.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -18,7 +18,10 @@ void main() {
   setUp(() async {
     final fs = MemoryFileSystem();
     path = PathPlannerPath.defaultPath(
-        pathDir: '/paths', fs: fs, name: 'testPath');
+      pathDir: '/paths',
+      fs: fs,
+      name: 'testPath',
+    );
     undoStack = ChangeStack();
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
@@ -28,16 +31,18 @@ void main() {
   testWidgets('shows editor', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: PathEditorPage(
-        prefs: prefs,
-        path: path,
-        fieldImage: FieldImage.defaultField,
-        onRenamed: (value) => name = value,
-        undoStack: undoStack,
-        shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: PathEditorPage(
+          prefs: prefs,
+          path: path,
+          fieldImage: FieldImage.defaultField,
+          onRenamed: (value) => name = value,
+          undoStack: undoStack,
+          shortcuts: false,
+        ),
       ),
-    ));
+    );
 
     expect(find.byType(SplitPathEditor), findsOneWidget);
   });
@@ -45,16 +50,18 @@ void main() {
   testWidgets('rename', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: PathEditorPage(
-        prefs: prefs,
-        path: path,
-        fieldImage: FieldImage.defaultField,
-        onRenamed: (value) => name = value,
-        undoStack: undoStack,
-        shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: PathEditorPage(
+          prefs: prefs,
+          path: path,
+          fieldImage: FieldImage.defaultField,
+          onRenamed: (value) => name = value,
+          undoStack: undoStack,
+          shortcuts: false,
+        ),
       ),
-    ));
+    );
 
     final nameField = find.byType(RenamableTitle);
 
@@ -70,16 +77,18 @@ void main() {
   testWidgets('back button', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: PathEditorPage(
-        prefs: prefs,
-        path: path,
-        fieldImage: FieldImage.defaultField,
-        onRenamed: (value) => name = value,
-        undoStack: undoStack,
-        shortcuts: false,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: PathEditorPage(
+          prefs: prefs,
+          path: path,
+          fieldImage: FieldImage.defaultField,
+          onRenamed: (value) => name = value,
+          undoStack: undoStack,
+          shortcuts: false,
+        ),
       ),
-    ));
+    );
 
     final backButton = find.byType(BackButton);
 

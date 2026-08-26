@@ -1,6 +1,6 @@
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
@@ -20,6 +20,7 @@ import 'package:pathplanner/widgets/editor/split_path_editor.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:pathplanner/widgets/legacy_material_bridge.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
@@ -32,15 +33,9 @@ void main() {
   setUp(() async {
     var fs = MemoryFileSystem();
     await fs.directory('/paths').create(recursive: true);
-    path = PathPlannerPath.defaultPath(
-      name: 'path',
-      pathDir: '/paths',
-      fs: fs,
-    );
+    path = PathPlannerPath.defaultPath(name: 'path', pathDir: '/paths', fs: fs);
     path.goalEndState.rotation = const Rotation2d();
-    path.rotationTargets = [
-      RotationTarget(0.5, const Rotation2d()),
-    ];
+    path.rotationTargets = [RotationTarget(0.5, const Rotation2d())];
     path.eventMarkers = [
       EventMarker(
         waypointRelativePos: 0.5,
@@ -57,11 +52,7 @@ void main() {
         name: 'z',
       ),
     ];
-    path.pointTowardsZones = [
-      PointTowardsZone(
-        name: 'pz',
-      ),
-    ];
+    path.pointTowardsZones = [PointTowardsZone(name: 'pz')];
     undoStack = ChangeStack();
     SharedPreferences.setMockInitialValues({
       PrefsKeys.holonomicMode: true,
@@ -78,21 +69,23 @@ void main() {
   testWidgets('has painter and tree', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: 1280,
-          height: 720,
-          child: SplitPathEditor(
-            prefs: prefs,
-            path: path,
-            fieldImage: FieldImage.official(OfficialField.crescendo),
-            undoStack: undoStack,
-            simulate: true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 1280,
+            height: 720,
+            child: SplitPathEditor(
+              prefs: prefs,
+              path: path,
+              fieldImage: FieldImage.official(OfficialField.crescendo),
+              undoStack: undoStack,
+              simulate: true,
+            ),
           ),
         ),
       ),
-    ));
+    );
 
     var painters = find.byType(CustomPaint);
     bool foundPathPainter = false;
@@ -108,16 +101,18 @@ void main() {
   testWidgets('swap tree side', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     final swapButton = find.byTooltip('Move to Other Side');
 
@@ -137,20 +132,23 @@ void main() {
   testWidgets('change tree size', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.dragFrom(
-        widgetTester.getCenter(find.byType(SplitPathEditor)),
-        const Offset(-100, 0));
+      widgetTester.getCenter(find.byType(SplitPathEditor)),
+      const Offset(-100, 0),
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 
@@ -160,9 +158,10 @@ void main() {
     await widgetTester.pump();
 
     await widgetTester.dragFrom(
-        widgetTester.getCenter(find.byType(SplitPathEditor)) +
-            const Offset(100, 0),
-        const Offset(-100, 0));
+      widgetTester.getCenter(find.byType(SplitPathEditor)) +
+          const Offset(100, 0),
+      const Offset(-100, 0),
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 
@@ -175,26 +174,32 @@ void main() {
     path.waypointsExpanded = true;
     prefs.setBool(PrefsKeys.holonomicMode, false);
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
-    var tapLocation = PathPainterUtil.pointToPixelOffset(
-            path.waypoints.first.anchor,
-            PathPainter.scale,
-            FieldImage.official(OfficialField.crescendo)) +
+    var tapLocation =
+        PathPainterUtil.pointToPixelOffset(
+          path.waypoints.first.anchor,
+          PathPainter.scale,
+          FieldImage.official(OfficialField.crescendo),
+        ) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(0.0, 23.0); // Some weird buffer going on
 
-    var gesture = await widgetTester.startGesture(tapLocation,
-        kind: PointerDeviceKind.mouse);
+    var gesture = await widgetTester.startGesture(
+      tapLocation,
+      kind: PointerDeviceKind.mouse,
+    );
 
     await widgetTester.pumpAndSettle();
 
@@ -202,8 +207,10 @@ void main() {
 
     await gesture.removePointer();
     await widgetTester.pump();
-    gesture = await widgetTester.startGesture(const Offset(100, 100),
-        kind: PointerDeviceKind.mouse);
+    gesture = await widgetTester.startGesture(
+      const Offset(100, 100),
+      kind: PointerDeviceKind.mouse,
+    );
     await widgetTester.pumpAndSettle();
 
     expect(find.byType(NumberTextField), findsNothing);
@@ -214,19 +221,25 @@ void main() {
 
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: fieldImage,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: fieldImage,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
-    var tapLocation = PathPainterUtil.pointToPixelOffset(
-            const Translation2d(1.0, 1.0), PathPainter.scale, fieldImage) +
+    var tapLocation =
+        PathPainterUtil.pointToPixelOffset(
+          const Translation2d(1.0, 1.0),
+          PathPainter.scale,
+          fieldImage,
+        ) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(0.0, 23.0); // Some weird buffer going on
 
@@ -250,28 +263,39 @@ void main() {
 
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: fieldImage,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: fieldImage,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     final startX = path.waypoints.last.anchor.x;
     final startY = path.waypoints.last.anchor.y;
-    var dragLocation = PathPainterUtil.pointToPixelOffset(
-            path.waypoints.last.anchor, PathPainter.scale, fieldImage) +
+    var dragLocation =
+        PathPainterUtil.pointToPixelOffset(
+          path.waypoints.last.anchor,
+          PathPainter.scale,
+          fieldImage,
+        ) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(0.0, 23.0); // Some weird buffer going on
-    var meterPixels =
-        PathPainterUtil.metersToPixels(1.0, PathPainter.scale, fieldImage);
+    var meterPixels = PathPainterUtil.metersToPixels(
+      1.0,
+      PathPainter.scale,
+      fieldImage,
+    );
 
-    var gesture = await widgetTester.startGesture(dragLocation,
-        kind: PointerDeviceKind.mouse);
+    var gesture = await widgetTester.startGesture(
+      dragLocation,
+      kind: PointerDeviceKind.mouse,
+    );
     await widgetTester.pump();
 
     for (int i = 0; i < meterPixels.ceil(); i++) {
@@ -300,31 +324,40 @@ void main() {
 
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: fieldImage,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: fieldImage,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     Translation2d targetPos = path.pathPoints
         .firstWhere((p) => p.rotationTarget == path.rotationTargets[0])
         .position;
-    var dragLocation = PathPainterUtil.pointToPixelOffset(
-            targetPos + const Translation2d(0.5, 0.0),
-            PathPainter.scale,
-            fieldImage) +
+    var dragLocation =
+        PathPainterUtil.pointToPixelOffset(
+          targetPos + const Translation2d(0.5, 0.0),
+          PathPainter.scale,
+          fieldImage,
+        ) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(0.0, 25.0); // Some weird buffer going on
-    var halfMeterPixels =
-        PathPainterUtil.metersToPixels(0.5, PathPainter.scale, fieldImage);
+    var halfMeterPixels = PathPainterUtil.metersToPixels(
+      0.5,
+      PathPainter.scale,
+      fieldImage,
+    );
 
-    var gesture = await widgetTester.startGesture(dragLocation,
-        kind: PointerDeviceKind.mouse);
+    var gesture = await widgetTester.startGesture(
+      dragLocation,
+      kind: PointerDeviceKind.mouse,
+    );
     await widgetTester.pump();
 
     for (int i = 0; i <= halfMeterPixels.ceil(); i++) {
@@ -348,29 +381,38 @@ void main() {
 
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: fieldImage,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: fieldImage,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     Translation2d targetPos = path.waypoints.last.anchor;
-    var dragLocation = PathPainterUtil.pointToPixelOffset(
-            targetPos + const Translation2d(0.5, 0.0),
-            PathPainter.scale,
-            fieldImage) +
+    var dragLocation =
+        PathPainterUtil.pointToPixelOffset(
+          targetPos + const Translation2d(0.5, 0.0),
+          PathPainter.scale,
+          fieldImage,
+        ) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(0.0, 25.0); // Some weird buffer going on
-    var halfMeterPixels =
-        PathPainterUtil.metersToPixels(0.5, PathPainter.scale, fieldImage);
+    var halfMeterPixels = PathPainterUtil.metersToPixels(
+      0.5,
+      PathPainter.scale,
+      fieldImage,
+    );
 
-    var gesture = await widgetTester.startGesture(dragLocation,
-        kind: PointerDeviceKind.mouse);
+    var gesture = await widgetTester.startGesture(
+      dragLocation,
+      kind: PointerDeviceKind.mouse,
+    );
     await widgetTester.pump();
 
     for (int i = 0; i <= halfMeterPixels.ceil(); i++) {
@@ -395,29 +437,38 @@ void main() {
     path.idealStartingState = IdealStartingState(0.0, const Rotation2d());
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: fieldImage,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: fieldImage,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     Translation2d targetPos = path.waypoints.first.anchor;
-    var dragLocation = PathPainterUtil.pointToPixelOffset(
-            targetPos + const Translation2d(0.5, 0.0),
-            PathPainter.scale,
-            fieldImage) +
+    var dragLocation =
+        PathPainterUtil.pointToPixelOffset(
+          targetPos + const Translation2d(0.5, 0.0),
+          PathPainter.scale,
+          fieldImage,
+        ) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(2.0, 28.0); // Some weird buffer going on
-    var halfMeterPixels =
-        PathPainterUtil.metersToPixels(0.5, PathPainter.scale, fieldImage);
+    var halfMeterPixels = PathPainterUtil.metersToPixels(
+      0.5,
+      PathPainter.scale,
+      fieldImage,
+    );
 
-    var gesture = await widgetTester.startGesture(dragLocation,
-        kind: PointerDeviceKind.mouse);
+    var gesture = await widgetTester.startGesture(
+      dragLocation,
+      kind: PointerDeviceKind.mouse,
+    );
     await widgetTester.pump();
 
     for (int i = 0; i <= halfMeterPixels.ceil(); i++) {
@@ -442,16 +493,18 @@ void main() {
     path.waypointsExpanded = true;
     path.addWaypoint(const Translation2d(7.0, 4.0));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     final deleteButtons = find.byTooltip('Delete Waypoint');
 
@@ -477,19 +530,22 @@ void main() {
     path.waypointsExpanded = true;
     path.addWaypoint(const Translation2d(7.0, 4.0));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
@@ -504,25 +560,29 @@ void main() {
 
     path.constraintZonesExpanded = true;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
     final zoneCard = find.descendant(
-        of: find.byType(TreeCardNode),
-        matching: find.widgetWithText(TreeCardNode, 'z'));
+      of: find.byType(TreeCardNode),
+      matching: find.widgetWithText(TreeCardNode, 'z'),
+    );
 
     await gesture.moveTo(widgetTester.getCenter(zoneCard));
     await widgetTester.pumpAndSettle();
@@ -541,25 +601,29 @@ void main() {
 
     path.pointTowardsZonesExpanded = true;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
     final zoneCard = find.descendant(
-        of: find.byType(TreeCardNode),
-        matching: find.widgetWithText(TreeCardNode, 'pz'));
+      of: find.byType(TreeCardNode),
+      matching: find.widgetWithText(TreeCardNode, 'pz'),
+    );
 
     await gesture.moveTo(widgetTester.getCenter(zoneCard));
     await widgetTester.pumpAndSettle();
@@ -578,25 +642,29 @@ void main() {
 
     path.rotationTargetsExpanded = true;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
     final targetCard = find.descendant(
-        of: find.byType(TreeCardNode),
-        matching: find.widgetWithText(TreeCardNode, 'Rotation Target 1'));
+      of: find.byType(TreeCardNode),
+      matching: find.widgetWithText(TreeCardNode, 'Rotation Target 1'),
+    );
 
     await gesture.moveTo(widgetTester.getCenter(targetCard));
     await widgetTester.pump();
@@ -617,10 +685,7 @@ void main() {
 
     // Find the specific slider for the rotation target
     final rotationTargetSlider = find.descendant(
-      of: find.ancestor(
-        of: targetCard,
-        matching: find.byType(TreeCardNode),
-      ),
+      of: find.ancestor(of: targetCard, matching: find.byType(TreeCardNode)),
       matching: find.byType(Slider),
     );
     expect(rotationTargetSlider, findsOneWidget);
@@ -644,25 +709,30 @@ void main() {
 
     path.eventMarkersExpanded = true;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        builder: legacyMaterialAppBuilder,
+        home: Scaffold(
+          body: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
     final markerCard = find.descendant(
-        of: find.byType(TreeCardNode),
-        matching: find.widgetWithText(TreeCardNode, 'm'));
+      of: find.byType(TreeCardNode),
+      matching: find.widgetWithText(TreeCardNode, 'm'),
+    );
 
     await gesture.moveTo(widgetTester.getCenter(markerCard));
     await widgetTester.pump();

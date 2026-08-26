@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/services/update_checker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -27,17 +27,17 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _updateController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
-    _offsetAnimation =
-        Tween<Offset>(begin: const Offset(0, -0.05), end: Offset.zero)
-            .animate(CurvedAnimation(
-      parent: _updateController,
-      curve: Curves.ease,
-    ));
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _updateController, curve: Curves.ease));
 
-    widget.updateChecker
-        .isGuiUpdateAvailable(widget.currentVersion)
-        .then((value) {
+    widget.updateChecker.isGuiUpdateAvailable(widget.currentVersion).then((
+      value,
+    ) {
       if (value) {
         setState(() {
           _visibile = value;
@@ -71,8 +71,10 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
                 children: [
                   Text(
                     'PathPlanner update available!',
-                    style:
-                        TextStyle(fontSize: 18, color: colorScheme.onSurface),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(

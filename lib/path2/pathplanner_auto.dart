@@ -20,10 +20,8 @@ sealed class AutoNode implements GraphNodeData {
   @override
   Offset editorPosition;
 
-  AutoNode({
-    String? id,
-    required this.editorPosition,
-  }) : id = id ?? generateGraphId() {
+  AutoNode({String? id, required this.editorPosition})
+    : id = id ?? generateGraphId() {
     _validateId(this.id, 'Auto node ID');
     validateFiniteOffset(editorPosition, 'editorPosition');
   }
@@ -50,11 +48,7 @@ sealed class AutoNode implements GraphNodeData {
 final class PathAutoNode extends AutoNode {
   String? pathName;
 
-  PathAutoNode({
-    super.id,
-    this.pathName,
-    required super.editorPosition,
-  });
+  PathAutoNode({super.id, this.pathName, required super.editorPosition});
 
   factory PathAutoNode.fromJson(Map<String, dynamic> json) {
     final pathName = json['pathName'];
@@ -72,19 +66,16 @@ final class PathAutoNode extends AutoNode {
   String get type => 'path';
 
   @override
-  PathAutoNode clone() => PathAutoNode(
-        id: id,
-        pathName: pathName,
-        editorPosition: editorPosition,
-      );
+  PathAutoNode clone() =>
+      PathAutoNode(id: id, pathName: pathName, editorPosition: editorPosition);
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'pathName': pathName,
-        'editorPosition': editorPositionToJson(editorPosition),
-      };
+    'id': id,
+    'type': type,
+    'pathName': pathName,
+    'editorPosition': editorPositionToJson(editorPosition),
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -111,8 +102,8 @@ class AutoBranch implements GraphBranchData {
     required this.sourceId,
     required this.targetId,
     AutoTransition? transition,
-  })  : id = id ?? generateGraphId(),
-        transition = transition ?? ConditionTransition() {
+  }) : id = id ?? generateGraphId(),
+       transition = transition ?? ConditionTransition() {
     _validateId(this.id, 'Auto branch ID');
     _validateId(sourceId, 'Auto branch source ID');
     _validateId(targetId, 'Auto branch target ID');
@@ -129,18 +120,18 @@ class AutoBranch implements GraphBranchData {
   }
 
   AutoBranch clone() => AutoBranch(
-        id: id,
-        sourceId: sourceId,
-        targetId: targetId,
-        transition: transition.clone(),
-      );
+    id: id,
+    sourceId: sourceId,
+    targetId: targetId,
+    transition: transition.clone(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'sourceId': sourceId,
-        'targetId': targetId,
-        'transition': transition.toJson(),
-      };
+    'id': id,
+    'sourceId': sourceId,
+    'targetId': targetId,
+    'transition': transition.toJson(),
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -165,8 +156,8 @@ class AutoGraphSnapshot {
     required Iterable<AutoBranch> branches,
     required this.startingPose,
     required this.startingPoseInitialized,
-  })  : nodes = [for (final node in nodes) node.clone()],
-        branches = [for (final branch in branches) branch.clone()];
+  }) : nodes = [for (final node in nodes) node.clone()],
+       branches = [for (final branch in branches) branch.clone()];
 }
 
 class Path2Auto {
@@ -212,11 +203,11 @@ class Path2Auto {
     required this.autoDir,
     required this.fs,
     this.folder,
-  })  : nodes = [],
-        branches = [],
-        startingPose = _zeroPose,
-        startingPoseInitialized = false,
-        sourceVersion = fileVersion;
+  }) : nodes = [],
+       branches = [],
+       startingPose = _zeroPose,
+       startingPoseInitialized = false,
+       sourceVersion = fileVersion;
 
   factory Path2Auto.fromJson(
     Map<String, dynamic> json,
@@ -268,7 +259,9 @@ class Path2Auto {
       return {};
     }
     return GraphAlgorithms.reverseReachableNodeIds<AutoBranch>(
-        nodeId, branches);
+      nodeId,
+      branches,
+    );
   }
 
   Set<String> get reachableNodeIds {
@@ -277,7 +270,9 @@ class Path2Auto {
       return {};
     }
     return GraphAlgorithms.reachableNodeIds<AutoBranch>(
-        roots.single.id, branches);
+      roots.single.id,
+      branches,
+    );
   }
 
   GraphDiagnostics get diagnostics => getDiagnostics();
@@ -288,30 +283,37 @@ class Path2Auto {
     final configurationWarnings = <String>[];
 
     if (nodes.isNotEmpty && hardErrors.isEmpty) {
-      final roots =
-          GraphAlgorithms.roots<AutoNode, AutoBranch>(nodes, branches);
+      final roots = GraphAlgorithms.roots<AutoNode, AutoBranch>(
+        nodes,
+        branches,
+      );
       if (roots.length != 1) {
         draftWarnings.add(
-            'Auto must have exactly one start node; found ${roots.length}');
+          'Auto must have exactly one start node; found ${roots.length}',
+        );
       } else {
         final reachable = GraphAlgorithms.reachableNodeIds<AutoBranch>(
-            roots.single.id, branches);
+          roots.single.id,
+          branches,
+        );
         if (reachable.length != nodes.length) {
           draftWarnings.add('Some auto nodes are unreachable from the start');
         }
       }
     }
 
-    final availablePathNames =
-        paths == null ? null : {for (final path in paths) path.name};
+    final availablePathNames = paths == null
+        ? null
+        : {for (final path in paths) path.name};
     for (final node in nodes.whereType<PathAutoNode>()) {
       final pathName = node.pathName;
       if (pathName == null || pathName.trim().isEmpty) {
         configurationWarnings.add('Auto node ${node.id} has no path selected');
       } else if (availablePathNames != null &&
           !availablePathNames.contains(pathName)) {
-        configurationWarnings
-            .add('Auto node ${node.id} references missing path "$pathName"');
+        configurationWarnings.add(
+          'Auto node ${node.id} references missing path "$pathName"',
+        );
       }
     }
     for (final branch in branches) {
@@ -319,8 +321,9 @@ class Path2Auto {
       if (transition is ConditionTransition &&
           (transition.conditionName == null ||
               transition.conditionName!.trim().isEmpty)) {
-        configurationWarnings
-            .add('Branch ${branch.id} has no condition selected');
+        configurationWarnings.add(
+          'Branch ${branch.id} has no condition selected',
+        );
       }
     }
 
@@ -340,13 +343,18 @@ class Path2Auto {
         nodeById(targetId) == null ||
         sourceId == targetId ||
         GraphAlgorithms.wouldCreateCycle<AutoBranch>(
-            sourceId, targetId, branches)) {
+          sourceId,
+          targetId,
+          branches,
+        )) {
       return false;
     }
     if (transition is FinishedTransition &&
-        branches.any((branch) =>
-            branch.sourceId == sourceId &&
-            branch.transition is FinishedTransition)) {
+        branches.any(
+          (branch) =>
+              branch.sourceId == sourceId &&
+              branch.transition is FinishedTransition,
+        )) {
       return false;
     }
     return true;
@@ -393,16 +401,16 @@ class Path2Auto {
   }
 
   AutoGraphSnapshot snapshotGraph() => AutoGraphSnapshot(
-        nodes: nodes,
-        branches: branches,
-        startingPose: startingPose,
-        startingPoseInitialized: startingPoseInitialized,
-      );
+    nodes: nodes,
+    branches: branches,
+    startingPose: startingPose,
+    startingPoseInitialized: startingPoseInitialized,
+  );
 
   void restoreGraph(AutoGraphSnapshot snapshot) {
     final restoredNodes = [for (final node in snapshot.nodes) node.clone()];
     final restoredBranches = [
-      for (final branch in snapshot.branches) branch.clone()
+      for (final branch in snapshot.branches) branch.clone(),
     ];
     final errors = _hardGraphErrors(restoredNodes, restoredBranches);
     if (errors.isNotEmpty) {
@@ -420,7 +428,8 @@ class Path2Auto {
     final graphDiagnostics = diagnostics;
     if (graphDiagnostics.hasHardErrors) {
       throw FormatException(
-          'Invalid auto graph: ${graphDiagnostics.hardErrors.join('; ')}');
+        'Invalid auto graph: ${graphDiagnostics.hardErrors.join('; ')}',
+      );
     }
     _validatePose(startingPose);
     return {
@@ -486,16 +495,16 @@ class Path2Auto {
   }
 
   Path2Auto duplicate(String newName) => Path2Auto(
-        name: newName,
-        nodes: [for (final node in nodes) node.clone()],
-        branches: [for (final branch in branches) branch.clone()],
-        startingPose: startingPose,
-        startingPoseInitialized: startingPoseInitialized,
-        autoDir: autoDir,
-        fs: fs,
-        folder: folder,
-        sourceVersion: sourceVersion,
-      );
+    name: newName,
+    nodes: [for (final node in nodes) node.clone()],
+    branches: [for (final branch in branches) branch.clone()],
+    startingPose: startingPose,
+    startingPoseInitialized: startingPoseInitialized,
+    autoDir: autoDir,
+    fs: fs,
+    folder: folder,
+    sourceVersion: sourceVersion,
+  );
 
   void rename(String newName) {
     final autoFile = fs.file(join(autoDir, '$name.auto'));
@@ -546,8 +555,9 @@ class Path2Auto {
       return false;
     }
 
-    final resolvedPath =
-        paths.firstWhereOrNull((path) => path.name == root.pathName);
+    final resolvedPath = paths.firstWhereOrNull(
+      (path) => path.name == root.pathName,
+    );
     if (resolvedPath == null ||
         resolvedPath.diagnostics.hasHardErrors ||
         resolvedPath.rootNodes.length != 1) {
@@ -555,10 +565,12 @@ class Path2Auto {
     }
 
     final waypoint = resolvedPath.rootNodes.single.waypoint;
-    setStartingPose(Pose2d(
-      waypoint.position,
-      waypoint is PoseWaypoint ? waypoint.rotation : const Rotation2d(),
-    ));
+    setStartingPose(
+      Pose2d(
+        waypoint.position,
+        waypoint is PoseWaypoint ? waypoint.rotation : const Rotation2d(),
+      ),
+    );
     return true;
   }
 
@@ -576,15 +588,15 @@ class Path2Auto {
   }
 
   List<String> getAllPathNames() => [
-        for (final node in nodes.whereType<PathAutoNode>())
-          if (node.pathName case final String pathName
-              when pathName.trim().isNotEmpty)
-            pathName,
-      ];
+    for (final node in nodes.whereType<PathAutoNode>())
+      if (node.pathName case final String pathName
+          when pathName.trim().isNotEmpty)
+        pathName,
+  ];
 
-  bool hasEmptyPathNodes() => nodes
-      .whereType<PathAutoNode>()
-      .any((node) => node.pathName == null || node.pathName!.trim().isEmpty);
+  bool hasEmptyPathNodes() => nodes.whereType<PathAutoNode>().any(
+    (node) => node.pathName == null || node.pathName!.trim().isEmpty,
+  );
 
   bool handleMissingPaths(Iterable<String> pathNames) {
     final available = pathNames.toSet();
@@ -599,11 +611,11 @@ class Path2Auto {
   }
 
   List<String> getAllConditionNames() => [
-        for (final branch in branches)
-          if (branch.transition case ConditionTransition(:final conditionName)
-              when conditionName != null && conditionName.trim().isNotEmpty)
-            conditionName,
-      ];
+    for (final branch in branches)
+      if (branch.transition case ConditionTransition(:final conditionName)
+          when conditionName != null && conditionName.trim().isNotEmpty)
+        conditionName,
+  ];
 
   bool updateConditionName(String oldName, String? newName) {
     var changed = false;
@@ -620,9 +632,9 @@ class Path2Auto {
   }
 
   Set<String> get _allIds => {
-        for (final node in nodes) node.id,
-        for (final branch in branches) branch.id,
-      };
+    for (final node in nodes) node.id,
+    for (final branch in branches) branch.id,
+  };
 
   void _collectConditionNames() {
     for (final branch in branches) {
@@ -645,16 +657,16 @@ class Path2Auto {
 
   @override
   int get hashCode => Object.hash(
-        name,
-        const ListEquality<AutoNode>().hash(nodes),
-        const ListEquality<AutoBranch>().hash(branches),
-        startingPose.x,
-        startingPose.y,
-        startingPose.rotation.radians,
-        startingPoseInitialized,
-        folder,
-        sourceVersion,
-      );
+    name,
+    const ListEquality<AutoNode>().hash(nodes),
+    const ListEquality<AutoBranch>().hash(branches),
+    startingPose.x,
+    startingPose.y,
+    startingPose.rotation.radians,
+    startingPoseInitialized,
+    folder,
+    sourceVersion,
+  );
 
   static String _validatedSourceVersion(Object? value) {
     if (value is! String) {
@@ -668,16 +680,14 @@ class Path2Auto {
     }
     if (parsed < _minimumFileVersion) {
       throw FormatException(
-          'Auto version $value is older than the minimum $fileVersion');
+        'Auto version $value is older than the minimum $fileVersion',
+      );
     }
     return value;
   }
 }
 
-List<String> _hardGraphErrors(
-  List<AutoNode> nodes,
-  List<AutoBranch> branches,
-) {
+List<String> _hardGraphErrors(List<AutoNode> nodes, List<AutoBranch> branches) {
   final errors = <String>[];
   final seenIds = <String>{};
   for (final node in nodes) {
@@ -703,11 +713,13 @@ List<String> _hardGraphErrors(
     }
     if (!nodeIds.contains(branch.sourceId)) {
       errors.add(
-          'Branch ${branch.id} references missing source ${branch.sourceId}');
+        'Branch ${branch.id} references missing source ${branch.sourceId}',
+      );
     }
     if (!nodeIds.contains(branch.targetId)) {
       errors.add(
-          'Branch ${branch.id} references missing target ${branch.targetId}');
+        'Branch ${branch.id} references missing target ${branch.targetId}',
+      );
     }
     if (branch.sourceId == branch.targetId) {
       errors.add('Branch ${branch.id} is a self-link');
@@ -730,8 +742,9 @@ List<String> _hardGraphErrors(
   }
   for (final entry in finishedBySource.entries) {
     if (entry.value > 1) {
-      errors
-          .add('Auto node ${entry.key} has more than one finished transition');
+      errors.add(
+        'Auto node ${entry.key} has more than one finished transition',
+      );
     }
   }
   if (GraphAlgorithms.hasCycle<AutoNode, AutoBranch>(nodes, branches)) {
@@ -777,12 +790,10 @@ Pose2d _poseFromJson(Object? value) {
       !y.isFinite ||
       !rotation.isFinite) {
     throw const FormatException(
-        'startingPose must contain finite x, y, and rotation values');
+      'startingPose must contain finite x, y, and rotation values',
+    );
   }
-  return Pose2d(
-    Translation2d(x, y),
-    Rotation2d.fromRadians(rotation),
-  );
+  return Pose2d(Translation2d(x, y), Rotation2d.fromRadians(rotation));
 }
 
 void _validatePose(Pose2d pose) {
@@ -791,11 +802,7 @@ void _validatePose(Pose2d pose) {
   }
 }
 
-String _requiredId(
-  Map<String, dynamic> json,
-  String key,
-  String label,
-) {
+String _requiredId(Map<String, dynamic> json, String key, String label) {
   final value = json[key];
   if (value is! String || value.trim().isEmpty) {
     throw FormatException('$label must be a nonempty string');

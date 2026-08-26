@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_command_widget.dart';
@@ -19,16 +19,18 @@ void main() {
   });
 
   testWidgets('time text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: WaitCommandWidget(
-          command: cmd,
-          undoStack: undoStack,
-          onRemoved: () => removed = true,
-          onUpdated: () => updated = true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: WaitCommandWidget(
+            command: cmd,
+            undoStack: undoStack,
+            onRemoved: () => removed = true,
+            onUpdated: () => updated = true,
+          ),
         ),
       ),
-    ));
+    );
 
     final textField = find.widgetWithText(NumberTextField, 'Wait Time (S)');
 
@@ -47,16 +49,18 @@ void main() {
   });
 
   testWidgets('remove button', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: WaitCommandWidget(
-          command: cmd,
-          undoStack: undoStack,
-          onRemoved: () => removed = true,
-          onUpdated: () => updated = true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: WaitCommandWidget(
+            command: cmd,
+            undoStack: undoStack,
+            onRemoved: () => removed = true,
+            onUpdated: () => updated = true,
+          ),
         ),
       ),
-    ));
+    );
 
     final removeButton = find.byTooltip('Remove Command');
 

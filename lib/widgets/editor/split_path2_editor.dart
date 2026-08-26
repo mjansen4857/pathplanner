@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path2/graph.dart';
@@ -30,7 +30,8 @@ class SplitPath2Editor extends StatefulWidget {
   final Future<Path2SimulationOutcome> Function(
     path2.Path path,
     RobotConfig robotConfig,
-  )? simulatePath;
+  )?
+  simulatePath;
 
   const SplitPath2Editor({
     super.key,
@@ -90,7 +91,8 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
       widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ?? Defaults.bumperOffsetY,
     );
 
-    final graphWeight = widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
+    final graphWeight =
+        widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
     _splitController.areas = [
       Area(
@@ -145,7 +147,8 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 64),
               child: Center(
                 child: AspectRatio(
-                  aspectRatio: widget.fieldImage.defaultSize.width /
+                  aspectRatio:
+                      widget.fieldImage.defaultSize.width /
                       widget.fieldImage.defaultSize.height,
                   child: GestureDetector(
                     key: const ValueKey('path2FieldGesture'),
@@ -201,8 +204,9 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
 
   Widget _buildGraphPane(ColorScheme colorScheme) {
     final diagnostics = widget.path.diagnostics;
-    final selectedNode =
-        _selectedNodeId == null ? null : widget.path.nodeById(_selectedNodeId!);
+    final selectedNode = _selectedNodeId == null
+        ? null
+        : widget.path.nodeById(_selectedNodeId!);
     final runtimesByLeaf =
         _simulation?.runtimesByLeafNodeId ?? const <String, List<double>>{};
     return Card(
@@ -354,10 +358,7 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     if (!diagnostics.hasWarnings && !diagnostics.hasHardErrors) {
       return const SizedBox.shrink();
     }
-    final messages = [
-      ...diagnostics.hardErrors,
-      ...diagnostics.warnings,
-    ];
+    final messages = [...diagnostics.hardErrors, ...diagnostics.warnings];
     return Tooltip(
       message: messages.join('\n'),
       child: Container(
@@ -397,30 +398,29 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
   Widget _transitionBadge(PathTransition transition) {
     return switch (transition) {
       DistanceTransition(:final distanceMeters) => Text(
-          '${distanceMeters.toStringAsFixed(2)} m',
-          key: const ValueKey('distanceTransitionBadge'),
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-        ),
+        '${distanceMeters.toStringAsFixed(2)} m',
+        key: const ValueKey('distanceTransitionBadge'),
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      ),
       ConditionTransition(:final conditionName) => Row(
-          key: const ValueKey('conditionTransitionBadge'),
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              '? ',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+        key: const ValueKey('conditionTransitionBadge'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            '? ',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+          Flexible(
+            child: Text(
+              conditionName?.trim().isNotEmpty ?? false
+                  ? conditionName!
+                  : 'Unset',
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
-            Flexible(
-              child: Text(
-                conditionName?.trim().isNotEmpty ?? false
-                    ? conditionName!
-                    : 'Unset',
-                overflow: TextOverflow.ellipsis,
-                style:
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
     };
   }
 
@@ -449,9 +449,8 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     }
     final result = await showDialog<_PathTransitionDialogResult>(
       context: context,
-      builder: (context) => _PathTransitionDialog(
-        initialTransition: DistanceTransition(),
-      ),
+      builder: (context) =>
+          _PathTransitionDialog(initialTransition: DistanceTransition()),
     );
     if (!mounted || result == null) {
       return;
@@ -488,14 +487,8 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     final waypoint = _newWaypoint(kind, position);
     const newNodeSize = PathGraphNodeCard.cardSize;
     final cardOffset = request.existingNodeIsSource
-        ? Offset(
-            newNodeSize.width / 2,
-            0,
-          )
-        : Offset(
-            newNodeSize.width / 2,
-            newNodeSize.height,
-          );
+        ? Offset(newNodeSize.width / 2, 0)
+        : Offset(newNodeSize.width / 2, newNodeSize.height);
     final node = path2.PathNode(
       waypoint: waypoint,
       editorPosition: request.scenePosition - cardOffset,
@@ -559,10 +552,7 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     return null;
   }
 
-  void _editNode(
-    String nodeId,
-    void Function(path2.PathNode node) edit,
-  ) {
+  void _editNode(String nodeId, void Function(path2.PathNode node) edit) {
     _commitGraphMutation(() {
       final node = widget.path.nodeById(nodeId);
       if (node == null) {
@@ -646,8 +636,9 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     }
 
     final rotationId = _rotationHandleHitTest(x, y);
-    final rotationNode =
-        rotationId == null ? null : widget.path.nodeById(rotationId)?.waypoint;
+    final rotationNode = rotationId == null
+        ? null
+        : widget.path.nodeById(rotationId)?.waypoint;
     if (rotationNode is PoseWaypoint) {
       _fieldDragBefore = widget.path.snapshotGraph();
       _draggedRotationNodeId = rotationId;
@@ -666,12 +657,16 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
       final target = _clampedFieldPosition(details.localPosition);
       num targetX = target.x;
       num targetY = target.y;
-      final snapSetting = widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
+      final snapSetting =
+          widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
           Defaults.snapToGuidelines;
-      final ctrlHeld = HardwareKeyboard.instance.logicalKeysPressed
-              .contains(LogicalKeyboardKey.controlLeft) ||
-          HardwareKeyboard.instance.logicalKeysPressed
-              .contains(LogicalKeyboardKey.controlRight);
+      final ctrlHeld =
+          HardwareKeyboard.instance.logicalKeysPressed.contains(
+            LogicalKeyboardKey.controlLeft,
+          ) ||
+          HardwareKeyboard.instance.logicalKeysPressed.contains(
+            LogicalKeyboardKey.controlRight,
+          );
       if (snapSetting ^ ctrlHeld) {
         num? closestX;
         num? closestY;
@@ -703,8 +698,9 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     }
 
     final rotationId = _draggedRotationNodeId;
-    final waypoint =
-        rotationId == null ? null : widget.path.nodeById(rotationId)?.waypoint;
+    final waypoint = rotationId == null
+        ? null
+        : widget.path.nodeById(rotationId)?.waypoint;
     if (waypoint is PoseWaypoint) {
       final x = _xPixelsToMeters(details.localPosition.dx);
       final y = _yPixelsToMeters(details.localPosition.dy);
@@ -817,9 +813,9 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
   Waypoint _newWaypoint(_WaypointKind kind, Translation2d position) {
     return switch (kind) {
       _WaypointKind.pose => PoseWaypoint(
-          position: position,
-          rotation: const Rotation2d(),
-        ),
+        position: position,
+        rotation: const Rotation2d(),
+      ),
       _WaypointKind.translation => TranslationWaypoint(position: position),
     };
   }
@@ -880,11 +876,12 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
         : _previewController.value * previous.totalTimeSeconds;
     late final Path2SimulationOutcome outcome;
     try {
-      outcome = await (widget.simulatePath ??
-          Path2Simulator.simulatePathInBackground)(
-        widget.path,
-        RobotConfig.fromPrefs(widget.prefs),
-      );
+      outcome =
+          await (widget.simulatePath ??
+              Path2Simulator.simulatePathInBackground)(
+            widget.path,
+            RobotConfig.fromPrefs(widget.prefs),
+          );
     } catch (error) {
       outcome = Path2SimulationOutcome.failed(
         Path2SimulationFailure(
@@ -910,10 +907,7 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     _previewController
       ..stop()
       ..duration = Duration(
-        milliseconds: max(
-          1,
-          (result.totalTimeSeconds * 1000).round(),
-        ),
+        milliseconds: max(1, (result.totalTimeSeconds * 1000).round()),
       );
     if (_previewPaused) {
       _previewController.value = result.totalTimeSeconds <= 0
@@ -1005,22 +999,21 @@ class _PathTransitionDialogState extends State<_PathTransitionDialog> {
     _waypointKind = _WaypointKind.translation;
     _distanceController = TextEditingController(
       text: widget.initialTransition is DistanceTransition
-          ? (widget.initialTransition as DistanceTransition)
-              .distanceMeters
-              .toString()
+          ? (widget.initialTransition as DistanceTransition).distanceMeters
+                .toString()
           : DistanceTransition.defaultDistanceMeters.toString(),
     );
     _conditionController = TextEditingController(
       text: widget.initialTransition is ConditionTransition
           ? (widget.initialTransition as ConditionTransition).conditionName ??
-              ''
+                ''
           : '',
     );
     _previewDistanceController = TextEditingController(
       text: widget.initialTransition is ConditionTransition
           ? (widget.initialTransition as ConditionTransition)
-              .previewDistanceMeters
-              .toString()
+                .previewDistanceMeters
+                .toString()
           : ConditionTransition.defaultPreviewDistanceMeters.toString(),
     );
     _conditionFocusNode = FocusNode();
@@ -1048,8 +1041,9 @@ class _PathTransitionDialogState extends State<_PathTransitionDialog> {
               DropdownButtonFormField<_WaypointKind>(
                 key: const ValueKey('newConnectedWaypointType'),
                 initialValue: _waypointKind,
-                decoration:
-                    const InputDecoration(labelText: 'New waypoint type'),
+                decoration: const InputDecoration(
+                  labelText: 'New waypoint type',
+                ),
                 items: const [
                   DropdownMenuItem(
                     value: _WaypointKind.translation,
@@ -1073,14 +1067,8 @@ class _PathTransitionDialogState extends State<_PathTransitionDialog> {
               initialValue: _transitionType,
               decoration: const InputDecoration(labelText: 'Transition'),
               items: const [
-                DropdownMenuItem(
-                  value: 'distance',
-                  child: Text('Distance'),
-                ),
-                DropdownMenuItem(
-                  value: 'condition',
-                  child: Text('Condition'),
-                ),
+                DropdownMenuItem(value: 'distance', child: Text('Distance')),
+                DropdownMenuItem(value: 'condition', child: Text('Condition')),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -1094,8 +1082,9 @@ class _PathTransitionDialogState extends State<_PathTransitionDialog> {
                 key: const ValueKey('pathTransitionDistance'),
                 controller: _distanceController,
                 autofocus: true,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Distance (m)',
                   errorText: _distanceError,
@@ -1115,24 +1104,20 @@ class _PathTransitionDialogState extends State<_PathTransitionDialog> {
                   );
                 },
                 onSelected: (value) => _conditionController.text = value,
-                fieldViewBuilder: (
-                  context,
-                  controller,
-                  focusNode,
-                  onSubmitted,
-                ) {
-                  return TextField(
-                    key: const ValueKey('pathTransitionCondition'),
-                    controller: controller,
-                    focusNode: focusNode,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Condition (select or create)',
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (_) => onSubmitted(),
-                  );
-                },
+                fieldViewBuilder:
+                    (context, controller, focusNode, onSubmitted) {
+                      return TextField(
+                        key: const ValueKey('pathTransitionCondition'),
+                        controller: controller,
+                        focusNode: focusNode,
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Condition (select or create)',
+                          border: OutlineInputBorder(),
+                        ),
+                        onSubmitted: (_) => onSubmitted(),
+                      );
+                    },
                 optionsViewBuilder: (context, onSelected, options) {
                   return Align(
                     alignment: Alignment.topLeft,
@@ -1161,12 +1146,12 @@ class _PathTransitionDialogState extends State<_PathTransitionDialog> {
               TextField(
                 key: const ValueKey('pathConditionPreviewDistance'),
                 controller: _previewDistanceController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Preview Distance (m)',
-                  helperText:
-                      'Used as the handoff distance while previewing this branch',
+                  helperText: 'Used as the handoff distance while previewing this branch',
                   errorText: _previewDistanceError,
                   border: const OutlineInputBorder(),
                 ),
@@ -1216,9 +1201,7 @@ class _PathTransitionDialogState extends State<_PathTransitionDialog> {
       if (previewDistance == null ||
           !previewDistance.isFinite ||
           previewDistance < 0) {
-        setState(
-          () => _previewDistanceError = 'Enter a non-negative number',
-        );
+        setState(() => _previewDistanceError = 'Enter a non-negative number');
         return;
       }
       transition = ConditionTransition(

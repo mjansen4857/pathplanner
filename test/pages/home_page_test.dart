@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/pages/home_page.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
@@ -25,17 +25,19 @@ void main() {
   });
 
   testWidgets('HomePage initial rendering', (WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: HomePage(
-        appVersion: '1.0.0',
-        prefs: prefs,
-        onTeamColorChanged: (_) {},
-        fs: fs,
-        undoStack: undoStack,
-        telemetry: telemetry,
-        updateChecker: updateChecker,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomePage(
+          appVersion: '1.0.0',
+          prefs: prefs,
+          onTeamColorChanged: (_) {},
+          fs: fs,
+          undoStack: undoStack,
+          telemetry: telemetry,
+          updateChecker: updateChecker,
+        ),
       ),
-    ));
+    );
 
     expect(find.byType(HomePage), findsOneWidget);
     expect(find.byType(CustomAppBar), findsOneWidget);

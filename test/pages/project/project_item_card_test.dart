@@ -1,6 +1,6 @@
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -21,28 +21,31 @@ void main() {
   });
 
   testWidgets('hover/open', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectItemCard(
-          name: 'test',
-          fieldImage: FieldImage.defaultField,
-          paths: [
-            PathPlannerPath.defaultPath(
-              pathDir: '/paths',
-              fs: MemoryFileSystem(),
-            ).pathPositions,
-          ],
-          onOpened: () => opened = true,
-          onDuplicated: () => duplicated = true,
-          onDeleted: () => deleted = true,
-          onRenamed: (value) => name = value,
-          bottomRightBadge: const Icon(Icons.badge),
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectItemCard(
+            name: 'test',
+            fieldImage: FieldImage.defaultField,
+            paths: [
+              PathPlannerPath.defaultPath(
+                pathDir: '/paths',
+                fs: MemoryFileSystem(),
+              ).pathPositions,
+            ],
+            onOpened: () => opened = true,
+            onDuplicated: () => duplicated = true,
+            onDeleted: () => deleted = true,
+            onRenamed: (value) => name = value,
+            bottomRightBadge: const Icon(Icons.badge),
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
@@ -59,30 +62,34 @@ void main() {
   });
 
   testWidgets('title', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectItemCard(
-          name: 'test',
-          fieldImage: FieldImage.defaultField,
-          paths: [
-            PathPlannerPath.defaultPath(
-              pathDir: '/paths',
-              fs: MemoryFileSystem(),
-            ).pathPositions,
-          ],
-          onOpened: () => opened = true,
-          onDuplicated: () => duplicated = true,
-          onDeleted: () => deleted = true,
-          onRenamed: (value) => name = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectItemCard(
+            name: 'test',
+            fieldImage: FieldImage.defaultField,
+            paths: [
+              PathPlannerPath.defaultPath(
+                pathDir: '/paths',
+                fs: MemoryFileSystem(),
+              ).pathPositions,
+            ],
+            onOpened: () => opened = true,
+            onDuplicated: () => duplicated = true,
+            onDeleted: () => deleted = true,
+            onRenamed: (value) => name = value,
+          ),
         ),
       ),
-    ));
+    );
 
     final nameField = find.byType(RenamableTitle);
 
     expect(nameField, findsOneWidget);
-    expect(find.descendant(of: nameField, matching: find.text('test')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: nameField, matching: find.text('test')),
+      findsOneWidget,
+    );
 
     await widgetTester.enterText(nameField, 'renamed');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
@@ -92,24 +99,26 @@ void main() {
   });
 
   testWidgets('duplicate', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectItemCard(
-          name: 'test',
-          fieldImage: FieldImage.defaultField,
-          paths: [
-            PathPlannerPath.defaultPath(
-              pathDir: '/paths',
-              fs: MemoryFileSystem(),
-            ).pathPositions,
-          ],
-          onOpened: () => opened = true,
-          onDuplicated: () => duplicated = true,
-          onDeleted: () => deleted = true,
-          onRenamed: (value) => name = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectItemCard(
+            name: 'test',
+            fieldImage: FieldImage.defaultField,
+            paths: [
+              PathPlannerPath.defaultPath(
+                pathDir: '/paths',
+                fs: MemoryFileSystem(),
+              ).pathPositions,
+            ],
+            onOpened: () => opened = true,
+            onDuplicated: () => duplicated = true,
+            onDeleted: () => deleted = true,
+            onRenamed: (value) => name = value,
+          ),
         ),
       ),
-    ));
+    );
 
     final popup = find.byType(PopupMenuButton<String>);
 
@@ -127,24 +136,26 @@ void main() {
   });
 
   testWidgets('delete cancel', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectItemCard(
-          name: 'test',
-          fieldImage: FieldImage.defaultField,
-          paths: [
-            PathPlannerPath.defaultPath(
-              pathDir: '/paths',
-              fs: MemoryFileSystem(),
-            ).pathPositions,
-          ],
-          onOpened: () => opened = true,
-          onDuplicated: () => duplicated = true,
-          onDeleted: () => deleted = true,
-          onRenamed: (value) => name = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectItemCard(
+            name: 'test',
+            fieldImage: FieldImage.defaultField,
+            paths: [
+              PathPlannerPath.defaultPath(
+                pathDir: '/paths',
+                fs: MemoryFileSystem(),
+              ).pathPositions,
+            ],
+            onOpened: () => opened = true,
+            onDuplicated: () => duplicated = true,
+            onDeleted: () => deleted = true,
+            onRenamed: (value) => name = value,
+          ),
         ),
       ),
-    ));
+    );
 
     final popup = find.byType(PopupMenuButton<String>);
 
@@ -168,24 +179,26 @@ void main() {
   });
 
   testWidgets('delete confirm', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectItemCard(
-          name: 'test',
-          fieldImage: FieldImage.defaultField,
-          paths: [
-            PathPlannerPath.defaultPath(
-              pathDir: '/paths',
-              fs: MemoryFileSystem(),
-            ).pathPositions,
-          ],
-          onOpened: () => opened = true,
-          onDuplicated: () => duplicated = true,
-          onDeleted: () => deleted = true,
-          onRenamed: (value) => name = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectItemCard(
+            name: 'test',
+            fieldImage: FieldImage.defaultField,
+            paths: [
+              PathPlannerPath.defaultPath(
+                pathDir: '/paths',
+                fs: MemoryFileSystem(),
+              ).pathPositions,
+            ],
+            onOpened: () => opened = true,
+            onDuplicated: () => duplicated = true,
+            onDeleted: () => deleted = true,
+            onRenamed: (value) => name = value,
+          ),
         ),
       ),
-    ));
+    );
 
     final popup = find.byType(PopupMenuButton<String>);
 
@@ -209,25 +222,27 @@ void main() {
   });
 
   testWidgets('shows warning icon', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ProjectItemCard(
-          name: 'test',
-          fieldImage: FieldImage.defaultField,
-          paths: [
-            PathPlannerPath.defaultPath(
-              pathDir: '/paths',
-              fs: MemoryFileSystem(),
-            ).pathPositions,
-          ],
-          onOpened: () => opened = true,
-          onDuplicated: () => duplicated = true,
-          onDeleted: () => deleted = true,
-          onRenamed: (value) => name = value,
-          warningMessage: 'test warning',
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProjectItemCard(
+            name: 'test',
+            fieldImage: FieldImage.defaultField,
+            paths: [
+              PathPlannerPath.defaultPath(
+                pathDir: '/paths',
+                fs: MemoryFileSystem(),
+              ).pathPositions,
+            ],
+            onOpened: () => opened = true,
+            onDuplicated: () => duplicated = true,
+            onDeleted: () => deleted = true,
+            onRenamed: (value) => name = value,
+            warningMessage: 'test warning',
+          ),
         ),
       ),
-    ));
+    );
 
     final warningIcon = find.byTooltip('test warning');
 

@@ -24,35 +24,38 @@ class ChoreoPath {
   });
 
   ChoreoPath.fromTrajJson(
-      Map<String, dynamic> json, String name, String choreoDir, FileSystem fs)
-      : this(
-          name: name,
-          trajectory: PathPlannerTrajectory.fromStates(
-            [
-              for (Map<String, dynamic> s in json['trajectory']['samples'])
-                TrajectoryState.pregen(
-                  s['t'],
-                  ChassisSpeeds(
-                    vx: s['vx'],
-                    vy: s['vy'],
-                    omega: s['omega'],
-                  ),
-                  Pose2d(Translation2d(s['x'], s['y']),
-                      Rotation2d.fromRadians(s['heading'])),
-                ),
-            ],
-          ),
-          fs: fs,
-          choreoDir: choreoDir,
-          eventMarkerTimes: [],
-        );
+    Map<String, dynamic> json,
+    String name,
+    String choreoDir,
+    FileSystem fs,
+  ) : this(
+        name: name,
+        trajectory: PathPlannerTrajectory.fromStates([
+          for (Map<String, dynamic> s in json['trajectory']['samples'])
+            TrajectoryState.pregen(
+              s['t'],
+              ChassisSpeeds(vx: s['vx'], vy: s['vy'], omega: s['omega']),
+              Pose2d(
+                Translation2d(s['x'], s['y']),
+                Rotation2d.fromRadians(s['heading']),
+              ),
+            ),
+        ]),
+        fs: fs,
+        choreoDir: choreoDir,
+        eventMarkerTimes: [],
+      );
 
   static Future<List<ChoreoPath>> loadAllPathsInDir(
-      String choreoDir, FileSystem fs) async {
+    String choreoDir,
+    FileSystem fs,
+  ) async {
     List<ChoreoPath> paths = [];
 
     Directory dir = fs.directory(choreoDir);
 
+    // Keep project file access off the UI thread.
+    // ignore: avoid_slow_async_io
     if (await dir.exists()) {
       List<FileSystemEntity> files = dir.listSync();
       for (FileSystemEntity e in files) {
@@ -65,12 +68,17 @@ class ChoreoPath {
             Map<String, dynamic> json = jsonDecode(jsonStr);
 
             // Add the full path
-            ChoreoPath path =
-                ChoreoPath.fromTrajJson(json, pathName, choreoDir, fs);
+            ChoreoPath path = ChoreoPath.fromTrajJson(
+              json,
+              pathName,
+              choreoDir,
+              fs,
+            );
 
             if (path.trajectory.states.isEmpty) {
               Log.error(
-                  'Failed to load choreo path: $pathName. Path has no trajectory states');
+                'Failed to load choreo path: $pathName. Path has no trajectory states',
+              );
               continue;
             }
 
@@ -98,9 +106,11 @@ class ChoreoPath {
 
               num startTime = path.trajectory.states[startIdx].timeSeconds;
               final splitStates = [
-                for (TrajectoryState s
-                    in path.trajectory.states.sublist(startIdx, endIdx))
-                  s.copyWithTime(s.timeSeconds - startTime)
+                for (TrajectoryState s in path.trajectory.states.sublist(
+                  startIdx,
+                  endIdx,
+                ))
+                  s.copyWithTime(s.timeSeconds - startTime),
               ];
               final splitTraj = PathPlannerTrajectory.fromStates(splitStates);
               final splitPath = ChoreoPath(
@@ -123,6 +133,6 @@ class ChoreoPath {
   }
 
   List<Translation2d> get pathPositions => [
-        for (TrajectoryState s in trajectory.states) s.pose.translation,
-      ];
+    for (TrajectoryState s in trajectory.states) s.pose.translation,
+  ];
 }

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:isolate_manager/isolate_manager.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -49,8 +49,9 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
   void initState() {
     super.initState();
 
-    _teamColor =
-        Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
+    _teamColor = Color(
+      widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor,
+    );
 
     _theme = ThemeData(
       useMaterial3: true,
@@ -98,13 +99,13 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
             trueChild: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(_renderProgress == 0.0
-                    ? 'Capturing Frames...'
-                    : 'Encoding GIF...'),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: _renderProgress,
+                Text(
+                  _renderProgress == 0.0
+                      ? 'Capturing Frames...'
+                      : 'Encoding GIF...',
                 ),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(value: _renderProgress),
               ],
             ),
             falseChild: Row(
@@ -112,14 +113,8 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
               children: [
                 SegmentedButton<bool>(
                   segments: const [
-                    ButtonSegment(
-                      value: true,
-                      label: Text('Dark'),
-                    ),
-                    ButtonSegment(
-                      value: false,
-                      label: Text('Light'),
-                    ),
+                    ButtonSegment(value: true, label: Text('Dark')),
+                    ButtonSegment(value: false, label: Text('Light')),
                   ],
                   selected: {_darkMode},
                   onSelectionChanged: (selection) {
@@ -128,8 +123,9 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
                       _theme = ThemeData(
                         useMaterial3: true,
                         colorSchemeSeed: _teamColor,
-                        brightness:
-                            _darkMode ? Brightness.dark : Brightness.light,
+                        brightness: _darkMode
+                            ? Brightness.dark
+                            : Brightness.light,
                       );
                     });
                   },
@@ -137,14 +133,8 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
                 const SizedBox(width: 8),
                 SegmentedButton<bool>(
                   segments: const [
-                    ButtonSegment(
-                      value: true,
-                      label: Text('Solid'),
-                    ),
-                    ButtonSegment(
-                      value: false,
-                      label: Text('Transparent'),
-                    ),
+                    ButtonSegment(value: true, label: Text('Solid')),
+                    ButtonSegment(value: false, label: Text('Transparent')),
                   ],
                   selected: {_solidBackground},
                   onSelectionChanged: _renderGif
@@ -158,14 +148,8 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
                 const SizedBox(width: 8),
                 SegmentedButton<bool>(
                   segments: const [
-                    ButtonSegment(
-                      value: false,
-                      label: Text('PNG'),
-                    ),
-                    ButtonSegment(
-                      value: true,
-                      label: Text('GIF'),
-                    ),
+                    ButtonSegment(value: false, label: Text('PNG')),
+                    ButtonSegment(value: true, label: Text('GIF')),
                   ],
                   selected: {_renderGif},
                   onSelectionChanged: (selection) {
@@ -188,18 +172,14 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
                   ),
                   onPressed: () async {
                     if (!_renderGif) {
-                      final imageBytes =
-                          await _controller.capture(pixelRatio: 1);
+                      final imageBytes = await _controller.capture(
+                        pixelRatio: 1,
+                      );
 
                       if (imageBytes != null) {
                         final saveLocation = await getSaveLocation(
                           acceptedTypeGroups: [
-                            const XTypeGroup(
-                              label: 'PNG',
-                              extensions: [
-                                'png',
-                              ],
-                            )
+                            const XTypeGroup(label: 'PNG', extensions: ['png']),
                           ],
                           suggestedName: 'pathplanner.png',
                         );
@@ -215,8 +195,9 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
                         _renderProgress = 0.0;
                       });
                       _gifImagesBytes.clear();
-                      WidgetsBinding.instance
-                          .addPostFrameCallback((_) => _renderGifFrame());
+                      WidgetsBinding.instance.addPostFrameCallback(
+                        (_) => _renderGifFrame(),
+                      );
                     }
                   },
                 ),
@@ -244,17 +225,19 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
       // Save the gif
 
       _manager ??= IsolateManager.createCustom(_encodeGif);
-      final GifProgress result =
-          await _manager!.compute(_gifImagesBytes, callback: (progressValue) {
-        GifProgress progress = progressValue;
-        if (mounted) {
-          setState(() {
-            _renderProgress = progress.progress;
-          });
-        }
+      final GifProgress result = await _manager!.compute(
+        _gifImagesBytes,
+        callback: (progressValue) {
+          GifProgress progress = progressValue;
+          if (mounted) {
+            setState(() {
+              _renderProgress = progress.progress;
+            });
+          }
 
-        return progress.bytes != null;
-      });
+          return progress.bytes != null;
+        },
+      );
 
       if (mounted) {
         setState(() {
@@ -264,12 +247,7 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
         if (result.bytes != null) {
           final saveLocation = await getSaveLocation(
             acceptedTypeGroups: [
-              const XTypeGroup(
-                label: 'GIF',
-                extensions: [
-                  'gif',
-                ],
-              )
+              const XTypeGroup(label: 'GIF', extensions: ['gif']),
             ],
             suggestedName: 'pathplanner.gif',
           );
@@ -286,8 +264,9 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
         setState(() {
           _sampleTime = widget.trajectory.getTotalTimeSeconds().toDouble();
         });
-        WidgetsBinding.instance
-            .addPostFrameCallback((_) => _renderGifFrame(true));
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _renderGifFrame(true),
+        );
       } else {
         setState(() {
           _sampleTime = nextTime;
@@ -299,23 +278,25 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
 
   @isolateManagerCustomWorker
   static void _encodeGif(dynamic params) {
-    IsolateManagerFunction.customFunction<GifProgress, List<Uint8List>>(params,
-        onEvent: (controller, message) {
-      img.PngDecoder decoder = img.PngDecoder();
-      img.GifEncoder encoder = img.GifEncoder(
-        numColors: 64,
-        dither: img.DitherKernel.none,
-      );
+    IsolateManagerFunction.customFunction<GifProgress, List<Uint8List>>(
+      params,
+      onEvent: (controller, message) {
+        img.PngDecoder decoder = img.PngDecoder();
+        img.GifEncoder encoder = img.GifEncoder(
+          numColors: 64,
+          dither: img.DitherKernel.none,
+        );
 
-      for (int i = 0; i < message.length; i++) {
-        encoder.addFrame(decoder.decode(message[i])!, duration: 4);
-        controller.sendResult((
-          progress: (i / (message.length - 1)),
-          bytes: null, // Only bother sending the bytes for the final result
-        ));
-      }
+        for (int i = 0; i < message.length; i++) {
+          encoder.addFrame(decoder.decode(message[i])!, duration: 4);
+          controller.sendResult((
+            progress: (i / (message.length - 1)),
+            bytes: null, // Only bother sending the bytes for the final result
+          ));
+        }
 
-      return (progress: 1.0, bytes: encoder.finish());
-    });
+        return (progress: 1.0, bytes: encoder.finish());
+      },
+    );
   }
 }

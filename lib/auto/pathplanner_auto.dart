@@ -59,17 +59,20 @@ class PathPlannerAuto {
   }
 
   PathPlannerAuto.fromJson(
-      Map<String, dynamic> json, String name, String autosDir, FileSystem fs)
-      : this(
-          autoDir: autosDir,
-          fs: fs,
-          name: name,
-          sequence:
-              Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
-          resetOdom: json['resetOdom'] ?? true,
-          folder: json['folder'],
-          choreoAuto: json['choreoAuto'] ?? false,
-        );
+    Map<String, dynamic> json,
+    String name,
+    String autosDir,
+    FileSystem fs,
+  ) : this(
+        autoDir: autosDir,
+        fs: fs,
+        name: name,
+        sequence:
+            Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
+        resetOdom: json['resetOdom'] ?? true,
+        folder: json['folder'],
+        choreoAuto: json['choreoAuto'] ?? false,
+      );
 
   Map<String, dynamic> toJson() {
     return {
@@ -102,8 +105,12 @@ class PathPlannerAuto {
           }
           String autoName = basenameWithoutExtension(e.path);
 
-          PathPlannerAuto auto =
-              PathPlannerAuto.fromJson(json, autoName, autosDir, fs);
+          PathPlannerAuto auto = PathPlannerAuto.fromJson(
+            json,
+            autoName,
+            autosDir,
+            fs,
+          );
           auto.lastModified = file.lastModifiedSync().toUtc();
 
           if (json['version'] != fileVersion) {
@@ -155,7 +162,10 @@ class PathPlannerAuto {
   }
 
   void _updatePathNameInCommands(
-      List<Command> commands, String oldPathName, String newPathName) {
+    List<Command> commands,
+    String oldPathName,
+    String newPathName,
+  ) {
     for (Command cmd in commands) {
       if (cmd is PathCommand && cmd.pathName == oldPathName) {
         cmd.pathName = newPathName;

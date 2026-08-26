@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,10 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class EditorSettingsTree extends StatefulWidget {
   final bool initiallyExpanded;
 
-  const EditorSettingsTree({
-    super.key,
-    this.initiallyExpanded = false,
-  });
+  const EditorSettingsTree({super.key, this.initiallyExpanded = false});
 
   @override
   State<EditorSettingsTree> createState() => _EditorSettingsTreeState();
@@ -30,13 +27,16 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
     SharedPreferences.getInstance().then((value) {
       setState(() {
         _prefs = value;
-        _snapToGuidelines = _prefs.getBool(PrefsKeys.snapToGuidelines) ??
+        _snapToGuidelines =
+            _prefs.getBool(PrefsKeys.snapToGuidelines) ??
             Defaults.snapToGuidelines;
-        _hidePathsOnHover = _prefs.getBool(PrefsKeys.hidePathsOnHover) ??
+        _hidePathsOnHover =
+            _prefs.getBool(PrefsKeys.hidePathsOnHover) ??
             Defaults.hidePathsOnHover;
         _showStates =
             _prefs.getBool(PrefsKeys.showStates) ?? Defaults.showStates;
-        _showRobotDetails = _prefs.getBool(PrefsKeys.showRobotDetails) ??
+        _showRobotDetails =
+            _prefs.getBool(PrefsKeys.showRobotDetails) ??
             Defaults.showRobotDetails;
         _showGrid = _prefs.getBool(PrefsKeys.showGrid) ?? Defaults.showGrid;
       });
@@ -86,25 +86,20 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
   }
 
   Widget _buildCheckboxRow(
-      String label, bool value, Function(bool) onChanged, String tooltip) {
+    String label,
+    bool value,
+    Function(bool) onChanged,
+    String tooltip,
+  ) {
     return Row(
       children: [
         Tooltip(
           message: tooltip,
-          child: Checkbox(
-            value: value,
-            onChanged: (val) => onChanged(val!),
-          ),
+          child: Checkbox(value: value, onChanged: (val) => onChanged(val!)),
         ),
         Padding(
-          padding: const EdgeInsets.only(
-            bottom: 3.0,
-            left: 4.0,
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 15),
-          ),
+          padding: const EdgeInsets.only(bottom: 3.0, left: 4.0),
+          child: Text(label, style: const TextStyle(fontSize: 15)),
         ),
       ],
     );

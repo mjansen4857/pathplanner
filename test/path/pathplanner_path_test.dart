@@ -51,11 +51,15 @@ void main() {
         ],
         globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
         goalEndState: GoalEndState(0.5, const Rotation2d()),
-        constraintZones:
-            List.generate(3, (index) => ConstraintsZone.defaultZone()),
+        constraintZones: List.generate(
+          3,
+          (index) => ConstraintsZone.defaultZone(),
+        ),
         pointTowardsZones: List.generate(2, (index) => PointTowardsZone()),
         rotationTargets: List.generate(
-            4, (index) => RotationTarget(0.0, const Rotation2d())),
+          4,
+          (index) => RotationTarget(0.0, const Rotation2d()),
+        ),
         eventMarkers: List.generate(5, (index) => EventMarker()),
         reversed: false,
         folder: null,
@@ -103,8 +107,12 @@ void main() {
       );
 
       Map<String, dynamic> json = path.toJson();
-      PathPlannerPath fromJson =
-          PathPlannerPath.fromJson(json, path.name, '/paths', fs);
+      PathPlannerPath fromJson = PathPlannerPath.fromJson(
+        json,
+        path.name,
+        '/paths',
+        fs,
+      );
 
       expect(fromJson, path);
     });
@@ -302,14 +310,15 @@ void main() {
         PointTowardsZone(
           minWaypointRelativePos: 0.25,
           maxWaypointRelativePos: 0.75,
-        )
+        ),
       ],
       rotationTargets: [RotationTarget(0.6, const Rotation2d())],
       eventMarkers: [
         EventMarker(
           waypointRelativePos: 0.5,
-          command:
-              SequentialCommandGroup(commands: [NamedCommand(name: 'testcmd')]),
+          command: SequentialCommandGroup(
+            commands: [NamedCommand(name: 'testcmd')],
+          ),
         ),
       ],
       reversed: false,
@@ -342,17 +351,23 @@ void main() {
     late MemoryFileSystem fs;
     final String pathsPath = Platform.isWindows ? 'C:\\paths' : '/paths';
 
-    setUp(() => fs = MemoryFileSystem(
+    setUp(
+      () => fs = MemoryFileSystem(
         style: Platform.isWindows
             ? FileSystemStyle.windows
-            : FileSystemStyle.posix));
+            : FileSystemStyle.posix,
+      ),
+    );
 
     test('rename', () {
       Directory pathDir = fs.directory(pathsPath);
       fs.file(join(pathDir.path, 'test.path')).createSync(recursive: true);
 
       PathPlannerPath path = PathPlannerPath.defaultPath(
-          name: 'test', pathDir: pathDir.path, fs: fs);
+        name: 'test',
+        pathDir: pathDir.path,
+        fs: fs,
+      );
 
       path.renamePath('renamed');
 
@@ -366,7 +381,10 @@ void main() {
       fs.file(join(pathDir.path, 'test.path')).createSync(recursive: true);
 
       PathPlannerPath path = PathPlannerPath.defaultPath(
-          name: 'test', pathDir: pathDir.path, fs: fs);
+        name: 'test',
+        pathDir: pathDir.path,
+        fs: fs,
+      );
 
       path.deletePath();
 
@@ -378,9 +396,15 @@ void main() {
       pathDir.createSync(recursive: true);
 
       PathPlannerPath path1 = PathPlannerPath.defaultPath(
-          name: 'test1', pathDir: pathDir.path, fs: fs);
+        name: 'test1',
+        pathDir: pathDir.path,
+        fs: fs,
+      );
       PathPlannerPath path2 = PathPlannerPath.defaultPath(
-          name: 'test2', pathDir: pathDir.path, fs: fs);
+        name: 'test2',
+        pathDir: pathDir.path,
+        fs: fs,
+      );
       path2.eventMarkers.add(EventMarker());
 
       fs
@@ -390,8 +414,10 @@ void main() {
           .file(join(pathDir.path, 'test2.path'))
           .writeAsStringSync(jsonEncode(path2.toJson()));
 
-      List<PathPlannerPath> loaded =
-          await PathPlannerPath.loadAllPathsInDir(pathDir.path, fs);
+      List<PathPlannerPath> loaded = await PathPlannerPath.loadAllPathsInDir(
+        pathDir.path,
+        fs,
+      );
 
       expect(loaded.length, 2);
 
@@ -407,7 +433,10 @@ void main() {
       pathDir.createSync(recursive: true);
 
       PathPlannerPath path = PathPlannerPath.defaultPath(
-          name: 'test', pathDir: pathDir.path, fs: fs);
+        name: 'test',
+        pathDir: pathDir.path,
+        fs: fs,
+      );
       path.constraintZones.add(ConstraintsZone.defaultZone());
 
       path.generateAndSavePath();
@@ -418,21 +447,23 @@ void main() {
       String fileContent = pathFile.readAsStringSync();
       Map<String, dynamic> fileJson = jsonDecode(fileContent);
       expect(
-          const DeepCollectionEquality().equals(fileJson, path.toJson()), true);
+        const DeepCollectionEquality().equals(fileJson, path.toJson()),
+        true,
+      );
     });
   });
 
   test('hasEmptyNamedCommand', () {
-    PathPlannerPath path =
-        PathPlannerPath.defaultPath(pathDir: '/paths', fs: MemoryFileSystem());
+    PathPlannerPath path = PathPlannerPath.defaultPath(
+      pathDir: '/paths',
+      fs: MemoryFileSystem(),
+    );
 
     path.eventMarkers.add(
       EventMarker(
         command: SequentialCommandGroup(
           commands: [
-            ParallelCommandGroup(commands: [
-              NamedCommand(),
-            ]),
+            ParallelCommandGroup(commands: [NamedCommand()]),
           ],
         ),
       ),

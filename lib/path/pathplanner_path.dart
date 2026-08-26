@@ -81,12 +81,16 @@ class PathPlannerPath implements HotReloadablePath {
       if (w.linkedName != null) {
         if (i == 0) {
           // Link rotation will be from ideal starting state
-          Waypoint.linked[w.linkedName!] =
-              Pose2d(w.anchor, idealStartingState.rotation);
+          Waypoint.linked[w.linkedName!] = Pose2d(
+            w.anchor,
+            idealStartingState.rotation,
+          );
         } else if (i == waypoints.length - 1) {
           // Link rotation will be from goal end state
-          Waypoint.linked[w.linkedName!] =
-              Pose2d(w.anchor, goalEndState.rotation);
+          Waypoint.linked[w.linkedName!] = Pose2d(
+            w.anchor,
+            goalEndState.rotation,
+          );
         } else if (!Waypoint.linked.containsKey(w.linkedName!)) {
           // If waypoint is not already in linked map, just use a 0 rotation for now
           Waypoint.linked[w.linkedName!] = Pose2d(w.anchor, const Rotation2d());
@@ -103,17 +107,17 @@ class PathPlannerPath implements HotReloadablePath {
     this.name = 'New Path',
     this.folder,
     PathConstraints? constraints,
-  })  : waypoints = [],
-        pathPoints = [],
-        globalConstraints = constraints ?? PathConstraints(),
-        goalEndState = GoalEndState(0, const Rotation2d()),
-        constraintZones = [],
-        pointTowardsZones = [],
-        rotationTargets = [],
-        eventMarkers = [],
-        reversed = false,
-        idealStartingState = IdealStartingState(0, const Rotation2d()),
-        useDefaultConstraints = true {
+  }) : waypoints = [],
+       pathPoints = [],
+       globalConstraints = constraints ?? PathConstraints(),
+       goalEndState = GoalEndState(0, const Rotation2d()),
+       constraintZones = [],
+       pointTowardsZones = [],
+       rotationTargets = [],
+       eventMarkers = [],
+       reversed = false,
+       idealStartingState = IdealStartingState(0, const Rotation2d()),
+       useDefaultConstraints = true {
     waypoints.addAll([
       Waypoint(
         anchor: const Translation2d(2.0, 7.0),
@@ -129,40 +133,45 @@ class PathPlannerPath implements HotReloadablePath {
   }
 
   PathPlannerPath.fromJson(
-      Map<String, dynamic> json, String name, String pathsDir, FileSystem fs)
-      : this(
-          pathDir: pathsDir,
-          fs: fs,
-          name: name,
-          waypoints: [
-            for (final waypointJson in json['waypoints'])
-              Waypoint.fromJson(waypointJson),
-          ],
-          globalConstraints:
-              PathConstraints.fromJson(json['globalConstraints'] ?? {}),
-          goalEndState: GoalEndState.fromJson(json['goalEndState'] ?? {}),
-          constraintZones: [
-            for (final zoneJson in json['constraintZones'] ?? [])
-              ConstraintsZone.fromJson(zoneJson),
-          ],
-          pointTowardsZones: [
-            for (final zoneJson in json['pointTowardsZones'] ?? [])
-              PointTowardsZone.fromJson(zoneJson),
-          ],
-          rotationTargets: [
-            for (final targetJson in json['rotationTargets'] ?? [])
-              RotationTarget.fromJson(targetJson),
-          ],
-          eventMarkers: [
-            for (final markerJson in json['eventMarkers'] ?? [])
-              EventMarker.fromJson(markerJson),
-          ],
-          reversed: json['reversed'] ?? false,
-          folder: json['folder'],
-          idealStartingState:
-              IdealStartingState.fromJson(json['idealStartingState'] ?? {}),
-          useDefaultConstraints: json['useDefaultConstraints'] ?? false,
-        );
+    Map<String, dynamic> json,
+    String name,
+    String pathsDir,
+    FileSystem fs,
+  ) : this(
+        pathDir: pathsDir,
+        fs: fs,
+        name: name,
+        waypoints: [
+          for (final waypointJson in json['waypoints'])
+            Waypoint.fromJson(waypointJson),
+        ],
+        globalConstraints: PathConstraints.fromJson(
+          json['globalConstraints'] ?? {},
+        ),
+        goalEndState: GoalEndState.fromJson(json['goalEndState'] ?? {}),
+        constraintZones: [
+          for (final zoneJson in json['constraintZones'] ?? [])
+            ConstraintsZone.fromJson(zoneJson),
+        ],
+        pointTowardsZones: [
+          for (final zoneJson in json['pointTowardsZones'] ?? [])
+            PointTowardsZone.fromJson(zoneJson),
+        ],
+        rotationTargets: [
+          for (final targetJson in json['rotationTargets'] ?? [])
+            RotationTarget.fromJson(targetJson),
+        ],
+        eventMarkers: [
+          for (final markerJson in json['eventMarkers'] ?? [])
+            EventMarker.fromJson(markerJson),
+        ],
+        reversed: json['reversed'] ?? false,
+        folder: json['folder'],
+        idealStartingState: IdealStartingState.fromJson(
+          json['idealStartingState'] ?? {},
+        ),
+        useDefaultConstraints: json['useDefaultConstraints'] ?? false,
+      );
 
   void generateAndSavePath() {
     generatePathPoints();
@@ -181,7 +190,9 @@ class PathPlannerPath implements HotReloadablePath {
   }
 
   static Future<List<PathPlannerPath>> loadAllPathsInDir(
-      String pathsDir, FileSystem fs) async {
+    String pathsDir,
+    FileSystem fs,
+  ) async {
     List<PathPlannerPath> paths = [];
 
     List<FileSystemEntity> files = fs.directory(pathsDir).listSync();
@@ -193,8 +204,14 @@ class PathPlannerPath implements HotReloadablePath {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String pathName = basenameWithoutExtension(e.path);
 
-          PathPlannerPath path =
-              PathPlannerPath.fromJson(json, pathName, pathsDir, fs);
+          PathPlannerPath path = PathPlannerPath.fromJson(
+            json,
+            pathName,
+            pathsDir,
+            fs,
+          );
+          // Keep project file access off the UI thread.
+          // ignore: avoid_slow_async_io
           path.lastModified = (await file.lastModified()).toUtc();
 
           if (json['version'] != fileVersion) {
@@ -231,28 +248,20 @@ class PathPlannerPath implements HotReloadablePath {
   @override
   Map<String, dynamic> toJson() {
     // Make sure rotation targets and event markers are sorted
-    final sortedTargets = List.of(rotationTargets).sorted(
-        (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
-    final sortedMarkers = List.of(eventMarkers).sorted(
-        (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+    final sortedTargets = List.of(
+      rotationTargets,
+    ).sorted((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+    final sortedMarkers = List.of(
+      eventMarkers,
+    ).sorted((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
 
     return {
       'version': fileVersion,
-      'waypoints': [
-        for (final w in waypoints) w.toJson(),
-      ],
-      'rotationTargets': [
-        for (final t in sortedTargets) t.toJson(),
-      ],
-      'constraintZones': [
-        for (final z in constraintZones) z.toJson(),
-      ],
-      'pointTowardsZones': [
-        for (final z in pointTowardsZones) z.toJson(),
-      ],
-      'eventMarkers': [
-        for (final m in sortedMarkers) m.toJson(),
-      ],
+      'waypoints': [for (final w in waypoints) w.toJson()],
+      'rotationTargets': [for (final t in sortedTargets) t.toJson()],
+      'constraintZones': [for (final z in constraintZones) z.toJson()],
+      'pointTowardsZones': [for (final z in pointTowardsZones) z.toJson()],
+      'eventMarkers': [for (final m in sortedMarkers) m.toJson()],
       'globalConstraints': globalConstraints.toJson(),
       'goalEndState': goalEndState.toJson(),
       'reversed': reversed,
@@ -280,8 +289,13 @@ class PathPlannerPath implements HotReloadablePath {
 
     Waypoint before = waypoints[waypointIdx];
     Waypoint after = waypoints[waypointIdx + 1];
-    Translation2d anchorPos = GeometryUtil.cubicLerp(before.anchor,
-        before.nextControl!, after.prevControl!, after.anchor, 0.5);
+    Translation2d anchorPos = GeometryUtil.cubicLerp(
+      before.anchor,
+      before.nextControl!,
+      after.prevControl!,
+      after.anchor,
+      0.5,
+    );
 
     Waypoint toAdd = Waypoint(
       anchor: anchorPos,
@@ -293,26 +307,38 @@ class PathPlannerPath implements HotReloadablePath {
 
     for (RotationTarget t in rotationTargets) {
       t.waypointRelativePos = _adjustInsertedWaypointRelativePos(
-          t.waypointRelativePos, waypointIdx + 1);
+        t.waypointRelativePos,
+        waypointIdx + 1,
+      );
     }
 
     for (EventMarker m in eventMarkers) {
       m.waypointRelativePos = _adjustInsertedWaypointRelativePos(
-          m.waypointRelativePos, waypointIdx + 1);
+        m.waypointRelativePos,
+        waypointIdx + 1,
+      );
     }
 
     for (ConstraintsZone z in constraintZones) {
       z.minWaypointRelativePos = _adjustInsertedWaypointRelativePos(
-          z.minWaypointRelativePos, waypointIdx + 1);
+        z.minWaypointRelativePos,
+        waypointIdx + 1,
+      );
       z.maxWaypointRelativePos = _adjustInsertedWaypointRelativePos(
-          z.maxWaypointRelativePos, waypointIdx + 1);
+        z.maxWaypointRelativePos,
+        waypointIdx + 1,
+      );
     }
 
     for (PointTowardsZone z in pointTowardsZones) {
       z.minWaypointRelativePos = _adjustInsertedWaypointRelativePos(
-          z.minWaypointRelativePos, waypointIdx + 1);
+        z.minWaypointRelativePos,
+        waypointIdx + 1,
+      );
       z.maxWaypointRelativePos = _adjustInsertedWaypointRelativePos(
-          z.maxWaypointRelativePos, waypointIdx + 1);
+        z.maxWaypointRelativePos,
+        waypointIdx + 1,
+      );
     }
   }
 
@@ -430,15 +456,18 @@ class PathPlannerPath implements HotReloadablePath {
     pathPoints.clear();
 
     final unaddedTargets = rotationTargets.sorted(
-        (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+      (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos),
+    );
 
     // first point
-    pathPoints.add(PathPoint(
-      position: samplePath(0.0),
-      rotationTarget: null,
-      constraints: _constraintsForPos(0.0),
-      waypointPos: 0.0,
-    ));
+    pathPoints.add(
+      PathPoint(
+        position: samplePath(0.0),
+        rotationTarget: null,
+        constraints: _constraintsForPos(0.0),
+        waypointPos: 0.0,
+      ),
+    );
 
     double pos = targetIncrement;
     while (pos < waypoints.length - 1) {
@@ -500,21 +529,25 @@ class PathPlannerPath implements HotReloadablePath {
         } else {
           // We should insert a point at the exact position
           RotationTarget t = unaddedTargets.removeAt(0);
-          pathPoints.add(PathPoint(
-            position: samplePath(t.waypointRelativePos),
-            rotationTarget: t,
-            constraints: _constraintsForPos(t.waypointRelativePos),
-            waypointPos: t.waypointRelativePos,
-          ));
+          pathPoints.add(
+            PathPoint(
+              position: samplePath(t.waypointRelativePos),
+              rotationTarget: t,
+              constraints: _constraintsForPos(t.waypointRelativePos),
+              waypointPos: t.waypointRelativePos,
+            ),
+          );
         }
       }
 
-      pathPoints.add(PathPoint(
-        position: position,
-        rotationTarget: target,
-        constraints: _constraintsForPos(pos),
-        waypointPos: pos,
-      ));
+      pathPoints.add(
+        PathPoint(
+          position: position,
+          rotationTarget: target,
+          constraints: _constraintsForPos(pos),
+          waypointPos: pos,
+        ),
+      );
       pos = min(pos + targetIncrement, waypoints.length - 1);
     }
 
@@ -563,22 +596,29 @@ class PathPlannerPath implements HotReloadablePath {
         }
       }
 
-      pathPoints.add(PathPoint(
-        position: position,
-        rotationTarget: null,
-        constraints: _constraintsForPos(pos),
-        waypointPos: pos,
-      ));
+      pathPoints.add(
+        PathPoint(
+          position: position,
+          rotationTarget: null,
+          constraints: _constraintsForPos(pos),
+          waypointPos: pos,
+        ),
+      );
       pos = waypoints.length - 1;
     }
 
     // Force end rotation target to end state rotation
-    pathPoints.last.rotationTarget =
-        RotationTarget(waypoints.length - 1, goalEndState.rotation);
+    pathPoints.last.rotationTarget = RotationTarget(
+      waypoints.length - 1,
+      goalEndState.rotation,
+    );
 
     for (int i = 1; i < pathPoints.length - 1; i++) {
-      num curveRadius = GeometryUtil.calculateRadius(pathPoints[i - 1].position,
-          pathPoints[i].position, pathPoints[i + 1].position);
+      num curveRadius = GeometryUtil.calculateRadius(
+        pathPoints[i - 1].position,
+        pathPoints[i].position,
+        pathPoints[i + 1].position,
+      );
 
       if (!curveRadius.isFinite) {
         continue;
@@ -587,13 +627,25 @@ class PathPlannerPath implements HotReloadablePath {
       if (curveRadius.abs() < 0.25) {
         // Curve radius is too tight for default spacing, insert 4 more points
         num before1WaypointPos = MathUtil.interpolate(
-            pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.33);
+          pathPoints[i - 1].waypointPos,
+          pathPoints[i].waypointPos,
+          0.33,
+        );
         num before2WaypointPos = MathUtil.interpolate(
-            pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.67);
+          pathPoints[i - 1].waypointPos,
+          pathPoints[i].waypointPos,
+          0.67,
+        );
         num after1WaypointPos = MathUtil.interpolate(
-            pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.33);
+          pathPoints[i].waypointPos,
+          pathPoints[i + 1].waypointPos,
+          0.33,
+        );
         num after2WaypointPos = MathUtil.interpolate(
-            pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.67);
+          pathPoints[i].waypointPos,
+          pathPoints[i + 1].waypointPos,
+          0.67,
+        );
 
         PathPoint before1 = PathPoint(
           position: samplePath(before1WaypointPos),
@@ -628,9 +680,15 @@ class PathPlannerPath implements HotReloadablePath {
       } else if (curveRadius.abs() < 0.5) {
         // Curve radius is too tight for default spacing, insert 2 more points
         num beforeWaypointPos = MathUtil.interpolate(
-            pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.5);
+          pathPoints[i - 1].waypointPos,
+          pathPoints[i].waypointPos,
+          0.5,
+        );
         num afterWaypointPos = MathUtil.interpolate(
-            pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.5);
+          pathPoints[i].waypointPos,
+          pathPoints[i + 1].waypointPos,
+          0.5,
+        );
 
         PathPoint before = PathPoint(
           position: samplePath(beforeWaypointPos),
@@ -656,15 +714,18 @@ class PathPlannerPath implements HotReloadablePath {
 
       if (curveRadius.isFinite) {
         pathPoints[i].maxV = min(
-            sqrt(pathPoints[i].constraints.maxAccelerationMPSSq *
-                curveRadius.abs()),
-            pathPoints[i].constraints.maxVelocityMPS);
+          sqrt(
+            pathPoints[i].constraints.maxAccelerationMPSSq * curveRadius.abs(),
+          ),
+          pathPoints[i].constraints.maxVelocityMPS,
+        );
       } else {
         pathPoints[i].maxV = pathPoints[i].constraints.maxVelocityMPS;
       }
 
       if (i > 0) {
-        pathPoints[i].distanceAlongPath = pathPoints[i - 1].distanceAlongPath +
+        pathPoints[i].distanceAlongPath =
+            pathPoints[i - 1].distanceAlongPath +
             pathPoints[i].position.getDistance(pathPoints[i - 1].position);
       }
 
@@ -675,8 +736,11 @@ class PathPlannerPath implements HotReloadablePath {
           final angleToTarget =
               (zone.fieldPosition - pathPoints[i].position).angle;
           final rotation = angleToTarget + zone.rotationOffset;
-          pathPoints[i].rotationTarget =
-              RotationTarget(pathPoints[i].waypointPos, rotation, false);
+          pathPoints[i].rotationTarget = RotationTarget(
+            pathPoints[i].waypointPos,
+            rotation,
+            false,
+          );
         }
       }
     }
@@ -695,11 +759,12 @@ class PathPlannerPath implements HotReloadablePath {
     num t = pos - i;
 
     return GeometryUtil.cubicLerp(
-        waypoints[i].anchor,
-        waypoints[i].nextControl!,
-        waypoints[i + 1].prevControl!,
-        waypoints[i + 1].anchor,
-        t);
+      waypoints[i].anchor,
+      waypoints[i].nextControl!,
+      waypoints[i + 1].prevControl!,
+      waypoints[i + 1].anchor,
+      t,
+    );
   }
 
   num _getCurveRadiusAtPoint(int index) {
@@ -708,14 +773,23 @@ class PathPlannerPath implements HotReloadablePath {
     }
 
     if (index == 0) {
-      return GeometryUtil.calculateRadius(pathPoints[index].position,
-          pathPoints[index + 1].position, pathPoints[index + 2].position);
+      return GeometryUtil.calculateRadius(
+        pathPoints[index].position,
+        pathPoints[index + 1].position,
+        pathPoints[index + 2].position,
+      );
     } else if (index == pathPoints.length - 1) {
-      return GeometryUtil.calculateRadius(pathPoints[index - 2].position,
-          pathPoints[index - 1].position, pathPoints[index].position);
+      return GeometryUtil.calculateRadius(
+        pathPoints[index - 2].position,
+        pathPoints[index - 1].position,
+        pathPoints[index].position,
+      );
     } else {
-      return GeometryUtil.calculateRadius(pathPoints[index - 1].position,
-          pathPoints[index].position, pathPoints[index + 1].position);
+      return GeometryUtil.calculateRadius(
+        pathPoints[index - 1].position,
+        pathPoints[index].position,
+        pathPoints[index + 1].position,
+      );
     }
   }
 
@@ -739,40 +813,33 @@ class PathPlannerPath implements HotReloadablePath {
   }
 
   List<Translation2d> get pathPositions => [
-        for (final p in pathPoints) p.position,
-      ];
+    for (final p in pathPoints) p.position,
+  ];
 
   static List<Waypoint> cloneWaypoints(List<Waypoint> waypoints) {
-    return [
-      for (final waypoint in waypoints) waypoint.clone(),
-    ];
+    return [for (final waypoint in waypoints) waypoint.clone()];
   }
 
   static List<ConstraintsZone> cloneConstraintZones(
-      List<ConstraintsZone> zones) {
-    return [
-      for (final zone in zones) zone.clone(),
-    ];
+    List<ConstraintsZone> zones,
+  ) {
+    return [for (final zone in zones) zone.clone()];
   }
 
   static List<PointTowardsZone> clonePointTowardsZones(
-      List<PointTowardsZone> zones) {
-    return [
-      for (final zone in zones) zone.clone(),
-    ];
+    List<PointTowardsZone> zones,
+  ) {
+    return [for (final zone in zones) zone.clone()];
   }
 
   static List<RotationTarget> cloneRotationTargets(
-      List<RotationTarget> targets) {
-    return [
-      for (final target in targets) target.clone(),
-    ];
+    List<RotationTarget> targets,
+  ) {
+    return [for (final target in targets) target.clone()];
   }
 
   static List<EventMarker> cloneEventMarkers(List<EventMarker> markers) {
-    return [
-      for (final marker in markers) marker.clone(),
-    ];
+    return [for (final marker in markers) marker.clone()];
   }
 
   @override
@@ -790,6 +857,14 @@ class PathPlannerPath implements HotReloadablePath {
       listEquals(other.rotationTargets, rotationTargets);
 
   @override
-  int get hashCode => Object.hash(name, globalConstraints, goalEndState,
-      waypoints, constraintZones, eventMarkers, rotationTargets, reversed);
+  int get hashCode => Object.hash(
+    name,
+    globalConstraints,
+    goalEndState,
+    waypoints,
+    constraintZones,
+    eventMarkers,
+    rotationTargets,
+    reversed,
+  );
 }

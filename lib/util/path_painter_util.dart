@@ -1,34 +1,41 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/robot_features/feature.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 class PathPainterUtil {
-  static void paintRobotModules(List<Pose2d> modulePoses, FieldImage fieldImage,
-      double scale, Canvas canvas, Color color) {
-    paintRobotModulesPixels([
-      for (Pose2d m in modulePoses)
-        PathPainterUtil.pointToPixelOffset(m.translation, scale, fieldImage),
-    ], [
-      for (Pose2d m in modulePoses) m.rotation.radians.toDouble(),
-    ],
-        PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
-        PathPainterUtil.uiPointSizeToPixels(12, scale, fieldImage),
-        1.0,
-        canvas,
-        color);
+  static void paintRobotModules(
+    List<Pose2d> modulePoses,
+    FieldImage fieldImage,
+    double scale,
+    Canvas canvas,
+    Color color,
+  ) {
+    paintRobotModulesPixels(
+      [
+        for (Pose2d m in modulePoses)
+          PathPainterUtil.pointToPixelOffset(m.translation, scale, fieldImage),
+      ],
+      [for (Pose2d m in modulePoses) m.rotation.radians.toDouble()],
+      PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+      PathPainterUtil.uiPointSizeToPixels(12, scale, fieldImage),
+      1.0,
+      canvas,
+      color,
+    );
   }
 
   static void paintRobotModulesPixels(
-      List<Offset> modulePositionsPixels,
-      List<double> moduleRotationsRadians,
-      double lengthPixels,
-      double witdthPixels,
-      double borderRadiusPixels,
-      Canvas canvas,
-      Color color) {
+    List<Offset> modulePositionsPixels,
+    List<double> moduleRotationsRadians,
+    double lengthPixels,
+    double witdthPixels,
+    double borderRadiusPixels,
+    Canvas canvas,
+    Color color,
+  ) {
     assert(modulePositionsPixels.length == moduleRotationsRadians.length);
     var paint = Paint()
       ..style = PaintingStyle.fill
@@ -42,40 +49,58 @@ class PathPainterUtil {
       canvas.rotate(-moduleRotationsRadians[i]);
       canvas.translate(-pos.dx, -pos.dy);
       canvas.drawRRect(
-          RRect.fromRectAndRadius(
-              Rect.fromCenter(
-                  center: pos, width: lengthPixels, height: witdthPixels),
-              Radius.circular(borderRadiusPixels)),
-          paint);
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: pos,
+            width: lengthPixels,
+            height: witdthPixels,
+          ),
+          Radius.circular(borderRadiusPixels),
+        ),
+        paint,
+      );
       canvas.restore();
     }
   }
 
   static void paintRobotOutline(
-      Pose2d pose,
-      FieldImage fieldImage,
-      Size robotSize,
-      Translation2d bumperOffset,
-      double scale,
-      Canvas canvas,
-      Color color,
-      Color outlineColor,
-      List<Feature> features,
-      {bool showDetails = false}) {
-    Offset center =
-        PathPainterUtil.pointToPixelOffset(pose.translation, scale, fieldImage);
+    Pose2d pose,
+    FieldImage fieldImage,
+    Size robotSize,
+    Translation2d bumperOffset,
+    double scale,
+    Canvas canvas,
+    Color color,
+    Color outlineColor,
+    List<Feature> features, {
+    bool showDetails = false,
+  }) {
+    Offset center = PathPainterUtil.pointToPixelOffset(
+      pose.translation,
+      scale,
+      fieldImage,
+    );
 
-    double width =
-        PathPainterUtil.metersToPixels(robotSize.width, scale, fieldImage);
-    double length =
-        PathPainterUtil.metersToPixels(robotSize.height, scale, fieldImage);
+    double width = PathPainterUtil.metersToPixels(
+      robotSize.width,
+      scale,
+      fieldImage,
+    );
+    double length = PathPainterUtil.metersToPixels(
+      robotSize.height,
+      scale,
+      fieldImage,
+    );
 
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(-pose.rotation.radians.toDouble());
 
-    double pixelsPerMeter =
-        PathPainterUtil.metersToPixels(1.0, scale, fieldImage);
+    double pixelsPerMeter = PathPainterUtil.metersToPixels(
+      1.0,
+      scale,
+      fieldImage,
+    );
     for (Feature f in features) {
       f.draw(canvas, pixelsPerMeter, color);
     }
@@ -87,10 +112,17 @@ class PathPainterUtil {
       pose.rotation.radians.toDouble(),
       Size(width, length),
       Offset(
-          PathPainterUtil.metersToPixels(
-              bumperOffset.x.toDouble(), scale, fieldImage),
-          PathPainterUtil.metersToPixels(
-              -bumperOffset.y.toDouble(), scale, fieldImage)),
+        PathPainterUtil.metersToPixels(
+          bumperOffset.x.toDouble(),
+          scale,
+          fieldImage,
+        ),
+        PathPainterUtil.metersToPixels(
+          -bumperOffset.y.toDouble(),
+          scale,
+          fieldImage,
+        ),
+      ),
       PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage),
       2.0,
       PathPainterUtil.metersToPixels(0.075, scale, fieldImage),
@@ -160,16 +192,17 @@ class PathPainterUtil {
   }
 
   static void paintRobotOutlinePixels(
-      Offset center,
-      double rotationRadians,
-      Size robotSizePixels,
-      Offset bumperOffsetPixels,
-      double dotRadiusPixels,
-      double bumperStrokeWidth,
-      double bumperRadiusPixels,
-      Canvas canvas,
-      Color color,
-      Color outlineColor) {
+    Offset center,
+    double rotationRadians,
+    Size robotSizePixels,
+    Offset bumperOffsetPixels,
+    double dotRadiusPixels,
+    double bumperStrokeWidth,
+    double bumperRadiusPixels,
+    Canvas canvas,
+    Color color,
+    Color outlineColor,
+  ) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = color
@@ -180,13 +213,16 @@ class PathPainterUtil {
     canvas.rotate(-rotationRadians);
     canvas.translate(bumperOffsetPixels.dx, bumperOffsetPixels.dy);
     canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromCenter(
-                center: Offset.zero,
-                width: robotSizePixels.height,
-                height: robotSizePixels.width),
-            Radius.circular(bumperRadiusPixels)),
-        paint);
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: robotSizePixels.height,
+          height: robotSizePixels.width,
+        ),
+        Radius.circular(bumperRadiusPixels),
+      ),
+      paint,
+    );
 
     Offset frontMiddle = Offset(robotSizePixels.height / 2, 0);
 
@@ -202,7 +238,11 @@ class PathPainterUtil {
   }
 
   static void paintMarker(
-      Canvas canvas, Offset location, Color color, Color strokeColor) {
+    Canvas canvas,
+    Offset location,
+    Color color,
+    Color strokeColor,
+  ) {
     const IconData markerIcon = Icons.location_on_rounded;
 
     TextPainter textPainter = TextPainter(
@@ -236,29 +276,41 @@ class PathPainterUtil {
     textStrokePainter.layout();
 
     textPainter.paint(
-        canvas, location - const Offset(17.5, 27.5)); // Adjust the offset
+      canvas,
+      location - const Offset(17.5, 27.5),
+    ); // Adjust the offset
     textStrokePainter.paint(
-        canvas, location - const Offset(17.5, 27.5)); // Adjust the offset
+      canvas,
+      location - const Offset(17.5, 27.5),
+    ); // Adjust the offset
   }
 
   static Offset pointToPixelOffset(
-      Translation2d point, double scale, FieldImage fieldImage) {
+    Translation2d point,
+    double scale,
+    FieldImage fieldImage,
+  ) {
     return Offset(
-            (point.x + fieldImage.marginMeters) *
-                fieldImage.pixelsPerMeter.toDouble(),
-            fieldImage.defaultSize.height -
-                ((point.y + fieldImage.marginMeters) *
-                    fieldImage.pixelsPerMeter))
-        .scale(scale, scale);
+      (point.x + fieldImage.marginMeters) *
+          fieldImage.pixelsPerMeter.toDouble(),
+      fieldImage.defaultSize.height -
+          ((point.y + fieldImage.marginMeters) * fieldImage.pixelsPerMeter),
+    ).scale(scale, scale);
   }
 
   static double metersToPixels(
-      double meters, double scale, FieldImage fieldImage) {
+    double meters,
+    double scale,
+    FieldImage fieldImage,
+  ) {
     return meters * fieldImage.pixelsPerMeter * scale;
   }
 
   static double uiPointSizeToPixels(
-      double size, double scale, FieldImage fieldImage) {
+    double size,
+    double scale,
+    FieldImage fieldImage,
+  ) {
     // 3240 = width of field image size is based on
     return size / 3240 * fieldImage.defaultSize.width * scale;
   }

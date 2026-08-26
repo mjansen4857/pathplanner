@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/services/project_condition_registry.dart';
 
 /// Manages the condition names referenced by Path 2 path and auto branches.
@@ -103,9 +103,7 @@ class _ProjectConditionsDialogState extends State<ProjectConditionsDialog> {
 
     if (confirmed == true && mounted) {
       widget.onConditionDeleted(conditionName);
-      setState(
-        () => ProjectConditionRegistry.conditions.remove(conditionName),
-      );
+      setState(() => ProjectConditionRegistry.conditions.remove(conditionName));
     }
   }
 
@@ -136,9 +134,8 @@ class _ProjectConditionsDialogState extends State<ProjectConditionsDialog> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

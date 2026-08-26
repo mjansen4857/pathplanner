@@ -26,16 +26,24 @@ class PPLibTelemetry {
     );
 
     _velSub = _client.subscribePeriodic('/PathPlanner/vel', 0.033);
-    _currentPoseSub =
-        _client.subscribePeriodic('/PathPlanner/currentPose', 0.033);
+    _currentPoseSub = _client.subscribePeriodic(
+      '/PathPlanner/currentPose',
+      0.033,
+    );
     _activePathSub = _client.subscribeAllSamples('/PathPlanner/activePath');
-    _targetPoseSub =
-        _client.subscribePeriodic('/PathPlanner/targetPose', 0.033);
+    _targetPoseSub = _client.subscribePeriodic(
+      '/PathPlanner/targetPose',
+      0.033,
+    );
 
     _hotReloadPathTopic = _client.publishNewTopic(
-        '/PathPlanner/HotReload/hotReloadPath', NT4TypeStr.typeStr);
+      '/PathPlanner/HotReload/hotReloadPath',
+      NT4TypeStr.typeStr,
+    );
     _hotReloadAutoTopic = _client.publishNewTopic(
-        '/PathPlanner/HotReload/hotReloadAuto', NT4TypeStr.typeStr);
+      '/PathPlanner/HotReload/hotReloadAuto',
+      NT4TypeStr.typeStr,
+    );
   }
 
   void setServerAddress(String serverAddress) {
@@ -49,10 +57,7 @@ class PPLibTelemetry {
   void hotReloadPath(HotReloadablePath path) {
     String pathName = path.name;
 
-    Map<String, dynamic> msgJson = {
-      'name': pathName,
-      'path': path.toJson(),
-    };
+    Map<String, dynamic> msgJson = {'name': pathName, 'path': path.toJson()};
 
     _client.addSample(_hotReloadPathTopic, jsonEncode(msgJson));
   }
@@ -62,29 +67,31 @@ class PPLibTelemetry {
   }
 
   void _publishHotReloadAuto(String autoName, Map<String, dynamic> autoJson) {
-    Map<String, dynamic> msgJson = {
-      'name': autoName,
-      'auto': autoJson,
-    };
+    Map<String, dynamic> msgJson = {'name': autoName, 'auto': autoJson};
 
     _client.addSample(_hotReloadAutoTopic, jsonEncode(msgJson));
   }
 
   Stream<List<num>> velocitiesStream() {
-    return _velSub.stream().map((vels) =>
-        (vels as List?)?.map((e) => e as num).toList() ?? [0, 0, 0, 0]);
+    return _velSub.stream().map(
+      (vels) => (vels as List?)?.map((e) => e as num).toList() ?? [0, 0, 0, 0],
+    );
   }
 
   Stream<Pose2d?> currentPoseStream() {
-    return _currentPoseSub.stream().map((pose) => (pose is List<int>)
-        ? Pose2d.fromBytes(Uint8List.fromList(pose))
-        : null);
+    return _currentPoseSub.stream().map(
+      (pose) => (pose is List<int>)
+          ? Pose2d.fromBytes(Uint8List.fromList(pose))
+          : null,
+    );
   }
 
   Stream<List<Pose2d>?> currentPathStream() {
-    return _activePathSub.stream().map((poses) => (poses is List<int>)
-        ? Pose2d.listFromBytes(Uint8List.fromList(poses))
-        : null);
+    return _activePathSub.stream().map(
+      (poses) => (poses is List<int>)
+          ? Pose2d.listFromBytes(Uint8List.fromList(poses))
+          : null,
+    );
   }
 
   Stream<bool> connectionStatusStream() {
@@ -92,9 +99,11 @@ class PPLibTelemetry {
   }
 
   Stream<Pose2d?> targetPoseStream() {
-    return _targetPoseSub.stream().map((pose) => (pose is List<int>)
-        ? Pose2d.fromBytes(Uint8List.fromList(pose))
-        : null);
+    return _targetPoseSub.stream().map(
+      (pose) => (pose is List<int>)
+          ? Pose2d.fromBytes(Uint8List.fromList(pose))
+          : null,
+    );
   }
 
   bool get isConnected => _isConnected;

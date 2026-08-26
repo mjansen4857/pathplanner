@@ -24,11 +24,7 @@ void main() {
     ProjectConditionRegistry.clear();
   });
 
-  path2_auto.PathAutoNode node(
-    String id,
-    String? pathName, {
-    double y = 0,
-  }) =>
+  path2_auto.PathAutoNode node(String id, String? pathName, {double y = 0}) =>
       path2_auto.PathAutoNode(
         id: id,
         pathName: pathName,
@@ -43,26 +39,26 @@ void main() {
     String sourceVersion = path2_auto.fileVersion,
     Pose2d startingPose = const Pose2d(Translation2d(), Rotation2d()),
     bool initialized = false,
-  }) =>
-      path2_auto.Path2Auto(
-        name: name,
-        nodes: nodes ?? [node(_nodeA, 'First'), node(_nodeB, 'Second', y: 300)],
-        branches: branches ??
-            [
-              path2_auto.AutoBranch(
-                id: _branchA,
-                sourceId: _nodeA,
-                targetId: _nodeB,
-                transition: const FinishedTransition(),
-              ),
-            ],
-        autoDir: '/autos',
-        fs: fs,
-        folder: folder,
-        sourceVersion: sourceVersion,
-        startingPose: startingPose,
-        startingPoseInitialized: initialized,
-      );
+  }) => path2_auto.Path2Auto(
+    name: name,
+    nodes: nodes ?? [node(_nodeA, 'First'), node(_nodeB, 'Second', y: 300)],
+    branches:
+        branches ??
+        [
+          path2_auto.AutoBranch(
+            id: _branchA,
+            sourceId: _nodeA,
+            targetId: _nodeB,
+            transition: const FinishedTransition(),
+          ),
+        ],
+    autoDir: '/autos',
+    fs: fs,
+    folder: folder,
+    sourceVersion: sourceVersion,
+    startingPose: startingPose,
+    startingPoseInitialized: initialized,
+  );
 
   path2.Path posePath(
     String name,
@@ -111,90 +107,93 @@ void main() {
     });
 
     test(
-        'round trips nodes, branches, layout, pose, folder, and future version',
-        () {
-      final original = auto(
-        nodes: [
-          node(_nodeA, 'First'),
-          node(_nodeB, 'Second', y: 250),
-          node(_nodeC, null, y: 500),
-        ],
-        branches: [
-          path2_auto.AutoBranch(
-            id: _branchA,
-            sourceId: _nodeA,
-            targetId: _nodeB,
-            transition: const FinishedTransition(),
+      'round trips nodes, branches, layout, pose, folder, and future version',
+      () {
+        final original = auto(
+          nodes: [
+            node(_nodeA, 'First'),
+            node(_nodeB, 'Second', y: 250),
+            node(_nodeC, null, y: 500),
+          ],
+          branches: [
+            path2_auto.AutoBranch(
+              id: _branchA,
+              sourceId: _nodeA,
+              targetId: _nodeB,
+              transition: const FinishedTransition(),
+            ),
+            path2_auto.AutoBranch(
+              id: _branchB,
+              sourceId: _nodeB,
+              targetId: _nodeC,
+              transition: ConditionTransition(conditionName: 'ready'),
+            ),
+          ],
+          sourceVersion: '2029.1.0-beta.2',
+          folder: 'Playoffs',
+          startingPose: Pose2d(
+            const Translation2d(2.5, 6.5),
+            Rotation2d.fromDegrees(45),
           ),
-          path2_auto.AutoBranch(
-            id: _branchB,
-            sourceId: _nodeB,
-            targetId: _nodeC,
-            transition: ConditionTransition(conditionName: 'ready'),
-          ),
-        ],
-        sourceVersion: '2029.1.0-beta.2',
-        folder: 'Playoffs',
-        startingPose: Pose2d(
-          const Translation2d(2.5, 6.5),
-          Rotation2d.fromDegrees(45),
-        ),
-        initialized: true,
-      );
+          initialized: true,
+        );
 
-      final json = original.toJson();
-      final restored = path2_auto.Path2Auto.fromJson(
-        json,
-        original.name,
-        '/autos',
-        fs,
-      );
+        final json = original.toJson();
+        final restored = path2_auto.Path2Auto.fromJson(
+          json,
+          original.name,
+          '/autos',
+          fs,
+        );
 
-      expect(
-        json.keys,
-        unorderedEquals([
-          'version',
-          'nodes',
-          'branches',
-          'startingPose',
-          'startingPoseInitialized',
-          'folder',
-        ]),
-      );
-      expect(restored, original);
-      expect(restored.version, '2029.1.0-beta.2');
-      expect(ProjectConditionRegistry.conditions, contains('ready'));
-    });
+        expect(
+          json.keys,
+          unorderedEquals([
+            'version',
+            'nodes',
+            'branches',
+            'startingPose',
+            'startingPoseInitialized',
+            'folder',
+          ]),
+        );
+        expect(restored, original);
+        expect(restored.version, '2029.1.0-beta.2');
+        expect(ProjectConditionRegistry.conditions, contains('ready'));
+      },
+    );
 
-    test('supports parallel condition branches and finished plus condition',
-        () {
-      final graph = auto(
-        branches: [
-          path2_auto.AutoBranch(
-            id: _branchA,
-            sourceId: _nodeA,
-            targetId: _nodeB,
-            transition: const FinishedTransition(),
-          ),
-          path2_auto.AutoBranch(
-            id: _branchB,
-            sourceId: _nodeA,
-            targetId: _nodeB,
-            transition: ConditionTransition(conditionName: 'fast'),
-          ),
-          path2_auto.AutoBranch(
-            id: _branchC,
-            sourceId: _nodeA,
-            targetId: _nodeB,
-            transition: ConditionTransition(conditionName: 'safe'),
-          ),
-        ],
-      );
+    test(
+      'supports parallel condition branches and finished plus condition',
+      () {
+        final graph = auto(
+          branches: [
+            path2_auto.AutoBranch(
+              id: _branchA,
+              sourceId: _nodeA,
+              targetId: _nodeB,
+              transition: const FinishedTransition(),
+            ),
+            path2_auto.AutoBranch(
+              id: _branchB,
+              sourceId: _nodeA,
+              targetId: _nodeB,
+              transition: ConditionTransition(conditionName: 'fast'),
+            ),
+            path2_auto.AutoBranch(
+              id: _branchC,
+              sourceId: _nodeA,
+              targetId: _nodeB,
+              transition: ConditionTransition(conditionName: 'safe'),
+            ),
+          ],
+        );
 
-      expect(graph.diagnostics.hardErrors, isEmpty);
-      expect(graph.rootNodes.map((node) => node.id), [_nodeA]);
-      expect(graph.leafNodes.map((node) => node.id), [_nodeB]);
-    });
+        expect(graph.diagnostics.hardErrors, isEmpty);
+        expect(graph.rootNodes.map((node) => node.id), [_nodeA]);
+        expect(graph.leafNodes.map((node) => node.id), [_nodeB]);
+      },
+    );
 
     test('multiple roots and disconnected nodes are saveable drafts', () {
       final draft = auto(branches: []);
@@ -237,31 +236,37 @@ void main() {
       final graph = auto();
 
       expect(
-        graph.addBranch(path2_auto.AutoBranch(
-          id: _branchB,
-          sourceId: _nodeA,
-          targetId: _nodeB,
-          transition: const FinishedTransition(),
-        )),
+        graph.addBranch(
+          path2_auto.AutoBranch(
+            id: _branchB,
+            sourceId: _nodeA,
+            targetId: _nodeB,
+            transition: const FinishedTransition(),
+          ),
+        ),
         isFalse,
       );
       expect(
-        graph.addBranch(path2_auto.AutoBranch(
-          id: _branchB,
-          sourceId: _nodeB,
-          targetId: _nodeA,
-          transition: ConditionTransition(conditionName: 'back'),
-        )),
+        graph.addBranch(
+          path2_auto.AutoBranch(
+            id: _branchB,
+            sourceId: _nodeB,
+            targetId: _nodeA,
+            transition: ConditionTransition(conditionName: 'back'),
+          ),
+        ),
         isFalse,
       );
       expect(graph.removeBranch(_branchA), isTrue);
       expect(
-        graph.addBranch(path2_auto.AutoBranch(
-          id: _branchB,
-          sourceId: _nodeA,
-          targetId: _nodeB,
-          transition: const FinishedTransition(),
-        )),
+        graph.addBranch(
+          path2_auto.AutoBranch(
+            id: _branchB,
+            sourceId: _nodeA,
+            targetId: _nodeB,
+            transition: const FinishedTransition(),
+          ),
+        ),
         isTrue,
       );
     });
@@ -275,10 +280,7 @@ void main() {
       expect(graph.nodes, isEmpty);
       expect(graph.branches, isEmpty);
       graph.setStartingPose(
-        Pose2d(
-          const Translation2d(9, 8),
-          Rotation2d.fromDegrees(45),
-        ),
+        Pose2d(const Translation2d(9, 8), Rotation2d.fromDegrees(45)),
       );
 
       graph.restoreGraph(snapshot);
@@ -299,10 +301,7 @@ void main() {
 
     test('path rename and deletion retain node occurrences', () {
       final graph = auto(
-        nodes: [
-          node(_nodeA, 'Shared'),
-          node(_nodeB, 'Shared', y: 300),
-        ],
+        nodes: [node(_nodeA, 'Shared'), node(_nodeB, 'Shared', y: 300)],
       );
       expect(graph.getAllPathNames(), ['Shared', 'Shared']);
 
@@ -378,11 +377,7 @@ void main() {
       final graph = auto(nodes: [node(_nodeA, 'First')], branches: []);
       expect(
         graph.initializeStartingPoseFromPaths([
-          posePath(
-            'First',
-            const Translation2d(3, 4),
-            multipleRoots: true,
-          ),
+          posePath('First', const Translation2d(3, 4), multipleRoots: true),
         ]),
         isFalse,
       );
@@ -391,10 +386,7 @@ void main() {
     test('manual pose is authoritative and invalid poses are rejected', () {
       final graph = auto(nodes: [node(_nodeA, 'First')], branches: []);
       graph.setStartingPose(
-        Pose2d(
-          const Translation2d(8, 9),
-          Rotation2d.fromDegrees(15),
-        ),
+        Pose2d(const Translation2d(8, 9), Rotation2d.fromDegrees(15)),
       );
 
       expect(
@@ -406,10 +398,7 @@ void main() {
       expect(graph.startingPose.translation, const Translation2d(8, 9));
       expect(
         () => graph.setStartingPose(
-          const Pose2d(
-            Translation2d(double.nan, 0),
-            Rotation2d(),
-          ),
+          const Pose2d(Translation2d(double.nan, 0), Rotation2d()),
         ),
         throwsArgumentError,
       );
@@ -511,110 +500,100 @@ void main() {
       );
 
       expect(
-        () => path2_auto.Path2Auto.fromJson(
-          invalid,
-          'Bad',
-          '/autos',
-          fs,
-        ),
+        () => path2_auto.Path2Auto.fromJson(invalid, 'Bad', '/autos', fs),
         throwsFormatException,
       );
     });
 
-    test('rejects malformed node/transition/pose payloads and unknown types',
-        () {
-      final base = validJson();
-      final malformed = jsonDecode(jsonEncode(base)) as Map<String, dynamic>;
-      ((malformed['nodes'] as List).first
-          as Map<String, dynamic>)['editorPosition'] = {
-        'x': double.nan,
-        'y': 0,
-      };
-      expect(
-        () => path2_auto.Path2Auto.fromJson(
-          malformed,
-          'Bad',
-          '/autos',
-          fs,
-        ),
-        throwsFormatException,
-      );
+    test(
+      'rejects malformed node/transition/pose payloads and unknown types',
+      () {
+        final base = validJson();
+        final malformed = jsonDecode(jsonEncode(base)) as Map<String, dynamic>;
+        ((malformed['nodes'] as List).first
+            as Map<String, dynamic>)['editorPosition'] = {
+          'x': double.nan,
+          'y': 0,
+        };
+        expect(
+          () => path2_auto.Path2Auto.fromJson(malformed, 'Bad', '/autos', fs),
+          throwsFormatException,
+        );
 
-      final unknownNode = jsonDecode(jsonEncode(base)) as Map<String, dynamic>;
-      ((unknownNode['nodes'] as List).first as Map<String, dynamic>)['type'] =
-          'wait';
-      expect(
-        () => path2_auto.Path2Auto.fromJson(
-          unknownNode,
-          'Bad',
-          '/autos',
-          fs,
-        ),
-        throwsFormatException,
-      );
+        final unknownNode =
+            jsonDecode(jsonEncode(base)) as Map<String, dynamic>;
+        ((unknownNode['nodes'] as List).first as Map<String, dynamic>)['type'] =
+            'wait';
+        expect(
+          () => path2_auto.Path2Auto.fromJson(unknownNode, 'Bad', '/autos', fs),
+          throwsFormatException,
+        );
 
-      final unknownTransition =
-          jsonDecode(jsonEncode(base)) as Map<String, dynamic>;
-      ((unknownTransition['branches'] as List).first
-          as Map<String, dynamic>)['transition'] = {
-        'type': 'distance',
-        'distanceMeters': 1
-      };
-      expect(
-        () => path2_auto.Path2Auto.fromJson(
-          unknownTransition,
-          'Bad',
-          '/autos',
-          fs,
-        ),
-        throwsFormatException,
-      );
+        final unknownTransition =
+            jsonDecode(jsonEncode(base)) as Map<String, dynamic>;
+        ((unknownTransition['branches'] as List).first
+            as Map<String, dynamic>)['transition'] = {
+          'type': 'distance',
+          'distanceMeters': 1,
+        };
+        expect(
+          () => path2_auto.Path2Auto.fromJson(
+            unknownTransition,
+            'Bad',
+            '/autos',
+            fs,
+          ),
+          throwsFormatException,
+        );
 
-      expect(
-        () => path2_auto.Path2Auto.fromJson(
-          {
-            ...base,
-            'startingPose': {
-              'position': {'x': 0, 'y': 0},
-              'rotation': double.infinity,
+        expect(
+          () => path2_auto.Path2Auto.fromJson(
+            {
+              ...base,
+              'startingPose': {
+                'position': {'x': 0, 'y': 0},
+                'rotation': double.infinity,
+              },
             },
-          },
-          'Bad',
-          '/autos',
-          fs,
-        ),
-        throwsFormatException,
-      );
-    });
+            'Bad',
+            '/autos',
+            fs,
+          ),
+          throwsFormatException,
+        );
+      },
+    );
 
-    test('cleanly rejects 2027.0 command autos and accepts future versions',
-        () {
-      final base = validJson();
-      expect(
-        () => path2_auto.Path2Auto.fromJson(
-          {
-            'version': '2027.0',
-            'command': {
-              'type': 'sequential',
-              'data': {'commands': []}
+    test(
+      'cleanly rejects 2027.0 command autos and accepts future versions',
+      () {
+        final base = validJson();
+        expect(
+          () => path2_auto.Path2Auto.fromJson(
+            {
+              'version': '2027.0',
+              'command': {
+                'type': 'sequential',
+                'data': {'commands': []},
+              },
             },
-          },
-          'Legacy',
-          '/autos',
-          fs,
-        ),
-        throwsFormatException,
-      );
-      expect(
-        path2_auto.Path2Auto.fromJson(
-          {...base, 'version': '2030.2.0'},
-          'Future',
-          '/autos',
-          fs,
-        ).version,
-        '2030.2.0',
-      );
-    });
+            'Legacy',
+            '/autos',
+            fs,
+          ),
+          throwsFormatException,
+        );
+        expect(
+          path2_auto.Path2Auto.fromJson(
+            {...base, 'version': '2030.2.0'},
+            'Future',
+            '/autos',
+            fs,
+          ).version,
+          '2030.2.0',
+        );
+      },
+    );
   });
 
   group('auto files', () {
@@ -650,8 +629,8 @@ void main() {
 
     test('loads accepted future files without rewriting', () async {
       final future = auto(sourceVersion: '2031.3.0');
-      final source =
-          const JsonEncoder.withIndent('  ').convert(future.toJson());
+      final source = const JsonEncoder.withIndent('  ')
+          .convert(future.toJson());
       fs.file('/autos/Future.auto')
         ..createSync(recursive: true)
         ..writeAsStringSync(source);

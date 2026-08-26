@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/trajectory/config.dart';
@@ -26,15 +26,17 @@ void main() {
       robotConfig: RobotConfig.fromPrefs(prefs),
     );
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: TrajectoryRenderDialog(
-          fieldImage: FieldImage.defaultField,
-          prefs: prefs,
-          trajectory: trajectory,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TrajectoryRenderDialog(
+            fieldImage: FieldImage.defaultField,
+            prefs: prefs,
+            trajectory: trajectory,
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.tap(find.text('Light'));
     await widgetTester.pumpAndSettle();

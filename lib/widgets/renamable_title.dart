@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 class RenamableTitle extends StatelessWidget {
@@ -32,22 +32,20 @@ class RenamableTitle extends StatelessWidget {
         },
         style: textStyle ?? TextStyle(color: colorScheme.onSurface),
         controller: TextEditingController(text: title)
-          ..selection =
-              TextSelection.fromPosition(TextPosition(offset: title.length)),
+          ..selection = TextSelection.fromPosition(
+            TextPosition(offset: title.length),
+          ),
         decoration: InputDecoration(
           border: InputBorder.none,
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
-            borderSide: BorderSide(
-              color: colorScheme.outline,
-            ),
+            borderSide: BorderSide(color: colorScheme.outline),
           ),
           enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.transparent,
-            ),
+            borderSide: BorderSide(color: Colors.transparent),
           ),
-          contentPadding: contentPadding ??
+          contentPadding:
+              contentPadding ??
               const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         ),
         inputFormatters: [

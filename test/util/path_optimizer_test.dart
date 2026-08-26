@@ -48,15 +48,20 @@ void main() {
     );
 
     RobotConfig config = RobotConfig.fromPrefs(prefs);
-    num originalTime =
-        PathPlannerTrajectory(path: unoptimized, robotConfig: config)
-            .getTotalTimeSeconds();
+    num originalTime = PathPlannerTrajectory(
+      path: unoptimized,
+      robotConfig: config,
+    ).getTotalTimeSeconds();
 
     const fieldSize = Size(16.54, 8.21);
     const robotSize = Size(0.9, 0.9);
 
     final result = await PathOptimizer.optimizePath(
-        unoptimized, config, fieldSize, robotSize);
+      unoptimized,
+      config,
+      fieldSize,
+      robotSize,
+    );
     expect(result.runtime, isNonNegative);
     expect(result.runtime, isNotNaN);
     expect(result.runtime, lessThan(originalTime));

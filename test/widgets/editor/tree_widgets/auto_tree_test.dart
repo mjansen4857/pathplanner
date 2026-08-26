@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/auto_tree.dart';
@@ -20,30 +20,34 @@ void main() {
   });
 
   testWidgets('has simulated driving time', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AutoTree(
-          auto: auto,
-          undoStack: ChangeStack(),
-          allPathNames: const [],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AutoTree(
+            auto: auto,
+            undoStack: ChangeStack(),
+            allPathNames: const [],
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.textContaining('Simulated Driving Time'), findsOneWidget);
   });
 
   testWidgets('swap side button', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AutoTree(
-          auto: auto,
-          undoStack: ChangeStack(),
-          allPathNames: const [],
-          onSideSwapped: () => sideSwapped = true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AutoTree(
+            auto: auto,
+            undoStack: ChangeStack(),
+            allPathNames: const [],
+            onSideSwapped: () => sideSwapped = true,
+          ),
         ),
       ),
-    ));
+    );
 
     var btn = find.byTooltip('Move to Other Side');
 
@@ -55,29 +59,33 @@ void main() {
   });
 
   testWidgets('has command group', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AutoTree(
-          auto: auto,
-          undoStack: ChangeStack(),
-          allPathNames: const [],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AutoTree(
+            auto: auto,
+            undoStack: ChangeStack(),
+            allPathNames: const [],
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(CommandGroupWidget), findsWidgets);
   });
 
   testWidgets('has reset odom check', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AutoTree(
-          auto: auto,
-          undoStack: ChangeStack(),
-          allPathNames: const [],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AutoTree(
+            auto: auto,
+            undoStack: ChangeStack(),
+            allPathNames: const [],
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(ResetOdomTree), findsWidgets);
   });

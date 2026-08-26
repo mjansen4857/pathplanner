@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/editor_settings_tree.dart';
 import 'package:undo/undo.dart';
@@ -66,12 +66,7 @@ class _ChoreoPathTreeState extends State<ChoreoPathTree> {
         const SizedBox(height: 4.0),
         const Expanded(
           child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Divider(),
-                EditorSettingsTree(),
-              ],
-            ),
+            child: Column(children: [Divider(), EditorSettingsTree()]),
           ),
         ),
       ],

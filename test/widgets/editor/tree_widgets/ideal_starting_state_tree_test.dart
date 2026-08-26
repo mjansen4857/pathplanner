@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/ideal_starting_state.dart';
@@ -19,24 +19,28 @@ void main() {
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
-    path.idealStartingState =
-        IdealStartingState(1.0, Rotation2d.fromDegrees(45));
+    path.idealStartingState = IdealStartingState(
+      1.0,
+      Rotation2d.fromDegrees(45),
+    );
     path.previewStartingStateExpanded = true;
     pathChanged = false;
   });
 
   testWidgets('tapping expands/collapses tree', (widgetTester) async {
     path.previewStartingStateExpanded = false;
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: IdealStartingStateTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          undoStack: undoStack,
-          holonomicMode: true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: IdealStartingStateTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            undoStack: undoStack,
+            holonomicMode: true,
+          ),
         ),
       ),
-    ));
+    );
 
     // Tree initially collapsed, expect to find nothing
     expect(find.byType(NumberTextField), findsNothing);
@@ -46,23 +50,26 @@ void main() {
 
     expect(find.byType(NumberTextField), findsWidgets);
 
-    await widgetTester.tap(find.text(
-        'Ideal Starting State')); // Use text so it doesn't tap middle of expanded card
+    await widgetTester.tap(
+      find.text('Ideal Starting State'),
+    ); // Use text so it doesn't tap middle of expanded card
     await widgetTester.pumpAndSettle();
     expect(find.byType(NumberTextField), findsNothing);
   });
 
   testWidgets('velocity text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: IdealStartingStateTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          undoStack: undoStack,
-          holonomicMode: true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: IdealStartingStateTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            undoStack: undoStack,
+            holonomicMode: true,
+          ),
         ),
       ),
-    ));
+    );
 
     final textField = find.widgetWithText(NumberTextField, 'Velocity (M/S)');
 
@@ -81,16 +88,18 @@ void main() {
   });
 
   testWidgets('rotation text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: IdealStartingStateTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          undoStack: undoStack,
-          holonomicMode: true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: IdealStartingStateTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            undoStack: undoStack,
+            holonomicMode: true,
+          ),
         ),
       ),
-    ));
+    );
 
     final textField = find.widgetWithText(NumberTextField, 'Rotation (Deg)');
 

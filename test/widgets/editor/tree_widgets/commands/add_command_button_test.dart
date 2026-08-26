@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 
@@ -6,14 +6,16 @@ void main() {
   testWidgets('button dropdown works', (widgetTester) async {
     String? chosenType;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AddCommandButton(
-          onTypeChosen: (type) => chosenType = type,
-          allowPathCommand: true,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AddCommandButton(
+            onTypeChosen: (type) => chosenType = type,
+            allowPathCommand: true,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byTooltip('Add Command'), findsOneWidget);
 

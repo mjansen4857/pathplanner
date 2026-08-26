@@ -23,8 +23,9 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        sequence:
-            SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        sequence: SequentialCommandGroup(
+          commands: [WaitCommand(waitTime: 1.0)],
+        ),
         resetOdom: true,
         folder: null,
         choreoAuto: false,
@@ -33,8 +34,9 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        sequence:
-            SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        sequence: SequentialCommandGroup(
+          commands: [WaitCommand(waitTime: 1.0)],
+        ),
         resetOdom: true,
         folder: null,
         choreoAuto: false,
@@ -62,16 +64,21 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        sequence:
-            SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        sequence: SequentialCommandGroup(
+          commands: [WaitCommand(waitTime: 1.0)],
+        ),
         resetOdom: true,
         folder: null,
         choreoAuto: false,
       );
 
       Map<String, dynamic> json = auto.toJson();
-      PathPlannerAuto fromJson =
-          PathPlannerAuto.fromJson(json, auto.name, '/autos', fs);
+      PathPlannerAuto fromJson = PathPlannerAuto.fromJson(
+        json,
+        auto.name,
+        '/autos',
+        fs,
+      );
 
       expect(fromJson, auto);
     });
@@ -83,8 +90,9 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        sequence:
-            SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        sequence: SequentialCommandGroup(
+          commands: [WaitCommand(waitTime: 1.0)],
+        ),
         resetOdom: true,
         folder: null,
         choreoAuto: false,
@@ -110,11 +118,7 @@ void main() {
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
-          SequentialCommandGroup(
-            commands: [
-              PathCommand(pathName: 'path2'),
-            ],
-          ),
+          SequentialCommandGroup(commands: [PathCommand(pathName: 'path2')]),
           PathCommand(pathName: 'path3'),
         ],
       ),
@@ -123,7 +127,9 @@ void main() {
     );
 
     expect(
-        listEquals(auto.getAllPathNames(), ['path1', 'path2', 'path3']), true);
+      listEquals(auto.getAllPathNames(), ['path1', 'path2', 'path3']),
+      true,
+    );
   });
 
   test('hasEmptyPathCommands', () {
@@ -137,11 +143,7 @@ void main() {
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
-          SequentialCommandGroup(
-            commands: [
-              PathCommand(pathName: 'path2'),
-            ],
-          ),
+          SequentialCommandGroup(commands: [PathCommand(pathName: 'path2')]),
           PathCommand(pathName: 'path3'),
         ],
       ),
@@ -159,11 +161,7 @@ void main() {
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
-          SequentialCommandGroup(
-            commands: [
-              PathCommand(),
-            ],
-          ),
+          SequentialCommandGroup(commands: [PathCommand()]),
           PathCommand(pathName: 'path3'),
         ],
       ),
@@ -185,11 +183,7 @@ void main() {
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
-          SequentialCommandGroup(
-            commands: [
-              PathCommand(pathName: 'path2'),
-            ],
-          ),
+          SequentialCommandGroup(commands: [PathCommand(pathName: 'path2')]),
           PathCommand(pathName: 'path3'),
         ],
       ),
@@ -217,11 +211,7 @@ void main() {
       folder: null,
       sequence: SequentialCommandGroup(
         commands: [
-          SequentialCommandGroup(
-            commands: [
-              NamedCommand(),
-            ],
-          ),
+          SequentialCommandGroup(commands: [NamedCommand()]),
         ],
       ),
       resetOdom: true,
@@ -245,11 +235,7 @@ void main() {
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
-          SequentialCommandGroup(
-            commands: [
-              PathCommand(pathName: 'path2'),
-            ],
-          ),
+          SequentialCommandGroup(commands: [PathCommand(pathName: 'path2')]),
           PathCommand(pathName: 'path3'),
         ],
       ),
@@ -261,20 +247,22 @@ void main() {
 
     expect((auto.sequence.commands[0] as PathCommand).pathName, 'updated1');
     expect(
-        ((auto.sequence.commands[1] as SequentialCommandGroup).commands[0]
-                as PathCommand)
-            .pathName,
-        'path2');
+      ((auto.sequence.commands[1] as SequentialCommandGroup).commands[0]
+              as PathCommand)
+          .pathName,
+      'path2',
+    );
     expect((auto.sequence.commands[2] as PathCommand).pathName, 'path3');
 
     auto.updatePathName('path2', 'updated2');
 
     expect((auto.sequence.commands[0] as PathCommand).pathName, 'updated1');
     expect(
-        ((auto.sequence.commands[1] as SequentialCommandGroup).commands[0]
-                as PathCommand)
-            .pathName,
-        'updated2');
+      ((auto.sequence.commands[1] as SequentialCommandGroup).commands[0]
+              as PathCommand)
+          .pathName,
+      'updated2',
+    );
     expect((auto.sequence.commands[2] as PathCommand).pathName, 'path3');
   });
 
@@ -282,17 +270,23 @@ void main() {
     late MemoryFileSystem fs;
     final String autosPath = Platform.isWindows ? 'C:\\autos' : '/autos';
 
-    setUp(() => fs = MemoryFileSystem(
+    setUp(
+      () => fs = MemoryFileSystem(
         style: Platform.isWindows
             ? FileSystemStyle.windows
-            : FileSystemStyle.posix));
+            : FileSystemStyle.posix,
+      ),
+    );
 
     test('rename', () {
       Directory autoDir = fs.directory(autosPath);
       fs.file(join(autoDir.path, 'test.auto')).createSync(recursive: true);
 
       PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
-          name: 'test', autoDir: autoDir.path, fs: fs);
+        name: 'test',
+        autoDir: autoDir.path,
+        fs: fs,
+      );
 
       auto.rename('renamed');
 
@@ -306,7 +300,10 @@ void main() {
       fs.file(join(autoDir.path, 'test.auto')).createSync(recursive: true);
 
       PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
-          name: 'test', autoDir: autoDir.path, fs: fs);
+        name: 'test',
+        autoDir: autoDir.path,
+        fs: fs,
+      );
 
       auto.delete();
 
@@ -318,9 +315,15 @@ void main() {
       autoDir.createSync(recursive: true);
 
       PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
-          name: 'test1', autoDir: autoDir.path, fs: fs);
+        name: 'test1',
+        autoDir: autoDir.path,
+        fs: fs,
+      );
       PathPlannerAuto auto2 = PathPlannerAuto.defaultAuto(
-          name: 'test2', autoDir: autoDir.path, fs: fs);
+        name: 'test2',
+        autoDir: autoDir.path,
+        fs: fs,
+      );
       auto2.sequence.commands.add(WaitCommand(waitTime: 0.5));
 
       fs
@@ -330,8 +333,10 @@ void main() {
           .file(join(autoDir.path, 'test2.auto'))
           .writeAsStringSync(jsonEncode(auto2.toJson()));
 
-      List<PathPlannerAuto> loaded =
-          await PathPlannerAuto.loadAllAutosInDir(autoDir.path, fs);
+      List<PathPlannerAuto> loaded = await PathPlannerAuto.loadAllAutosInDir(
+        autoDir.path,
+        fs,
+      );
 
       expect(loaded.length, 2);
 
@@ -374,9 +379,7 @@ void main() {
         fs: fs,
       );
       auto.sequence.commands.add(
-        SequentialCommandGroup(
-          commands: [NamedCommand(name: 'score')],
-        ),
+        SequentialCommandGroup(commands: [NamedCommand(name: 'score')]),
       );
       fs
           .file(join(autoDir.path, 'events.auto'))
@@ -392,7 +395,10 @@ void main() {
       autoDir.createSync(recursive: true);
 
       PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
-          name: 'test', autoDir: autoDir.path, fs: fs);
+        name: 'test',
+        autoDir: autoDir.path,
+        fs: fs,
+      );
       auto.sequence.commands.add(WaitCommand(waitTime: 1.0));
 
       auto.saveFile();
@@ -403,7 +409,9 @@ void main() {
       String fileContent = autoFile.readAsStringSync();
       Map<String, dynamic> fileJson = jsonDecode(fileContent);
       expect(
-          const DeepCollectionEquality().equals(fileJson, auto.toJson()), true);
+        const DeepCollectionEquality().equals(fileJson, auto.toJson()),
+        true,
+      );
     });
   });
 }

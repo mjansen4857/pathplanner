@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/robot_features/feature.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
@@ -72,8 +72,9 @@ class TrajectoryPainter extends CustomPainter {
   }) {
     robotConfig = RobotConfig.fromPrefs(prefs);
 
-    for (String featureJson in prefs.getStringList(PrefsKeys.robotFeatures) ??
-        Defaults.robotFeatures) {
+    for (String featureJson
+        in prefs.getStringList(PrefsKeys.robotFeatures) ??
+            Defaults.robotFeatures) {
       try {
         robotFeatures.add(Feature.fromJson(jsonDecode(featureJson))!);
       } catch (_) {
@@ -87,36 +88,43 @@ class TrajectoryPainter extends CustomPainter {
     scale = size.width / fieldImage.defaultSize.width;
 
     _paintTrajectory(
-        trajectory,
-        canvas,
-        colorScheme.brightness == Brightness.dark
-            ? colorScheme.secondary
-            : colorScheme.primary);
+      trajectory,
+      canvas,
+      colorScheme.brightness == Brightness.dark
+          ? colorScheme.secondary
+          : colorScheme.primary,
+    );
 
     if (sampleTime == null) {
       // Paint start and end
       PathPainterUtil.paintRobotOutline(
-          Pose2d(trajectory.states.first.pose.translation,
-              trajectory.states.first.pose.rotation),
-          fieldImage,
-          robotConfig.bumperSize,
-          robotConfig.bumperOffset,
-          scale,
-          canvas,
-          Colors.green[700]!,
-          colorScheme.surfaceContainer,
-          robotFeatures);
+        Pose2d(
+          trajectory.states.first.pose.translation,
+          trajectory.states.first.pose.rotation,
+        ),
+        fieldImage,
+        robotConfig.bumperSize,
+        robotConfig.bumperOffset,
+        scale,
+        canvas,
+        Colors.green[700]!,
+        colorScheme.surfaceContainer,
+        robotFeatures,
+      );
       PathPainterUtil.paintRobotOutline(
-          Pose2d(trajectory.states.last.pose.translation,
-              trajectory.states.last.pose.rotation),
-          fieldImage,
-          robotConfig.bumperSize,
-          robotConfig.bumperOffset,
-          scale,
-          canvas,
-          Colors.red[700]!,
-          colorScheme.surfaceContainer,
-          robotFeatures);
+        Pose2d(
+          trajectory.states.last.pose.translation,
+          trajectory.states.last.pose.rotation,
+        ),
+        fieldImage,
+        robotConfig.bumperSize,
+        robotConfig.bumperOffset,
+        scale,
+        canvas,
+        Colors.red[700]!,
+        colorScheme.surfaceContainer,
+        robotFeatures,
+      );
     } else {
       TrajectoryState state = trajectory.sample(sampleTime!);
       Rotation2d rotation = state.pose.rotation;
@@ -127,44 +135,50 @@ class TrajectoryPainter extends CustomPainter {
         // between trajectory states
         List<Pose2d> modPoses = [
           Pose2d(
-              state.pose.translation +
-                  robotConfig.moduleLocations[0].rotateBy(rotation),
-              state.moduleStates[0].fieldAngle),
+            state.pose.translation +
+                robotConfig.moduleLocations[0].rotateBy(rotation),
+            state.moduleStates[0].fieldAngle,
+          ),
           Pose2d(
-              state.pose.translation +
-                  robotConfig.moduleLocations[1].rotateBy(rotation),
-              state.moduleStates[1].fieldAngle),
+            state.pose.translation +
+                robotConfig.moduleLocations[1].rotateBy(rotation),
+            state.moduleStates[1].fieldAngle,
+          ),
           Pose2d(
-              state.pose.translation +
-                  robotConfig.moduleLocations[2].rotateBy(rotation),
-              state.moduleStates[2].fieldAngle),
+            state.pose.translation +
+                robotConfig.moduleLocations[2].rotateBy(rotation),
+            state.moduleStates[2].fieldAngle,
+          ),
           Pose2d(
-              state.pose.translation +
-                  robotConfig.moduleLocations[3].rotateBy(rotation),
-              state.moduleStates[3].fieldAngle),
+            state.pose.translation +
+                robotConfig.moduleLocations[3].rotateBy(rotation),
+            state.moduleStates[3].fieldAngle,
+          ),
         ];
         PathPainterUtil.paintRobotModules(
-            modPoses,
-            fieldImage,
-            scale,
-            canvas,
-            colorScheme.brightness == Brightness.dark
-                ? colorScheme.primary
-                : colorScheme.secondary);
-      }
-
-      PathPainterUtil.paintRobotOutline(
-          Pose2d(state.pose.translation, rotation),
+          modPoses,
           fieldImage,
-          robotConfig.bumperSize,
-          robotConfig.bumperOffset,
           scale,
           canvas,
           colorScheme.brightness == Brightness.dark
               ? colorScheme.primary
               : colorScheme.secondary,
-          colorScheme.surfaceContainer,
-          robotFeatures);
+        );
+      }
+
+      PathPainterUtil.paintRobotOutline(
+        Pose2d(state.pose.translation, rotation),
+        fieldImage,
+        robotConfig.bumperSize,
+        robotConfig.bumperOffset,
+        scale,
+        canvas,
+        colorScheme.brightness == Brightness.dark
+            ? colorScheme.primary
+            : colorScheme.secondary,
+        colorScheme.surfaceContainer,
+        robotFeatures,
+      );
     }
   }
 
@@ -175,7 +189,10 @@ class TrajectoryPainter extends CustomPainter {
   }
 
   void _paintTrajectory(
-      PathPlannerTrajectory traj, Canvas canvas, Color baseColor) {
+    PathPlannerTrajectory traj,
+    Canvas canvas,
+    Color baseColor,
+  ) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = baseColor
@@ -184,12 +201,18 @@ class TrajectoryPainter extends CustomPainter {
     Path p = Path();
 
     Offset start = PathPainterUtil.pointToPixelOffset(
-        traj.states.first.pose.translation, scale, fieldImage);
+      traj.states.first.pose.translation,
+      scale,
+      fieldImage,
+    );
     p.moveTo(start.dx, start.dy);
 
     for (int i = 1; i < traj.states.length; i++) {
       Offset pos = PathPainterUtil.pointToPixelOffset(
-          traj.states[i].pose.translation, scale, fieldImage);
+        traj.states[i].pose.translation,
+        scale,
+        fieldImage,
+      );
 
       p.lineTo(pos.dx, pos.dy);
     }

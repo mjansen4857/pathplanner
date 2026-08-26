@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
@@ -70,7 +70,8 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
       widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ?? Defaults.bumperOffsetX,
       widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ?? Defaults.bumperOffsetY,
     );
-    final treeWeight = widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
+    final treeWeight =
+        widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
     _controller.areas = [
       Area(
@@ -143,7 +144,8 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 64),
               child: Center(
                 child: AspectRatio(
-                  aspectRatio: widget.fieldImage.defaultSize.width /
+                  aspectRatio:
+                      widget.fieldImage.defaultSize.width /
                       widget.fieldImage.defaultSize.height,
                   child: GestureDetector(
                     key: const ValueKey('path2AutoFieldGesture'),
@@ -233,9 +235,7 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
         }
       }
       if (resolved != null) {
-        occurrences.add(
-          Path2PaintPath(path: resolved, occurrenceId: node.id),
-        );
+        occurrences.add(Path2PaintPath(path: resolved, occurrenceId: node.id));
       }
     }
     // Duplicate auto nodes can reference the exact same path geometry. Paint
@@ -328,12 +328,16 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
         widget.fieldImage.defaultSize.height * Path2Painter.scale,
       ),
     );
-    final snapSetting = widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
+    final snapSetting =
+        widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
         Defaults.snapToGuidelines;
-    final ctrlHeld = HardwareKeyboard.instance.logicalKeysPressed
-            .contains(LogicalKeyboardKey.controlLeft) ||
-        HardwareKeyboard.instance.logicalKeysPressed
-            .contains(LogicalKeyboardKey.controlRight);
+    final ctrlHeld =
+        HardwareKeyboard.instance.logicalKeysPressed.contains(
+          LogicalKeyboardKey.controlLeft,
+        ) ||
+        HardwareKeyboard.instance.logicalKeysPressed.contains(
+          LogicalKeyboardKey.controlRight,
+        );
     if (snapSetting ^ ctrlHeld) {
       final waypointPositions = widget.allPaths
           .expand((path) => path.nodes)

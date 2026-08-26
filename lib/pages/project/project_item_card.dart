@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -128,11 +128,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.edit,
-                          size: 18,
-                          color: colorScheme.primary,
-                        ),
+                        Icon(Icons.edit, size: 18, color: colorScheme.primary),
                         const SizedBox(width: 4),
                         Text(
                           'Edit',
@@ -178,7 +174,9 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                                     duration: const Duration(milliseconds: 200),
                                     child: BackdropFilter(
                                       filter: ImageFilter.blur(
-                                          sigmaX: 5.0, sigmaY: 5.0),
+                                        sigmaX: 5.0,
+                                        sigmaY: 5.0,
+                                      ),
                                       child: Container(),
                                     ),
                                   ),
@@ -188,8 +186,9 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                                     child: AnimatedScale(
                                       scale: _hovering ? 1.0 : 0.0,
                                       curve: Curves.easeInOut,
-                                      duration:
-                                          const Duration(milliseconds: 200),
+                                      duration: const Duration(
+                                        milliseconds: 200,
+                                      ),
                                       child: Icon(
                                         Icons.edit,
                                         color: colorScheme.onSurface,
@@ -226,12 +225,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                     color: Colors.orange[300]!,
                     shadows: widget.compact
                         ? null
-                        : const [
-                            Shadow(
-                              offset: Offset(2, 2),
-                              blurRadius: 4,
-                            )
-                          ],
+                        : const [Shadow(offset: Offset(2, 2), blurRadius: 4)],
                   ),
                 ),
               ),
@@ -259,7 +253,8 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
           surfaceTintColor: colorScheme.surfaceTint,
           title: const Text('Delete File'),
           content: Text(
-              'Are you sure you want to delete the file: ${widget.name}? This cannot be undone.\n\nIf this is a path, any autos using it will have their reference to it removed.'),
+            'Are you sure you want to delete the file: ${widget.name}? This cannot be undone.\n\nIf this is a path, any autos using it will have their reference to it removed.',
+          ),
           actions: [
             TextButton(
               onPressed: () {

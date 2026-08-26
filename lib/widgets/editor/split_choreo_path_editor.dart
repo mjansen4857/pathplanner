@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -47,7 +47,8 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
 
-    double treeWeight = widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
+    double treeWeight =
+        widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
     _controller.areas = [
       Area(
@@ -114,8 +115,10 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
               double? newWeight = _treeOnRight
                   ? _controller.areas[1].weight
                   : _controller.areas[0].weight;
-              widget.prefs
-                  .setDouble(PrefsKeys.editorTreeWeight, newWeight ?? 0.5);
+              widget.prefs.setDouble(
+                PrefsKeys.editorTreeWeight,
+                newWeight ?? 0.5,
+              );
             },
             children: [
               if (_treeOnRight)
@@ -131,14 +134,18 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
                 surfaceTintColor: colorScheme.surfaceTint,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.only(
-                    topLeft:
-                        _treeOnRight ? const Radius.circular(12) : Radius.zero,
-                    topRight:
-                        _treeOnRight ? Radius.zero : const Radius.circular(12),
-                    bottomLeft:
-                        _treeOnRight ? const Radius.circular(12) : Radius.zero,
-                    bottomRight:
-                        _treeOnRight ? Radius.zero : const Radius.circular(12),
+                    topLeft: _treeOnRight
+                        ? const Radius.circular(12)
+                        : Radius.zero,
+                    topRight: _treeOnRight
+                        ? Radius.zero
+                        : const Radius.circular(12),
+                    bottomLeft: _treeOnRight
+                        ? const Radius.circular(12)
+                        : Radius.zero,
+                    bottomRight: _treeOnRight
+                        ? Radius.zero
+                        : const Radius.circular(12),
                   ),
                 ),
                 child: Padding(
@@ -156,14 +163,15 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
                     }),
                     onRenderPath: () {
                       showDialog(
-                          context: context,
-                          builder: (context) {
-                            return TrajectoryRenderDialog(
-                              fieldImage: widget.fieldImage,
-                              prefs: widget.prefs,
-                              trajectory: widget.path.trajectory,
-                            );
-                          });
+                        context: context,
+                        builder: (context) {
+                          return TrajectoryRenderDialog(
+                            fieldImage: widget.fieldImage,
+                            prefs: widget.prefs,
+                            trajectory: widget.path.trajectory,
+                          );
+                        },
+                      );
                     },
                   ),
                 ),
@@ -190,9 +198,9 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
         _previewController.stop();
         _previewController.reset();
         _previewController.duration = Duration(
-            milliseconds:
-                (widget.path.trajectory.states.last.timeSeconds * 1000)
-                    .toInt());
+          milliseconds: (widget.path.trajectory.states.last.timeSeconds * 1000)
+              .toInt(),
+        );
         _previewController.repeat();
       }
     }

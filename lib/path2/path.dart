@@ -26,8 +26,8 @@ class PathNode implements GraphNodeData {
     required this.waypoint,
     required this.editorPosition,
     EndTolerance? endTolerance,
-  })  : id = id ?? generateGraphId(),
-        endTolerance = endTolerance ?? EndTolerance() {
+  }) : id = id ?? generateGraphId(),
+       endTolerance = endTolerance ?? EndTolerance() {
     _validateId(this.id, 'Path node ID');
     validateFiniteOffset(editorPosition, 'editorPosition');
   }
@@ -48,18 +48,18 @@ class PathNode implements GraphNodeData {
   }
 
   PathNode clone() => PathNode(
-        id: id,
-        waypoint: waypoint.clone(),
-        editorPosition: editorPosition,
-        endTolerance: endTolerance.clone(),
-      );
+    id: id,
+    waypoint: waypoint.clone(),
+    editorPosition: editorPosition,
+    endTolerance: endTolerance.clone(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'waypoint': waypoint.toJson(),
-        'editorPosition': editorPositionToJson(editorPosition),
-        'endTolerance': endTolerance.toJson(),
-      };
+    'id': id,
+    'waypoint': waypoint.toJson(),
+    'editorPosition': editorPositionToJson(editorPosition),
+    'endTolerance': endTolerance.toJson(),
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -87,8 +87,8 @@ class PathBranch implements GraphBranchData {
     required this.sourceId,
     required this.targetId,
     PathTransition? transition,
-  })  : id = id ?? generateGraphId(),
-        transition = transition ?? DistanceTransition() {
+  }) : id = id ?? generateGraphId(),
+       transition = transition ?? DistanceTransition() {
     _validateId(this.id, 'Path branch ID');
     _validateId(sourceId, 'Path branch source ID');
     _validateId(targetId, 'Path branch target ID');
@@ -105,18 +105,18 @@ class PathBranch implements GraphBranchData {
   }
 
   PathBranch clone() => PathBranch(
-        id: id,
-        sourceId: sourceId,
-        targetId: targetId,
-        transition: transition.clone(),
-      );
+    id: id,
+    sourceId: sourceId,
+    targetId: targetId,
+    transition: transition.clone(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'sourceId': sourceId,
-        'targetId': targetId,
-        'transition': transition.toJson(),
-      };
+    'id': id,
+    'sourceId': sourceId,
+    'targetId': targetId,
+    'transition': transition.toJson(),
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -137,8 +137,8 @@ class PathGraphSnapshot {
   PathGraphSnapshot({
     required Iterable<PathNode> nodes,
     required Iterable<PathBranch> branches,
-  })  : nodes = [for (final node in nodes) node.clone()],
-        branches = [for (final branch in branches) branch.clone()];
+  }) : nodes = [for (final node in nodes) node.clone()],
+       branches = [for (final branch in branches) branch.clone()];
 }
 
 class Path {
@@ -254,7 +254,9 @@ class Path {
       return {};
     }
     return GraphAlgorithms.reverseReachableNodeIds<PathBranch>(
-        nodeId, branches);
+      nodeId,
+      branches,
+    );
   }
 
   /// Nodes reachable from the single root, or an empty set for a draft that
@@ -265,7 +267,9 @@ class Path {
       return {};
     }
     return GraphAlgorithms.reachableNodeIds<PathBranch>(
-        roots.single.id, branches);
+      roots.single.id,
+      branches,
+    );
   }
 
   GraphDiagnostics get diagnostics {
@@ -274,14 +278,19 @@ class Path {
     final configurationWarnings = <String>[];
 
     if (nodes.isNotEmpty && hardErrors.isEmpty) {
-      final roots =
-          GraphAlgorithms.roots<PathNode, PathBranch>(nodes, branches);
+      final roots = GraphAlgorithms.roots<PathNode, PathBranch>(
+        nodes,
+        branches,
+      );
       if (roots.length != 1) {
         draftWarnings.add(
-            'Path must have exactly one start node; found ${roots.length}');
+          'Path must have exactly one start node; found ${roots.length}',
+        );
       } else {
         final reachable = GraphAlgorithms.reachableNodeIds<PathBranch>(
-            roots.single.id, branches);
+          roots.single.id,
+          branches,
+        );
         if (reachable.length != nodes.length) {
           draftWarnings.add('Some path nodes are unreachable from the start');
         }
@@ -293,8 +302,9 @@ class Path {
       if (transition is ConditionTransition &&
           (transition.conditionName == null ||
               transition.conditionName!.trim().isEmpty)) {
-        configurationWarnings
-            .add('Branch ${branch.id} has no condition selected');
+        configurationWarnings.add(
+          'Branch ${branch.id} has no condition selected',
+        );
       }
     }
 
@@ -312,7 +322,10 @@ class Path {
       return false;
     }
     return !GraphAlgorithms.wouldCreateCycle<PathBranch>(
-        sourceId, targetId, branches);
+      sourceId,
+      targetId,
+      branches,
+    );
   }
 
   bool addNode(PathNode node) {
@@ -361,7 +374,7 @@ class Path {
   void restoreGraph(PathGraphSnapshot snapshot) {
     final restoredNodes = [for (final node in snapshot.nodes) node.clone()];
     final restoredBranches = [
-      for (final branch in snapshot.branches) branch.clone()
+      for (final branch in snapshot.branches) branch.clone(),
     ];
     final errors = _hardGraphErrors(restoredNodes, restoredBranches);
     if (errors.isNotEmpty) {
@@ -373,11 +386,11 @@ class Path {
   }
 
   List<String> getAllConditionNames() => [
-        for (final branch in branches)
-          if (branch.transition case ConditionTransition(:final conditionName)
-              when conditionName != null && conditionName.trim().isNotEmpty)
-            conditionName,
-      ];
+    for (final branch in branches)
+      if (branch.transition case ConditionTransition(:final conditionName)
+          when conditionName != null && conditionName.trim().isNotEmpty)
+        conditionName,
+  ];
 
   bool updateConditionName(String oldName, String? newName) {
     var changed = false;
@@ -398,7 +411,8 @@ class Path {
     final graphDiagnostics = diagnostics;
     if (graphDiagnostics.hasHardErrors) {
       throw FormatException(
-          'Invalid path graph: ${graphDiagnostics.hardErrors.join('; ')}');
+        'Invalid path graph: ${graphDiagnostics.hardErrors.join('; ')}',
+      );
     }
     return {
       'version': sourceVersion,
@@ -481,19 +495,19 @@ class Path {
   }
 
   Path duplicate(String newName) => Path(
-        name: newName,
-        nodes: [for (final node in nodes) node.clone()],
-        branches: [for (final branch in branches) branch.clone()],
-        fs: fs,
-        pathDir: pathDir,
-        folder: folder,
-        sourceVersion: sourceVersion,
-      );
+    name: newName,
+    nodes: [for (final node in nodes) node.clone()],
+    branches: [for (final branch in branches) branch.clone()],
+    fs: fs,
+    pathDir: pathDir,
+    folder: folder,
+    sourceVersion: sourceVersion,
+  );
 
   Set<String> get _allIds => {
-        for (final node in nodes) node.id,
-        for (final branch in branches) branch.id,
-      };
+    for (final node in nodes) node.id,
+    for (final branch in branches) branch.id,
+  };
 
   void _collectConditionNames() {
     for (final branch in branches) {
@@ -512,12 +526,12 @@ class Path {
 
   @override
   int get hashCode => Object.hash(
-        name,
-        const ListEquality<PathNode>().hash(nodes),
-        const ListEquality<PathBranch>().hash(branches),
-        folder,
-        sourceVersion,
-      );
+    name,
+    const ListEquality<PathNode>().hash(nodes),
+    const ListEquality<PathBranch>().hash(branches),
+    folder,
+    sourceVersion,
+  );
 
   static String _validatedSourceVersion(Object? value) {
     if (value is! String) {
@@ -531,16 +545,14 @@ class Path {
     }
     if (parsed < _minimumFileVersion) {
       throw FormatException(
-          'Path version $value is older than the minimum $fileVersion');
+        'Path version $value is older than the minimum $fileVersion',
+      );
     }
     return value;
   }
 }
 
-List<String> _hardGraphErrors(
-  List<PathNode> nodes,
-  List<PathBranch> branches,
-) {
+List<String> _hardGraphErrors(List<PathNode> nodes, List<PathBranch> branches) {
   final errors = <String>[];
   if (nodes.isEmpty) {
     errors.add('A path must have at least one node');
@@ -567,11 +579,13 @@ List<String> _hardGraphErrors(
     }
     if (!nodeIds.contains(branch.sourceId)) {
       errors.add(
-          'Branch ${branch.id} references missing source ${branch.sourceId}');
+        'Branch ${branch.id} references missing source ${branch.sourceId}',
+      );
     }
     if (!nodeIds.contains(branch.targetId)) {
       errors.add(
-          'Branch ${branch.id} references missing target ${branch.targetId}');
+        'Branch ${branch.id} references missing target ${branch.targetId}',
+      );
     }
     if (branch.sourceId == branch.targetId) {
       errors.add('Branch ${branch.id} is a self-link');
@@ -646,11 +660,7 @@ List<PathBranch> _branchesFromJson(Object? value) {
   return [for (final item in value) PathBranch.fromJson(item)];
 }
 
-String _requiredId(
-  Map<String, dynamic> json,
-  String key,
-  String label,
-) {
+String _requiredId(Map<String, dynamic> json, String key, String label) {
   final value = json[key];
   if (value is! String || value.trim().isEmpty) {
     throw FormatException('$label must be a nonempty string');

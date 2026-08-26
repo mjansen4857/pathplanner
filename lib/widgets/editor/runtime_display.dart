@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class RuntimeDisplay extends StatelessWidget {
   final num? currentRuntime;
@@ -24,10 +24,10 @@ class RuntimeDisplay extends StatelessWidget {
       message: isShortened
           ? 'Path time decreased by ~${difference.abs().toStringAsFixed(2)}s'
           : isNoSignificantChange
-              ? 'Path time changed by less than 0.05s'
-              : isMinorIncrease
-                  ? 'Path time slightly increased by ~${difference.abs().toStringAsFixed(2)}s'
-                  : 'Path time increased by ~${difference.abs().toStringAsFixed(2)}s',
+          ? 'Path time changed by less than 0.05s'
+          : isMinorIncrease
+          ? 'Path time slightly increased by ~${difference.abs().toStringAsFixed(2)}s'
+          : 'Path time increased by ~${difference.abs().toStringAsFixed(2)}s',
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
@@ -36,19 +36,19 @@ class RuntimeDisplay extends StatelessWidget {
           color: isNoSignificantChange
               ? Colors.grey[100]
               : isShortened
-                  ? Colors.green[100]
-                  : isMinorIncrease
-                      ? Colors.orange[100]
-                      : Colors.red[100],
+              ? Colors.green[100]
+              : isMinorIncrease
+              ? Colors.orange[100]
+              : Colors.red[100],
           borderRadius: BorderRadius.circular(4.0),
           border: Border.all(
             color: isNoSignificantChange
                 ? Colors.grey[300]!
                 : isShortened
-                    ? Colors.green[200]!
-                    : isMinorIncrease
-                        ? Colors.orange[200]!
-                        : Colors.red[200]!,
+                ? Colors.green[200]!
+                : isMinorIncrease
+                ? Colors.orange[200]!
+                : Colors.red[200]!,
             width: 1.0,
           ),
         ),
@@ -69,10 +69,10 @@ class RuntimeDisplay extends StatelessWidget {
                     color: isNoSignificantChange
                         ? Colors.grey[800]
                         : isShortened
-                            ? Colors.green[800]
-                            : isMinorIncrease
-                                ? Colors.orange[800]
-                                : Colors.red[800],
+                        ? Colors.green[800]
+                        : isMinorIncrease
+                        ? Colors.orange[800]
+                        : Colors.red[800],
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -85,8 +85,8 @@ class RuntimeDisplay extends StatelessWidget {
                       color: isShortened
                           ? Colors.green[700]
                           : isMinorIncrease
-                              ? Colors.orange[700]
-                              : Colors.red[700],
+                          ? Colors.orange[700]
+                          : Colors.red[700],
                     ),
                   ),
                 ],
@@ -94,26 +94,28 @@ class RuntimeDisplay extends StatelessWidget {
                   AnimatedSlide(
                     duration: const Duration(milliseconds: 500),
                     curve: isShortened
-                        ? Curves.easeOut // Slide down
+                        ? Curves
+                              .easeOut // Slide down
                         : isMinorIncrease
-                            ? Curves.easeInOut // Slide right
-                            : Curves.bounceOut, // Bounce up
+                        ? Curves
+                              .easeInOut // Slide right
+                        : Curves.bounceOut, // Bounce up
                     offset: isShortened
                         ? const Offset(0, 0.1) // Slide down
                         : isMinorIncrease
-                            ? const Offset(0.1, 0) // Slide right
-                            : const Offset(0, -0.1), // Bounce up
+                        ? const Offset(0.1, 0) // Slide right
+                        : const Offset(0, -0.1), // Bounce up
                     child: Icon(
                       isShortened
                           ? Icons.arrow_downward
                           : isMinorIncrease
-                              ? Icons.arrow_forward
-                              : Icons.arrow_upward,
+                          ? Icons.arrow_forward
+                          : Icons.arrow_upward,
                       color: isShortened
                           ? Colors.green[700]
                           : isMinorIncrease
-                              ? Colors.orange[700]
-                              : Colors.red[700],
+                          ? Colors.orange[700]
+                          : Colors.red[700],
                       size: 16.0,
                     ),
                   ),

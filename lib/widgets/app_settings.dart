@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:path/path.dart';
@@ -10,6 +10,7 @@ import 'package:pathplanner/widgets/dialogs/edit_field_dialog.dart';
 import 'package:pathplanner/widgets/dialogs/import_field_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
+import 'package:pathplanner/widgets/legacy_material_bridge.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -49,26 +50,31 @@ class _AppSettingsState extends State<AppSettings> {
   void initState() {
     super.initState();
 
-    _defaultMaxVel = widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
+    _defaultMaxVel =
+        widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
         Defaults.defaultMaxVel;
-    _defaultMaxAccel = widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
+    _defaultMaxAccel =
+        widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
         Defaults.defaultMaxAccel;
-    _defaultMaxAngVel = widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
+    _defaultMaxAngVel =
+        widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
         Defaults.defaultMaxAngVel;
     _defaultMaxAngAccel =
         widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
-            Defaults.defaultMaxAngAccel;
+        Defaults.defaultMaxAngAccel;
     _defaultNominalVoltage =
         widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ??
-            Defaults.defaultNominalVoltage;
+        Defaults.defaultNominalVoltage;
     // PathPlanner's active editor only supports swerve robots. Keep this
     // compatibility preference normalized because robot-side settings readers
     // still expect the key to be present.
     widget.prefs.setBool(PrefsKeys.holonomicMode, true);
     _selectedField = widget.selectedField;
-    _teamColor =
-        Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
-    _pplibClientHost = widget.prefs.getString(PrefsKeys.ntServerAddress) ??
+    _teamColor = Color(
+      widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor,
+    );
+    _pplibClientHost =
+        widget.prefs.getString(PrefsKeys.ntServerAddress) ??
         Defaults.ntServerAddress;
   }
 
@@ -90,8 +96,10 @@ class _AppSettingsState extends State<AppSettings> {
                   minValue: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
-                      widget.prefs
-                          .setDouble(PrefsKeys.defaultMaxVel, value.toDouble());
+                      widget.prefs.setDouble(
+                        PrefsKeys.defaultMaxVel,
+                        value.toDouble(),
+                      );
                       setState(() {
                         _defaultMaxVel = value;
                       });
@@ -109,7 +117,9 @@ class _AppSettingsState extends State<AppSettings> {
                   onSubmitted: (value) {
                     if (value != null) {
                       widget.prefs.setDouble(
-                          PrefsKeys.defaultMaxAccel, value.toDouble());
+                        PrefsKeys.defaultMaxAccel,
+                        value.toDouble(),
+                      );
                       setState(() {
                         _defaultMaxAccel = value;
                       });
@@ -133,7 +143,9 @@ class _AppSettingsState extends State<AppSettings> {
                       onSubmitted: (value) {
                         if (value != null) {
                           widget.prefs.setDouble(
-                              PrefsKeys.defaultMaxAngVel, value.toDouble());
+                            PrefsKeys.defaultMaxAngVel,
+                            value.toDouble(),
+                          );
                           setState(() {
                             _defaultMaxAngVel = value;
                           });
@@ -151,7 +163,9 @@ class _AppSettingsState extends State<AppSettings> {
                       onSubmitted: (value) {
                         if (value != null) {
                           widget.prefs.setDouble(
-                              PrefsKeys.defaultMaxAngAccel, value.toDouble());
+                            PrefsKeys.defaultMaxAngAccel,
+                            value.toDouble(),
+                          );
                           setState(() {
                             _defaultMaxAngAccel = value;
                           });
@@ -179,8 +193,9 @@ class _AppSettingsState extends State<AppSettings> {
                       onSubmitted: (value) {
                         if (value != null) {
                           widget.prefs.setDouble(
-                              PrefsKeys.defaultNominalVoltage,
-                              value.toDouble());
+                            PrefsKeys.defaultNominalVoltage,
+                            value.toDouble(),
+                          );
                           setState(() {
                             _defaultNominalVoltage = value;
                           });
@@ -221,8 +236,10 @@ class _AppSettingsState extends State<AppSettings> {
                         try {
                           Uri.parseIPv4Address(value);
 
-                          widget.prefs
-                              .setString(PrefsKeys.ntServerAddress, value);
+                          widget.prefs.setString(
+                            PrefsKeys.ntServerAddress,
+                            value,
+                          );
                           setState(() {
                             _pplibClientHost = value;
                           });
@@ -245,16 +262,18 @@ class _AppSettingsState extends State<AppSettings> {
   }
 
   Widget _buildTextField(
-      BuildContext context,
-      String label,
-      ValueChanged<String>? onSubmitted,
-      String text,
-      TextInputFormatter? formatter) {
+    BuildContext context,
+    String label,
+    ValueChanged<String>? onSubmitted,
+    String text,
+    TextInputFormatter? formatter,
+  ) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     final controller = TextEditingController(text: text)
-      ..selection =
-          TextSelection.fromPosition(TextPosition(offset: text.length));
+      ..selection = TextSelection.fromPosition(
+        TextPosition(offset: text.length),
+      );
 
     return SizedBox(
       height: 42,
@@ -269,9 +288,7 @@ class _AppSettingsState extends State<AppSettings> {
         },
         child: TextField(
           controller: controller,
-          inputFormatters: [
-            if (formatter != null) formatter,
-          ],
+          inputFormatters: [if (formatter != null) formatter],
           style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
@@ -309,8 +326,10 @@ class _AppSettingsState extends State<AppSettings> {
                     isExpanded: true,
                     underline: Container(),
                     icon: const Icon(Icons.arrow_drop_down),
-                    style:
-                        TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colorScheme.onSurface,
+                    ),
                     onChanged: (FieldImage? newValue) {
                       if (newValue != null) {
                         setState(() {
@@ -322,8 +341,9 @@ class _AppSettingsState extends State<AppSettings> {
                       }
                     },
                     items: [
-                      ...widget.fieldImages.map<DropdownMenuItem<FieldImage>>(
-                          (FieldImage value) {
+                      ...widget.fieldImages.map<DropdownMenuItem<FieldImage>>((
+                        FieldImage value,
+                      ) {
                         return DropdownMenuItem<FieldImage>(
                           value: value,
                           child: Text(value.name),
@@ -332,7 +352,7 @@ class _AppSettingsState extends State<AppSettings> {
                       const DropdownMenuItem<FieldImage?>(
                         value: null,
                         child: Text('Import Custom...'),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -347,10 +367,11 @@ class _AppSettingsState extends State<AppSettings> {
               ElevatedButton(
                 onPressed: () {
                   showDialog(
-                      context: context,
-                      builder: (context) {
-                        return EditFieldDialog(fieldImage: _selectedField);
-                      });
+                    context: context,
+                    builder: (context) {
+                      return EditFieldDialog(fieldImage: _selectedField);
+                    },
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   fixedSize: const Size(80, 24),
@@ -365,39 +386,46 @@ class _AppSettingsState extends State<AppSettings> {
               ElevatedButton(
                 onPressed: () {
                   showDialog(
-                      context: context,
-                      builder: (context) {
-                        ColorScheme colorScheme = Theme.of(context).colorScheme;
-                        return AlertDialog(
-                          backgroundColor: colorScheme.surface,
-                          surfaceTintColor: colorScheme.surfaceTint,
-                          title: const Text('Delete Custom Field Image'),
-                          content: Text(
-                              'Are you sure you want to delete the custom field "${_selectedField.name}"? This cannot be undone.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () async {
-                                Navigator.of(context).pop();
+                    context: context,
+                    builder: (context) {
+                      ColorScheme colorScheme = Theme.of(context).colorScheme;
+                      return AlertDialog(
+                        backgroundColor: colorScheme.surface,
+                        surfaceTintColor: colorScheme.surfaceTint,
+                        title: const Text('Delete Custom Field Image'),
+                        content: Text(
+                          'Are you sure you want to delete the custom field "${_selectedField.name}"? This cannot be undone.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () async {
+                              Navigator.of(context).pop();
 
-                                Directory appDir =
-                                    await getApplicationSupportDirectory();
-                                Directory imagesDir = Directory(
-                                    join(appDir.path, 'custom_fields'));
-                                File imageFile = File(join(imagesDir.path,
-                                    '${_selectedField.name}_${_selectedField.pixelsPerMeter.toStringAsFixed(2)}.${_selectedField.extension}'));
+                              Directory appDir =
+                                  await getApplicationSupportDirectory();
+                              Directory imagesDir = Directory(
+                                join(appDir.path, 'custom_fields'),
+                              );
+                              File imageFile = File(
+                                join(
+                                  imagesDir.path,
+                                  '${_selectedField.name}_${_selectedField.pixelsPerMeter.toStringAsFixed(2)}.${_selectedField.extension}',
+                                ),
+                              );
 
-                                await imageFile.delete();
-                                widget.fieldImages.remove(_selectedField);
-                                setState(() {
-                                  _selectedField = FieldImage.defaultField;
-                                });
-                                widget.onFieldSelected(FieldImage.defaultField);
-                              },
-                              child: const Text('Confirm'),
-                            ),
-                          ],
-                        );
-                      });
+                              await imageFile.delete();
+                              widget.fieldImages.remove(_selectedField);
+                              setState(() {
+                                _selectedField = FieldImage.defaultField;
+                              });
+                              widget.onFieldSelected(FieldImage.defaultField);
+                            },
+                            child: const Text('Confirm'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   fixedSize: const Size(80, 24),
@@ -440,16 +468,18 @@ class _AppSettingsState extends State<AppSettings> {
                       content: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4.0),
                         child: SingleChildScrollView(
-                          child: ColorPicker(
-                            pickerColor: _teamColor,
-                            enableAlpha: false,
-                            hexInputBar: true,
-                            onColorChanged: (Color color) {
-                              setState(() {
-                                _teamColor = color;
-                              });
-                              widget.onTeamColorChanged(_teamColor);
-                            },
+                          child: LegacyMaterialBridge(
+                            child: ColorPicker(
+                              pickerColor: _teamColor,
+                              enableAlpha: false,
+                              hexInputBar: true,
+                              onColorChanged: (Color color) {
+                                setState(() {
+                                  _teamColor = color;
+                                });
+                                widget.onTeamColorChanged(_teamColor);
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -490,52 +520,56 @@ class _AppSettingsState extends State<AppSettings> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return ImportFieldDialog(onImport:
-            (String name, double pixelsPerMeter, File imageFile) async {
-          for (FieldImage image in widget.fieldImages) {
-            if (image.name == name) {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  ColorScheme colorScheme = Theme.of(context).colorScheme;
-                  return KeyBoardShortcuts(
-                    keysToPress: {LogicalKeyboardKey.enter},
-                    onKeysPressed: () => Navigator.of(context).pop(),
-                    child: AlertDialog(
-                      backgroundColor: colorScheme.surface,
-                      surfaceTintColor: colorScheme.surfaceTint,
-                      title: const Text('Failed to Import Field'),
-                      content:
-                          Text('Field with the name "$name" already exists.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('OK'),
+        return ImportFieldDialog(
+          onImport: (String name, double pixelsPerMeter, File imageFile) async {
+            for (FieldImage image in widget.fieldImages) {
+              if (image.name == name) {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    ColorScheme colorScheme = Theme.of(context).colorScheme;
+                    return KeyBoardShortcuts(
+                      keysToPress: {LogicalKeyboardKey.enter},
+                      onKeysPressed: () => Navigator.of(context).pop(),
+                      child: AlertDialog(
+                        backgroundColor: colorScheme.surface,
+                        surfaceTintColor: colorScheme.surfaceTint,
+                        title: const Text('Failed to Import Field'),
+                        content: Text(
+                          'Field with the name "$name" already exists.',
                         ),
-                      ],
-                    ),
-                  );
-                },
-              );
-              return;
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+                return;
+              }
             }
-          }
 
-          Directory appDir = await getApplicationSupportDirectory();
-          Directory imagesDir = Directory(join(appDir.path, 'custom_fields'));
+            Directory appDir = await getApplicationSupportDirectory();
+            Directory imagesDir = Directory(join(appDir.path, 'custom_fields'));
 
-          imagesDir.createSync(recursive: true);
+            imagesDir.createSync(recursive: true);
 
-          String imageExtension = imageFile.path.split('.').last;
-          String importedPath = join(imagesDir.path,
-              '${name}_${pixelsPerMeter.toStringAsFixed(2)}.$imageExtension');
+            String imageExtension = imageFile.path.split('.').last;
+            String importedPath = join(
+              imagesDir.path,
+              '${name}_${pixelsPerMeter.toStringAsFixed(2)}.$imageExtension',
+            );
 
-          await imageFile.copy(importedPath);
+            await imageFile.copy(importedPath);
 
-          FieldImage newField = FieldImage.custom(File(importedPath));
+            FieldImage newField = FieldImage.custom(File(importedPath));
 
-          widget.onFieldSelected(newField);
-        });
+            widget.onFieldSelected(newField);
+          },
+        );
       },
     );
   }

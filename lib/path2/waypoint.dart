@@ -25,7 +25,9 @@ abstract class Waypoint {
     _validateNonNegativeFinite(maxVelocity, 'maxVelocity');
     _validateNonNegativeFinite(maxAngularVelocity, 'maxAngularVelocity');
     _validateNonNegativeFinite(
-        maxAngularAcceleration, 'maxAngularAcceleration');
+      maxAngularAcceleration,
+      'maxAngularAcceleration',
+    );
   }
 
   bool get isDragging => _isDragging;
@@ -114,7 +116,11 @@ abstract class Waypoint {
   }
 
   int get commonHashCode => Object.hash(
-      position, maxVelocity, maxAngularVelocity, maxAngularAcceleration);
+    position,
+    maxVelocity,
+    maxAngularVelocity,
+    maxAngularAcceleration,
+  );
 }
 
 class TranslationWaypoint extends Waypoint {
@@ -126,15 +132,24 @@ class TranslationWaypoint extends Waypoint {
   });
 
   TranslationWaypoint.fromJson(Map<String, dynamic> json)
-      : this(
-          position: _positionFromJson(json),
-          maxVelocity: _optionalNonNegativeNum(
-              json, 'maxVelocity', Waypoint.defaultMaxVelocity),
-          maxAngularVelocity: _optionalNonNegativeNum(
-              json, 'maxAngularVelocity', Waypoint.defaultMaxAngularVelocity),
-          maxAngularAcceleration: _optionalNonNegativeNum(json,
-              'maxAngularAcceleration', Waypoint.defaultMaxAngularAcceleration),
-        );
+    : this(
+        position: _positionFromJson(json),
+        maxVelocity: _optionalNonNegativeNum(
+          json,
+          'maxVelocity',
+          Waypoint.defaultMaxVelocity,
+        ),
+        maxAngularVelocity: _optionalNonNegativeNum(
+          json,
+          'maxAngularVelocity',
+          Waypoint.defaultMaxAngularVelocity,
+        ),
+        maxAngularAcceleration: _optionalNonNegativeNum(
+          json,
+          'maxAngularAcceleration',
+          Waypoint.defaultMaxAngularAcceleration,
+        ),
+      );
 
   @override
   TranslationWaypoint clone() {
@@ -171,16 +186,25 @@ class PoseWaypoint extends Waypoint {
   }
 
   PoseWaypoint.fromJson(Map<String, dynamic> json)
-      : this(
-          position: _positionFromJson(json),
-          rotation: _rotationFromJson(json),
-          maxVelocity: _optionalNonNegativeNum(
-              json, 'maxVelocity', Waypoint.defaultMaxVelocity),
-          maxAngularVelocity: _optionalNonNegativeNum(
-              json, 'maxAngularVelocity', Waypoint.defaultMaxAngularVelocity),
-          maxAngularAcceleration: _optionalNonNegativeNum(json,
-              'maxAngularAcceleration', Waypoint.defaultMaxAngularAcceleration),
-        );
+    : this(
+        position: _positionFromJson(json),
+        rotation: _rotationFromJson(json),
+        maxVelocity: _optionalNonNegativeNum(
+          json,
+          'maxVelocity',
+          Waypoint.defaultMaxVelocity,
+        ),
+        maxAngularVelocity: _optionalNonNegativeNum(
+          json,
+          'maxAngularVelocity',
+          Waypoint.defaultMaxAngularVelocity,
+        ),
+        maxAngularAcceleration: _optionalNonNegativeNum(
+          json,
+          'maxAngularAcceleration',
+          Waypoint.defaultMaxAngularAcceleration,
+        ),
+      );
 
   @override
   PoseWaypoint clone() {
@@ -195,10 +219,7 @@ class PoseWaypoint extends Waypoint {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      ...commonJson('pose'),
-      'rotation': rotation.toJson(),
-    };
+    return {...commonJson('pose'), 'rotation': rotation.toJson()};
   }
 
   @override
@@ -221,7 +242,8 @@ Translation2d _positionFromJson(Map<String, dynamic> json) {
   final y = position['y'];
   if (x is! num || y is! num || !x.isFinite || !y.isFinite) {
     throw const FormatException(
-        'Waypoint position must contain finite x and y values');
+      'Waypoint position must contain finite x and y values',
+    );
   }
 
   return Translation2d(x, y);
@@ -236,14 +258,18 @@ Rotation2d _rotationFromJson(Map<String, dynamic> json) {
   final value = rotation['value'];
   if (value is! num || !value.isFinite) {
     throw const FormatException(
-        'Pose waypoint rotation must contain a finite value');
+      'Pose waypoint rotation must contain a finite value',
+    );
   }
 
   return Rotation2d(value);
 }
 
 num _optionalNonNegativeNum(
-    Map<String, dynamic> json, String key, num defaultValue) {
+  Map<String, dynamic> json,
+  String key,
+  num defaultValue,
+) {
   final value = json[key];
   if (value == null) {
     return defaultValue;

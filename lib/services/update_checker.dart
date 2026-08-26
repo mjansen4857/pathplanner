@@ -16,12 +16,14 @@ class UpdateChecker {
 
   Future<bool> isGuiUpdateAvailable(String currentVersion) async {
     try {
-      Release latestRelease = await _github.repositories
-          .getLatestRelease(RepositorySlug('mjansen4857', 'pathplanner'));
+      Release latestRelease = await _github.repositories.getLatestRelease(
+        RepositorySlug('mjansen4857', 'pathplanner'),
+      );
       String latestVersion = latestRelease.tagName!.substring(1);
 
       Log.verbose(
-          'Current App Version: $currentVersion, Latest Release: $latestVersion');
+        'Current App Version: $currentVersion, Latest Release: $latestVersion',
+      );
 
       Version current = Version.parse(currentVersion);
       Version latest = Version.parse(latestVersion);
@@ -37,11 +39,16 @@ class UpdateChecker {
     }
   }
 
-  Future<bool> isPPLibUpdateAvailable(
-      {required Directory projectDir, required FileSystem fs}) async {
-    File vendorDepFile =
-        fs.file(join(projectDir.path, 'vendordeps', 'PathplannerLib.json'));
+  Future<bool> isPPLibUpdateAvailable({
+    required Directory projectDir,
+    required FileSystem fs,
+  }) async {
+    File vendorDepFile = fs.file(
+      join(projectDir.path, 'vendordeps', 'PathplannerLib.json'),
+    );
 
+    // Keep project file access off the UI thread.
+    // ignore: avoid_slow_async_io
     if (await vendorDepFile.exists()) {
       String fileContent = await vendorDepFile.readAsString();
       Map<String, dynamic> localJson = jsonDecode(fileContent);
@@ -54,7 +61,8 @@ class UpdateChecker {
         String remoteVersion = remoteJson['version'];
 
         Log.verbose(
-            'Current PPLib Version: $localVersion, Latest Release: $remoteVersion');
+          'Current PPLib Version: $localVersion, Latest Release: $remoteVersion',
+        );
 
         if (Version.parse(remoteVersion) > Version.parse(localVersion)) {
           return true;

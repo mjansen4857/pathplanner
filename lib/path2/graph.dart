@@ -31,9 +31,9 @@ class GraphDiagnostics {
     Iterable<String> hardErrors = const [],
     Iterable<String> draftWarnings = const [],
     Iterable<String> configurationWarnings = const [],
-  })  : hardErrors = List.unmodifiable(hardErrors),
-        draftWarnings = List.unmodifiable(draftWarnings),
-        configurationWarnings = List.unmodifiable(configurationWarnings);
+  }) : hardErrors = List.unmodifiable(hardErrors),
+       draftWarnings = List.unmodifiable(draftWarnings),
+       configurationWarnings = List.unmodifiable(configurationWarnings);
 
   List<String> get warnings =>
       List.unmodifiable([...draftWarnings, ...configurationWarnings]);
@@ -49,15 +49,17 @@ class GraphDiagnostics {
       other is GraphDiagnostics &&
       const ListEquality<String>().equals(other.hardErrors, hardErrors) &&
       const ListEquality<String>().equals(other.draftWarnings, draftWarnings) &&
-      const ListEquality<String>()
-          .equals(other.configurationWarnings, configurationWarnings);
+      const ListEquality<String>().equals(
+        other.configurationWarnings,
+        configurationWarnings,
+      );
 
   @override
   int get hashCode => Object.hash(
-        const ListEquality<String>().hash(hardErrors),
-        const ListEquality<String>().hash(draftWarnings),
-        const ListEquality<String>().hash(configurationWarnings),
-      );
+    const ListEquality<String>().hash(hardErrors),
+    const ListEquality<String>().hash(draftWarnings),
+    const ListEquality<String>().hash(configurationWarnings),
+  );
 }
 
 /// Algorithms shared by path and auto directed acyclic multigraphs.
@@ -71,7 +73,7 @@ class GraphAlgorithms {
     final targets = {for (final branch in branches) branch.targetId};
     return [
       for (final node in nodes)
-        if (!targets.contains(node.id)) node
+        if (!targets.contains(node.id)) node,
     ];
   }
 
@@ -82,7 +84,7 @@ class GraphAlgorithms {
     final sources = {for (final branch in branches) branch.sourceId};
     return [
       for (final node in nodes)
-        if (!sources.contains(node.id)) node
+        if (!sources.contains(node.id)) node,
     ];
   }
 
@@ -184,8 +186,9 @@ String generateGraphId() {
   final bytes = List<int>.generate(16, (_) => random.nextInt(256));
   bytes[6] = (bytes[6] & 0x0f) | 0x40;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  final hex =
-      bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+  final hex = bytes
+      .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+      .join();
   return '${hex.substring(0, 8)}-'
       '${hex.substring(8, 12)}-'
       '${hex.substring(12, 16)}-'
@@ -211,21 +214,22 @@ class EndTolerance {
   factory EndTolerance.fromJson(Object? value) {
     final json = _jsonObject(value, 'endTolerance');
     return EndTolerance(
-      distanceMeters:
-          _requiredFiniteNum(json, 'distanceMeters', nonNegative: true),
+      distanceMeters: _requiredFiniteNum(
+        json,
+        'distanceMeters',
+        nonNegative: true,
+      ),
       angleDegrees: _requiredFiniteNum(json, 'angleDegrees', nonNegative: true),
     );
   }
 
-  EndTolerance clone() => EndTolerance(
-        distanceMeters: distanceMeters,
-        angleDegrees: angleDegrees,
-      );
+  EndTolerance clone() =>
+      EndTolerance(distanceMeters: distanceMeters, angleDegrees: angleDegrees);
 
   Map<String, dynamic> toJson() => {
-        'distanceMeters': distanceMeters,
-        'angleDegrees': angleDegrees,
-      };
+    'distanceMeters': distanceMeters,
+    'angleDegrees': angleDegrees,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -288,16 +292,17 @@ final class DistanceTransition extends PathTransition {
 
   num distanceMeters;
 
-  DistanceTransition({
-    this.distanceMeters = defaultDistanceMeters,
-  }) {
+  DistanceTransition({this.distanceMeters = defaultDistanceMeters}) {
     _validateNonNegativeFinite(distanceMeters, 'distanceMeters');
   }
 
   factory DistanceTransition.fromJson(Map<String, dynamic> json) =>
       DistanceTransition(
-        distanceMeters:
-            _requiredFiniteNum(json, 'distanceMeters', nonNegative: true),
+        distanceMeters: _requiredFiniteNum(
+          json,
+          'distanceMeters',
+          nonNegative: true,
+        ),
       );
 
   @override
@@ -309,9 +314,9 @@ final class DistanceTransition extends PathTransition {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': type,
-        'distanceMeters': distanceMeters,
-      };
+    'type': type,
+    'distanceMeters': distanceMeters,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -331,10 +336,7 @@ final class ConditionTransition implements PathTransition, AutoTransition {
     this.conditionName,
     this.previewDistanceMeters = defaultPreviewDistanceMeters,
   }) {
-    _validateNonNegativeFinite(
-      previewDistanceMeters,
-      'previewDistanceMeters',
-    );
+    _validateNonNegativeFinite(previewDistanceMeters, 'previewDistanceMeters');
   }
 
   factory ConditionTransition.fromJson(Map<String, dynamic> json) {
@@ -363,16 +365,16 @@ final class ConditionTransition implements PathTransition, AutoTransition {
 
   @override
   ConditionTransition clone() => ConditionTransition(
-        conditionName: conditionName,
-        previewDistanceMeters: previewDistanceMeters,
-      );
+    conditionName: conditionName,
+    previewDistanceMeters: previewDistanceMeters,
+  );
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': type,
-        'conditionName': conditionName,
-        'previewDistanceMeters': previewDistanceMeters,
-      };
+    'type': type,
+    'conditionName': conditionName,
+    'previewDistanceMeters': previewDistanceMeters,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -381,11 +383,7 @@ final class ConditionTransition implements PathTransition, AutoTransition {
       other.previewDistanceMeters == previewDistanceMeters;
 
   @override
-  int get hashCode => Object.hash(
-        type,
-        conditionName,
-        previewDistanceMeters,
-      );
+  int get hashCode => Object.hash(type, conditionName, previewDistanceMeters);
 }
 
 final class FinishedTransition extends AutoTransition {

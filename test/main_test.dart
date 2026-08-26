@@ -27,18 +27,23 @@ void main() {
 
     when(updateChecker.isGuiUpdateAvailable(any))
         .thenAnswer((_) => Future.value(false));
-    when(updateChecker.isPPLibUpdateAvailable(
-            projectDir: anyNamed('projectDir'), fs: anyNamed('fs')))
-        .thenAnswer((_) => Future.value(false));
+    when(
+      updateChecker.isPPLibUpdateAvailable(
+        projectDir: anyNamed('projectDir'),
+        fs: anyNamed('fs'),
+      ),
+    ).thenAnswer((_) => Future.value(false));
 
-    await widgetTester.pumpWidget(PathPlanner(
-      appVersion: '2077.1.0',
-      fs: fs,
-      prefs: prefs,
-      undoStack: undoStack,
-      telemetry: telemetry,
-      updateChecker: updateChecker,
-    ));
+    await widgetTester.pumpWidget(
+      PathPlanner(
+        appVersion: '2077.1.0',
+        fs: fs,
+        prefs: prefs,
+        undoStack: undoStack,
+        telemetry: telemetry,
+        updateChecker: updateChecker,
+      ),
+    );
     await widgetTester.pumpAndSettle();
   });
 }

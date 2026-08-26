@@ -6,13 +6,11 @@ class WaitCommand extends Command {
   WaitCommand({this.waitTime = 0}) : super(type: 'wait');
 
   WaitCommand.fromDataJson(Map<String, dynamic> dataJson)
-      : this(waitTime: dataJson['waitTime'] ?? 0);
+    : this(waitTime: dataJson['waitTime'] ?? 0);
 
   @override
   Map<String, dynamic> dataToJson() {
-    return {
-      'waitTime': waitTime,
-    };
+    return {'waitTime': waitTime};
   }
 
   @override

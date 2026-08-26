@@ -1,17 +1,15 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/widgets/editor/runtime_display.dart';
 
 void main() {
-  testWidgets('RuntimeDisplay shows current runtime',
-      (WidgetTester tester) async {
+  testWidgets('RuntimeDisplay shows current runtime', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: RuntimeDisplay(
-            currentRuntime: 5.0,
-            previousRuntime: null,
-          ),
+          body: RuntimeDisplay(currentRuntime: 5.0, previousRuntime: null),
         ),
       ),
     );
@@ -19,15 +17,13 @@ void main() {
     expect(find.text('~5.00s'), findsOneWidget);
   });
 
-  testWidgets('RuntimeDisplay shows runtime decrease',
-      (WidgetTester tester) async {
+  testWidgets('RuntimeDisplay shows runtime decrease', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: RuntimeDisplay(
-            currentRuntime: 4.5,
-            previousRuntime: 5.0,
-          ),
+          body: RuntimeDisplay(currentRuntime: 4.5, previousRuntime: 5.0),
         ),
       ),
     );
@@ -37,15 +33,13 @@ void main() {
     expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
   });
 
-  testWidgets('RuntimeDisplay shows runtime increase',
-      (WidgetTester tester) async {
+  testWidgets('RuntimeDisplay shows runtime increase', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: RuntimeDisplay(
-            currentRuntime: 5.5,
-            previousRuntime: 5.0,
-          ),
+          body: RuntimeDisplay(currentRuntime: 5.5, previousRuntime: 5.0),
         ),
       ),
     );
@@ -55,15 +49,13 @@ void main() {
     expect(find.byIcon(Icons.arrow_upward), findsOneWidget);
   });
 
-  testWidgets('RuntimeDisplay shows no significant change',
-      (WidgetTester tester) async {
+  testWidgets('RuntimeDisplay shows no significant change', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: RuntimeDisplay(
-            currentRuntime: 5.03,
-            previousRuntime: 5.0,
-          ),
+          body: RuntimeDisplay(currentRuntime: 5.03, previousRuntime: 5.0),
         ),
       ),
     );

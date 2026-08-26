@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path2/pathplanner_auto.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
@@ -52,11 +52,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> submit(
-    WidgetTester tester,
-    String label,
-    String value,
-  ) async {
+  Future<void> submit(WidgetTester tester, String label, String value) async {
     final field = find.widgetWithText(NumberTextField, label);
     expect(field, findsOneWidget);
     await tester.enterText(field, value);
@@ -64,8 +60,9 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('shows a pose summary and expands to three fields',
-      (tester) async {
+  testWidgets('shows a pose summary and expands to three fields', (
+    tester,
+  ) async {
     await pumpTree(tester, initiallyExpanded: false);
 
     expect(find.text('Starting Pose'), findsOneWidget);
@@ -76,15 +73,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-        find.widgetWithText(NumberTextField, 'X Position (M)'), findsOneWidget);
+      find.widgetWithText(NumberTextField, 'X Position (M)'),
+      findsOneWidget,
+    );
     expect(
-        find.widgetWithText(NumberTextField, 'Y Position (M)'), findsOneWidget);
+      find.widgetWithText(NumberTextField, 'Y Position (M)'),
+      findsOneWidget,
+    );
     expect(
-        find.widgetWithText(NumberTextField, 'Heading (Deg)'), findsOneWidget);
+      find.widgetWithText(NumberTextField, 'Heading (Deg)'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('x submit is one undoable initialized-pose change',
-      (tester) async {
+  testWidgets('x submit is one undoable initialized-pose change', (
+    tester,
+  ) async {
     await pumpTree(tester);
 
     await submit(tester, 'X Position (M)', '3.75');
@@ -108,8 +112,9 @@ void main() {
     expect(autoChangedCount, 3);
   });
 
-  testWidgets('y submit preserves x and heading and is undoable',
-      (tester) async {
+  testWidgets('y submit preserves x and heading and is undoable', (
+    tester,
+  ) async {
     await pumpTree(tester);
 
     await submit(tester, 'Y Position (M)', '-0.5');
@@ -124,8 +129,9 @@ void main() {
     expect(auto.startingPoseInitialized, isFalse);
   });
 
-  testWidgets('heading submit normalizes degrees and is undoable',
-      (tester) async {
+  testWidgets('heading submit normalizes degrees and is undoable', (
+    tester,
+  ) async {
     await pumpTree(tester);
 
     await submit(tester, 'Heading (Deg)', '200');

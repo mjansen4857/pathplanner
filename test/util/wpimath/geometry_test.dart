@@ -58,7 +58,7 @@ void main() {
           0xfb,
           0x21,
           0x09,
-          0x40
+          0x40,
         ];
         Uint8List data = Uint8List.fromList(rawBytes);
 
@@ -118,7 +118,7 @@ void main() {
           0xfb,
           0x21,
           0x09,
-          0x40
+          0x40,
         ];
         Uint8List data = Uint8List.fromList(rawBytes);
 
@@ -378,8 +378,8 @@ void main() {
   });
 
   test('interpolate', () {
-    Rotation2d a =
-        Rotation2d.fromDegrees(0).interpolate(Rotation2d.fromDegrees(90), 0.5);
+    Rotation2d a = Rotation2d.fromDegrees(0)
+        .interpolate(Rotation2d.fromDegrees(90), 0.5);
     Rotation2d b = Rotation2d.fromDegrees(-30)
         .interpolate(Rotation2d.fromDegrees(-90), 0.5);
     Rotation2d c = Rotation2d.fromDegrees(120)

@@ -7,11 +7,13 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
 
-    await widgetTester.pumpWidget(ErrorPopup(
-      prefs: prefs,
-      error: 'Test Error',
-      stackTrace: StackTrace.fromString('Test stack trace'),
-    ));
+    await widgetTester.pumpWidget(
+      ErrorPopup(
+        prefs: prefs,
+        error: 'Test Error',
+        stackTrace: StackTrace.fromString('Test stack trace'),
+      ),
+    );
 
     expect(find.text('Test Error'), findsOne);
     expect(find.text('Copy Stack Trace'), findsOne);

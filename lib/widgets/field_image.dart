@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 
@@ -11,7 +11,7 @@ enum OfficialField {
   crescendo,
   reefscape,
   reefscapeAnnotated,
-  rebuilt
+  rebuilt,
 }
 
 class FieldImage {
@@ -25,8 +25,9 @@ class FieldImage {
 
   static List<FieldImage>? _officialFields;
 
-  static final FieldImage defaultField =
-      FieldImage.official(OfficialField.rebuilt);
+  static final FieldImage defaultField = FieldImage.official(
+    OfficialField.rebuilt,
+  );
 
   static List<FieldImage> offialFields() {
     _officialFields ??= [
@@ -35,7 +36,7 @@ class FieldImage {
       FieldImage.official(OfficialField.crescendo),
       FieldImage.official(OfficialField.reefscape),
       FieldImage.official(OfficialField.reefscapeAnnotated),
-      FieldImage.official(OfficialField.rebuilt)
+      FieldImage.official(OfficialField.rebuilt),
     ];
     return _officialFields!;
   }
@@ -114,24 +115,27 @@ class FieldImage {
   }
 
   FieldImage.custom(File imageFile) {
-    image = Image.file(
-      imageFile,
-      fit: BoxFit.contain,
-    );
+    image = Image.file(imageFile, fit: BoxFit.contain);
 
     final imageSize = ImageSizeGetter.getSizeResult(FileInput(imageFile)).size;
     if (imageSize.needRotate) {
-      defaultSize =
-          ui.Size(imageSize.height.toDouble(), imageSize.width.toDouble());
+      defaultSize = ui.Size(
+        imageSize.height.toDouble(),
+        imageSize.width.toDouble(),
+      );
     } else {
-      defaultSize =
-          ui.Size(imageSize.width.toDouble(), imageSize.height.toDouble());
+      defaultSize = ui.Size(
+        imageSize.width.toDouble(),
+        imageSize.height.toDouble(),
+      );
     }
 
     // Assumes filename will be in FieldName_PixelsPerMeter format
     String fileName = imageFile.path.split(Platform.pathSeparator).last;
     String ppm = fileName.substring(
-        fileName.lastIndexOf('_') + 1, fileName.lastIndexOf('.'));
+      fileName.lastIndexOf('_') + 1,
+      fileName.lastIndexOf('.'),
+    );
     pixelsPerMeter = num.parse(ppm);
     name = fileName.substring(0, fileName.lastIndexOf('_'));
     extension = fileName.substring(fileName.lastIndexOf('.') + 1);
@@ -140,9 +144,13 @@ class FieldImage {
   }
 
   ui.Size getFieldSizeMeters() {
-    ui.Offset temp = ((defaultSize / pixelsPerMeter.toDouble()) -
-            ui.Size(2 * marginMeters.toDouble(), 2 * marginMeters.toDouble()))
-        as Offset;
+    ui.Offset temp =
+        ((defaultSize / pixelsPerMeter.toDouble()) -
+                ui.Size(
+                  2 * marginMeters.toDouble(),
+                  2 * marginMeters.toDouble(),
+                ))
+            as Offset;
     return ui.Size(temp.dx, temp.dy);
   }
 
@@ -158,15 +166,17 @@ class FieldImage {
   }
 
   @override
-  int get hashCode => Object.hash(image.hashCode, defaultSize.hashCode,
-      pixelsPerMeter.hashCode, name.hashCode);
+  int get hashCode => Object.hash(
+    image.hashCode,
+    defaultSize.hashCode,
+    pixelsPerMeter.hashCode,
+    name.hashCode,
+  );
 
   Widget getWidget() {
     return AspectRatio(
       aspectRatio: defaultSize.width / defaultSize.height,
-      child: SizedBox.expand(
-        child: image,
-      ),
+      child: SizedBox.expand(child: image),
     );
   }
 }

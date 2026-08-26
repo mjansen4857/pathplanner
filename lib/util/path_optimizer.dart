@@ -18,21 +18,28 @@ class PathOptimizer {
 
   static IsolateManager? _manager;
 
-  static Future<OptimizationResult> optimizePath(PathPlannerPath path,
-      RobotConfig config, Size fieldSizeMeters, Size robotSizeMeters,
-      {ValueChanged<OptimizationResult>? onUpdate}) async {
+  static Future<OptimizationResult> optimizePath(
+    PathPlannerPath path,
+    RobotConfig config,
+    Size fieldSizeMeters,
+    Size robotSizeMeters, {
+    ValueChanged<OptimizationResult>? onUpdate,
+  }) async {
     // Create a new path in the memory file system so it can't edit any original paths or files
     PathPlannerPath copy = PathPlannerPath(
       name: path.name,
       waypoints: PathPlannerPath.cloneWaypoints(path.waypoints),
       globalConstraints: path.globalConstraints.clone(),
       goalEndState: path.goalEndState.clone(),
-      constraintZones:
-          PathPlannerPath.cloneConstraintZones(path.constraintZones),
-      rotationTargets:
-          PathPlannerPath.cloneRotationTargets(path.rotationTargets),
-      pointTowardsZones:
-          PathPlannerPath.clonePointTowardsZones(path.pointTowardsZones),
+      constraintZones: PathPlannerPath.cloneConstraintZones(
+        path.constraintZones,
+      ),
+      rotationTargets: PathPlannerPath.cloneRotationTargets(
+        path.rotationTargets,
+      ),
+      pointTowardsZones: PathPlannerPath.clonePointTowardsZones(
+        path.pointTowardsZones,
+      ),
       eventMarkers: [], // Markers don't matter. Save some memory
       pathDir: '',
       fs: MemoryFileSystem(),
@@ -52,7 +59,8 @@ class PathOptimizer {
       callback: (value) {
         OptimizationResult result = value;
         Log.info(
-            'Best fit after generation ${result.generation}: ${result.runtime.toStringAsFixed(2)}s');
+          'Best fit after generation ${result.generation}: ${result.runtime.toStringAsFixed(2)}s',
+        );
         onUpdate?.call(result);
 
         return result.generation == generations;
@@ -60,7 +68,8 @@ class PathOptimizer {
     );
     final runtime = DateTime.now().difference(start);
     Log.info(
-        'Finished ${PathOptimizer.generations} generations in ${(runtime.inMilliseconds / 1000.0).toStringAsFixed(2)}s');
+      'Finished ${PathOptimizer.generations} generations in ${(runtime.inMilliseconds / 1000.0).toStringAsFixed(2)}s',
+    );
     return result;
   }
 
@@ -75,11 +84,15 @@ class PathOptimizer {
         // of the field. If not, make sure all optimization results are
         // inside of the field perimiter to be considered valid.
         bool preventFieldExit = true;
-        final num robotRadius = sqrt(pow(args.robotSizeMeters.width / 2.0, 2) +
-            pow(args.robotSizeMeters.height / 2.0, 2));
+        final num robotRadius = sqrt(
+          pow(args.robotSizeMeters.width / 2.0, 2) +
+              pow(args.robotSizeMeters.height / 2.0, 2),
+        );
         final minPos = Translation2d(robotRadius, robotRadius);
-        final maxPos = Translation2d(args.fieldSizeMeters.width - robotRadius,
-            args.fieldSizeMeters.height - robotRadius);
+        final maxPos = Translation2d(
+          args.fieldSizeMeters.width - robotRadius,
+          args.fieldSizeMeters.height - robotRadius,
+        );
         for (Waypoint w in args.path.waypoints) {
           if (w.anchor.x < minPos.x ||
               w.anchor.y < minPos.y ||
@@ -99,8 +112,13 @@ class PathOptimizer {
             mutatedPoints.add(_Individual.mutate(p.waypoints[i]));
           }
           p.waypoints = mutatedPoints;
-          _Individual individual =
-              _Individual(p, args.config, minPos, maxPos, preventFieldExit);
+          _Individual individual = _Individual(
+            p,
+            args.config,
+            minPos,
+            maxPos,
+            preventFieldExit,
+          );
           return individual;
         });
 
@@ -116,7 +134,9 @@ class PathOptimizer {
 
           // Fittest 10% of population moves to next generation
           List<_Individual> nextGen = List.generate(
-              (populationSize * 0.1).floor(), (index) => population[index]);
+            (populationSize * 0.1).floor(),
+            (index) => population[index],
+          );
 
           // Fittest 50% of population will produce offspring
           for (int i = 0; i < (populationSize * 0.9).floor(); i++) {
@@ -129,7 +149,10 @@ class PathOptimizer {
 
           if (bestFit == null || population.first.fitness < bestFit.runtime) {
             bestFit = OptimizationResult(
-                population.first.path, population.first.fitness, generation);
+              population.first.path,
+              population.first.fitness,
+              generation,
+            );
           } else {
             bestFit = bestFit.withGeneration(generation);
           }
@@ -172,7 +195,12 @@ class _Individual {
   final bool preventFieldExit;
 
   _Individual(
-      this.path, this.config, this.minPos, this.maxPos, this.preventFieldExit) {
+    this.path,
+    this.config,
+    this.minPos,
+    this.maxPos,
+    this.preventFieldExit,
+  ) {
     path.generatePathPoints();
 
     bool shouldGenerate = true;
@@ -192,8 +220,10 @@ class _Individual {
     }
 
     if (shouldGenerate) {
-      fitness = PathPlannerTrajectory(path: path, robotConfig: config)
-          .getTotalTimeSeconds();
+      fitness = PathPlannerTrajectory(
+        path: path,
+        robotConfig: config,
+      ).getTotalTimeSeconds();
     }
   }
 
@@ -261,5 +291,9 @@ class _OptimizerArgs {
   final Size robotSizeMeters;
 
   const _OptimizerArgs(
-      this.path, this.config, this.fieldSizeMeters, this.robotSizeMeters);
+    this.path,
+    this.config,
+    this.fieldSizeMeters,
+    this.robotSizeMeters,
+  );
 }

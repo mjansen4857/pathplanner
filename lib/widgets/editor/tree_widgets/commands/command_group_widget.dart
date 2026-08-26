@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
@@ -57,8 +57,10 @@ class CommandGroupWidget extends StatelessWidget {
                 color: Colors.transparent,
                 child: ConditionalWidget(
                   condition: onGroupTypeChanged != null,
-                  falseChild:
-                      Text('$type Group', style: const TextStyle(fontSize: 16)),
+                  falseChild: Text(
+                    '$type Group',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                   trueChild: PopupMenuButton(
                     initialValue: command.type,
                     tooltip: '',
@@ -80,18 +82,17 @@ class CommandGroupWidget extends StatelessWidget {
                         value: 'deadline',
                         child: Text('Deadline Group'),
                       ),
-                      PopupMenuItem(
-                        value: 'race',
-                        child: Text('Race Group'),
-                      ),
+                      PopupMenuItem(value: 'race', child: Text('Race Group')),
                     ],
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('$type Group',
-                              style: const TextStyle(fontSize: 16)),
+                          Text(
+                            '$type Group',
+                            style: const TextStyle(fontSize: 16),
+                          ),
                           const Icon(Icons.arrow_drop_down),
                         ],
                       ),
@@ -104,27 +105,30 @@ class CommandGroupWidget extends StatelessWidget {
             AddCommandButton(
               allowPathCommand: allPathNames != null,
               onTypeChosen: (value) {
-                undoStack.add(Change(
-                  CommandGroup.cloneCommandsList(command.commands),
-                  () {
-                    final cmd = Command.fromType(value);
-                    if (cmd != null) {
-                      command.commands.add(cmd);
+                undoStack.add(
+                  Change(
+                    CommandGroup.cloneCommandsList(command.commands),
+                    () {
+                      final cmd = Command.fromType(value);
+                      if (cmd != null) {
+                        command.commands.add(cmd);
+                        onUpdated?.call();
+                      }
+                    },
+                    (oldValue) {
+                      command.commands = CommandGroup.cloneCommandsList(
+                        oldValue,
+                      );
                       onUpdated?.call();
-                    }
-                  },
-                  (oldValue) {
-                    command.commands = CommandGroup.cloneCommandsList(oldValue);
-                    onUpdated?.call();
-                  },
-                ));
+                    },
+                  ),
+                );
               },
             ),
             Visibility(
-                visible: onDuplicateCommand != null,
-                child: DuplicateCommandButton(
-                  onPressed: onDuplicateCommand,
-                )),
+              visible: onDuplicateCommand != null,
+              child: DuplicateCommandButton(onPressed: onDuplicateCommand),
+            ),
             Visibility(
               visible: onRemoved != null,
               child: Tooltip(
@@ -133,8 +137,9 @@ class CommandGroupWidget extends StatelessWidget {
                 child: IconButton(
                   onPressed: onRemoved,
                   visualDensity: const VisualDensity(
-                      horizontal: VisualDensity.minimumDensity,
-                      vertical: VisualDensity.minimumDensity),
+                    horizontal: VisualDensity.minimumDensity,
+                    vertical: VisualDensity.minimumDensity,
+                  ),
                   icon: Icon(Icons.delete, color: colorScheme.error),
                 ),
               ),
@@ -156,16 +161,19 @@ class CommandGroupWidget extends StatelessWidget {
       itemBuilder: (context, index) {
         if (command.commands[index] is PathCommand) {
           return MouseRegion(
-            onEnter: (event) => onPathCommandHovered
-                ?.call((command.commands[index] as PathCommand).pathName),
+            onEnter: (event) => onPathCommandHovered?.call(
+              (command.commands[index] as PathCommand).pathName,
+            ),
             onExit: (event) => onPathCommandHovered?.call(null),
             key: Key('$index'),
             child: Card(
               elevation: subCommandElevation,
               color: colorScheme.primaryContainer,
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 16.0,
+                ),
                 child: Row(
                   children: [
                     ReorderableDragStartListener(
@@ -200,8 +208,10 @@ class CommandGroupWidget extends StatelessWidget {
             surfaceTintColor: colorScheme.surfaceTint,
             key: Key('$index'),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 16.0,
+              ),
               child: Row(
                 children: [
                   ReorderableDragStartListener(
@@ -217,25 +227,23 @@ class CommandGroupWidget extends StatelessWidget {
         }
       },
       itemCount: command.commands.length,
-      onReorder: (oldIndex, newIndex) {
-        if (oldIndex < newIndex) {
-          newIndex -= 1;
-        }
-
-        undoStack.add(Change(
-          CommandGroup.cloneCommandsList(command.commands),
-          () {
-            List<Command> cmds = List.of(command.commands);
-            Command temp = cmds.removeAt(oldIndex);
-            cmds.insert(newIndex, temp);
-            command.commands = cmds;
-            onUpdated?.call();
-          },
-          (oldValue) {
-            command.commands = CommandGroup.cloneCommandsList(oldValue);
-            onUpdated?.call();
-          },
-        ));
+      onReorderItem: (oldIndex, newIndex) {
+        undoStack.add(
+          Change(
+            CommandGroup.cloneCommandsList(command.commands),
+            () {
+              List<Command> cmds = List.of(command.commands);
+              Command temp = cmds.removeAt(oldIndex);
+              cmds.insert(newIndex, temp);
+              command.commands = cmds;
+              onUpdated?.call();
+            },
+            (oldValue) {
+              command.commands = CommandGroup.cloneCommandsList(oldValue);
+              onUpdated?.call();
+            },
+          ),
+        );
       },
     );
   }
@@ -269,27 +277,29 @@ class CommandGroupWidget extends StatelessWidget {
         showEditPathButton: showEditPathButton,
         onEditPathPressed: onEditPathPressed,
         onGroupTypeChanged: (value) {
-          undoStack.add(Change(
-            command.commands[cmdIndex].type,
-            () {
-              List<Command> cmds =
-                  (command.commands[cmdIndex] as CommandGroup).commands;
-              final cmd = Command.fromType(value, commands: cmds);
-              if (cmd != null) {
-                command.commands[cmdIndex] = cmd;
-                onUpdated?.call();
-              }
-            },
-            (oldValue) {
-              List<Command> cmds =
-                  (command.commands[cmdIndex] as CommandGroup).commands;
-              final cmd = Command.fromType(oldValue, commands: cmds);
-              if (cmd != null) {
-                command.commands[cmdIndex] = cmd;
-                onUpdated?.call();
-              }
-            },
-          ));
+          undoStack.add(
+            Change(
+              command.commands[cmdIndex].type,
+              () {
+                List<Command> cmds =
+                    (command.commands[cmdIndex] as CommandGroup).commands;
+                final cmd = Command.fromType(value, commands: cmds);
+                if (cmd != null) {
+                  command.commands[cmdIndex] = cmd;
+                  onUpdated?.call();
+                }
+              },
+              (oldValue) {
+                List<Command> cmds =
+                    (command.commands[cmdIndex] as CommandGroup).commands;
+                final cmd = Command.fromType(oldValue, commands: cmds);
+                if (cmd != null) {
+                  command.commands[cmdIndex] = cmd;
+                  onUpdated?.call();
+                }
+              },
+            ),
+          );
         },
         onDuplicateCommand: () => _duplicateCommand(cmdIndex),
       );
@@ -299,31 +309,35 @@ class CommandGroupWidget extends StatelessWidget {
   }
 
   void _removeCommand(int idx) {
-    undoStack.add(Change(
-      CommandGroup.cloneCommandsList(command.commands),
-      () {
-        command.commands.removeAt(idx);
-        onUpdated?.call();
-      },
-      (oldValue) {
-        command.commands = CommandGroup.cloneCommandsList(oldValue);
-        onUpdated?.call();
-      },
-    ));
+    undoStack.add(
+      Change(
+        CommandGroup.cloneCommandsList(command.commands),
+        () {
+          command.commands.removeAt(idx);
+          onUpdated?.call();
+        },
+        (oldValue) {
+          command.commands = CommandGroup.cloneCommandsList(oldValue);
+          onUpdated?.call();
+        },
+      ),
+    );
   }
 
   void _duplicateCommand(int idx) {
-    undoStack.add(Change(
-      CommandGroup.cloneCommandsList(command.commands),
-      () {
-        Command commandToDuplicate = command.commands.elementAt(idx).clone();
-        command.commands.insert(idx + 1, commandToDuplicate);
-        onUpdated?.call();
-      },
-      (oldValue) {
-        command.commands = CommandGroup.cloneCommandsList(oldValue);
-        onUpdated?.call();
-      },
-    ));
+    undoStack.add(
+      Change(
+        CommandGroup.cloneCommandsList(command.commands),
+        () {
+          Command commandToDuplicate = command.commands.elementAt(idx).clone();
+          command.commands.insert(idx + 1, commandToDuplicate);
+          onUpdated?.call();
+        },
+        (oldValue) {
+          command.commands = CommandGroup.cloneCommandsList(oldValue);
+          onUpdated?.call();
+        },
+      ),
+    );
   }
 }

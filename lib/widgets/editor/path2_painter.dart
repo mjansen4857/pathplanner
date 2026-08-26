@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
 import 'package:pathplanner/path2/simulation/simulation_state.dart';
 import 'package:pathplanner/path2/waypoint.dart';
@@ -27,10 +27,10 @@ class Path2PaintPath {
     required this.path,
     String? occurrenceId,
     Set<String>? visibleNodeIds,
-  })  : occurrenceId = occurrenceId ?? path.name,
-        visibleNodeIds = visibleNodeIds == null
-            ? null
-            : Set<String>.unmodifiable(visibleNodeIds);
+  }) : occurrenceId = occurrenceId ?? path.name,
+       visibleNodeIds = visibleNodeIds == null
+           ? null
+           : Set<String>.unmodifiable(visibleNodeIds);
 }
 
 /// Paints Path 2 graphs and all simulated root-to-leaf preview traversals.
@@ -81,14 +81,16 @@ class Path2Painter extends CustomPainter {
       prefs.getDouble(PrefsKeys.bumperOffsetX) ?? Defaults.bumperOffsetX,
       prefs.getDouble(PrefsKeys.bumperOffsetY) ?? Defaults.bumperOffsetY,
     );
-    robotRadius = sqrt(
+    robotRadius =
+        sqrt(
           robotSize.width * robotSize.width +
               robotSize.height * robotSize.height,
         ) /
         2.0;
 
-    for (final featureJson in prefs.getStringList(PrefsKeys.robotFeatures) ??
-        Defaults.robotFeatures) {
+    for (final featureJson
+        in prefs.getStringList(PrefsKeys.robotFeatures) ??
+            Defaults.robotFeatures) {
       try {
         final feature = Feature.fromJson(jsonDecode(featureJson));
         if (feature != null) {
@@ -125,14 +127,18 @@ class Path2Painter extends CustomPainter {
   }
 
   void _paintSimulationTraces(Canvas canvas) {
-    for (var traversalIndex = 0;
-        traversalIndex < simulations.length;
-        traversalIndex++) {
+    for (
+      var traversalIndex = 0;
+      traversalIndex < simulations.length;
+      traversalIndex++
+    ) {
       final simulation = simulations[traversalIndex];
       final trace = Path();
-      for (var sampleIndex = 0;
-          sampleIndex < simulation.samples.length;
-          sampleIndex++) {
+      for (
+        var sampleIndex = 0;
+        sampleIndex < simulation.samples.length;
+        sampleIndex++
+      ) {
         final point = PathPainterUtil.pointToPixelOffset(
           simulation.samples[sampleIndex].pose.translation,
           scale,
@@ -161,9 +167,11 @@ class Path2Painter extends CustomPainter {
       return;
     }
     final time = (animation?.value ?? 0) * simulationDurationSeconds;
-    for (var traversalIndex = 0;
-        traversalIndex < simulations.length;
-        traversalIndex++) {
+    for (
+      var traversalIndex = 0;
+      traversalIndex < simulations.length;
+      traversalIndex++
+    ) {
       final simulation = simulations[traversalIndex];
       final sample = simulation.sampleAt(
         time.clamp(0, simulation.totalTimeSeconds).toDouble(),
@@ -179,7 +187,8 @@ class Path2Painter extends CustomPainter {
         _previewColor,
         colorScheme.surfaceContainer.withAlpha(190),
         robotFeatures,
-        showDetails: prefs.getBool(PrefsKeys.showRobotDetails) ??
+        showDetails:
+            prefs.getBool(PrefsKeys.showRobotDetails) ??
             Defaults.showRobotDetails,
       );
     }
@@ -187,10 +196,7 @@ class Path2Painter extends CustomPainter {
 
   Color get _previewColor => colorScheme.primary;
 
-  void _paintRobotModules(
-    Canvas canvas,
-    Path2SimulationSample sample,
-  ) {
+  void _paintRobotModules(Canvas canvas, Path2SimulationSample sample) {
     final locations = <Translation2d>[
       Translation2d(
         prefs.getDouble(PrefsKeys.flModuleX) ?? Defaults.flModuleX,
@@ -235,8 +241,9 @@ class Path2Painter extends CustomPainter {
           !_isVisible(occurrence, branch.targetId)) {
         continue;
       }
-      groups.putIfAbsent(
-          (branch.sourceId, branch.targetId), () => []).add(branch);
+      groups
+          .putIfAbsent((branch.sourceId, branch.targetId), () => [])
+          .add(branch);
     }
 
     for (final branches in groups.values) {
@@ -278,12 +285,7 @@ class Path2Painter extends CustomPainter {
   bool _isVisible(Path2PaintPath occurrence, String nodeId) =>
       occurrence.visibleNodeIds?.contains(nodeId) ?? true;
 
-  void _paintDottedLine(
-    Canvas canvas,
-    Offset start,
-    Offset end,
-    Color color,
-  ) {
+  void _paintDottedLine(Canvas canvas, Offset start, Offset end, Color color) {
     final vector = end - start;
     final distance = vector.distance;
     if (distance <= 0) {
@@ -330,7 +332,8 @@ class Path2Painter extends CustomPainter {
         color.withAlpha(160),
         colorScheme.surfaceContainer,
         robotFeatures,
-        showDetails: prefs.getBool(PrefsKeys.showRobotDetails) ??
+        showDetails:
+            prefs.getBool(PrefsKeys.showRobotDetails) ??
             Defaults.showRobotDetails,
       );
     } else if (waypoint is TranslationWaypoint) {
@@ -348,11 +351,7 @@ class Path2Painter extends CustomPainter {
     final leaves = occurrence.path.leafNodes;
     final isRoot = roots.any((root) => root.id == node.id);
     final isLeaf = leaves.any((leaf) => leaf.id == node.id);
-    final radius = PathPainterUtil.uiPointSizeToPixels(
-      25,
-      scale,
-      fieldImage,
-    );
+    final radius = PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage);
 
     if (isRoot && isLeaf && !_isHighlighted(occurrence, node.id)) {
       canvas.drawCircle(center, radius, Paint()..color = Colors.green);
@@ -378,7 +377,8 @@ class Path2Painter extends CustomPainter {
     PoseWaypoint waypoint,
     Color color,
   ) {
-    final handlePosition = waypoint.position +
+    final handlePosition =
+        waypoint.position +
         Translation2d(
           robotSize.height / 2 + bumperOffset.x,
           bumperOffset.y,
@@ -446,7 +446,8 @@ class Path2Painter extends CustomPainter {
       scale,
       fieldImage,
     );
-    final handlePosition = pose.translation +
+    final handlePosition =
+        pose.translation +
         Translation2d(
           robotSize.height / 2 + bumperOffset.x,
           bumperOffset.y,
@@ -456,10 +457,16 @@ class Path2Painter extends CustomPainter {
       scale,
       fieldImage,
     );
-    final anchorRadius =
-        PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage);
-    final rotationRadius =
-        PathPainterUtil.uiPointSizeToPixels(14, scale, fieldImage);
+    final anchorRadius = PathPainterUtil.uiPointSizeToPixels(
+      20,
+      scale,
+      fieldImage,
+    );
+    final rotationRadius = PathPainterUtil.uiPointSizeToPixels(
+      14,
+      scale,
+      fieldImage,
+    );
     canvas.drawCircle(center, anchorRadius, Paint()..color = color);
     canvas.drawCircle(handle, rotationRadius, Paint()..color = color);
     for (final circle in [(center, anchorRadius), (handle, rotationRadius)]) {

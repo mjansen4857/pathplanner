@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path2/graph.dart';
 import 'package:pathplanner/path2/pathplanner_auto.dart';
 import 'package:pathplanner/services/project_condition_registry.dart';
@@ -161,7 +161,8 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
     final outgoing = widget.auto.branches
         .where((branch) => branch.sourceId == pathNode.id)
         .length;
-    final pathMissing = pathNode.pathName == null ||
+    final pathMissing =
+        pathNode.pathName == null ||
         !widget.allPathNames.contains(pathNode.pathName);
     final selectableNames = widget.allPathNames.toSet().toList()..sort();
     if (pathNode.pathName != null &&
@@ -201,8 +202,10 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                     child: ColoredBox(
                       color: colorScheme.surfaceContainerHighest,
                       child: const Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 9,
+                        ),
                         child: Row(
                           children: [
                             Icon(Icons.route_rounded, size: 19),
@@ -224,9 +227,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                       children: [
                         Expanded(
                           child: InputDecorator(
-                            key: ValueKey(
-                              'path2AutoNodePath-${pathNode.id}',
-                            ),
+                            key: ValueKey('path2AutoNodePath-${pathNode.id}'),
                             decoration: const InputDecoration(
                               labelText: 'Path',
                               border: OutlineInputBorder(),
@@ -260,14 +261,13 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                           tooltip: 'Open Path',
                           onPressed: pathMissing
                               ? null
-                              : () => widget.onEditPathPressed
-                                  ?.call(pathNode.pathName),
+                              : () => widget.onEditPathPressed?.call(
+                                  pathNode.pathName,
+                                ),
                           icon: const Icon(Icons.open_in_new_rounded),
                         ),
                         IconButton(
-                          key: ValueKey(
-                            'path2AutoDeleteNode-${pathNode.id}',
-                          ),
+                          key: ValueKey('path2AutoDeleteNode-${pathNode.id}'),
                           tooltip: 'Delete Auto Node',
                           onPressed: () => _deleteNode(pathNode.id),
                           color: colorScheme.error,
@@ -277,8 +277,10 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                     ),
                   ),
                   Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
                     child: Wrap(
                       spacing: 6,
                       runSpacing: 4,
@@ -403,9 +405,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
       _showMessage('That connection would create a cycle');
       return;
     }
-    final transition = await _chooseTransition(
-      sourceId: request.sourceId,
-    );
+    final transition = await _chooseTransition(sourceId: request.sourceId);
     if (!mounted || transition == null) {
       return;
     }
@@ -425,9 +425,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
     _performGraphChange(() => widget.auto.addBranch(branch.clone()));
   }
 
-  Future<void> _connectToNewNode(
-    GraphEmptyConnectionRequest request,
-  ) async {
+  Future<void> _connectToNewNode(GraphEmptyConnectionRequest request) async {
     final pathName = await _choosePath();
     if (!mounted || pathName == null) {
       return;
@@ -502,10 +500,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
       return;
     }
     if (transition is FinishedTransition &&
-        _hasFinishedBranch(
-          branch.sourceId,
-          excludingBranchId: branch.id,
-        )) {
+        _hasFinishedBranch(branch.sourceId, excludingBranchId: branch.id)) {
       _showMessage('This node already has a finished transition');
       return;
     }
@@ -560,10 +555,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
     return result?.transition;
   }
 
-  bool _hasFinishedBranch(
-    String sourceId, {
-    String? excludingBranchId,
-  }) {
+  bool _hasFinishedBranch(String sourceId, {String? excludingBranchId}) {
     return widget.auto.branches.any(
       (branch) =>
           branch.id != excludingBranchId &&
@@ -592,11 +584,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
     }
   }
 
-  void _moveNode(
-    String nodeId,
-    Offset oldPosition,
-    Offset newPosition,
-  ) {
+  void _moveNode(String nodeId, Offset oldPosition, Offset newPosition) {
     if (oldPosition == newPosition) {
       return;
     }
@@ -634,11 +622,7 @@ class _TopologyBadge extends StatelessWidget {
   final String label;
   final Color? color;
 
-  const _TopologyBadge({
-    required this.icon,
-    required this.label,
-    this.color,
-  });
+  const _TopologyBadge({required this.icon, required this.label, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -648,10 +632,7 @@ class _TopologyBadge extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: resolvedColor),
         const SizedBox(width: 2),
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: resolvedColor),
-        ),
+        Text(label, style: TextStyle(fontSize: 11, color: resolvedColor)),
       ],
     );
   }
@@ -663,9 +644,7 @@ class _TransitionDialogResult {
 
   const _TransitionDialogResult.transition(this.transition) : delete = false;
 
-  const _TransitionDialogResult.delete()
-      : transition = null,
-        delete = true;
+  const _TransitionDialogResult.delete() : transition = null, delete = true;
 }
 
 enum _AutoTransitionKind { finished, condition }
@@ -703,8 +682,8 @@ class _AutoTransitionDialogState extends State<_AutoTransitionDialog> {
     _previewDistanceController = TextEditingController(
       text: widget.initialTransition is ConditionTransition
           ? (widget.initialTransition as ConditionTransition)
-              .previewDistanceMeters
-              .toString()
+                .previewDistanceMeters
+                .toString()
           : ConditionTransition.defaultPreviewDistanceMeters.toString(),
     );
   }
@@ -766,33 +745,30 @@ class _AutoTransitionDialogState extends State<_AutoTransitionDialog> {
                 onSelected: (condition) {
                   _conditionController?.text = condition;
                 },
-                fieldViewBuilder: (
-                  context,
-                  controller,
-                  focusNode,
-                  onSubmitted,
-                ) {
-                  _conditionController = controller;
-                  return TextField(
-                    key: const ValueKey('path2AutoConditionName'),
-                    controller: controller,
-                    focusNode: focusNode,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Condition Name',
-                      hintText: 'Select or create a condition',
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (_) => _save(),
-                  );
-                },
+                fieldViewBuilder:
+                    (context, controller, focusNode, onSubmitted) {
+                      _conditionController = controller;
+                      return TextField(
+                        key: const ValueKey('path2AutoConditionName'),
+                        controller: controller,
+                        focusNode: focusNode,
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Condition Name',
+                          hintText: 'Select or create a condition',
+                          border: OutlineInputBorder(),
+                        ),
+                        onSubmitted: (_) => _save(),
+                      );
+                    },
               ),
               const SizedBox(height: 12),
               TextField(
                 key: const ValueKey('path2AutoConditionPreviewDistance'),
                 controller: _previewDistanceController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Preview Distance (m)',
                   helperText:
@@ -809,14 +785,11 @@ class _AutoTransitionDialogState extends State<_AutoTransitionDialog> {
         if (widget.allowDelete)
           TextButton.icon(
             key: const ValueKey('path2AutoDeleteBranch'),
-            onPressed: () => Navigator.of(context).pop(
-              const _TransitionDialogResult.delete(),
-            ),
+            onPressed: () =>
+                Navigator.of(context)
+                    .pop(const _TransitionDialogResult.delete()),
             icon: Icon(Icons.delete_forever_rounded, color: colorScheme.error),
-            label: Text(
-              'Delete',
-              style: TextStyle(color: colorScheme.error),
-            ),
+            label: Text('Delete', style: TextStyle(color: colorScheme.error)),
           ),
         TextButton(
           onPressed: Navigator.of(context).pop,
@@ -837,24 +810,20 @@ class _AutoTransitionDialogState extends State<_AutoTransitionDialog> {
         (previewDistance == null ||
             !previewDistance.isFinite ||
             previewDistance < 0)) {
-      setState(
-        () => _previewDistanceError = 'Enter a non-negative number',
-      );
+      setState(() => _previewDistanceError = 'Enter a non-negative number');
       return;
     }
     final transition = switch (_kind) {
       _AutoTransitionKind.finished => const FinishedTransition(),
       _AutoTransitionKind.condition => ConditionTransition(
-          conditionName: _emptyToNull(_conditionController?.text),
-          previewDistanceMeters: previewDistance!,
-        ),
+        conditionName: _emptyToNull(_conditionController?.text),
+        previewDistanceMeters: previewDistance!,
+      ),
     };
     if (transition is ConditionTransition) {
       ProjectConditionRegistry.register(transition.conditionName);
     }
-    Navigator.of(context).pop(
-      _TransitionDialogResult.transition(transition),
-    );
+    Navigator.of(context).pop(_TransitionDialogResult.transition(transition));
   }
 
   static String? _emptyToNull(String? value) {

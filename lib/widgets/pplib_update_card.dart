@@ -1,5 +1,5 @@
 import 'package:file/file.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/services/update_checker.dart';
 
 class PPLibUpdateCard extends StatefulWidget {
@@ -29,24 +29,24 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
     super.initState();
 
     _updateController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
-    _offsetAnimation =
-        Tween<Offset>(begin: const Offset(0, -0.05), end: Offset.zero)
-            .animate(CurvedAnimation(
-      parent: _updateController,
-      curve: Curves.ease,
-    ));
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _updateController, curve: Curves.ease));
 
     widget.updateChecker
         .isPPLibUpdateAvailable(projectDir: widget.projectDir, fs: widget.fs)
         .then((value) {
-      if (value) {
-        setState(() {
-          _visibile = true;
-          _updateController.forward();
+          if (value) {
+            setState(() {
+              _visibile = true;
+              _updateController.forward();
+            });
+          }
         });
-      }
-    });
   }
 
   @override
@@ -73,8 +73,10 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
                 children: [
                   Text(
                     'PathPlannerLib update available!',
-                    style:
-                        TextStyle(fontSize: 18, color: colorScheme.onSurface),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(

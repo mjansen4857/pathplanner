@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 
@@ -9,25 +9,26 @@ void main() {
     bool hoverStarted = false;
     bool hoverEnded = false;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: TreeCardNode(
-          title: const Text('test_card'),
-          initiallyExpanded: false,
-          onHoverStart: () => hoverStarted = true,
-          onHoverEnd: () => hoverEnded = true,
-          children: const [
-            Text('child_text'),
-          ],
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TreeCardNode(
+            title: const Text('test_card'),
+            initiallyExpanded: false,
+            onHoverStart: () => hoverStarted = true,
+            onHoverEnd: () => hoverEnded = true,
+            children: const [Text('child_text')],
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.text('test_card'), findsOneWidget);
     expect(find.text('child_text'), findsNothing);
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
     await widgetTester.pump();

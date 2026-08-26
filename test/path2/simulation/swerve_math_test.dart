@@ -9,18 +9,20 @@ import 'package:pathplanner/util/wpimath/kinematics.dart';
 
 void main() {
   group('Path2SimulationModuleState', () {
-    test('optimization reverses speed when steering travel exceeds 90 degrees',
-        () {
-      final state = Path2SimulationModuleState(
-        speedMetersPerSecond: 2.0,
-        angle: Rotation2d.fromDegrees(170),
-      );
+    test(
+      'optimization reverses speed when steering travel exceeds 90 degrees',
+      () {
+        final state = Path2SimulationModuleState(
+          speedMetersPerSecond: 2.0,
+          angle: Rotation2d.fromDegrees(170),
+        );
 
-      final optimized = state.optimized(const Rotation2d());
+        final optimized = state.optimized(const Rotation2d());
 
-      expect(optimized.speedMetersPerSecond, -2.0);
-      expect(optimized.angle.degrees, closeTo(-10.0, 1e-9));
-    });
+        expect(optimized.speedMetersPerSecond, -2.0);
+        expect(optimized.angle.degrees, closeTo(-10.0, 1e-9));
+      },
+    );
 
     test('optimization leaves a 90 degree change alone', () {
       final state = Path2SimulationModuleState(
@@ -53,8 +55,10 @@ void main() {
       const dt = 0.02;
       const requested = ChassisSpeeds(vx: 1.0, vy: 0.0, omega: 1.0);
 
-      final discretized =
-          Path2SimulationMath.discretizeChassisSpeeds(requested, dt);
+      final discretized = Path2SimulationMath.discretizeChassisSpeeds(
+        requested,
+        dt,
+      );
       final integrated = Path2SimulationMath.integratePose(
         const Pose2d(Translation2d(), Rotation2d()),
         discretized,
@@ -88,10 +92,7 @@ void main() {
   group('Path2SimulationResult', () {
     Path2SimulationState stateAt(double x, double heading) {
       return Path2SimulationState(
-        pose: Pose2d(
-          Translation2d(x, 0),
-          Rotation2d.fromRadians(heading),
-        ),
+        pose: Pose2d(Translation2d(x, 0), Rotation2d.fromRadians(heading)),
         robotRelativeSpeeds: ChassisSpeeds(vx: x),
         moduleStates: List.generate(
           4,
@@ -127,12 +128,7 @@ void main() {
       final config = _testConfig();
       final restoredConfig = Path2RobotConfigSnapshot.fromMap(config.toMap());
       final result = Path2SimulationResult(
-        [
-          Path2SimulationSample(
-            timeSeconds: 0.0,
-            state: stateAt(1.0, 0.2),
-          ),
-        ],
+        [Path2SimulationSample(timeSeconds: 0.0, state: stateAt(1.0, 0.2))],
         markerActivations: const [
           Path2SimulationMarkerActivation(
             pathIndex: 2,

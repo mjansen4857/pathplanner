@@ -1,6 +1,6 @@
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/choreo_path.dart';
@@ -47,9 +47,7 @@ void main() {
     auto = PathPlannerAuto(
       name: 'test',
       sequence: SequentialCommandGroup(
-        commands: [
-          PathCommand(pathName: 'testPath'),
-        ],
+        commands: [PathCommand(pathName: 'testPath')],
       ),
       resetOdom: true,
       autoDir: '/autos',
@@ -72,33 +70,41 @@ void main() {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     auto.choreoAuto = true;
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitAutoEditor(
-          prefs: prefs,
-          auto: auto,
-          autoPaths: [testPath],
-          autoChoreoPaths: [
-            ChoreoPath(
-              name: 'test',
-              trajectory: PathPlannerTrajectory.fromStates([
-                TrajectoryState.pregen(0.0, const ChassisSpeeds(),
-                    const Pose2d(Translation2d(), Rotation2d())),
-                TrajectoryState.pregen(1.0, const ChassisSpeeds(),
-                    const Pose2d(Translation2d(), Rotation2d())),
-              ]),
-              fs: fs,
-              choreoDir: '/choreo',
-              eventMarkerTimes: [0.5],
-            ),
-          ],
-          allPathNames: const ['testPath', 'otherPath'],
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
-          onAutoChanged: () {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitAutoEditor(
+            prefs: prefs,
+            auto: auto,
+            autoPaths: [testPath],
+            autoChoreoPaths: [
+              ChoreoPath(
+                name: 'test',
+                trajectory: PathPlannerTrajectory.fromStates([
+                  TrajectoryState.pregen(
+                    0.0,
+                    const ChassisSpeeds(),
+                    const Pose2d(Translation2d(), Rotation2d()),
+                  ),
+                  TrajectoryState.pregen(
+                    1.0,
+                    const ChassisSpeeds(),
+                    const Pose2d(Translation2d(), Rotation2d()),
+                  ),
+                ]),
+                fs: fs,
+                choreoDir: '/choreo',
+                eventMarkerTimes: [0.5],
+              ),
+            ],
+            allPathNames: const ['testPath', 'otherPath'],
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+            onAutoChanged: () {},
+          ),
         ),
       ),
-    ));
+    );
 
     var painters = find.byType(CustomPaint);
     bool foundPathPainter = false;
@@ -114,30 +120,34 @@ void main() {
   testWidgets('path hover', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitAutoEditor(
-          prefs: prefs,
-          auto: auto,
-          autoPaths: [testPath],
-          autoChoreoPaths: const [],
-          allPathNames: const ['testPath', 'otherPath'],
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
-          onAutoChanged: () {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitAutoEditor(
+            prefs: prefs,
+            auto: auto,
+            autoPaths: [testPath],
+            autoChoreoPaths: const [],
+            allPathNames: const ['testPath', 'otherPath'],
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+            onAutoChanged: () {},
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
     expect(find.byType(PathCommandWidget), findsOneWidget);
 
-    await gesture
-        .moveTo(widgetTester.getCenter(find.byType(PathCommandWidget)));
+    await gesture.moveTo(
+      widgetTester.getCenter(find.byType(PathCommandWidget)),
+    );
     await widgetTester.pump();
 
     await gesture.moveTo(Offset.infinite);
@@ -147,20 +157,22 @@ void main() {
   testWidgets('swap tree side', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitAutoEditor(
-          prefs: prefs,
-          auto: auto,
-          autoPaths: [testPath],
-          autoChoreoPaths: const [],
-          allPathNames: const ['testPath', 'otherPath'],
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
-          onAutoChanged: () {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitAutoEditor(
+            prefs: prefs,
+            auto: auto,
+            autoPaths: [testPath],
+            autoChoreoPaths: const [],
+            allPathNames: const ['testPath', 'otherPath'],
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+            onAutoChanged: () {},
+          ),
         ),
       ),
-    ));
+    );
 
     final swapButton = find.byTooltip('Move to Other Side');
 
@@ -180,24 +192,27 @@ void main() {
   testWidgets('change tree size', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SplitAutoEditor(
-          prefs: prefs,
-          auto: auto,
-          autoPaths: [testPath],
-          autoChoreoPaths: const [],
-          allPathNames: const ['testPath', 'otherPath'],
-          fieldImage: FieldImage.official(OfficialField.crescendo),
-          undoStack: undoStack,
-          onAutoChanged: () {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SplitAutoEditor(
+            prefs: prefs,
+            auto: auto,
+            autoPaths: [testPath],
+            autoChoreoPaths: const [],
+            allPathNames: const ['testPath', 'otherPath'],
+            fieldImage: FieldImage.official(OfficialField.crescendo),
+            undoStack: undoStack,
+            onAutoChanged: () {},
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.dragFrom(
-        widgetTester.getCenter(find.byType(SplitAutoEditor)),
-        const Offset(-100, 0));
+      widgetTester.getCenter(find.byType(SplitAutoEditor)),
+      const Offset(-100, 0),
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 
@@ -207,9 +222,10 @@ void main() {
     await widgetTester.pump();
 
     await widgetTester.dragFrom(
-        widgetTester.getCenter(find.byType(SplitAutoEditor)) +
-            const Offset(100, 0),
-        const Offset(-100, 0));
+      widgetTester.getCenter(find.byType(SplitAutoEditor)) +
+          const Offset(100, 0),
+      const Offset(-100, 0),
+    );
 
     await widgetTester.pump(const Duration(seconds: 1));
 

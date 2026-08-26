@@ -1,6 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
 import 'package:pathplanner/path2/waypoint.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
@@ -46,10 +46,12 @@ class PathGraphNodeCard extends StatelessWidget {
     final waypoint = node.waypoint;
     final isRoot = path.rootNodes.any((root) => root.id == node.id);
     final isLeaf = path.isLeaf(node.id);
-    final incoming =
-        path.branches.where((branch) => branch.targetId == node.id).length;
-    final outgoing =
-        path.branches.where((branch) => branch.sourceId == node.id).length;
+    final incoming = path.branches
+        .where((branch) => branch.targetId == node.id)
+        .length;
+    final outgoing = path.branches
+        .where((branch) => branch.sourceId == node.id)
+        .length;
 
     return MouseRegion(
       onEnter: (_) => onHovered(node.id),
@@ -155,13 +157,9 @@ class PathGraphNodeCard extends StatelessWidget {
                                 ),
                               if (isLeaf && estimatedRuntimeSeconds.isNotEmpty)
                                 _InfoBadge(
-                                  key: ValueKey(
-                                    'pathNodeRuntime-${node.id}',
-                                  ),
+                                  key: ValueKey('pathNodeRuntime-${node.id}'),
                                   icon: Icons.timer_outlined,
-                                  label: _runtimeLabel(
-                                    estimatedRuntimeSeconds,
-                                  ),
+                                  label: _runtimeLabel(estimatedRuntimeSeconds),
                                   color: colorScheme.primary,
                                 ),
                             ],
@@ -291,15 +289,11 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                             contentPadding: EdgeInsets.zero,
                             title: const Text('Pose waypoint'),
                             value: waypoint is PoseWaypoint,
-                            onChanged: (isPose) => onEdit(
-                              node.id,
-                              (current) {
-                                current.waypoint =
-                                    current.waypoint.withRotation(
-                                  isPose ? const Rotation2d() : null,
-                                );
-                              },
-                            ),
+                            onChanged: (isPose) => onEdit(node.id, (current) {
+                              current.waypoint = current.waypoint.withRotation(
+                                isPose ? const Rotation2d() : null,
+                              );
+                            }),
                           ),
                           Row(
                             children: [
@@ -351,16 +345,13 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                               arrowKeyIncrement: 1,
                               onSubmitted: (value) {
                                 if (value != null && value.isFinite) {
-                                  onEdit(
-                                    node.id,
-                                    (current) {
-                                      final currentWaypoint = current.waypoint;
-                                      if (currentWaypoint is PoseWaypoint) {
-                                        currentWaypoint.rotation =
-                                            Rotation2d.fromDegrees(value);
-                                      }
-                                    },
-                                  );
+                                  onEdit(node.id, (current) {
+                                    final currentWaypoint = current.waypoint;
+                                    if (currentWaypoint is PoseWaypoint) {
+                                      currentWaypoint.rotation =
+                                          Rotation2d.fromDegrees(value);
+                                    }
+                                  });
                                 }
                               },
                             ),
@@ -401,8 +392,11 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                                         value >= 0) {
                                       onEdit(
                                         node.id,
-                                        (current) => current.waypoint
-                                            .maxAngularVelocity = value,
+                                        (current) =>
+                                            current
+                                                    .waypoint
+                                                    .maxAngularVelocity =
+                                                value,
                                       );
                                     }
                                   },
@@ -424,8 +418,11 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                                         value >= 0) {
                                       onEdit(
                                         node.id,
-                                        (current) => current.waypoint
-                                            .maxAngularAcceleration = value,
+                                        (current) =>
+                                            current
+                                                    .waypoint
+                                                    .maxAngularAcceleration =
+                                                value,
                                       );
                                     }
                                   },
@@ -452,8 +449,11 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                                           value >= 0) {
                                         onEdit(
                                           node.id,
-                                          (current) => current.endTolerance
-                                              .distanceMeters = value,
+                                          (current) =>
+                                              current
+                                                      .endTolerance
+                                                      .distanceMeters =
+                                                  value,
                                         );
                                       }
                                     },
@@ -477,8 +477,11 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                                             value >= 0) {
                                           onEdit(
                                             node.id,
-                                            (current) => current.endTolerance
-                                                .angleDegrees = value,
+                                            (current) =>
+                                                current
+                                                        .endTolerance
+                                                        .angleDegrees =
+                                                    value,
                                           );
                                         }
                                       },

@@ -1,5 +1,5 @@
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/commands/command_groups.dart';
@@ -12,9 +12,7 @@ void main() {
     final auto = PathPlannerAuto(
       name: 'test',
       sequence: SequentialCommandGroup(
-        commands: [
-          PathCommand(pathName: 'testPath'),
-        ],
+        commands: [PathCommand(pathName: 'testPath')],
       ),
       resetOdom: true,
       autoDir: '/autos',
@@ -24,14 +22,13 @@ void main() {
     );
     ChangeStack undoStack = ChangeStack();
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ResetOdomTree(
-          auto: auto,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ResetOdomTree(auto: auto, undoStack: undoStack),
         ),
       ),
-    ));
+    );
 
     expect(find.text('Reset Odometry'), findsOneWidget);
     final checkbox = find.byType(Checkbox);

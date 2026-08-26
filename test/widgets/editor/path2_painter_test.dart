@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:file/memory.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
 import 'package:pathplanner/path2/simulation/simulation_state.dart';
@@ -46,7 +46,8 @@ void main() {
   }) {
     return path2.Path(
       name: 'render',
-      nodes: nodes ??
+      nodes:
+          nodes ??
           [
             path2.PathNode(
               id: 'a',
@@ -63,14 +64,9 @@ void main() {
               editorPosition: const Offset(0, 200),
             ),
           ],
-      branches: branches ??
-          [
-            path2.PathBranch(
-              id: 'ab',
-              sourceId: 'a',
-              targetId: 'b',
-            ),
-          ],
+      branches:
+          branches ??
+          [path2.PathBranch(id: 'ab', sourceId: 'a', targetId: 'b')],
       fs: MemoryFileSystem(),
       pathDir: '/paths',
     );
@@ -84,9 +80,7 @@ void main() {
   }) {
     return Path2Painter(
       colorScheme: const ColorScheme.light(),
-      paintPaths: [
-        Path2PaintPath(path: path, visibleNodeIds: visibleNodeIds),
-      ],
+      paintPaths: [Path2PaintPath(path: path, visibleNodeIds: visibleNodeIds)],
       fieldImage: fieldImage,
       prefs: prefs,
       simple: simple,
@@ -119,8 +113,9 @@ void main() {
         path2.PathBranch(id: 'bc', sourceId: 'b', targetId: 'c'),
       ],
     );
-    final ancestorsOnly =
-        await _render(painter(path, visibleNodeIds: {'a', 'b'}));
+    final ancestorsOnly = await _render(
+      painter(path, visibleNodeIds: {'a', 'b'}),
+    );
     final allNodes = await _render(painter(path));
     final hiddenNode = PathPainterUtil.pointToPixelOffset(
       c.waypoint.position,
@@ -231,61 +226,60 @@ void main() {
     );
   });
 
-  test('all preview traces, robots, and swerve modules use one color',
-      () async {
-    Path2SimulationResult traversalAt(double y) => Path2SimulationResult([
-          Path2SimulationSample(
-            timeSeconds: 0,
-            state: Path2SimulationState.atRest(
-              Pose2d(Translation2d(1, y), const Rotation2d()),
-            ),
+  test(
+    'all preview traces, robots, and swerve modules use one color',
+    () async {
+      Path2SimulationResult traversalAt(double y) => Path2SimulationResult([
+        Path2SimulationSample(
+          timeSeconds: 0,
+          state: Path2SimulationState.atRest(
+            Pose2d(Translation2d(1, y), const Rotation2d()),
           ),
-          Path2SimulationSample(
-            timeSeconds: 1,
-            state: Path2SimulationState.atRest(
-              Pose2d(Translation2d(3, y), const Rotation2d()),
-            ),
+        ),
+        Path2SimulationSample(
+          timeSeconds: 1,
+          state: Path2SimulationState.atRest(
+            Pose2d(Translation2d(3, y), const Rotation2d()),
           ),
-        ]);
+        ),
+      ]);
 
-    final image = await _render(
-      painter(
-        makePath(),
-        simulations: [traversalAt(2), traversalAt(6)],
-      ),
-    );
-    final primary = const ColorScheme.light().primary;
-    final traceColor = primary.withAlpha(150);
+      final image = await _render(
+        painter(makePath(), simulations: [traversalAt(2), traversalAt(6)]),
+      );
+      final primary = const ColorScheme.light().primary;
+      final traceColor = primary.withAlpha(150);
 
-    for (final y in [2.0, 6.0]) {
-      final traceMidpoint = PathPainterUtil.pointToPixelOffset(
-        Translation2d(2, y),
+      for (final y in [2.0, 6.0]) {
+        final traceMidpoint = PathPainterUtil.pointToPixelOffset(
+          Translation2d(2, y),
+          Path2Painter.scale,
+          fieldImage,
+        );
+        expect(
+          _containsColorNear(image, traceMidpoint, _rgba(traceColor), 4) ||
+              _containsColorNear(
+                image,
+                traceMidpoint,
+                _premultipliedRgba(traceColor),
+                4,
+              ),
+          isTrue,
+        );
+      }
+
+      final frontLeftModule = PathPainterUtil.pointToPixelOffset(
+        const Translation2d(1.25, 2.25),
         Path2Painter.scale,
         fieldImage,
       );
       expect(
-        _containsColorNear(image, traceMidpoint, _rgba(traceColor), 4) ||
-            _containsColorNear(
-              image,
-              traceMidpoint,
-              _premultipliedRgba(traceColor),
-              4,
-            ),
+        _containsColorNear(image, frontLeftModule, _rgba(primary), 8),
         isTrue,
+        reason: 'the preview should draw the simulated swerve modules',
       );
-    }
-
-    final frontLeftModule = PathPainterUtil.pointToPixelOffset(
-      const Translation2d(1.25, 2.25),
-      Path2Painter.scale,
-      fieldImage,
-    );
-    expect(
-      _containsColorNear(image, frontLeftModule, _rgba(primary), 8),
-      isTrue,
-      reason: 'the preview should draw the simulated swerve modules',
-    );
-  });
+    },
+  );
 }
 
 class _RenderedImage {
@@ -298,10 +292,11 @@ class _RenderedImage {
 
 Future<_RenderedImage> _render(Path2Painter painter) async {
   const width = 600;
-  final height = (painter.fieldImage.defaultSize.height /
-          painter.fieldImage.defaultSize.width *
-          width)
-      .round();
+  final height =
+      (painter.fieldImage.defaultSize.height /
+              painter.fieldImage.defaultSize.width *
+              width)
+          .round();
   final recorder = ui.PictureRecorder();
   painter.paint(Canvas(recorder), Size(width.toDouble(), height.toDouble()));
   final picture = recorder.endRecording();

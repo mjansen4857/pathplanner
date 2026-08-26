@@ -27,9 +27,7 @@ class Path2SwerveSetpoint {
     );
   }
 
-  factory Path2SwerveSetpoint.fromSimulationState(
-    Path2SimulationState state,
-  ) {
+  factory Path2SwerveSetpoint.fromSimulationState(Path2SimulationState state) {
     return Path2SwerveSetpoint(
       robotRelativeSpeeds: state.robotRelativeSpeeds,
       moduleStates: state.moduleStates,
@@ -37,9 +35,7 @@ class Path2SwerveSetpoint {
   }
 
   factory Path2SwerveSetpoint.fromMap(Map<String, dynamic> map) {
-    final speeds = Map<String, dynamic>.from(
-      map['robotRelativeSpeeds'] as Map,
-    );
+    final speeds = Map<String, dynamic>.from(map['robotRelativeSpeeds'] as Map);
     return Path2SwerveSetpoint(
       robotRelativeSpeeds: ChassisSpeeds(
         vx: (speeds['vx'] as num).toDouble(),
@@ -57,14 +53,15 @@ class Path2SwerveSetpoint {
   }
 
   Map<String, dynamic> toMap() => {
-        'robotRelativeSpeeds': {
-          'vx': robotRelativeSpeeds.vx.toDouble(),
-          'vy': robotRelativeSpeeds.vy.toDouble(),
-          'omega': robotRelativeSpeeds.omega.toDouble(),
-        },
-        'moduleStates':
-            moduleStates.map((state) => state.toMap()).toList(growable: false),
-      };
+    'robotRelativeSpeeds': {
+      'vx': robotRelativeSpeeds.vx.toDouble(),
+      'vy': robotRelativeSpeeds.vy.toDouble(),
+      'omega': robotRelativeSpeeds.omega.toDouble(),
+    },
+    'moduleStates': moduleStates
+        .map((state) => state.toMap())
+        .toList(growable: false),
+  };
 }
 
 /// Limits desired Path2 follower output to the configured swerve drivetrain's
@@ -82,7 +79,7 @@ class SwerveSetpointGenerator {
   final Path2SwerveKinematics _kinematics;
 
   SwerveSetpointGenerator(this.config)
-      : _kinematics = Path2SwerveKinematics(config.moduleLocations);
+    : _kinematics = Path2SwerveKinematics(config.moduleLocations);
 
   factory SwerveSetpointGenerator.fromRobotConfig(RobotConfig config) {
     return SwerveSetpointGenerator(
@@ -112,8 +109,9 @@ class SwerveSetpointGenerator {
         config.maxDriveVelocityMetersPerSecond,
       ),
     );
-    desiredRobotRelativeSpeeds =
-        _kinematics.toChassisSpeeds(desiredModuleStates);
+    desiredRobotRelativeSpeeds = _kinematics.toChassisSpeeds(
+      desiredModuleStates,
+    );
 
     var needsSteering = true;
     if (Path2SimulationMath.chassisSpeedsEpsilonEquals(
@@ -183,18 +181,18 @@ class SwerveSetpointGenerator {
       return generateSetpoint(previousSetpoint, const ChassisSpeeds());
     }
 
-    final dx = desiredRobotRelativeSpeeds.vx.toDouble() -
+    final dx =
+        desiredRobotRelativeSpeeds.vx.toDouble() -
         previousSetpoint.robotRelativeSpeeds.vx.toDouble();
-    final dy = desiredRobotRelativeSpeeds.vy.toDouble() -
+    final dy =
+        desiredRobotRelativeSpeeds.vy.toDouble() -
         previousSetpoint.robotRelativeSpeeds.vy.toDouble();
-    final dtheta = desiredRobotRelativeSpeeds.omega.toDouble() -
+    final dtheta =
+        desiredRobotRelativeSpeeds.omega.toDouble() -
         previousSetpoint.robotRelativeSpeeds.omega.toDouble();
 
     var minimumInterpolation = 1.0;
-    final steeringOverrides = List<Rotation2d?>.filled(
-      config.numModules,
-      null,
-    );
+    final steeringOverrides = List<Rotation2d?>.filled(config.numModules, null);
 
     for (var module = 0; module < config.numModules; module++) {
       final previousState = previousSetpoint.moduleStates[module];
@@ -226,7 +224,8 @@ class SwerveSetpointGenerator {
         if (stepsNeeded <= 1.0) {
           steeringOverrides[module] = desiredState.angle;
         } else {
-          steeringOverrides[module] = previousState.angle +
+          steeringOverrides[module] =
+              previousState.angle +
               Rotation2d.fromRadians(
                 necessaryRotation.radians.sign * maxThetaStep,
               );
@@ -238,7 +237,8 @@ class SwerveSetpointGenerator {
         continue;
       }
 
-      final maxHeadingChange = (periodSeconds * config.wheelFrictionForce) /
+      final maxHeadingChange =
+          (periodSeconds * config.wheelFrictionForce) /
           ((config.massKg / config.numModules) *
               previousState.speedMetersPerSecond.abs());
       maxThetaStep = math.min(maxThetaStep, maxHeadingChange);
@@ -251,8 +251,10 @@ class SwerveSetpointGenerator {
         desiredHeading[module].radians.toDouble(),
         maxThetaStep,
       );
-      minimumInterpolation =
-          math.min(minimumInterpolation, steeringInterpolation);
+      minimumInterpolation = math.min(
+        minimumInterpolation,
+        steeringInterpolation,
+      );
     }
 
     var chassisForceVector = const Translation2d();
@@ -267,20 +269,20 @@ class SwerveSetpointGenerator {
         inputVoltage,
       );
       var reverseCurrent = config
-          .motorCurrent(
-            lastVelocityRadiansPerSecond.abs(),
-            -inputVoltage,
-          )
+          .motorCurrent(lastVelocityRadiansPerSecond.abs(), -inputVoltage)
           .abs();
-      forwardCurrent =
-          forwardCurrent.clamp(0.0, config.driveCurrentLimitAmps).toDouble();
-      reverseCurrent =
-          reverseCurrent.clamp(0.0, config.driveCurrentLimitAmps).toDouble();
+      forwardCurrent = forwardCurrent
+          .clamp(0.0, config.driveCurrentLimitAmps)
+          .toDouble();
+      reverseCurrent = reverseCurrent
+          .clamp(0.0, config.driveCurrentLimitAmps)
+          .toDouble();
       final forwardModuleTorque = config.motorTorque(forwardCurrent);
       final reverseModuleTorque = config.motorTorque(reverseCurrent);
 
-      final optimizedDesired =
-          desiredModuleStates[module].optimized(previousState.angle);
+      final optimizedDesired = desiredModuleStates[module].optimized(
+        previousState.angle,
+      );
       desiredModuleStates[module] = optimizedDesired;
 
       late final int forceSign;
@@ -304,10 +306,7 @@ class SwerveSetpointGenerator {
         }
       }
 
-      moduleTorque = math.min(
-        moduleTorque,
-        config.maxTorqueBeforeWheelSlip,
-      );
+      moduleTorque = math.min(moduleTorque, config.maxTorqueBeforeWheelSlip);
       final forceAtCarpet = moduleTorque / config.wheelRadiusMeters;
       final moduleForceVector = Translation2d.fromAngle(
         forceAtCarpet * forceSign,
@@ -342,11 +341,11 @@ class SwerveSetpointGenerator {
       final vxAtMinimum = minimumInterpolation == 1.0
           ? desiredVx[module]
           : (desiredVx[module] - previousVx[module]) * minimumInterpolation +
-              previousVx[module];
+                previousVx[module];
       final vyAtMinimum = minimumInterpolation == 1.0
           ? desiredVy[module]
           : (desiredVy[module] - previousVy[module]) * minimumInterpolation +
-              previousVy[module];
+                previousVy[module];
       final driveInterpolation = _findDriveMaxS(
         previousVx[module],
         previousVy[module],
@@ -360,7 +359,8 @@ class SwerveSetpointGenerator {
     var returnedSpeeds = ChassisSpeeds(
       vx: previousSetpoint.robotRelativeSpeeds.vx + minimumInterpolation * dx,
       vy: previousSetpoint.robotRelativeSpeeds.vy + minimumInterpolation * dy,
-      omega: previousSetpoint.robotRelativeSpeeds.omega +
+      omega:
+          previousSetpoint.robotRelativeSpeeds.omega +
           minimumInterpolation * dtheta,
     );
     returnedSpeeds = Path2SimulationMath.discretizeChassisSpeeds(

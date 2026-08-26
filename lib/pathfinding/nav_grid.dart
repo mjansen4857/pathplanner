@@ -14,10 +14,8 @@ class NavGrid {
     required this.grid,
   });
 
-  NavGrid.blankGrid({
-    required this.nodeSizeMeters,
-    required this.fieldSize,
-  }) : grid = [] {
+  NavGrid.blankGrid({required this.nodeSizeMeters, required this.fieldSize})
+    : grid = [] {
     int rows = (fieldSize.height / nodeSizeMeters).ceil();
     int cols = (fieldSize.width / nodeSizeMeters).ceil();
 
@@ -25,9 +23,9 @@ class NavGrid {
   }
 
   NavGrid.fromJson(Map<String, dynamic> json)
-      : fieldSize = _sizeFromJson(json['field_size']),
-        nodeSizeMeters = json['nodeSizeMeters'] ?? 0.2,
-        grid = [] {
+    : fieldSize = _sizeFromJson(json['field_size']),
+      nodeSizeMeters = json['nodeSizeMeters'] ?? 0.2,
+      grid = [] {
     grid = [
       for (var dynList in json['grid'] ?? [])
         (dynList as List<dynamic>).map((e) => e as bool).toList(),
@@ -47,10 +45,7 @@ class NavGrid {
 
   Map<String, dynamic> toJson() {
     return {
-      'field_size': {
-        'x': fieldSize.width,
-        'y': fieldSize.height,
-      },
+      'field_size': {'x': fieldSize.width, 'y': fieldSize.height},
       'nodeSizeMeters': nodeSizeMeters,
       'grid': grid,
     };
@@ -61,7 +56,9 @@ class NavGrid {
       return FieldImage.defaultField.getFieldSizeMeters();
     }
     return Size(
-        (sizeJson['x'] as num).toDouble(), (sizeJson['y'] as num).toDouble());
+      (sizeJson['x'] as num).toDouble(),
+      (sizeJson['y'] as num).toDouble(),
+    );
   }
 
   @override

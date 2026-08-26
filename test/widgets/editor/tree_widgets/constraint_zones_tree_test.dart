@@ -1,6 +1,6 @@
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/path_constraints.dart';
@@ -46,72 +46,87 @@ void main() {
 
   testWidgets('tapping expands/collapses tree', (widgetTester) async {
     path.constraintZonesExpanded = false;
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     // Tree initially collapsed, expect to find nothing
     expect(
-        find.descendant(
-            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
-        findsNothing);
+      find.descendant(
+        of: find.byType(TreeCardNode),
+        matching: find.byType(TreeCardNode),
+      ),
+      findsNothing,
+    );
 
     await widgetTester.tap(find.byType(ConstraintZonesTree));
     await widgetTester.pumpAndSettle();
 
     expect(path.constraintZonesExpanded, true);
 
-    await widgetTester.tap(find.text(
-        'Constraint Zones')); // Use text so it doesn't tap middle of expanded card
+    await widgetTester.tap(
+      find.text('Constraint Zones'),
+    ); // Use text so it doesn't tap middle of expanded card
     await widgetTester.pumpAndSettle();
     expect(path.constraintZonesExpanded, false);
   });
 
   testWidgets('Zone card for each zone', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(
-        find.descendant(
-            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
-        findsNWidgets(2));
+      find.descendant(
+        of: find.byType(TreeCardNode),
+        matching: find.byType(TreeCardNode),
+      ),
+      findsNWidgets(2),
+    );
   });
 
   testWidgets('Zone card titles', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.widgetWithText(RenamableTitle, '0'), findsOneWidget);
     expect(find.widgetWithText(RenamableTitle, '1'), findsOneWidget);
 
     await widgetTester.enterText(
-        find.widgetWithText(RenamableTitle, '0'), 'zone');
+      find.widgetWithText(RenamableTitle, '0'),
+      'zone',
+    );
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
@@ -123,25 +138,30 @@ void main() {
   });
 
   testWidgets('Zone card hover', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
-    final gesture =
-        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await widgetTester.createGesture(
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
     var zoneCards = find.descendant(
-        of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode));
+      of: find.byType(TreeCardNode),
+      matching: find.byType(TreeCardNode),
+    );
 
     await gesture.moveTo(widgetTester.getCenter(zoneCards.at(0)));
     await widgetTester.pump();
@@ -155,20 +175,24 @@ void main() {
   });
 
   testWidgets('tapping expands/collapses zone cards', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     var zoneCards = find.descendant(
-        of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode));
+      of: find.byType(TreeCardNode),
+      matching: find.byType(TreeCardNode),
+    );
 
     expect(find.byType(NumberTextField), findsNothing);
 
@@ -187,18 +211,20 @@ void main() {
   });
 
   testWidgets('Max vel text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
-          initiallySelectedZone: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+            initiallySelectedZone: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.widgetWithText(NumberTextField, 'Max Velocity (M/S)');
 
@@ -219,21 +245,25 @@ void main() {
   });
 
   testWidgets('Max accel text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
-          initiallySelectedZone: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+            initiallySelectedZone: 0,
+          ),
         ),
       ),
-    ));
+    );
 
-    var textField =
-        find.widgetWithText(NumberTextField, 'Max Acceleration (M/S²)');
+    var textField = find.widgetWithText(
+      NumberTextField,
+      'Max Acceleration (M/S²)',
+    );
 
     expect(textField, findsOneWidget);
 
@@ -252,21 +282,25 @@ void main() {
   });
 
   testWidgets('Max ang vel text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
-          initiallySelectedZone: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+            initiallySelectedZone: 0,
+          ),
         ),
       ),
-    ));
+    );
 
-    var textField =
-        find.widgetWithText(NumberTextField, 'Max Angular Velocity (Deg/S)');
+    var textField = find.widgetWithText(
+      NumberTextField,
+      'Max Angular Velocity (Deg/S)',
+    );
 
     expect(textField, findsOneWidget);
 
@@ -285,21 +319,25 @@ void main() {
   });
 
   testWidgets('Max ang accel text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
-          initiallySelectedZone: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+            initiallySelectedZone: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.widgetWithText(
-        NumberTextField, 'Max Angular Acceleration (Deg/S²)');
+      NumberTextField,
+      'Max Angular Acceleration (Deg/S²)',
+    );
 
     expect(textField, findsOneWidget);
 
@@ -315,25 +353,31 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(
-        path.constraintZones[0].constraints.maxAngularAccelerationDeg, oldVal);
+      path.constraintZones[0].constraints.maxAngularAccelerationDeg,
+      oldVal,
+    );
   });
 
   testWidgets('nominal voltage text field', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
-          initiallySelectedZone: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+            initiallySelectedZone: 0,
+          ),
         ),
       ),
-    ));
+    );
 
-    var textField =
-        find.widgetWithText(NumberTextField, 'Nominal Voltage (Volts)');
+    var textField = find.widgetWithText(
+      NumberTextField,
+      'Nominal Voltage (Volts)',
+    );
 
     expect(textField, findsOneWidget);
 
@@ -352,18 +396,20 @@ void main() {
   });
 
   testWidgets('min pos slider', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
-          initiallySelectedZone: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+            initiallySelectedZone: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var sliders = find.byType(Slider);
 
@@ -382,18 +428,20 @@ void main() {
   });
 
   testWidgets('max pos slider', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
-          initiallySelectedZone: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+            initiallySelectedZone: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var sliders = find.byType(Slider);
 
@@ -412,18 +460,20 @@ void main() {
   });
 
   testWidgets('Delete zone button', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
-          initiallySelectedZone: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+            initiallySelectedZone: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var deleteButtons = find.byTooltip('Delete Zone');
 
@@ -442,18 +492,20 @@ void main() {
   });
 
   testWidgets('move buttons hidden when zone selected', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
-          initiallySelectedZone: 0,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+            initiallySelectedZone: 0,
+          ),
         ),
       ),
-    ));
+    );
 
     var downButtons = find.byTooltip('Move Zone Down');
     var upButtons = find.byTooltip('Move Zone Up');
@@ -464,17 +516,19 @@ void main() {
 
   testWidgets('move zone down', (widgetTester) async {
     path.constraintZones.add(ConstraintsZone.defaultZone());
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     var downButtons = find.byTooltip('Move Zone Down');
 
@@ -499,17 +553,19 @@ void main() {
 
   testWidgets('move zone up', (widgetTester) async {
     path.constraintZones.add(ConstraintsZone.defaultZone());
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     var upButtons = find.byTooltip('Move Zone Up');
 
@@ -533,17 +589,19 @@ void main() {
   });
 
   testWidgets('add new zone', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     // Find the add new zone button by its tooltip
     var newZoneButton = find.byTooltip('Add New Constraint Zone');
@@ -569,18 +627,20 @@ void main() {
       ),
     ];
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          initiallySelectedZone: 0,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            initiallySelectedZone: 0,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.widgetWithText(NumberTextField, 'Start Pos');
 
@@ -592,12 +652,16 @@ void main() {
 
     expect(pathChanged, true);
     expect(
-        path.constraintZones.first.minWaypointRelativePos, closeTo(0.4, 0.001));
+      path.constraintZones.first.minWaypointRelativePos,
+      closeTo(0.4, 0.001),
+    );
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.constraintZones.first.minWaypointRelativePos,
-        closeTo(0.25, 0.001));
+    expect(
+      path.constraintZones.first.minWaypointRelativePos,
+      closeTo(0.25, 0.001),
+    );
   });
 
   testWidgets('end pos text field', (widgetTester) async {
@@ -609,18 +673,20 @@ void main() {
       ),
     ];
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConstraintZonesTree(
-          path: path,
-          initiallySelectedZone: 0,
-          onPathChanged: () => pathChanged = true,
-          onZoneHovered: (value) => hoveredZone = value,
-          onZoneSelected: (value) => selectedZone = value,
-          undoStack: undoStack,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConstraintZonesTree(
+            path: path,
+            initiallySelectedZone: 0,
+            onPathChanged: () => pathChanged = true,
+            onZoneHovered: (value) => hoveredZone = value,
+            onZoneSelected: (value) => selectedZone = value,
+            undoStack: undoStack,
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.widgetWithText(NumberTextField, 'End Pos');
 
@@ -632,11 +698,15 @@ void main() {
 
     expect(pathChanged, true);
     expect(
-        path.constraintZones.first.maxWaypointRelativePos, closeTo(0.6, 0.001));
+      path.constraintZones.first.maxWaypointRelativePos,
+      closeTo(0.6, 0.001),
+    );
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.constraintZones.first.maxWaypointRelativePos,
-        closeTo(0.75, 0.001));
+    expect(
+      path.constraintZones.first.maxWaypointRelativePos,
+      closeTo(0.75, 0.001),
+    );
   });
 }

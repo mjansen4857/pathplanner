@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -54,8 +54,10 @@ class _WaypointsTreeState extends State<WaypointsTree> {
 
     _selectedWaypoint = widget.initialSelectedWaypoint;
 
-    _controllers =
-        List.generate(waypoints.length, (index) => ExpansibleController());
+    _controllers = List.generate(
+      waypoints.length,
+      (index) => ExpansibleController(),
+    );
 
     _treeController = widget.controller ?? WaypointsTreeController();
     _treeController._state = this;
@@ -147,10 +149,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Tooltip(
                 message: waypoint.linkedName,
-                child: const Icon(
-                  Icons.link,
-                  color: Colors.green,
-                ),
+                child: const Icon(Icons.link, color: Colors.green),
               ),
             ),
           Expanded(child: Container()),
@@ -207,11 +206,14 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   onSubmitted: (value) {
                     if (value != null) {
                       Waypoint wRef = waypoints[waypointIdx];
-                      widget.undoStack.add(_waypointChange(
-                        wRef,
-                        () => wRef.move(value, wRef.anchor.y),
-                        (oldVal) => wRef.move(oldVal.anchor.x, oldVal.anchor.y),
-                      ));
+                      widget.undoStack.add(
+                        _waypointChange(
+                          wRef,
+                          () => wRef.move(value, wRef.anchor.y),
+                          (oldVal) =>
+                              wRef.move(oldVal.anchor.x, oldVal.anchor.y),
+                        ),
+                      );
                     }
                   },
                 ),
@@ -224,11 +226,14 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   onSubmitted: (value) {
                     if (value != null) {
                       Waypoint wRef = waypoints[waypointIdx];
-                      widget.undoStack.add(_waypointChange(
-                        wRef,
-                        () => wRef.move(wRef.anchor.x, value),
-                        (oldVal) => wRef.move(oldVal.anchor.x, oldVal.anchor.y),
-                      ));
+                      widget.undoStack.add(
+                        _waypointChange(
+                          wRef,
+                          () => wRef.move(wRef.anchor.x, value),
+                          (oldVal) =>
+                              wRef.move(oldVal.anchor.x, oldVal.anchor.y),
+                        ),
+                      );
                     }
                   },
                 ),
@@ -242,11 +247,13 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   onSubmitted: (value) {
                     if (value != null) {
                       Waypoint wRef = waypoints[waypointIdx];
-                      widget.undoStack.add(_waypointChange(
-                        wRef,
-                        () => wRef.setHeading(Rotation2d.fromDegrees(value)),
-                        (oldVal) => wRef.setHeading(oldVal.heading),
-                      ));
+                      widget.undoStack.add(
+                        _waypointChange(
+                          wRef,
+                          () => wRef.setHeading(Rotation2d.fromDegrees(value)),
+                          (oldVal) => wRef.setHeading(oldVal.heading),
+                        ),
+                      );
                     }
                   },
                 ),
@@ -268,12 +275,15 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                       onSubmitted: (value) {
                         if (value != null) {
                           Waypoint wRef = waypoints[waypointIdx];
-                          widget.undoStack.add(_waypointChange(
-                            wRef,
-                            () => wRef.setPrevControlLength(value),
-                            (oldVal) => wRef.setPrevControlLength(
-                                oldVal.prevControlLength!),
-                          ));
+                          widget.undoStack.add(
+                            _waypointChange(
+                              wRef,
+                              () => wRef.setPrevControlLength(value),
+                              (oldVal) => wRef.setPrevControlLength(
+                                oldVal.prevControlLength!,
+                              ),
+                            ),
+                          );
                         }
                       },
                     ),
@@ -291,12 +301,15 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                       onSubmitted: (value) {
                         if (value != null) {
                           Waypoint wRef = waypoints[waypointIdx];
-                          widget.undoStack.add(_waypointChange(
-                            wRef,
-                            () => wRef.setNextControlLength(value),
-                            (oldVal) => wRef.setNextControlLength(
-                                oldVal.nextControlLength!),
-                          ));
+                          widget.undoStack.add(
+                            _waypointChange(
+                              wRef,
+                              () => wRef.setNextControlLength(value),
+                              (oldVal) => wRef.setNextControlLength(
+                                oldVal.nextControlLength!,
+                              ),
+                            ),
+                          );
                         }
                       },
                     ),
@@ -316,20 +329,24 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   message: 'Add Rotation Target at Waypoint',
                   child: IconButton(
                     onPressed: () {
-                      widget.undoStack.add(Change(
-                        PathPlannerPath.cloneRotationTargets(
-                            widget.path.rotationTargets),
-                        () {
-                          widget.path.rotationTargets.add(
-                              RotationTarget(waypointIdx, const Rotation2d()));
-                          widget.onPathChanged?.call();
-                        },
-                        (oldValue) {
-                          widget.path.rotationTargets =
-                              PathPlannerPath.cloneRotationTargets(oldValue);
-                          widget.onPathChanged?.call();
-                        },
-                      ));
+                      widget.undoStack.add(
+                        Change(
+                          PathPlannerPath.cloneRotationTargets(
+                            widget.path.rotationTargets,
+                          ),
+                          () {
+                            widget.path.rotationTargets.add(
+                              RotationTarget(waypointIdx, const Rotation2d()),
+                            );
+                            widget.onPathChanged?.call();
+                          },
+                          (oldValue) {
+                            widget.path.rotationTargets =
+                                PathPlannerPath.cloneRotationTargets(oldValue);
+                            widget.onPathChanged?.call();
+                          },
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.rotate_right_rounded, size: 20),
                   ),
@@ -339,41 +356,52 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   message: 'Create New Waypoint After',
                   child: IconButton(
                     onPressed: () {
-                      widget.undoStack.add(Change(
-                        [
-                          PathPlannerPath.cloneWaypoints(widget.path.waypoints),
-                          PathPlannerPath.cloneConstraintZones(
-                              widget.path.constraintZones),
-                          PathPlannerPath.cloneEventMarkers(
-                              widget.path.eventMarkers),
-                          PathPlannerPath.cloneRotationTargets(
-                              widget.path.rotationTargets),
-                        ],
-                        () {
-                          widget.path.insertWaypointAfter(waypointIdx);
-                          widget.onPathChanged?.call();
-                        },
-                        (oldValue) {
-                          _selectedWaypoint = null;
-                          widget.onWaypointHovered?.call(null);
-                          widget.onWaypointSelected?.call(null);
+                      widget.undoStack.add(
+                        Change(
+                          [
+                            PathPlannerPath.cloneWaypoints(
+                              widget.path.waypoints,
+                            ),
+                            PathPlannerPath.cloneConstraintZones(
+                              widget.path.constraintZones,
+                            ),
+                            PathPlannerPath.cloneEventMarkers(
+                              widget.path.eventMarkers,
+                            ),
+                            PathPlannerPath.cloneRotationTargets(
+                              widget.path.rotationTargets,
+                            ),
+                          ],
+                          () {
+                            widget.path.insertWaypointAfter(waypointIdx);
+                            widget.onPathChanged?.call();
+                          },
+                          (oldValue) {
+                            _selectedWaypoint = null;
+                            widget.onWaypointHovered?.call(null);
+                            widget.onWaypointSelected?.call(null);
 
-                          widget.path.waypoints =
-                              PathPlannerPath.cloneWaypoints(
-                                  oldValue[0] as List<Waypoint>);
-                          widget.path.constraintZones =
-                              PathPlannerPath.cloneConstraintZones(
-                                  oldValue[1] as List<ConstraintsZone>);
-                          widget.path.eventMarkers =
-                              PathPlannerPath.cloneEventMarkers(
-                                  oldValue[2] as List<EventMarker>);
-                          widget.path.rotationTargets =
-                              PathPlannerPath.cloneRotationTargets(
-                                  oldValue[3] as List<RotationTarget>);
+                            widget.path.waypoints =
+                                PathPlannerPath.cloneWaypoints(
+                                  oldValue[0] as List<Waypoint>,
+                                );
+                            widget.path.constraintZones =
+                                PathPlannerPath.cloneConstraintZones(
+                                  oldValue[1] as List<ConstraintsZone>,
+                                );
+                            widget.path.eventMarkers =
+                                PathPlannerPath.cloneEventMarkers(
+                                  oldValue[2] as List<EventMarker>,
+                                );
+                            widget.path.rotationTargets =
+                                PathPlannerPath.cloneRotationTargets(
+                                  oldValue[3] as List<RotationTarget>,
+                                );
 
-                          widget.onPathChanged?.call();
-                        },
-                      ));
+                            widget.onPathChanged?.call();
+                          },
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.add, size: 20),
                   ),
@@ -391,11 +419,17 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   message: 'Unlink Waypoint',
                   child: IconButton(
                     onPressed: () {
-                      widget.undoStack.add(_waypointChange(waypoint, () {
-                        waypoint.linkedName = null;
-                      }, (oldVal) {
-                        waypoint.linkedName = oldVal.linkedName;
-                      }));
+                      widget.undoStack.add(
+                        _waypointChange(
+                          waypoint,
+                          () {
+                            waypoint.linkedName = null;
+                          },
+                          (oldVal) {
+                            waypoint.linkedName = oldVal.linkedName;
+                          },
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.link_off, size: 20),
                   ),
@@ -411,124 +445,141 @@ class _WaypointsTreeState extends State<WaypointsTree> {
     final TextEditingController controller = TextEditingController();
 
     showDialog(
-        context: context,
-        builder: (context) {
-          ColorScheme colorScheme = Theme.of(context).colorScheme;
-          return AlertDialog(
-            backgroundColor: colorScheme.surface,
-            surfaceTintColor: colorScheme.surfaceTint,
-            title: const Text('Link Waypoint'),
-            content: SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                      'Convert this waypoint to a linked waypoint. Updating the position one instance of a linked waypoint will update all linked waypoints under the same name.'),
-                  const SizedBox(height: 18),
-                  const Text(
-                      'If you choose the name of an existing linked waypoint, this waypoint will be updated to match its position.'),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownMenu<String>(
-                          label: const Text('Linked Waypoint Name'),
-                          controller: controller,
-                          enableSearch: false,
-                          enableFilter: true,
-                          width: 400,
-                          dropdownMenuEntries: [
-                            for (String name in Waypoint.linked.keys)
-                              DropdownMenuEntry(
-                                value: name,
-                                label: name,
-                              ),
-                          ],
-                          inputDecorationTheme: InputDecorationTheme(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            contentPadding:
-                                const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                            isDense: true,
-                            constraints: const BoxConstraints(
-                              maxHeight: 42,
-                            ),
+      context: context,
+      builder: (context) {
+        ColorScheme colorScheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
+          title: const Text('Link Waypoint'),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Convert this waypoint to a linked waypoint. Updating the position one instance of a linked waypoint will update all linked waypoints under the same name.',
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'If you choose the name of an existing linked waypoint, this waypoint will be updated to match its position.',
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownMenu<String>(
+                        label: const Text('Linked Waypoint Name'),
+                        controller: controller,
+                        enableSearch: false,
+                        enableFilter: true,
+                        width: 400,
+                        dropdownMenuEntries: [
+                          for (String name in Waypoint.linked.keys)
+                            DropdownMenuEntry(value: name, label: name),
+                        ],
+                        inputDecorationTheme: InputDecorationTheme(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
+                          contentPadding: const EdgeInsets.fromLTRB(
+                            12,
+                            0,
+                            12,
+                            0,
+                          ),
+                          isDense: true,
+                          constraints: const BoxConstraints(maxHeight: 42),
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: Navigator.of(context).pop,
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  if (controller.text.isNotEmpty) {
-                    String name = controller.text;
+          ),
+          actions: [
+            TextButton(
+              onPressed: Navigator.of(context).pop,
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  String name = controller.text;
 
-                    if (Waypoint.linked.containsKey(name)) {
-                      // Linked waypoint exists, update this waypoint
-                      Pose2d link = Waypoint.linked[name]!;
-                      Translation2d anchor = link.translation;
+                  if (Waypoint.linked.containsKey(name)) {
+                    // Linked waypoint exists, update this waypoint
+                    Pose2d link = Waypoint.linked[name]!;
+                    Translation2d anchor = link.translation;
 
-                      widget.undoStack
-                          .add(_waypointChange(waypoints[waypointIdx], () {
-                        waypoints[waypointIdx].linkedName = name;
-                        waypoints[waypointIdx].move(anchor.x, anchor.y);
+                    widget.undoStack.add(
+                      _waypointChange(
+                        waypoints[waypointIdx],
+                        () {
+                          waypoints[waypointIdx].linkedName = name;
+                          waypoints[waypointIdx].move(anchor.x, anchor.y);
 
-                        if (waypointIdx == 0) {
-                          // Update the ideal starting state rotation
-                          widget.path.idealStartingState.rotation =
-                              link.rotation;
-                        } else if (waypointIdx == waypoints.length - 1) {
-                          // Update the goal end state rotation
-                          widget.path.goalEndState.rotation = link.rotation;
-                        }
-                      }, (oldVal) {
-                        waypoints[waypointIdx] = oldVal.clone();
-                      }));
-                    } else {
-                      // Create new linked waypoint
-                      widget.undoStack
-                          .add(_waypointChange(waypoints[waypointIdx], () {
-                        waypoints[waypointIdx].linkedName = name;
+                          if (waypointIdx == 0) {
+                            // Update the ideal starting state rotation
+                            widget.path.idealStartingState.rotation =
+                                link.rotation;
+                          } else if (waypointIdx == waypoints.length - 1) {
+                            // Update the goal end state rotation
+                            widget.path.goalEndState.rotation = link.rotation;
+                          }
+                        },
+                        (oldVal) {
+                          waypoints[waypointIdx] = oldVal.clone();
+                        },
+                      ),
+                    );
+                  } else {
+                    // Create new linked waypoint
+                    widget.undoStack.add(
+                      _waypointChange(
+                        waypoints[waypointIdx],
+                        () {
+                          waypoints[waypointIdx].linkedName = name;
 
-                        Rotation2d linkRotation = const Rotation2d();
-                        if (waypointIdx == 0) {
-                          // Use ideal starting state rotation
-                          linkRotation =
-                              widget.path.idealStartingState.rotation;
-                        } else if (waypointIdx == waypoints.length - 1) {
-                          // Use goal end state rotation
-                          linkRotation = widget.path.goalEndState.rotation;
-                        }
+                          Rotation2d linkRotation = const Rotation2d();
+                          if (waypointIdx == 0) {
+                            // Use ideal starting state rotation
+                            linkRotation =
+                                widget.path.idealStartingState.rotation;
+                          } else if (waypointIdx == waypoints.length - 1) {
+                            // Use goal end state rotation
+                            linkRotation = widget.path.goalEndState.rotation;
+                          }
 
-                        Waypoint.linked[name] =
-                            Pose2d(waypoints[waypointIdx].anchor, linkRotation);
-                      }, (oldVal) {
-                        waypoints[waypointIdx] = oldVal.clone();
-                        Waypoint.linked.remove(name);
-                      }));
-                    }
-                    Navigator.of(context).pop();
+                          Waypoint.linked[name] = Pose2d(
+                            waypoints[waypointIdx].anchor,
+                            linkRotation,
+                          );
+                        },
+                        (oldVal) {
+                          waypoints[waypointIdx] = oldVal.clone();
+                          Waypoint.linked.remove(name);
+                        },
+                      ),
+                    );
                   }
-                },
-                child: const Text('Confirm'),
-              ),
-            ],
-          );
-        });
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Change _waypointChange(
-      Waypoint waypoint, VoidCallback execute, Function(Waypoint oldVal) undo) {
+    Waypoint waypoint,
+    VoidCallback execute,
+    Function(Waypoint oldVal) undo,
+  ) {
     return Change(
       waypoint.clone(),
       () {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
@@ -32,21 +32,31 @@ class RobotConfig {
     prefs.setBool(PrefsKeys.holonomicMode, true);
     ModuleConfig moduleConfig = ModuleConfig.fromPrefs(prefs, 1);
     List<Translation2d> moduleLocations = [
-      Translation2d(prefs.getDouble(PrefsKeys.flModuleX) ?? Defaults.flModuleX,
-          prefs.getDouble(PrefsKeys.flModuleY) ?? Defaults.flModuleY),
-      Translation2d(prefs.getDouble(PrefsKeys.frModuleX) ?? Defaults.frModuleX,
-          prefs.getDouble(PrefsKeys.frModuleY) ?? Defaults.frModuleY),
-      Translation2d(prefs.getDouble(PrefsKeys.blModuleX) ?? Defaults.blModuleX,
-          prefs.getDouble(PrefsKeys.blModuleY) ?? Defaults.blModuleY),
-      Translation2d(prefs.getDouble(PrefsKeys.brModuleX) ?? Defaults.brModuleX,
-          prefs.getDouble(PrefsKeys.brModuleY) ?? Defaults.brModuleY),
+      Translation2d(
+        prefs.getDouble(PrefsKeys.flModuleX) ?? Defaults.flModuleX,
+        prefs.getDouble(PrefsKeys.flModuleY) ?? Defaults.flModuleY,
+      ),
+      Translation2d(
+        prefs.getDouble(PrefsKeys.frModuleX) ?? Defaults.frModuleX,
+        prefs.getDouble(PrefsKeys.frModuleY) ?? Defaults.frModuleY,
+      ),
+      Translation2d(
+        prefs.getDouble(PrefsKeys.blModuleX) ?? Defaults.blModuleX,
+        prefs.getDouble(PrefsKeys.blModuleY) ?? Defaults.blModuleY,
+      ),
+      Translation2d(
+        prefs.getDouble(PrefsKeys.brModuleX) ?? Defaults.brModuleX,
+        prefs.getDouble(PrefsKeys.brModuleY) ?? Defaults.brModuleY,
+      ),
     ];
     Size bumperSize = Size(
-        prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth,
-        prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength);
+      prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth,
+      prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength,
+    );
     Translation2d bumperOffset = Translation2d(
-        prefs.getDouble(PrefsKeys.bumperOffsetX) ?? Defaults.bumperOffsetX,
-        prefs.getDouble(PrefsKeys.bumperOffsetY) ?? Defaults.bumperOffsetY);
+      prefs.getDouble(PrefsKeys.bumperOffsetX) ?? Defaults.bumperOffsetX,
+      prefs.getDouble(PrefsKeys.bumperOffsetY) ?? Defaults.bumperOffsetY,
+    );
 
     return RobotConfig(
       massKG: prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
@@ -76,21 +86,25 @@ class ModuleConfig {
   });
 
   ModuleConfig.fromPrefs(SharedPreferences prefs, int numMotors)
-      : this(
-          wheelRadiusMeters: prefs.getDouble(PrefsKeys.driveWheelRadius) ??
-              Defaults.driveWheelRadius,
-          maxDriveVelocityMPS: prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
-              Defaults.maxDriveSpeed,
-          driveMotor: DCMotor.fromString(
-                  prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
-                  numMotors)
-              .withReduction(prefs.getDouble(PrefsKeys.driveGearing) ??
-                  Defaults.driveGearing),
-          driveCurrentLimit: (prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
-                  Defaults.driveCurrentLimit) *
+    : this(
+        wheelRadiusMeters:
+            prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+            Defaults.driveWheelRadius,
+        maxDriveVelocityMPS:
+            prefs.getDouble(PrefsKeys.maxDriveSpeed) ?? Defaults.maxDriveSpeed,
+        driveMotor:
+            DCMotor.fromString(
+              prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
               numMotors,
-          wheelCOF: prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
-        );
+            ).withReduction(
+              prefs.getDouble(PrefsKeys.driveGearing) ?? Defaults.driveGearing,
+            ),
+        driveCurrentLimit:
+            (prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
+                Defaults.driveCurrentLimit) *
+            numMotors,
+        wheelCOF: prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
+      );
 
   num get maxDriveVelocityRadPerSec => maxDriveVelocityMPS / wheelRadiusMeters;
 }

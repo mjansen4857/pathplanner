@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 enum GraphConnectorSide { top, bottom }
 
@@ -94,26 +94,24 @@ abstract final class GraphBranchRouter {
       canvasSize.width,
       start.dx,
       end.dx,
-      for (final obstacle in obstacleList) ...[
-        obstacle.left,
-        obstacle.right,
-      ],
+      for (final obstacle in obstacleList) ...[obstacle.left, obstacle.right],
     ]);
     final ys = _uniqueSorted([
       0,
       canvasSize.height,
       start.dy,
       end.dy,
-      for (final obstacle in obstacleList) ...[
-        obstacle.top,
-        obstacle.bottom,
-      ],
+      for (final obstacle in obstacleList) ...[obstacle.top, obstacle.bottom],
     ]);
 
-    final startKey =
-        (_indexOfCoordinate(xs, start.dx), _indexOfCoordinate(ys, start.dy));
-    final endKey =
-        (_indexOfCoordinate(xs, end.dx), _indexOfCoordinate(ys, end.dy));
+    final startKey = (
+      _indexOfCoordinate(xs, start.dx),
+      _indexOfCoordinate(ys, start.dy),
+    );
+    final endKey = (
+      _indexOfCoordinate(xs, end.dx),
+      _indexOfCoordinate(ys, end.dy),
+    );
     final open = HeapPriorityQueue<_RouteCandidate>(
       (a, b) => a.estimatedTotal.compareTo(b.estimatedTotal),
     )..add(_RouteCandidate(startKey, 0, _manhattan(start, end)));
@@ -128,18 +126,11 @@ abstract final class GraphBranchRouter {
         continue;
       }
       if (key == endKey) {
-        return _simplifyRoute(
-          _reconstructRoute(previous, key, xs, ys),
-        );
+        return _simplifyRoute(_reconstructRoute(previous, key, xs, ys));
       }
 
       final point = Offset(xs[key.$1], ys[key.$2]);
-      for (final neighbor in _neighbors(
-        key,
-        xs,
-        ys,
-        obstacleList,
-      )) {
+      for (final neighbor in _neighbors(key, xs, ys, obstacleList)) {
         if (closed.contains(neighbor)) {
           continue;
         }
@@ -337,7 +328,7 @@ class VisualGraphEditor extends StatefulWidget {
   final GraphNodeMoved? onNodeMoved;
   final FutureOr<void> Function(GraphConnectionRequest request)? onConnect;
   final FutureOr<void> Function(GraphEmptyConnectionRequest request)?
-      onConnectToEmpty;
+  onConnectToEmpty;
   final void Function(String branchId, Offset globalPosition)? onBranchTap;
   final VoidCallback? onCanvasTap;
   final Color? branchColor;
@@ -471,16 +462,8 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
     final matrix = Matrix4.identity()
       ..setEntry(0, 0, scale)
       ..setEntry(1, 1, scale)
-      ..setEntry(
-        0,
-        3,
-        viewportCenter.dx - sceneCenter.dx * scale,
-      )
-      ..setEntry(
-        1,
-        3,
-        viewportCenter.dy - sceneCenter.dy * scale,
-      );
+      ..setEntry(0, 3, viewportCenter.dx - sceneCenter.dx * scale)
+      ..setEntry(1, 3, viewportCenter.dy - sceneCenter.dy * scale);
     _transformationController.value = matrix;
   }
 
@@ -528,7 +511,8 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
                               provisional: _connectionDrag == null
                                   ? null
                                   : _provisionalLine(_connectionDrag!),
-                              defaultColor: widget.branchColor ??
+                              defaultColor:
+                                  widget.branchColor ??
                                   colorScheme.outlineVariant,
                             ),
                           ),
@@ -550,9 +534,9 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
                               child: InkWell(
                                 onTapDown: (details) =>
                                     widget.onBranchTap?.call(
-                                  layout.branch.id,
-                                  details.globalPosition,
-                                ),
+                                      layout.branch.id,
+                                      details.globalPosition,
+                                    ),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 9,
@@ -604,15 +588,14 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
     );
     final groups = <(String, String), List<VisualGraphBranch>>{};
     for (final branch in validBranches) {
-      groups.putIfAbsent(
-          (branch.sourceId, branch.targetId), () => []).add(branch);
+      groups
+          .putIfAbsent((branch.sourceId, branch.targetId), () => [])
+          .add(branch);
     }
 
     final layouts = <_BranchLayout>[];
     final occupiedBadgeRects = <Rect>[];
-    final nodeRects = [
-      for (final node in widget.nodes) _nodeRect(node),
-    ];
+    final nodeRects = [for (final node in widget.nodes) _nodeRect(node)];
     for (final branches in groups.values) {
       for (var index = 0; index < branches.length; index++) {
         final branch = branches[index];
@@ -663,13 +646,7 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
             height: _branchBadgeHeight,
           ),
         );
-        layouts.add(
-          _BranchLayout(
-            branch,
-            points,
-            badgeCenter,
-          ),
-        );
+        layouts.add(_BranchLayout(branch, points, badgeCenter));
       }
     }
     return layouts;
@@ -677,8 +654,9 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
 
   _ProvisionalLine _provisionalLine(_ConnectionDrag drag) {
     final node = _nodeById(drag.nodeId);
-    final start =
-        node == null ? drag.scenePosition : _connectorCenter(node, drag.side);
+    final start = node == null
+        ? drag.scenePosition
+        : _connectorCenter(node, drag.side);
     return _ProvisionalLine(start, drag.scenePosition);
   }
 
@@ -715,12 +693,10 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
       final length = (end - start).distance;
       for (final fraction in const [0.5, 0.25, 0.75]) {
         final distance = traveled + length * fraction;
-        candidates.add(
-          (
-            point: Offset.lerp(start, end, fraction)!,
-            distanceFromMiddle: (distance - totalLength / 2).abs(),
-          ),
-        );
+        candidates.add((
+          point: Offset.lerp(start, end, fraction)!,
+          distanceFromMiddle: (distance - totalLength / 2).abs(),
+        ));
       }
       traveled += length;
     }
@@ -734,8 +710,9 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
         height: _branchBadgeHeight,
       );
       if (nodeRects.every((node) => !rect.overlaps(node.inflate(4))) &&
-          occupiedBadgeRects
-              .every((badge) => !rect.overlaps(badge.inflate(4)))) {
+          occupiedBadgeRects.every(
+            (badge) => !rect.overlaps(badge.inflate(4)),
+          )) {
         return candidate.point;
       }
     }
@@ -768,10 +745,7 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
     return points.last;
   }
 
-  Offset _connectorCenter(
-    VisualGraphNode node,
-    GraphConnectorSide side,
-  ) {
+  Offset _connectorCenter(VisualGraphNode node, GraphConnectorSide side) {
     final rect = _nodeRect(node);
     return Offset(
       rect.center.dx,
@@ -852,10 +826,12 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
       if (target.nodeId == drag.nodeId || target.side == drag.side) {
         return;
       }
-      final sourceId =
-          drag.side == GraphConnectorSide.bottom ? drag.nodeId : target.nodeId;
-      final targetId =
-          drag.side == GraphConnectorSide.bottom ? target.nodeId : drag.nodeId;
+      final sourceId = drag.side == GraphConnectorSide.bottom
+          ? drag.nodeId
+          : target.nodeId;
+      final targetId = drag.side == GraphConnectorSide.bottom
+          ? target.nodeId
+          : drag.nodeId;
       await widget.onConnect?.call(
         GraphConnectionRequest(
           sourceId: sourceId,
@@ -917,9 +893,7 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
     if (box == null) {
       return globalPosition;
     }
-    return _transformationController.toScene(
-      box.globalToLocal(globalPosition),
-    );
+    return _transformationController.toScene(box.globalToLocal(globalPosition));
   }
 }
 
@@ -977,11 +951,8 @@ class GraphConnectorHandle extends StatelessWidget {
           key: ValueKey('graphConnector-$nodeId-${side.name}'),
           behavior: HitTestBehavior.opaque,
           dragStartBehavior: DragStartBehavior.down,
-          onPanStart: (details) => state._startConnection(
-            nodeId,
-            side,
-            details.globalPosition,
-          ),
+          onPanStart: (details) =>
+              state._startConnection(nodeId, side, details.globalPosition),
           onPanUpdate: (details) =>
               state._updateConnection(details.globalPosition),
           onPanEnd: (details) => state._endConnection(details.globalPosition),
@@ -1015,14 +986,11 @@ class GraphConnectorHandle extends StatelessWidget {
 class _GraphInteractionScope extends InheritedWidget {
   final _VisualGraphEditorState state;
 
-  const _GraphInteractionScope({
-    required this.state,
-    required super.child,
-  });
+  const _GraphInteractionScope({required this.state, required super.child});
 
   static _VisualGraphEditorState of(BuildContext context) {
-    final scope =
-        context.dependOnInheritedWidgetOfExactType<_GraphInteractionScope>();
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<_GraphInteractionScope>();
     assert(scope != null, 'Graph handles must be below a VisualGraphEditor');
     return scope!.state;
   }
@@ -1122,14 +1090,13 @@ class _GraphBranchPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
     for (final metric in path.computeMetrics()) {
-      for (double offset = 0;
-          offset < metric.length;
-          offset += dashLength + gapLength) {
+      for (
+        double offset = 0;
+        offset < metric.length;
+        offset += dashLength + gapLength
+      ) {
         canvas.drawPath(
-          metric.extractPath(
-            offset,
-            min(metric.length, offset + dashLength),
-          ),
+          metric.extractPath(offset, min(metric.length, offset + dashLength)),
           paint,
         );
       }
@@ -1155,9 +1122,11 @@ class _GraphBranchPainter extends CustomPainter {
       ..color = color
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
-    for (double offset = 0;
-        offset < distance;
-        offset += dashLength + gapLength) {
+    for (
+      double offset = 0;
+      offset < distance;
+      offset += dashLength + gapLength
+    ) {
       canvas.drawLine(
         start + unit * offset,
         start + unit * min(distance, offset + dashLength),
@@ -1219,10 +1188,7 @@ class _ConnectionDrag {
     this.globalPosition,
   );
 
-  _ConnectionDrag copyWith({
-    Offset? scenePosition,
-    Offset? globalPosition,
-  }) {
+  _ConnectionDrag copyWith({Offset? scenePosition, Offset? globalPosition}) {
     return _ConnectionDrag(
       nodeId,
       side,

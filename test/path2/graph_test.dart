@@ -38,14 +38,15 @@ void main() {
       final restoredCondition = PathTransition.fromJson(condition.toJson());
       expect(restoredCondition, condition);
       expect(AutoTransition.fromJson(condition.toJson()), condition);
-      expect(AutoTransition.fromJson(const FinishedTransition().toJson()),
-          const FinishedTransition());
+      expect(
+        AutoTransition.fromJson(const FinishedTransition().toJson()),
+        const FinishedTransition(),
+      );
       expect(
         (PathTransition.fromJson({
           'type': 'condition',
           'conditionName': 'legacy',
-        }) as ConditionTransition)
-            .previewDistanceMeters,
+        }) as ConditionTransition).previewDistanceMeters,
         ConditionTransition.defaultPreviewDistanceMeters,
       );
     });
@@ -60,9 +61,10 @@ void main() {
         throwsFormatException,
       );
       expect(
-        () => PathTransition.fromJson(
-          {'type': 'distance', 'distanceMeters': -0.1},
-        ),
+        () => PathTransition.fromJson({
+          'type': 'distance',
+          'distanceMeters': -0.1,
+        }),
         throwsA(anyOf(isA<FormatException>(), isA<ArgumentError>())),
       );
       expect(

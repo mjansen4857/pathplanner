@@ -1,20 +1,22 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 
 void main() {
   testWidgets('renamable title', (widgetTester) async {
     bool renameCalled = false;
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RenamableTitle(
-          title: 'test',
-          onRename: (value) {
-            renameCalled = true;
-          },
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RenamableTitle(
+            title: 'test',
+            onRename: (value) {
+              renameCalled = true;
+            },
+          ),
         ),
       ),
-    ));
+    );
 
     var textField = find.byType(TextField);
     expect(textField, findsOneWidget);

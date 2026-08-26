@@ -1,8 +1,17 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'
+    as legacy
+    show
+        DropdownButtonHideUnderline,
+        DropdownMenuItem,
+        InputDecoration,
+        OutlineInputBorder,
+        TextFormField;
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/duplicate_command_button.dart';
+import 'package:pathplanner/widgets/legacy_material_bridge.dart';
 import 'package:undo/undo.dart';
 
 class PathCommandWidget extends StatefulWidget {
@@ -49,108 +58,109 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
     return Row(
       children: [
         Expanded(
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton2<String>(
-              isExpanded: true,
-              hint: const Text('Path Name'),
-              value: widget.command.pathName,
-              items: List.generate(
-                widget.allPathNames.length,
-                (index) => DropdownMenuItem(
-                  value: widget.allPathNames[index],
-                  child: Tooltip(
-                    message: widget.allPathNames[index],
-                    child: Text(
-                      widget.allPathNames[index],
-                      style: TextStyle(
-                        fontWeight: FontWeight.normal,
-                        color: colorScheme.onPrimaryContainer,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ),
-              buttonStyleData: ButtonStyleData(
-                padding: const EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                height: 42,
-              ),
-              dropdownStyleData: DropdownStyleData(
-                maxHeight: 300,
-                isOverButton: true,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              menuItemStyleData: const MenuItemStyleData(),
-              dropdownSearchData: DropdownSearchData(
-                searchController: _controller,
-                searchInnerWidgetHeight: 42,
-                searchInnerWidget: Container(
-                  height: 46,
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-                  child: TextFormField(
-                    focusNode: _focusNode,
-                    autofocus: true,
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 8,
-                      ),
-                      hintText: 'Search...',
-                      hintStyle: const TextStyle(fontSize: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+          child: LegacyMaterialBridge(
+            child: legacy.DropdownButtonHideUnderline(
+              child: DropdownButton2<String>(
+                isExpanded: true,
+                hint: const Text('Path Name'),
+                value: widget.command.pathName,
+                items: List.generate(
+                  widget.allPathNames.length,
+                  (index) => legacy.DropdownMenuItem(
+                    value: widget.allPathNames[index],
+                    child: Tooltip(
+                      message: widget.allPathNames[index],
+                      child: Text(
+                        widget.allPathNames[index],
+                        style: TextStyle(
+                          fontWeight: FontWeight.normal,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
                 ),
-                searchMatchFn: (item, searchValue) {
-                  return item.value
-                      .toString()
-                      .toLowerCase()
-                      .startsWith(searchValue.toLowerCase());
+                buttonStyleData: ButtonStyleData(
+                  padding: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colorScheme.onPrimaryContainer),
+                  ),
+                  height: 42,
+                ),
+                dropdownStyleData: DropdownStyleData(
+                  maxHeight: 300,
+                  isOverButton: true,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                menuItemStyleData: const MenuItemStyleData(),
+                dropdownSearchData: DropdownSearchData(
+                  searchController: _controller,
+                  searchInnerWidgetHeight: 42,
+                  searchInnerWidget: Container(
+                    height: 46,
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                    child: legacy.TextFormField(
+                      focusNode: _focusNode,
+                      autofocus: true,
+                      controller: _controller,
+                      decoration: legacy.InputDecoration(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        hintText: 'Search...',
+                        hintStyle: const TextStyle(fontSize: 14),
+                        border: legacy.OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                  searchMatchFn: (item, searchValue) {
+                    return item.value.toString().toLowerCase().startsWith(
+                      searchValue.toLowerCase(),
+                    );
+                  },
+                ),
+                onMenuStateChange: (isOpen) {
+                  if (!isOpen) {
+                    _controller.clear();
+                  } else {
+                    // Request focus after a delay to wait for the menu to open
+                    Future.delayed(const Duration(milliseconds: 50))
+                        .then((_) => _focusNode.requestFocus());
+                  }
+                },
+                onChanged: (value) {
+                  FocusScopeNode currentScope = FocusScope.of(context);
+                  if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+                    FocusManager.instance.primaryFocus!.unfocus();
+                  }
+
+                  if (value != null) {
+                    widget.undoStack.add(
+                      Change(
+                        widget.command.pathName,
+                        () {
+                          widget.command.pathName = value;
+                          widget.onUpdated?.call();
+                        },
+                        (oldValue) {
+                          widget.command.pathName = oldValue;
+                          widget.onUpdated?.call();
+                        },
+                      ),
+                    );
+                  } else if (widget.command.pathName != null) {
+                    _controller.text = widget.command.pathName!;
+                  }
                 },
               ),
-              onMenuStateChange: (isOpen) {
-                if (!isOpen) {
-                  _controller.clear();
-                } else {
-                  // Request focus after a delay to wait for the menu to open
-                  Future.delayed(const Duration(milliseconds: 50))
-                      .then((_) => _focusNode.requestFocus());
-                }
-              },
-              onChanged: (value) {
-                FocusScopeNode currentScope = FocusScope.of(context);
-                if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-                  FocusManager.instance.primaryFocus!.unfocus();
-                }
-
-                if (value != null) {
-                  widget.undoStack.add(Change(
-                    widget.command.pathName,
-                    () {
-                      widget.command.pathName = value;
-                      widget.onUpdated?.call();
-                    },
-                    (oldValue) {
-                      widget.command.pathName = oldValue;
-                      widget.onUpdated?.call();
-                    },
-                  ));
-                } else if (widget.command.pathName != null) {
-                  _controller.text = widget.command.pathName!;
-                }
-              },
             ),
           ),
         ),
@@ -180,17 +190,16 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
             ),
           ),
         ),
-        DuplicateCommandButton(
-          onPressed: widget.onDuplicateCommand,
-        ),
+        DuplicateCommandButton(onPressed: widget.onDuplicateCommand),
         Tooltip(
           message: 'Remove Command',
           waitDuration: const Duration(milliseconds: 500),
           child: IconButton(
             onPressed: widget.onRemoved,
             visualDensity: const VisualDensity(
-                horizontal: VisualDensity.minimumDensity,
-                vertical: VisualDensity.minimumDensity),
+              horizontal: VisualDensity.minimumDensity,
+              vertical: VisualDensity.minimumDensity,
+            ),
             icon: Icon(Icons.delete, color: colorScheme.error),
           ),
         ),

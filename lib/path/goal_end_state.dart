@@ -7,14 +7,11 @@ class GoalEndState {
   GoalEndState(this.velocityMPS, this.rotation);
 
   GoalEndState.fromJson(Map<String, dynamic> json)
-      : velocityMPS = json['velocity'] ?? 0,
-        rotation = Rotation2d.fromDegrees(json['rotation'] ?? 0);
+    : velocityMPS = json['velocity'] ?? 0,
+      rotation = Rotation2d.fromDegrees(json['rotation'] ?? 0);
 
   Map<String, dynamic> toJson() {
-    return {
-      'velocity': velocityMPS,
-      'rotation': rotation.degrees,
-    };
+    return {'velocity': velocityMPS, 'rotation': rotation.degrees};
   }
 
   GoalEndState clone() {

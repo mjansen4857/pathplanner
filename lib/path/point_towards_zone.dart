@@ -18,13 +18,13 @@ class PointTowardsZone {
   });
 
   PointTowardsZone.fromJson(Map<String, dynamic> json)
-      : this(
-          fieldPosition: Translation2d.fromJson(json['fieldPosition']),
-          rotationOffset: Rotation2d.fromDegrees(json['rotationOffset']),
-          minWaypointRelativePos: json['minWaypointRelativePos'],
-          maxWaypointRelativePos: json['maxWaypointRelativePos'],
-          name: json['name'],
-        );
+    : this(
+        fieldPosition: Translation2d.fromJson(json['fieldPosition']),
+        rotationOffset: Rotation2d.fromDegrees(json['rotationOffset']),
+        minWaypointRelativePos: json['minWaypointRelativePos'],
+        maxWaypointRelativePos: json['maxWaypointRelativePos'],
+        name: json['name'],
+      );
 
   PointTowardsZone clone() {
     return PointTowardsZone(
@@ -58,6 +58,11 @@ class PointTowardsZone {
   }
 
   @override
-  int get hashCode => Object.hash(fieldPosition, rotationOffset,
-      minWaypointRelativePos, maxWaypointRelativePos, name);
+  int get hashCode => Object.hash(
+    fieldPosition,
+    rotationOffset,
+    minWaypointRelativePos,
+    maxWaypointRelativePos,
+    name,
+  );
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -19,16 +19,18 @@ void main() {
     ProjectPage.events.add('test1');
     ProjectPage.events.add('test2');
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ManagementDialog(
-          onEventRenamed: (p0, p1) {},
-          onEventDeleted: (p0) {},
-          onLinkedRenamed: (p0, p1) {},
-          onLinkedDeleted: (p0) {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ManagementDialog(
+            onEventRenamed: (p0, p1) {},
+            onEventDeleted: (p0) {},
+            onLinkedRenamed: (p0, p1) {},
+            onLinkedDeleted: (p0) {},
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.text('test1'), findsOneWidget);
     expect(find.text('test2'), findsOneWidget);
@@ -41,16 +43,18 @@ void main() {
     Waypoint.linked['link1'] = const Pose2d(Translation2d(0, 0), Rotation2d());
     Waypoint.linked['link2'] = const Pose2d(Translation2d(0, 0), Rotation2d());
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ManagementDialog(
-          onEventRenamed: (p0, p1) {},
-          onEventDeleted: (p0) {},
-          onLinkedRenamed: (p0, p1) {},
-          onLinkedDeleted: (p0) {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ManagementDialog(
+            onEventRenamed: (p0, p1) {},
+            onEventDeleted: (p0) {},
+            onLinkedRenamed: (p0, p1) {},
+            onLinkedDeleted: (p0) {},
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.tap(find.text('Manage Linked Waypoints'));
     await widgetTester.pumpAndSettle();
@@ -67,25 +71,29 @@ void main() {
 
     bool removed = false;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ManagementDialog(
-          onEventRenamed: (p0, p1) {},
-          onEventDeleted: (p0) {
-            removed = true;
-          },
-          onLinkedRenamed: (p0, p1) {},
-          onLinkedDeleted: (p0) {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ManagementDialog(
+            onEventRenamed: (p0, p1) {},
+            onEventDeleted: (p0) {
+              removed = true;
+            },
+            onLinkedRenamed: (p0, p1) {},
+            onLinkedDeleted: (p0) {},
+          ),
         ),
       ),
-    ));
+    );
 
     final cmdTile = find.widgetWithText(ListTile, 'test1');
 
     expect(cmdTile, findsOneWidget);
 
-    final removeBtn =
-        find.descendant(of: cmdTile, matching: find.byTooltip('Remove event'));
+    final removeBtn = find.descendant(
+      of: cmdTile,
+      matching: find.byTooltip('Remove event'),
+    );
 
     expect(removeBtn, findsOneWidget);
 
@@ -111,18 +119,20 @@ void main() {
 
     bool removed = false;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ManagementDialog(
-          onEventRenamed: (p0, p1) {},
-          onEventDeleted: (p0) {},
-          onLinkedRenamed: (p0, p1) {},
-          onLinkedDeleted: (p0) {
-            removed = true;
-          },
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ManagementDialog(
+            onEventRenamed: (p0, p1) {},
+            onEventDeleted: (p0) {},
+            onLinkedRenamed: (p0, p1) {},
+            onLinkedDeleted: (p0) {
+              removed = true;
+            },
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.tap(find.text('Manage Linked Waypoints'));
     await widgetTester.pumpAndSettle();
@@ -132,7 +142,9 @@ void main() {
     expect(linkTile, findsOneWidget);
 
     final removeBtn = find.descendant(
-        of: linkTile, matching: find.byTooltip('Remove linked waypoint'));
+      of: linkTile,
+      matching: find.byTooltip('Remove linked waypoint'),
+    );
 
     expect(removeBtn, findsOneWidget);
 
@@ -157,25 +169,29 @@ void main() {
 
     bool renamed = false;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ManagementDialog(
-          onEventRenamed: (p0, p1) {
-            renamed = true;
-          },
-          onEventDeleted: (p0) {},
-          onLinkedRenamed: (p0, p1) {},
-          onLinkedDeleted: (p0) {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ManagementDialog(
+            onEventRenamed: (p0, p1) {
+              renamed = true;
+            },
+            onEventDeleted: (p0) {},
+            onLinkedRenamed: (p0, p1) {},
+            onLinkedDeleted: (p0) {},
+          ),
         ),
       ),
-    ));
+    );
 
     final cmdTile = find.widgetWithText(ListTile, 'test1');
 
     expect(cmdTile, findsOneWidget);
 
-    final renameBtn =
-        find.descendant(of: cmdTile, matching: find.byTooltip('Rename event'));
+    final renameBtn = find.descendant(
+      of: cmdTile,
+      matching: find.byTooltip('Rename event'),
+    );
 
     expect(renameBtn, findsOneWidget);
 
@@ -209,18 +225,20 @@ void main() {
 
     bool renamed = false;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ManagementDialog(
-          onEventRenamed: (p0, p1) {},
-          onEventDeleted: (p0) {},
-          onLinkedRenamed: (p0, p1) {
-            renamed = true;
-          },
-          onLinkedDeleted: (p0) {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ManagementDialog(
+            onEventRenamed: (p0, p1) {},
+            onEventDeleted: (p0) {},
+            onLinkedRenamed: (p0, p1) {
+              renamed = true;
+            },
+            onLinkedDeleted: (p0) {},
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.tap(find.text('Manage Linked Waypoints'));
     await widgetTester.pumpAndSettle();
@@ -230,7 +248,9 @@ void main() {
     expect(linkTile, findsOneWidget);
 
     final renameBtn = find.descendant(
-        of: linkTile, matching: find.byTooltip('Rename linked waypoint'));
+      of: linkTile,
+      matching: find.byTooltip('Rename linked waypoint'),
+    );
 
     expect(renameBtn, findsOneWidget);
 
@@ -263,25 +283,29 @@ void main() {
 
     bool renamed = false;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ManagementDialog(
-          onEventRenamed: (p0, p1) {
-            renamed = true;
-          },
-          onEventDeleted: (p0) {},
-          onLinkedRenamed: (p0, p1) {},
-          onLinkedDeleted: (p0) {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ManagementDialog(
+            onEventRenamed: (p0, p1) {
+              renamed = true;
+            },
+            onEventDeleted: (p0) {},
+            onLinkedRenamed: (p0, p1) {},
+            onLinkedDeleted: (p0) {},
+          ),
         ),
       ),
-    ));
+    );
 
     final cmdTile = find.widgetWithText(ListTile, 'test1');
 
     expect(cmdTile, findsOneWidget);
 
-    final renameBtn =
-        find.descendant(of: cmdTile, matching: find.byTooltip('Rename event'));
+    final renameBtn = find.descendant(
+      of: cmdTile,
+      matching: find.byTooltip('Rename event'),
+    );
 
     expect(renameBtn, findsOneWidget);
 
@@ -315,18 +339,20 @@ void main() {
 
     bool renamed = false;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ManagementDialog(
-          onEventRenamed: (p0, p1) {},
-          onEventDeleted: (p0) {},
-          onLinkedRenamed: (p0, p1) {
-            renamed = true;
-          },
-          onLinkedDeleted: (p0) {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ManagementDialog(
+            onEventRenamed: (p0, p1) {},
+            onEventDeleted: (p0) {},
+            onLinkedRenamed: (p0, p1) {
+              renamed = true;
+            },
+            onLinkedDeleted: (p0) {},
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.tap(find.text('Manage Linked Waypoints'));
     await widgetTester.pumpAndSettle();
@@ -336,7 +362,9 @@ void main() {
     expect(linkTile, findsOneWidget);
 
     final renameBtn = find.descendant(
-        of: linkTile, matching: find.byTooltip('Rename linked waypoint'));
+      of: linkTile,
+      matching: find.byTooltip('Rename linked waypoint'),
+    );
 
     expect(renameBtn, findsOneWidget);
 
@@ -368,25 +396,29 @@ void main() {
 
     bool renamed = false;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ManagementDialog(
-          onEventRenamed: (p0, p1) {
-            renamed = true;
-          },
-          onEventDeleted: (p0) {},
-          onLinkedRenamed: (p0, p1) {},
-          onLinkedDeleted: (p0) {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ManagementDialog(
+            onEventRenamed: (p0, p1) {
+              renamed = true;
+            },
+            onEventDeleted: (p0) {},
+            onLinkedRenamed: (p0, p1) {},
+            onLinkedDeleted: (p0) {},
+          ),
         ),
       ),
-    ));
+    );
 
     final cmdTile = find.widgetWithText(ListTile, 'test1');
 
     expect(cmdTile, findsOneWidget);
 
-    final renameBtn =
-        find.descendant(of: cmdTile, matching: find.byTooltip('Rename event'));
+    final renameBtn = find.descendant(
+      of: cmdTile,
+      matching: find.byTooltip('Rename event'),
+    );
 
     expect(renameBtn, findsOneWidget);
 
@@ -419,18 +451,20 @@ void main() {
 
     bool renamed = false;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ManagementDialog(
-          onEventRenamed: (p0, p1) {},
-          onEventDeleted: (p0) {},
-          onLinkedRenamed: (p0, p1) {
-            renamed = true;
-          },
-          onLinkedDeleted: (p0) {},
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ManagementDialog(
+            onEventRenamed: (p0, p1) {},
+            onEventDeleted: (p0) {},
+            onLinkedRenamed: (p0, p1) {
+              renamed = true;
+            },
+            onLinkedDeleted: (p0) {},
+          ),
         ),
       ),
-    ));
+    );
 
     await widgetTester.tap(find.text('Manage Linked Waypoints'));
     await widgetTester.pumpAndSettle();
@@ -440,7 +474,9 @@ void main() {
     expect(linkTile, findsOneWidget);
 
     final renameBtn = find.descendant(
-        of: linkTile, matching: find.byTooltip('Rename linked waypoint'));
+      of: linkTile,
+      matching: find.byTooltip('Rename linked waypoint'),
+    );
 
     expect(renameBtn, findsOneWidget);
 

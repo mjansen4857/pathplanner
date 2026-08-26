@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -18,8 +18,10 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({
       PrefsKeys.holonomicMode: true,
-      PrefsKeys.teamColor: int.parse(Colors.black.toHexString(),
-          radix: 16), // deprecating 'value' is so dumb
+      PrefsKeys.teamColor: int.parse(
+        Colors.black.toHexString(),
+        radix: 16,
+      ), // deprecating 'value' is so dumb
       PrefsKeys.ntServerAddress: '10.30.15.2',
       PrefsKeys.defaultMaxVel: 1.0,
       PrefsKeys.defaultMaxAccel: 2.0,
@@ -36,25 +38,31 @@ void main() {
   testWidgets('default max vel text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AppSettings(
-          onSettingsChanged: () => settingsChanged = true,
-          onFieldSelected: (value) => selectedField = value,
-          fieldImages: FieldImage.offialFields(),
-          selectedField: FieldImage.official(OfficialField.chargedUp),
-          prefs: prefs,
-          onTeamColorChanged: (value) => teamColor = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            onFieldSelected: (value) => selectedField = value,
+            fieldImages: FieldImage.offialFields(),
+            selectedField: FieldImage.official(OfficialField.chargedUp),
+            prefs: prefs,
+            onTeamColorChanged: (value) => teamColor = value,
+          ),
         ),
       ),
-    ));
+    );
 
-    final textField =
-        find.widgetWithText(NumberTextField, 'Max Velocity (M/S)');
+    final textField = find.widgetWithText(
+      NumberTextField,
+      'Max Velocity (M/S)',
+    );
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('1.000')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: textField, matching: find.text('1.000')),
+      findsOneWidget,
+    );
 
     await widgetTester.enterText(textField, '1.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
@@ -67,25 +75,31 @@ void main() {
   testWidgets('default max accel text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AppSettings(
-          onSettingsChanged: () => settingsChanged = true,
-          onFieldSelected: (value) => selectedField = value,
-          fieldImages: FieldImage.offialFields(),
-          selectedField: FieldImage.official(OfficialField.chargedUp),
-          prefs: prefs,
-          onTeamColorChanged: (value) => teamColor = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            onFieldSelected: (value) => selectedField = value,
+            fieldImages: FieldImage.offialFields(),
+            selectedField: FieldImage.official(OfficialField.chargedUp),
+            prefs: prefs,
+            onTeamColorChanged: (value) => teamColor = value,
+          ),
         ),
       ),
-    ));
+    );
 
-    final textField =
-        find.widgetWithText(NumberTextField, 'Max Acceleration (M/S²)');
+    final textField = find.widgetWithText(
+      NumberTextField,
+      'Max Acceleration (M/S²)',
+    );
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('2.000')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: textField, matching: find.text('2.000')),
+      findsOneWidget,
+    );
 
     await widgetTester.enterText(textField, '2.2');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
@@ -98,25 +112,31 @@ void main() {
   testWidgets('default max ang vel text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AppSettings(
-          onSettingsChanged: () => settingsChanged = true,
-          onFieldSelected: (value) => selectedField = value,
-          fieldImages: FieldImage.offialFields(),
-          selectedField: FieldImage.official(OfficialField.chargedUp),
-          prefs: prefs,
-          onTeamColorChanged: (value) => teamColor = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            onFieldSelected: (value) => selectedField = value,
+            fieldImages: FieldImage.offialFields(),
+            selectedField: FieldImage.official(OfficialField.chargedUp),
+            prefs: prefs,
+            onTeamColorChanged: (value) => teamColor = value,
+          ),
         ),
       ),
-    ));
+    );
 
-    final textField =
-        find.widgetWithText(NumberTextField, 'Max Angular Velocity (Deg/S)');
+    final textField = find.widgetWithText(
+      NumberTextField,
+      'Max Angular Velocity (Deg/S)',
+    );
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('3.000')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: textField, matching: find.text('3.000')),
+      findsOneWidget,
+    );
 
     await widgetTester.enterText(textField, '3.3');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
@@ -129,25 +149,31 @@ void main() {
   testWidgets('default max ang accel text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AppSettings(
-          onSettingsChanged: () => settingsChanged = true,
-          onFieldSelected: (value) => selectedField = value,
-          fieldImages: FieldImage.offialFields(),
-          selectedField: FieldImage.official(OfficialField.chargedUp),
-          prefs: prefs,
-          onTeamColorChanged: (value) => teamColor = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            onFieldSelected: (value) => selectedField = value,
+            fieldImages: FieldImage.offialFields(),
+            selectedField: FieldImage.official(OfficialField.chargedUp),
+            prefs: prefs,
+            onTeamColorChanged: (value) => teamColor = value,
+          ),
         ),
       ),
-    ));
+    );
 
-    final textField =
-        find.widgetWithText(NumberTextField, 'Max Angular Accel (Deg/S²)');
+    final textField = find.widgetWithText(
+      NumberTextField,
+      'Max Angular Accel (Deg/S²)',
+    );
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('4.000')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: textField, matching: find.text('4.000')),
+      findsOneWidget,
+    );
 
     await widgetTester.enterText(textField, '4.4');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
@@ -160,25 +186,31 @@ void main() {
   testWidgets('default voltage text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AppSettings(
-          onSettingsChanged: () => settingsChanged = true,
-          onFieldSelected: (value) => selectedField = value,
-          fieldImages: FieldImage.offialFields(),
-          selectedField: FieldImage.official(OfficialField.chargedUp),
-          prefs: prefs,
-          onTeamColorChanged: (value) => teamColor = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            onFieldSelected: (value) => selectedField = value,
+            fieldImages: FieldImage.offialFields(),
+            selectedField: FieldImage.official(OfficialField.chargedUp),
+            prefs: prefs,
+            onTeamColorChanged: (value) => teamColor = value,
+          ),
         ),
       ),
-    ));
+    );
 
-    final textField =
-        find.widgetWithText(NumberTextField, 'Nominal Voltage (Volts)');
+    final textField = find.widgetWithText(
+      NumberTextField,
+      'Nominal Voltage (Volts)',
+    );
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('12.000')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: textField, matching: find.text('12.000')),
+      findsOneWidget,
+    );
 
     await widgetTester.enterText(textField, '10.0');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
@@ -191,24 +223,28 @@ void main() {
   testWidgets('field image dropdown', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AppSettings(
-          onSettingsChanged: () => settingsChanged = true,
-          onFieldSelected: (value) => selectedField = value,
-          fieldImages: FieldImage.offialFields(),
-          selectedField: FieldImage.official(OfficialField.chargedUp),
-          prefs: prefs,
-          onTeamColorChanged: (value) => teamColor = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            onFieldSelected: (value) => selectedField = value,
+            fieldImages: FieldImage.offialFields(),
+            selectedField: FieldImage.official(OfficialField.chargedUp),
+            prefs: prefs,
+            onTeamColorChanged: (value) => teamColor = value,
+          ),
         ),
       ),
-    ));
+    );
 
     final dropdown = find.byType(DropdownButton<FieldImage?>);
 
     expect(dropdown, findsOneWidget);
-    expect(find.descendant(of: dropdown, matching: find.text('Charged Up')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: dropdown, matching: find.text('Charged Up')),
+      findsOneWidget,
+    );
 
     await widgetTester.tap(dropdown);
     await widgetTester.pumpAndSettle();
@@ -228,18 +264,20 @@ void main() {
   testWidgets('team color picker', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AppSettings(
-          onSettingsChanged: () => settingsChanged = true,
-          onFieldSelected: (value) => selectedField = value,
-          fieldImages: FieldImage.offialFields(),
-          selectedField: FieldImage.official(OfficialField.chargedUp),
-          prefs: prefs,
-          onTeamColorChanged: (value) => teamColor = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            onFieldSelected: (value) => selectedField = value,
+            fieldImages: FieldImage.offialFields(),
+            selectedField: FieldImage.official(OfficialField.chargedUp),
+            prefs: prefs,
+            onTeamColorChanged: (value) => teamColor = value,
+          ),
         ),
       ),
-    ));
+    );
 
     final pickerButton = find.byType(ElevatedButton);
 
@@ -257,25 +295,29 @@ void main() {
     await widgetTester.tap(resetButton);
     await widgetTester.pumpAndSettle();
 
-    expect(int.parse(teamColor.toHexString(), radix: 16),
-        Defaults.teamColor); // deprecating 'value' is so dumb
+    expect(
+      int.parse(teamColor.toHexString(), radix: 16),
+      Defaults.teamColor,
+    ); // deprecating 'value' is so dumb
   });
 
   testWidgets('telemetry host text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AppSettings(
-          onSettingsChanged: () => settingsChanged = true,
-          onFieldSelected: (value) => selectedField = value,
-          fieldImages: FieldImage.offialFields(),
-          selectedField: FieldImage.official(OfficialField.chargedUp),
-          prefs: prefs,
-          onTeamColorChanged: (value) => teamColor = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            onFieldSelected: (value) => selectedField = value,
+            fieldImages: FieldImage.offialFields(),
+            selectedField: FieldImage.official(OfficialField.chargedUp),
+            prefs: prefs,
+            onTeamColorChanged: (value) => teamColor = value,
+          ),
         ),
       ),
-    ));
+    );
 
     final textField = find.widgetWithText(TextField, 'roboRIO IP (10.TE.AM.2)');
 
@@ -289,23 +331,26 @@ void main() {
     expect(prefs.getString(PrefsKeys.ntServerAddress), '10.99.99.2');
   });
 
-  testWidgets('hides holonomic mode and normalizes legacy preference',
-      (widgetTester) async {
+  testWidgets('hides holonomic mode and normalizes legacy preference', (
+    widgetTester,
+  ) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
     await prefs.setBool(PrefsKeys.holonomicMode, false);
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AppSettings(
-          onSettingsChanged: () => settingsChanged = true,
-          onFieldSelected: (value) => selectedField = value,
-          fieldImages: FieldImage.offialFields(),
-          selectedField: FieldImage.official(OfficialField.chargedUp),
-          prefs: prefs,
-          onTeamColorChanged: (value) => teamColor = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            onFieldSelected: (value) => selectedField = value,
+            fieldImages: FieldImage.offialFields(),
+            selectedField: FieldImage.official(OfficialField.chargedUp),
+            prefs: prefs,
+            onTeamColorChanged: (value) => teamColor = value,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.widgetWithText(FilterChip, 'Holonomic Mode'), findsNothing);
     expect(prefs.getBool(PrefsKeys.holonomicMode), true);
@@ -315,18 +360,20 @@ void main() {
   testWidgets('does not expose hot reload', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AppSettings(
-          onSettingsChanged: () => settingsChanged = true,
-          onFieldSelected: (value) => selectedField = value,
-          fieldImages: FieldImage.offialFields(),
-          selectedField: FieldImage.official(OfficialField.chargedUp),
-          prefs: prefs,
-          onTeamColorChanged: (value) => teamColor = value,
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            onFieldSelected: (value) => selectedField = value,
+            fieldImages: FieldImage.offialFields(),
+            selectedField: FieldImage.official(OfficialField.chargedUp),
+            prefs: prefs,
+            onTeamColorChanged: (value) => teamColor = value,
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.widgetWithText(FilterChip, 'Hot Reload'), findsNothing);
   });

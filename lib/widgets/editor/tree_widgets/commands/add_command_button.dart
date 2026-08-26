@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AddCommandButton extends StatelessWidget {
   final ValueChanged<String> onTypeChosen;
@@ -19,9 +19,7 @@ class AddCommandButton extends StatelessWidget {
     return PopupMenuButton(
       tooltip: 'Add Command',
       elevation: 12.0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       icon: Icon(Icons.add, color: colorScheme.primary),
       itemBuilder: (context) => _getMenuEntries(),
       position: PopupMenuPosition.under,
@@ -34,19 +32,10 @@ class AddCommandButton extends StatelessWidget {
   List<PopupMenuEntry<String>> _getMenuEntries() {
     return [
       if (allowPathCommand)
-        const PopupMenuItem(
-          value: 'path',
-          child: Text('Follow Path'),
-        ),
-      const PopupMenuItem(
-        value: 'named',
-        child: Text('Named Command'),
-      ),
+        const PopupMenuItem(value: 'path', child: Text('Follow Path')),
+      const PopupMenuItem(value: 'named', child: Text('Named Command')),
       if (allowWaitCommand)
-        const PopupMenuItem(
-          value: 'wait',
-          child: Text('Wait Command'),
-        ),
+        const PopupMenuItem(value: 'wait', child: Text('Wait Command')),
       const PopupMenuItem(
         value: 'sequential',
         child: Text('Sequential Command Group'),
@@ -59,10 +48,7 @@ class AddCommandButton extends StatelessWidget {
         value: 'deadline',
         child: Text('Parallel Deadline Group'),
       ),
-      const PopupMenuItem(
-        value: 'race',
-        child: Text('Parallel Race Group'),
-      ),
+      const PopupMenuItem(value: 'race', child: Text('Parallel Race Group')),
     ];
   }
 }

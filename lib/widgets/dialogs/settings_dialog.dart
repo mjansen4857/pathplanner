@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/widgets/app_settings.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/robot_config_settings.dart';
@@ -33,12 +33,8 @@ class SettingsDialog extends StatelessWidget {
         surfaceTintColor: colorScheme.surfaceTint,
         title: const TabBar(
           tabs: [
-            Tab(
-              text: 'Robot Config',
-            ),
-            Tab(
-              text: 'App Settings',
-            ),
+            Tab(text: 'Robot Config'),
+            Tab(text: 'App Settings'),
           ],
         ),
         content: SizedBox(

@@ -1,22 +1,17 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 List<_KeyBoardShortcuts> _keyBoardShortcuts = [];
 
-enum BasicShortCuts {
-  creation,
-  previousPage,
-  nextPage,
-  save,
-  undo,
-  redo,
-}
+enum BasicShortCuts { creation, previousPage, nextPage, save, undo, redo }
 
 bool _isPressed(
-    Set<LogicalKeyboardKey> keysPressed, Set<LogicalKeyboardKey> keysToPress) {
+  Set<LogicalKeyboardKey> keysPressed,
+  Set<LogicalKeyboardKey> keysToPress,
+) {
   //when we type shift on chrome flutter's core return two pressed keys : Shift Left && Shift Right. So we need to delete one on the set to run the action
   keysToPress = LogicalKeyboardKey.collapseSynonyms(keysToPress);
   keysPressed = LogicalKeyboardKey.collapseSynonyms(keysPressed);
@@ -34,8 +29,12 @@ class KeyBoardShortcuts extends StatefulWidget {
   /// Function when keys are pressed
   final VoidCallback? onKeysPressed;
 
-  const KeyBoardShortcuts(
-      {this.keysToPress, this.onKeysPressed, required this.child, super.key});
+  const KeyBoardShortcuts({
+    this.keysToPress,
+    this.onKeysPressed,
+    required this.child,
+    super.key,
+  });
 
   @override
   State<KeyBoardShortcuts> createState() => _KeyBoardShortcuts();
@@ -104,8 +103,10 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
   Widget build(BuildContext context) {
     return VisibilityDetector(
       key: key,
-      child:
-          PrimaryScrollController(controller: _controller, child: widget.child),
+      child: PrimaryScrollController(
+        controller: _controller,
+        child: widget.child,
+      ),
       onVisibilityChanged: (visibilityInfo) {
         if (visibilityInfo.visibleFraction == 1) {
           _attachKeyboardIfDetached();

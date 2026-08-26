@@ -1,6 +1,6 @@
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path2/graph.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
@@ -17,13 +17,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
 void main() {
-  testWidgets('shows an empty graph and a disabled zero-time seekbar',
-      (tester) async {
+  testWidgets('shows an empty graph and a disabled zero-time seekbar', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1280, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    SharedPreferences.setMockInitialValues({
-      PrefsKeys.treeOnRight: true,
-    });
+    SharedPreferences.setMockInitialValues({PrefsKeys.treeOnRight: true});
     final prefs = await SharedPreferences.getInstance();
     final fs = MemoryFileSystem();
     final path = path2.Path.defaultPath(
@@ -57,28 +56,23 @@ void main() {
     expect(find.byKey(const ValueKey('path2AutoEmptyGraph')), findsOneWidget);
     final painter = tester
         .widgetList<CustomPaint>(find.byType(CustomPaint))
-        .map(
-          (paint) => paint.painter,
-        )
+        .map((paint) => paint.painter)
         .whereType<Path2Painter>()
         .single;
     expect(painter.paintPaths, isEmpty);
-    final seekbar = tester.widget<PreviewSeekbar>(
-      find.byType(PreviewSeekbar),
-    );
+    final seekbar = tester.widget<PreviewSeekbar>(find.byType(PreviewSeekbar));
     expect(seekbar.enabled, isFalse);
     expect(seekbar.totalPathTime, 0);
     expect(tester.widget<Slider>(find.byType(Slider)).onChanged, isNull);
     expect(find.textContaining('Simulated Driving Time'), findsNothing);
   });
 
-  testWidgets('adds a path node transactionally and supports undo',
-      (tester) async {
+  testWidgets('adds a path node transactionally and supports undo', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1280, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    SharedPreferences.setMockInitialValues({
-      PrefsKeys.treeOnRight: true,
-    });
+    SharedPreferences.setMockInitialValues({PrefsKeys.treeOnRight: true});
     final prefs = await SharedPreferences.getInstance();
     final fs = MemoryFileSystem();
     final path = path2.Path.defaultPath(
@@ -130,9 +124,7 @@ void main() {
     expect(undoStack.canUndo, isTrue);
     final painter = tester
         .widgetList<CustomPaint>(find.byType(CustomPaint))
-        .map(
-          (paint) => paint.painter,
-        )
+        .map((paint) => paint.painter)
         .whereType<Path2Painter>()
         .single;
     expect(painter.paintPaths, hasLength(1));
@@ -150,13 +142,12 @@ void main() {
     expect(auto.startingPoseInitialized, isTrue);
   });
 
-  testWidgets('hover filters duplicate path occurrences by auto-node ID',
-      (tester) async {
+  testWidgets('hover filters duplicate path occurrences by auto-node ID', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1400, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    SharedPreferences.setMockInitialValues({
-      PrefsKeys.treeOnRight: true,
-    });
+    SharedPreferences.setMockInitialValues({PrefsKeys.treeOnRight: true});
     final prefs = await SharedPreferences.getInstance();
     final fs = MemoryFileSystem();
     final path = path2.Path.defaultPath(
@@ -215,16 +206,15 @@ void main() {
 
     Path2Painter painter() => tester
         .widgetList<CustomPaint>(find.byType(CustomPaint))
-        .map(
-          (paint) => paint.painter,
-        )
+        .map((paint) => paint.painter)
         .whereType<Path2Painter>()
         .single;
 
-    expect(
-      painter().paintPaths.map((occurrence) => occurrence.occurrenceId),
-      [second.id, first.id, third.id],
-    );
+    expect(painter().paintPaths.map((occurrence) => occurrence.occurrenceId), [
+      second.id,
+      first.id,
+      third.id,
+    ]);
 
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     await mouse.addPointer();
@@ -233,15 +223,16 @@ void main() {
     );
     await tester.pump();
 
-    expect(
-      painter().paintPaths.map((occurrence) => occurrence.occurrenceId),
-      [first.id, second.id],
-    );
+    expect(painter().paintPaths.map((occurrence) => occurrence.occurrenceId), [
+      first.id,
+      second.id,
+    ]);
     expect(painter().hoveredOccurrenceId, second.id);
   });
 
-  testWidgets('edits parallel branch transitions independently with undo',
-      (tester) async {
+  testWidgets('edits parallel branch transitions independently with undo', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1000, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final fs = MemoryFileSystem();
@@ -312,9 +303,7 @@ void main() {
       find.byKey(const ValueKey('path2AutoConditionPreviewDistance')),
       '0.6',
     );
-    await tester.tap(
-      find.byKey(const ValueKey('path2AutoSaveTransition')),
-    );
+    await tester.tap(find.byKey(const ValueKey('path2AutoSaveTransition')));
     await tester.pumpAndSettle();
 
     final edited = auto.branches.singleWhere(
@@ -335,14 +324,12 @@ void main() {
     final restored = auto.branches.singleWhere(
       (branch) => branch.id == conditional.id,
     );
-    expect(
-      (restored.transition as ConditionTransition).conditionName,
-      isNull,
-    );
+    expect((restored.transition as ConditionTransition).conditionName, isNull);
   });
 
-  testWidgets('drags the auto starting position as one undoable change',
-      (tester) async {
+  testWidgets('drags the auto starting position as one undoable change', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1280, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     SharedPreferences.setMockInitialValues({
@@ -393,14 +380,13 @@ void main() {
     );
     await tester.pump();
 
-    final start = PathPainterUtil.pointToPixelOffset(
+    final start =
+        PathPainterUtil.pointToPixelOffset(
           originalPose.translation,
           Path2Painter.scale,
           fieldImage,
         ) +
-        tester.getTopLeft(
-          find.byKey(const ValueKey('path2AutoFieldGesture')),
-        );
+        tester.getTopLeft(find.byKey(const ValueKey('path2AutoFieldGesture')));
     final meterPixels = PathPainterUtil.metersToPixels(
       1,
       Path2Painter.scale,

@@ -13,7 +13,9 @@ void main() {
     expect(Command.fromType('named'), isInstanceOf<NamedCommand>());
     expect(Command.fromType('path'), isInstanceOf<PathCommand>());
     expect(
-        Command.fromType('sequential'), isInstanceOf<SequentialCommandGroup>());
+      Command.fromType('sequential'),
+      isInstanceOf<SequentialCommandGroup>(),
+    );
     expect(Command.fromType('parallel'), isInstanceOf<ParallelCommandGroup>());
     expect(Command.fromType('race'), isInstanceOf<RaceCommandGroup>());
     expect(Command.fromType('deadline'), isInstanceOf<DeadlineCommandGroup>());
@@ -24,27 +26,35 @@ void main() {
     ];
 
     expect(
-        listEquals(
-            (Command.fromType('sequential', commands: cmds) as CommandGroup)
-                .commands,
-            cmds),
-        true);
+      listEquals(
+        (Command.fromType(
+          'sequential',
+          commands: cmds,
+        ) as CommandGroup).commands,
+        cmds,
+      ),
+      true,
+    );
     expect(
-        listEquals(
-            (Command.fromType('parallel', commands: cmds) as CommandGroup)
-                .commands,
-            cmds),
-        true);
+      listEquals(
+        (Command.fromType('parallel', commands: cmds) as CommandGroup).commands,
+        cmds,
+      ),
+      true,
+    );
     expect(
-        listEquals(
-            (Command.fromType('race', commands: cmds) as CommandGroup).commands,
-            cmds),
-        true);
+      listEquals(
+        (Command.fromType('race', commands: cmds) as CommandGroup).commands,
+        cmds,
+      ),
+      true,
+    );
     expect(
-        listEquals(
-            (Command.fromType('deadline', commands: cmds) as CommandGroup)
-                .commands,
-            cmds),
-        true);
+      listEquals(
+        (Command.fromType('deadline', commands: cmds) as CommandGroup).commands,
+        cmds,
+      ),
+      true,
+    );
   });
 }

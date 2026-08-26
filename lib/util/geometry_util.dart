@@ -4,17 +4,29 @@ import 'package:pathplanner/util/wpimath/geometry.dart';
 
 class GeometryUtil {
   static Translation2d quadraticLerp(
-      Translation2d a, Translation2d b, Translation2d c, num t) {
+    Translation2d a,
+    Translation2d b,
+    Translation2d c,
+    num t,
+  ) {
     return a.interpolate(b, t).interpolate(b.interpolate(c, t), t);
   }
 
-  static Translation2d cubicLerp(Translation2d a, Translation2d b,
-      Translation2d c, Translation2d d, num t) {
+  static Translation2d cubicLerp(
+    Translation2d a,
+    Translation2d b,
+    Translation2d c,
+    Translation2d d,
+    num t,
+  ) {
     return quadraticLerp(a, b, c, t).interpolate(quadraticLerp(b, c, d, t), t);
   }
 
   static num calculateRadius(
-      Translation2d a, Translation2d b, Translation2d c) {
+    Translation2d a,
+    Translation2d b,
+    Translation2d c,
+  ) {
     Translation2d vba = a - b;
     Translation2d vbc = c - b;
     num crossZ = vba.x * vbc.y - vba.y * vbc.x;

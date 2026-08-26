@@ -1,6 +1,6 @@
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path2/graph.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
@@ -28,11 +28,7 @@ void main() {
   setUp(() async {
     final fs = MemoryFileSystem();
     fs.directory('/paths').createSync(recursive: true);
-    path = path2.Path.defaultPath(
-      name: 'Path2',
-      pathDir: '/paths',
-      fs: fs,
-    );
+    path = path2.Path.defaultPath(name: 'Path2', pathDir: '/paths', fs: fs);
     undoStack = ChangeStack();
     fieldImage = FieldImage.official(OfficialField.chargedUp);
     SharedPreferences.setMockInitialValues({
@@ -65,27 +61,34 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  test('default distance path can be simulated with project preferences',
-      () async {
-    final outcome = await Path2Simulator.simulatePathInBackground(
-      path,
-      RobotConfig.fromPrefs(prefs),
-    );
+  test(
+    'default distance path can be simulated with project preferences',
+    () async {
+      final outcome = await Path2Simulator.simulatePathInBackground(
+        path,
+        RobotConfig.fromPrefs(prefs),
+      );
 
-    expect(outcome.failure, isNull, reason: outcome.failure?.message);
-    expect(outcome.result!.traversals, hasLength(1));
-  });
+      expect(outcome.failure, isNull, reason: outcome.failure?.message);
+      expect(outcome.result!.traversals, hasLength(1));
+    },
+  );
 
-  testWidgets('shows graph cards and a stopped zero-time seekbar',
-      (tester) async {
+  testWidgets('shows graph cards and a stopped zero-time seekbar', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     expect(find.byType(VisualGraphEditor), findsOneWidget);
     expect(find.byType(Path2Painter), findsNothing);
-    expect(find.byKey(ValueKey('graphNode-${path.nodes.first.id}')),
-        findsOneWidget);
-    expect(find.byKey(ValueKey('graphNode-${path.nodes.last.id}')),
-        findsOneWidget);
+    expect(
+      find.byKey(ValueKey('graphNode-${path.nodes.first.id}')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(ValueKey('graphNode-${path.nodes.last.id}')),
+      findsOneWidget,
+    );
     expect(find.text('Start'), findsOneWidget);
     expect(find.text('End'), findsOneWidget);
 
@@ -100,8 +103,9 @@ void main() {
     expect(find.text('Point Towards Zones'), findsNothing);
   });
 
-  testWidgets('toolbar adds a disconnected field-centered node with undo',
-      (tester) async {
+  testWidgets('toolbar adds a disconnected field-centered node with undo', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     await tester.tap(find.byKey(const ValueKey('addPathNodeButton')));
     await tester.pumpAndSettle();
@@ -130,8 +134,9 @@ void main() {
     expect(path.nodes, hasLength(3));
   });
 
-  testWidgets('leaf tolerances depend on node and waypoint type',
-      (tester) async {
+  testWidgets('leaf tolerances depend on node and waypoint type', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final start = path.nodes.first;
     final end = path.nodes.last;
@@ -165,8 +170,9 @@ void main() {
     );
   });
 
-  testWidgets('selected pose node opens its settings in a floating panel',
-      (tester) async {
+  testWidgets('selected pose node opens its settings in a floating panel', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final start = path.nodes.first;
     final card = find.byKey(ValueKey('graphNode-${start.id}'));
@@ -190,17 +196,15 @@ void main() {
       reason: 'the panel should shrink to the height of its settings',
     );
     expect(
-      find.descendant(
-        of: panel,
-        matching: find.byType(BackdropFilter),
-      ),
+      find.descendant(of: panel, matching: find.byType(BackdropFilter)),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('preview enables, animates, and displays the leaf runtime',
-      (tester) async {
+  testWidgets('preview enables, animates, and displays the leaf runtime', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1500, 900));
     await tester.pumpWidget(
       MaterialApp(
@@ -212,9 +216,9 @@ void main() {
             undoStack: undoStack,
             simulatePath: (path, config) async =>
                 Path2Simulator.simulateTraversals(
-              Path2Simulator.previewTraversals(path),
-              Path2RobotConfigSnapshot.fromRobotConfig(config),
-            ),
+                  Path2Simulator.previewTraversals(path),
+                  Path2RobotConfigSnapshot.fromRobotConfig(config),
+                ),
           ),
         ),
       ),
@@ -233,8 +237,9 @@ void main() {
     seekbar.previewController.stop();
   });
 
-  testWidgets('clicking empty graph space deselects the waypoint',
-      (tester) async {
+  testWidgets('clicking empty graph space deselects the waypoint', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final start = path.nodes.first;
     await tester.tap(find.byKey(ValueKey('graphNode-${start.id}')));
@@ -246,10 +251,7 @@ void main() {
 
     final graph = find.byType(VisualGraphEditor);
     await tester.tap(
-      find.descendant(
-        of: graph,
-        matching: find.byTooltip('Fit Graph to View'),
-      ),
+      find.descendant(of: graph, matching: find.byTooltip('Fit Graph to View')),
     );
     await tester.pumpAndSettle();
     await tester.tapAt(tester.getTopLeft(graph) + const Offset(24, 24));
@@ -258,13 +260,12 @@ void main() {
     expect(find.byType(PathGraphNodeSettingsPanel), findsNothing);
   });
 
-  testWidgets('condition branch edits its preview handoff distance',
-      (tester) async {
+  testWidgets('condition branch edits its preview handoff distance', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final branch = path.branches.single;
-    await tester.tap(
-      find.byKey(ValueKey('graphBranchBadge-${branch.id}')),
-    );
+    await tester.tap(find.byKey(ValueKey('graphBranchBadge-${branch.id}')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('pathTransitionType')));
     await tester.pumpAndSettle();
@@ -278,9 +279,7 @@ void main() {
       find.byKey(const ValueKey('pathConditionPreviewDistance')),
       '0.8',
     );
-    await tester.tap(
-      find.byKey(const ValueKey('savePathTransitionButton')),
-    );
+    await tester.tap(find.byKey(const ValueKey('savePathTransitionButton')));
     await tester.pumpAndSettle();
 
     final transition = path.branches.single.transition as ConditionTransition;
@@ -311,8 +310,9 @@ void main() {
     );
   });
 
-  testWidgets('branch deletion creates a saveable draft and is undoable',
-      (tester) async {
+  testWidgets('branch deletion creates a saveable draft and is undoable', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final branchId = path.branches.single.id;
     await tester.tap(find.byKey(ValueKey('graphBranchBadge-$branchId')));
@@ -351,8 +351,9 @@ void main() {
     expect(find.text('Create Branch'), findsNothing);
   });
 
-  testWidgets('connector-to-empty cancellation is transactional',
-      (tester) async {
+  testWidgets('connector-to-empty cancellation is transactional', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final connector = find.byKey(
       ValueKey('graphConnector-${path.nodes.first.id}-bottom'),
@@ -372,15 +373,17 @@ void main() {
     expect(path.branches, hasLength(1));
   });
 
-  testWidgets('field anchor drag commits one undoable node edit',
-      (tester) async {
+  testWidgets('field anchor drag commits one undoable node edit', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final node = path.nodes.last;
     final original = node.waypoint.position;
     final painterFinder = find.byWidgetPredicate(
       (widget) => widget is CustomPaint && widget.painter is Path2Painter,
     );
-    final location = PathPainterUtil.pointToPixelOffset(
+    final location =
+        PathPainterUtil.pointToPixelOffset(
           original,
           Path2Painter.scale,
           fieldImage,
@@ -398,23 +401,29 @@ void main() {
       kind: PointerDeviceKind.mouse,
     );
     await tester.pumpAndSettle();
-    expect(path.nodeById(node.id)!.waypoint.position.x,
-        closeTo(original.x + 1, 0.06));
+    expect(
+      path.nodeById(node.id)!.waypoint.position.x,
+      closeTo(original.x + 1, 0.06),
+    );
 
     undoStack.undo();
     await tester.pumpAndSettle();
     expect(
-        path.nodeById(node.id)!.waypoint.position.x, closeTo(original.x, 0.01));
+      path.nodeById(node.id)!.waypoint.position.x,
+      closeTo(original.x, 0.01),
+    );
   });
 
-  testWidgets('field click selects and centers by stable node id',
-      (tester) async {
+  testWidgets('field click selects and centers by stable node id', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final node = path.nodes.first;
     final painterFinder = find.byWidgetPredicate(
       (widget) => widget is CustomPaint && widget.painter is Path2Painter,
     );
-    final location = PathPainterUtil.pointToPixelOffset(
+    final location =
+        PathPainterUtil.pointToPixelOffset(
           node.waypoint.position,
           Path2Painter.scale,
           fieldImage,

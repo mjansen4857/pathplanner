@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
@@ -40,13 +40,15 @@ class GlobalConstraintsTree extends StatelessWidget {
                 child: NumberTextField(
                   initialValue: path.globalConstraints.maxVelocityMPS,
                   label: 'Max Velocity (M/S)',
-                  enabled: !path.useDefaultConstraints &&
+                  enabled:
+                      !path.useDefaultConstraints &&
                       !path.globalConstraints.unlimited,
                   minValue: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
                       _addChange(
-                          () => path.globalConstraints.maxVelocityMPS = value);
+                        () => path.globalConstraints.maxVelocityMPS = value,
+                      );
                     }
                   },
                 ),
@@ -56,13 +58,16 @@ class GlobalConstraintsTree extends StatelessWidget {
                 child: NumberTextField(
                   initialValue: path.globalConstraints.maxAccelerationMPSSq,
                   label: 'Max Acceleration (M/S²)',
-                  enabled: !path.useDefaultConstraints &&
+                  enabled:
+                      !path.useDefaultConstraints &&
                       !path.globalConstraints.unlimited,
                   minValue: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
-                      _addChange(() =>
-                          path.globalConstraints.maxAccelerationMPSSq = value);
+                      _addChange(
+                        () =>
+                            path.globalConstraints.maxAccelerationMPSSq = value,
+                      );
                     }
                   },
                 ),
@@ -80,13 +85,16 @@ class GlobalConstraintsTree extends StatelessWidget {
                   initialValue: path.globalConstraints.maxAngularVelocityDeg,
                   label: 'Max Angular Velocity (Deg/S)',
                   arrowKeyIncrement: 1.0,
-                  enabled: !path.useDefaultConstraints &&
+                  enabled:
+                      !path.useDefaultConstraints &&
                       !path.globalConstraints.unlimited,
                   minValue: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
-                      _addChange(() =>
-                          path.globalConstraints.maxAngularVelocityDeg = value);
+                      _addChange(
+                        () => path.globalConstraints.maxAngularVelocityDeg =
+                            value,
+                      );
                     }
                   },
                 ),
@@ -98,13 +106,16 @@ class GlobalConstraintsTree extends StatelessWidget {
                       path.globalConstraints.maxAngularAccelerationDeg,
                   label: 'Max Angular Acceleration (Deg/S²)',
                   arrowKeyIncrement: 1.0,
-                  enabled: !path.useDefaultConstraints &&
+                  enabled:
+                      !path.useDefaultConstraints &&
                       !path.globalConstraints.unlimited,
                   minValue: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
-                      _addChange(() => path
-                          .globalConstraints.maxAngularAccelerationDeg = value);
+                      _addChange(
+                        () => path.globalConstraints.maxAngularAccelerationDeg =
+                            value,
+                      );
                     }
                   },
                 ),
@@ -128,7 +139,8 @@ class GlobalConstraintsTree extends StatelessWidget {
                   onSubmitted: (value) {
                     if (value != null) {
                       _addChange(
-                          () => path.globalConstraints.nominalVoltage = value);
+                        () => path.globalConstraints.nominalVoltage = value,
+                      );
                     }
                   },
                 ),
@@ -147,24 +159,28 @@ class GlobalConstraintsTree extends StatelessWidget {
                     Checkbox(
                       value: path.useDefaultConstraints,
                       onChanged: (value) {
-                        undoStack.add(Change(
-                          (
-                            path.useDefaultConstraints,
-                            path.globalConstraints.clone()
+                        undoStack.add(
+                          Change(
+                            (
+                              path.useDefaultConstraints,
+                              path.globalConstraints.clone(),
+                            ),
+                            () {
+                              path.useDefaultConstraints = value ?? false;
+                              PathConstraints cloned = defaultConstraints
+                                  .clone();
+                              cloned.unlimited =
+                                  path.globalConstraints.unlimited;
+                              path.globalConstraints = cloned;
+                              onPathChanged?.call();
+                            },
+                            (oldValue) {
+                              path.useDefaultConstraints = oldValue.$1;
+                              path.globalConstraints = oldValue.$2.clone();
+                              onPathChanged?.call();
+                            },
                           ),
-                          () {
-                            path.useDefaultConstraints = value ?? false;
-                            PathConstraints cloned = defaultConstraints.clone();
-                            cloned.unlimited = path.globalConstraints.unlimited;
-                            path.globalConstraints = cloned;
-                            onPathChanged?.call();
-                          },
-                          (oldValue) {
-                            path.useDefaultConstraints = oldValue.$1;
-                            path.globalConstraints = oldValue.$2.clone();
-                            onPathChanged?.call();
-                          },
-                        ));
+                        );
                       },
                     ),
                     const SizedBox(width: 4),
@@ -181,24 +197,23 @@ class GlobalConstraintsTree extends StatelessWidget {
                     Checkbox(
                       value: path.globalConstraints.unlimited,
                       onChanged: (value) {
-                        undoStack.add(Change(
-                          path.globalConstraints.unlimited,
-                          () {
-                            path.globalConstraints.unlimited = value ?? false;
-                            onPathChanged?.call();
-                          },
-                          (oldValue) {
-                            path.globalConstraints.unlimited = oldValue;
-                            onPathChanged?.call();
-                          },
-                        ));
+                        undoStack.add(
+                          Change(
+                            path.globalConstraints.unlimited,
+                            () {
+                              path.globalConstraints.unlimited = value ?? false;
+                              onPathChanged?.call();
+                            },
+                            (oldValue) {
+                              path.globalConstraints.unlimited = oldValue;
+                              onPathChanged?.call();
+                            },
+                          ),
+                        );
                       },
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'Unlimited',
-                      style: TextStyle(fontSize: 15),
-                    ),
+                    const Text('Unlimited', style: TextStyle(fontSize: 15)),
                   ],
                 ),
               ),
@@ -210,16 +225,18 @@ class GlobalConstraintsTree extends StatelessWidget {
   }
 
   void _addChange(VoidCallback execute) {
-    undoStack.add(Change(
-      path.globalConstraints.clone(),
-      () {
-        execute.call();
-        onPathChanged?.call();
-      },
-      (oldValue) {
-        path.globalConstraints = oldValue.clone();
-        onPathChanged?.call();
-      },
-    ));
+    undoStack.add(
+      Change(
+        path.globalConstraints.clone(),
+        () {
+          execute.call();
+          onPathChanged?.call();
+        },
+        (oldValue) {
+          path.globalConstraints = oldValue.clone();
+          onPathChanged?.call();
+        },
+      ),
+    );
   }
 }

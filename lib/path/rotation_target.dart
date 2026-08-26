@@ -5,12 +5,17 @@ class RotationTarget {
   Rotation2d rotation;
   final bool displayInEditor;
 
-  RotationTarget(this.waypointRelativePos, this.rotation,
-      [this.displayInEditor = true]);
+  RotationTarget(
+    this.waypointRelativePos,
+    this.rotation, [
+    this.displayInEditor = true,
+  ]);
 
   RotationTarget.fromJson(Map<String, dynamic> json)
-      : this(json['waypointRelativePos'] ?? 0.5,
-            Rotation2d.fromDegrees(json['rotationDegrees'] ?? 0));
+    : this(
+        json['waypointRelativePos'] ?? 0.5,
+        Rotation2d.fromDegrees(json['rotationDegrees'] ?? 0),
+      );
 
   Map<String, dynamic> toJson() {
     return {

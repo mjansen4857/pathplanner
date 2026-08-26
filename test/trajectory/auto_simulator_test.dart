@@ -38,7 +38,9 @@ void main() {
           maxWaypointRelativePos: 0.4,
         ),
       ],
-      pointTowardsZones: [PointTowardsZone()],
+      pointTowardsZones: [
+        PointTowardsZone(fieldPosition: const Translation2d(0.4, 5.5)),
+      ],
       rotationTargets: [RotationTarget(0.5, Rotation2d.fromDegrees(45))],
       eventMarkers: [],
       pathDir: '',
@@ -70,7 +72,9 @@ void main() {
           maxWaypointRelativePos: 0.4,
         ),
       ],
-      pointTowardsZones: [PointTowardsZone()],
+      pointTowardsZones: [
+        PointTowardsZone(fieldPosition: const Translation2d(0.4, 5.5)),
+      ],
       rotationTargets: [RotationTarget(0.5, Rotation2d.fromDegrees(45))],
       eventMarkers: [],
       pathDir: '',

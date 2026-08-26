@@ -10,7 +10,7 @@ class PointTowardsZone {
   String name;
 
   PointTowardsZone({
-    this.fieldPosition = const Translation2d(0.4, 5.5),
+    this.fieldPosition = const Translation2d(-7.6, 1.5),
     this.rotationOffset = const Rotation2d(),
     this.minWaypointRelativePos = 0.25,
     this.maxWaypointRelativePos = 0.75,

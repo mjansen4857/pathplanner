@@ -78,12 +78,9 @@ void main() {
     var fs = MemoryFileSystem();
     fs.directory(deployPath).createSync(recursive: true);
     NavGrid grid = NavGrid(
-      fieldSize: const Size(16.54, 8.02),
-      nodeSizeMeters: 0.2,
-      grid: List.generate(
-        (8.02 / 0.2).ceil(),
-        (index) => List.filled((16.54 / 0.2).ceil(), false),
-      ),
+      fieldSize: const Size(15.1, 7.1),
+      nodeSizeMeters: 1.0,
+      grid: List.generate(8, (index) => List.filled(16, false)),
     );
     fs
         .file(join(deployPath, 'navgrid.json'))
@@ -102,13 +99,15 @@ void main() {
     );
     await widgetTester.pump();
 
-    await widgetTester.tapAt(const Offset(200, 200));
+    await widgetTester.tapAt(
+      widgetTester.getCenter(find.image(FieldImage.defaultField.image.image)),
+    );
     await widgetTester.pump();
 
     NavGrid editedGrid = NavGrid.fromJson(
       jsonDecode(fs.file(join(deployPath, 'navgrid.json')).readAsStringSync()),
     );
-    expect(editedGrid, isNot(grid));
+    expect(editedGrid.grid[4][8], isTrue);
   });
 
   testWidgets('navgrid editor drag', (widgetTester) async {

@@ -184,14 +184,14 @@ class Path {
   }) {
     final first = PathNode(
       waypoint: PoseWaypoint(
-        position: const Translation2d(2.0, 7.0),
+        position: const Translation2d(-6.0, 3.0),
         rotation: const Rotation2d(),
       ),
       editorPosition: const Offset(100, 80),
     );
     final second = PathNode(
       waypoint: PoseWaypoint(
-        position: const Translation2d(4.0, 6.0),
+        position: const Translation2d(-4.0, 2.0),
         rotation: const Rotation2d(),
       ),
       editorPosition: const Offset(100, 600),

@@ -954,16 +954,19 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   }
 
   double _xPixelsToMeters(double pixels) {
-    return (((pixels - 48) / PathPainter.scale) /
-            widget.fieldImage.pixelsPerMeter) -
-        widget.fieldImage.marginMeters;
+    return PathPainterUtil.xPixelsToMeters(
+      pixels - 48,
+      PathPainter.scale,
+      widget.fieldImage,
+    );
   }
 
   double _yPixelsToMeters(double pixels) {
-    return ((widget.fieldImage.defaultSize.height -
-                ((pixels - 48) / PathPainter.scale)) /
-            widget.fieldImage.pixelsPerMeter) -
-        widget.fieldImage.marginMeters;
+    return PathPainterUtil.yPixelsToMeters(
+      pixels - 48,
+      PathPainter.scale,
+      widget.fieldImage,
+    );
   }
 
   double _pixelsToMeters(double pixels) {

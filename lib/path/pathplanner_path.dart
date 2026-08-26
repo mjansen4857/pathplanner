@@ -120,12 +120,12 @@ class PathPlannerPath implements HotReloadablePath {
        useDefaultConstraints = true {
     waypoints.addAll([
       Waypoint(
-        anchor: const Translation2d(2.0, 7.0),
-        nextControl: const Translation2d(3.0, 7.0),
+        anchor: const Translation2d(-6.0, 3.0),
+        nextControl: const Translation2d(-5.0, 3.0),
       ),
       Waypoint(
-        prevControl: const Translation2d(3.0, 6.0),
-        anchor: const Translation2d(4.0, 6.0),
+        prevControl: const Translation2d(-5.0, 2.0),
+        anchor: const Translation2d(-4.0, 2.0),
       ),
     ]);
 

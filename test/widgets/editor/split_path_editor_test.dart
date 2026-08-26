@@ -236,7 +236,7 @@ void main() {
 
     var tapLocation =
         PathPainterUtil.pointToPixelOffset(
-          const Translation2d(1.0, 1.0),
+          const Translation2d(-5.0, 1.0),
           PathPainter.scale,
           fieldImage,
         ) +
@@ -249,7 +249,7 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(path.waypoints.length, 3);
-    expect(path.waypoints.last.anchor.x, closeTo(1.0, 0.05));
+    expect(path.waypoints.last.anchor.x, closeTo(-5.0, 0.05));
     expect(path.waypoints.last.anchor.y, closeTo(1.0, 0.05));
 
     undoStack.undo();

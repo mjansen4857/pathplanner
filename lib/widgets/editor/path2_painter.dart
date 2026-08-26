@@ -489,10 +489,16 @@ class Path2Painter extends CustomPainter {
       ..color = colorScheme.secondary.withAlpha(50)
       ..strokeWidth = 1;
     final spacing = PathPainterUtil.metersToPixels(0.5, scale, fieldImage);
-    for (double x = 0; x <= size.width; x += spacing) {
+    for (double x = size.width / 2; x <= size.width; x += spacing) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
-    for (double y = 0; y <= size.height; y += spacing) {
+    for (double x = size.width / 2 - spacing; x >= 0; x -= spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = size.height / 2; y <= size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+    for (double y = size.height / 2 - spacing; y >= 0; y -= spacing) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }

@@ -261,17 +261,29 @@ class _NavGridPageState extends State<NavGridPage> {
   }
 
   double _xPixelsToMeters(double pixels) {
-    return (((pixels - 48) / _NavigationPainter.scale) /
-            widget.fieldImage.pixelsPerMeter) -
-        widget.fieldImage.marginMeters;
+    return PathPainterUtil.xPixelsToMeters(
+          pixels - 48,
+          _NavigationPainter.scale,
+          widget.fieldImage,
+        ) +
+        _gridWidthMeters / 2;
   }
 
   double _yPixelsToMeters(double pixels) {
-    return ((widget.fieldImage.defaultSize.height -
-                ((pixels - 48) / _NavigationPainter.scale)) /
-            widget.fieldImage.pixelsPerMeter) -
-        widget.fieldImage.marginMeters;
+    return PathPainterUtil.yPixelsToMeters(
+          pixels - 48,
+          _NavigationPainter.scale,
+          widget.fieldImage,
+        ) +
+        _gridHeightMeters / 2;
   }
+
+  double get _gridWidthMeters =>
+      (_grid.grid.isEmpty ? 0 : _grid.grid.first.length) *
+      _grid.nodeSizeMeters.toDouble();
+
+  double get _gridHeightMeters =>
+      _grid.grid.length * _grid.nodeSizeMeters.toDouble();
 
   void _saveNavGrid() {
     widget.fs
@@ -297,6 +309,9 @@ class _NavigationPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     scale = size.width / fieldImage.defaultSize.width;
+    final gridWidthMeters =
+        (grid.isEmpty ? 0 : grid.first.length) * nodeSizeMeters;
+    final gridHeightMeters = grid.length * nodeSizeMeters;
 
     var outlinePaint = Paint()
       ..style = PaintingStyle.stroke
@@ -309,12 +324,18 @@ class _NavigationPainter extends CustomPainter {
     for (int row = 0; row < grid.length; row++) {
       for (int col = 0; col < grid[row].length; col++) {
         Offset tl = PathPainterUtil.pointToPixelOffset(
-          Translation2d(col * nodeSizeMeters, row * nodeSizeMeters),
+          Translation2d(
+            col * nodeSizeMeters - gridWidthMeters / 2,
+            row * nodeSizeMeters - gridHeightMeters / 2,
+          ),
           scale,
           fieldImage,
         );
         Offset br = PathPainterUtil.pointToPixelOffset(
-          Translation2d((col + 1) * nodeSizeMeters, (row + 1) * nodeSizeMeters),
+          Translation2d(
+            (col + 1) * nodeSizeMeters - gridWidthMeters / 2,
+            (row + 1) * nodeSizeMeters - gridHeightMeters / 2,
+          ),
           scale,
           fieldImage,
         );

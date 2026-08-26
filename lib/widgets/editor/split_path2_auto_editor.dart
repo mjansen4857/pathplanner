@@ -418,15 +418,19 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
   }
 
   double _xPixelsToMeters(double pixels) {
-    return ((pixels / Path2Painter.scale) / widget.fieldImage.pixelsPerMeter) -
-        widget.fieldImage.marginMeters;
+    return PathPainterUtil.xPixelsToMeters(
+      pixels,
+      Path2Painter.scale,
+      widget.fieldImage,
+    );
   }
 
   double _yPixelsToMeters(double pixels) {
-    return ((widget.fieldImage.defaultSize.height -
-                pixels / Path2Painter.scale) /
-            widget.fieldImage.pixelsPerMeter) -
-        widget.fieldImage.marginMeters;
+    return PathPainterUtil.yPixelsToMeters(
+      pixels,
+      Path2Painter.scale,
+      widget.fieldImage,
+    );
   }
 
   double _pixelsToMeters(double pixels) =>

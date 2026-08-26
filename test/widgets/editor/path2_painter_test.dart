@@ -245,12 +245,12 @@ void main() {
       ]);
 
       final image = await _render(
-        painter(makePath(), simulations: [traversalAt(2), traversalAt(6)]),
+        painter(makePath(), simulations: [traversalAt(-2), traversalAt(2)]),
       );
       final primary = const ColorScheme.light().primary;
       final traceColor = primary.withAlpha(150);
 
-      for (final y in [2.0, 6.0]) {
+      for (final y in [-2.0, 2.0]) {
         final traceMidpoint = PathPainterUtil.pointToPixelOffset(
           Translation2d(2, y),
           Path2Painter.scale,
@@ -269,7 +269,7 @@ void main() {
       }
 
       final frontLeftModule = PathPainterUtil.pointToPixelOffset(
-        const Translation2d(1.25, 2.25),
+        const Translation2d(1.25, -1.75),
         Path2Painter.scale,
         fieldImage,
       );

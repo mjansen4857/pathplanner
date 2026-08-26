@@ -10,6 +10,7 @@ import 'package:pathplanner/path2/waypoint.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/graph_editor/path_graph_node_card.dart';
 import 'package:pathplanner/widgets/editor/graph_editor/visual_graph_editor.dart';
 import 'package:pathplanner/widgets/editor/path2_painter.dart';
@@ -115,15 +116,7 @@ void main() {
     expect(path.nodes, hasLength(3));
     expect(path.branches, hasLength(1));
     expect(path.nodes.last.waypoint, isA<TranslationWaypoint>());
-    final fieldSize = fieldImage.getFieldSizeMeters();
-    expect(
-      path.nodes.last.waypoint.position.x,
-      closeTo(fieldSize.width / 2, 0.001),
-    );
-    expect(
-      path.nodes.last.waypoint.position.y,
-      closeTo(fieldSize.height / 2, 0.001),
-    );
+    expect(path.nodes.last.waypoint.position, const Translation2d());
     expect(find.byKey(const ValueKey('pathGraphDiagnostics')), findsOneWidget);
 
     undoStack.undo();

@@ -425,14 +425,10 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
   }
 
   void _addToolbarNode(_WaypointKind kind) {
-    final fieldSize = widget.fieldImage.getFieldSizeMeters();
     final graphCenter =
         _graphController.viewportCenterInScene ?? const Offset(300, 250);
     final node = path2.PathNode(
-      waypoint: _newWaypoint(
-        kind,
-        Translation2d(fieldSize.width / 2, fieldSize.height / 2),
-      ),
+      waypoint: _newWaypoint(kind, const Translation2d()),
       editorPosition: Offset.zero,
     );
     const cardSize = PathGraphNodeCard.cardSize;
@@ -793,20 +789,21 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
   Translation2d _clampedFieldPosition(Offset localPosition) {
     final size = widget.fieldImage.getFieldSizeMeters();
     return Translation2d(
-      _xPixelsToMeters(localPosition.dx).clamp(0, size.width),
-      _yPixelsToMeters(localPosition.dy).clamp(0, size.height),
+      _xPixelsToMeters(localPosition.dx).clamp(-size.width / 2, size.width / 2),
+      _yPixelsToMeters(localPosition.dy)
+          .clamp(-size.height / 2, size.height / 2),
     );
   }
 
   Translation2d _offsetWaypointPosition(Translation2d origin) {
     final size = widget.fieldImage.getFieldSizeMeters();
     var x = origin.x + 1;
-    if (x > size.width) {
+    if (x > size.width / 2) {
       x = origin.x - 1;
     }
     return Translation2d(
-      x.clamp(0, size.width),
-      origin.y.clamp(0, size.height),
+      x.clamp(-size.width / 2, size.width / 2),
+      origin.y.clamp(-size.height / 2, size.height / 2),
     );
   }
 
@@ -936,15 +933,19 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
   }
 
   double _xPixelsToMeters(double pixels) {
-    return ((pixels / Path2Painter.scale) / widget.fieldImage.pixelsPerMeter) -
-        widget.fieldImage.marginMeters;
+    return PathPainterUtil.xPixelsToMeters(
+      pixels,
+      Path2Painter.scale,
+      widget.fieldImage,
+    );
   }
 
   double _yPixelsToMeters(double pixels) {
-    return ((widget.fieldImage.defaultSize.height -
-                pixels / Path2Painter.scale) /
-            widget.fieldImage.pixelsPerMeter) -
-        widget.fieldImage.marginMeters;
+    return PathPainterUtil.yPixelsToMeters(
+      pixels,
+      Path2Painter.scale,
+      widget.fieldImage,
+    );
   }
 
   double _pixelsToMeters(double pixels) =>

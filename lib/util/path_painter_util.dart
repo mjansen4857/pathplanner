@@ -291,11 +291,29 @@ class PathPainterUtil {
     FieldImage fieldImage,
   ) {
     return Offset(
-      (point.x + fieldImage.marginMeters) *
-          fieldImage.pixelsPerMeter.toDouble(),
-      fieldImage.defaultSize.height -
-          ((point.y + fieldImage.marginMeters) * fieldImage.pixelsPerMeter),
+      fieldImage.defaultSize.width / 2 +
+          point.x * fieldImage.pixelsPerMeter.toDouble(),
+      fieldImage.defaultSize.height / 2 -
+          point.y * fieldImage.pixelsPerMeter.toDouble(),
     ).scale(scale, scale);
+  }
+
+  static double xPixelsToMeters(
+    double pixels,
+    double scale,
+    FieldImage fieldImage,
+  ) {
+    return ((pixels / scale) - fieldImage.defaultSize.width / 2) /
+        fieldImage.pixelsPerMeter;
+  }
+
+  static double yPixelsToMeters(
+    double pixels,
+    double scale,
+    FieldImage fieldImage,
+  ) {
+    return (fieldImage.defaultSize.height / 2 - pixels / scale) /
+        fieldImage.pixelsPerMeter;
   }
 
   static double metersToPixels(

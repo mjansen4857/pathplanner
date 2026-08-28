@@ -26,12 +26,14 @@ IconData _waypointIcon(Waypoint waypoint) => switch (waypoint.type) {
 
 /// Compact graph representation of a waypoint.
 ///
-/// Editable values deliberately live in [PathGraphNodeSettingsPanel] so cards
-/// remain readable when a graph contains many nodes and branches.
+/// Editable values deliberately live in [PathGraphNodeSettingsPanel]. Cards
+/// only surface the small amount of preview information useful at a glance.
 class PathGraphNodeCard extends StatelessWidget {
   static const Size cardSize = Size(300, 142);
+  static const Size pointTowardsCardSize = Size(300, 172);
 
-  static Size sizeFor(path2.Path path, path2.PathNode node) => cardSize;
+  static Size sizeFor(path2.Path path, path2.PathNode node) =>
+      node.waypoint is PointTowardsWaypoint ? pointTowardsCardSize : cardSize;
 
   final path2.Path path;
   final path2.PathNode node;
@@ -56,6 +58,7 @@ class PathGraphNodeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final waypoint = node.waypoint;
+    final pointTowards = waypoint is PointTowardsWaypoint ? waypoint : null;
     final isRoot = path.rootNodes.any((root) => root.id == node.id);
     final isLeaf = path.isLeaf(node.id);
     final incoming = path.branches
@@ -64,6 +67,7 @@ class PathGraphNodeCard extends StatelessWidget {
     final outgoing = path.branches
         .where((branch) => branch.sourceId == node.id)
         .length;
+    final hasStatusPreview = isRoot || isLeaf;
 
     return MouseRegion(
       onEnter: (_) => onHovered(node.id),
@@ -141,34 +145,76 @@ class PathGraphNodeCard extends StatelessWidget {
                           horizontal: 12,
                           vertical: 8,
                         ),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Wrap(
-                            spacing: 7,
-                            runSpacing: 5,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              if (isRoot)
-                                const _InfoBadge(
-                                  icon: Icons.start_rounded,
-                                  label: 'Start',
-                                  color: Colors.green,
-                                ),
-                              if (isLeaf)
-                                const _InfoBadge(
-                                  icon: Icons.flag_outlined,
-                                  label: 'End',
-                                  color: Colors.red,
-                                ),
-                              if (isLeaf && estimatedRuntimeSeconds.isNotEmpty)
-                                _InfoBadge(
-                                  key: ValueKey('pathNodeRuntime-${node.id}'),
-                                  icon: Icons.timer_outlined,
-                                  label: _runtimeLabel(estimatedRuntimeSeconds),
-                                  color: colorScheme.primary,
-                                ),
-                            ],
-                          ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (pointTowards != null)
+                              Wrap(
+                                spacing: 7,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  _InfoBadge(
+                                    key: ValueKey(
+                                      pointTowards.inheritTargetFromParent
+                                          ? 'pathNodeInheritedTarget-${node.id}'
+                                          : 'pathNodeTargetPreview-${node.id}',
+                                    ),
+                                    icon: pointTowards.inheritTargetFromParent
+                                        ? Icons.account_tree_outlined
+                                        : Icons.gps_fixed_rounded,
+                                    label: pointTowards.inheritTargetFromParent
+                                        ? 'Target inherited'
+                                        : 'Target: '
+                                              '${pointTowards.targetPosition.x.toStringAsFixed(2)}, '
+                                              '${pointTowards.targetPosition.y.toStringAsFixed(2)}',
+                                    color: Colors.orange,
+                                  ),
+                                  _InfoBadge(
+                                    key: ValueKey(
+                                      'pathNodeRotationOffsetPreview-${node.id}',
+                                    ),
+                                    icon: Icons.rotate_right_rounded,
+                                    label:
+                                        'Offset: ${pointTowards.rotationOffset.degrees.toStringAsFixed(1)}°',
+                                    color: colorScheme.secondary,
+                                  ),
+                                ],
+                              ),
+                            if (pointTowards != null && hasStatusPreview)
+                              const SizedBox(height: 5),
+                            if (hasStatusPreview)
+                              Wrap(
+                                spacing: 7,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  if (isRoot)
+                                    const _InfoBadge(
+                                      icon: Icons.start_rounded,
+                                      label: 'Start',
+                                      color: Colors.green,
+                                    ),
+                                  if (isLeaf)
+                                    const _InfoBadge(
+                                      icon: Icons.flag_outlined,
+                                      label: 'End',
+                                      color: Colors.red,
+                                    ),
+                                  if (isLeaf &&
+                                      estimatedRuntimeSeconds.isNotEmpty)
+                                    _InfoBadge(
+                                      key: ValueKey(
+                                        'pathNodeRuntime-${node.id}',
+                                      ),
+                                      icon: Icons.timer_outlined,
+                                      label: _runtimeLabel(
+                                        estimatedRuntimeSeconds,
+                                      ),
+                                      color: colorScheme.primary,
+                                    ),
+                                ],
+                              ),
+                          ],
                         ),
                       ),
                     ),
@@ -376,65 +422,92 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                             ),
                           ],
                           if (waypoint is PointTowardsWaypoint) ...[
+                            if (!waypoint.inheritTargetFromParent) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: NumberTextField(
+                                      key: ValueKey(
+                                        'pathNodeTargetX-${node.id}',
+                                      ),
+                                      initialValue: waypoint.targetPosition.x,
+                                      label: 'Target X (m)',
+                                      onSubmitted: (value) {
+                                        if (value != null && value.isFinite) {
+                                          onEdit(node.id, (current) {
+                                            final currentWaypoint =
+                                                current.waypoint;
+                                            if (currentWaypoint
+                                                is PointTowardsWaypoint) {
+                                              path.updatePointTowardsTarget(
+                                                current.id,
+                                                Translation2d(
+                                                  value,
+                                                  currentWaypoint
+                                                      .targetPosition
+                                                      .y,
+                                                ),
+                                              );
+                                            }
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: NumberTextField(
+                                      key: ValueKey(
+                                        'pathNodeTargetY-${node.id}',
+                                      ),
+                                      initialValue: waypoint.targetPosition.y,
+                                      label: 'Target Y (m)',
+                                      onSubmitted: (value) {
+                                        if (value != null && value.isFinite) {
+                                          onEdit(node.id, (current) {
+                                            final currentWaypoint =
+                                                current.waypoint;
+                                            if (currentWaypoint
+                                                is PointTowardsWaypoint) {
+                                              path.updatePointTowardsTarget(
+                                                current.id,
+                                                Translation2d(
+                                                  currentWaypoint
+                                                      .targetPosition
+                                                      .x,
+                                                  value,
+                                                ),
+                                              );
+                                            }
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                             const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: NumberTextField(
-                                    key: ValueKey('pathNodeTargetX-${node.id}'),
-                                    initialValue: waypoint.targetPosition.x,
-                                    label: 'Target X (m)',
-                                    onSubmitted: (value) {
-                                      if (value != null && value.isFinite) {
-                                        onEdit(node.id, (current) {
-                                          final currentWaypoint =
-                                              current.waypoint;
-                                          if (currentWaypoint
-                                              is PointTowardsWaypoint) {
-                                            path.updatePointTowardsTarget(
-                                              current.id,
-                                              Translation2d(
-                                                value,
-                                                currentWaypoint
-                                                    .targetPosition
-                                                    .y,
-                                              ),
-                                            );
-                                          }
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: NumberTextField(
-                                    key: ValueKey('pathNodeTargetY-${node.id}'),
-                                    initialValue: waypoint.targetPosition.y,
-                                    label: 'Target Y (m)',
-                                    onSubmitted: (value) {
-                                      if (value != null && value.isFinite) {
-                                        onEdit(node.id, (current) {
-                                          final currentWaypoint =
-                                              current.waypoint;
-                                          if (currentWaypoint
-                                              is PointTowardsWaypoint) {
-                                            path.updatePointTowardsTarget(
-                                              current.id,
-                                              Translation2d(
-                                                currentWaypoint
-                                                    .targetPosition
-                                                    .x,
-                                                value,
-                                              ),
-                                            );
-                                          }
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
+                            NumberTextField(
+                              key: ValueKey(
+                                'pathNodeRotationOffset-${node.id}',
+                              ),
+                              initialValue: waypoint.rotationOffset.degrees,
+                              label: 'Rotation Offset (deg)',
+                              arrowKeyIncrement: 1,
+                              onSubmitted: (value) {
+                                if (value != null && value.isFinite) {
+                                  onEdit(node.id, (current) {
+                                    final currentWaypoint = current.waypoint;
+                                    if (currentWaypoint
+                                        is PointTowardsWaypoint) {
+                                      currentWaypoint.rotationOffset =
+                                          Rotation2d.fromDegrees(value);
+                                    }
+                                  });
+                                }
+                              },
                             ),
                             SwitchListTile(
                               key: ValueKey('pathNodeUnprofiled-${node.id}'),
@@ -506,7 +579,27 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                                 ),
                               ),
                           ],
-                          const SizedBox(height: 8),
+                          Padding(
+                            key: ValueKey(
+                              'pathNodeConstraintsSection-${node.id}',
+                            ),
+                            padding: const EdgeInsets.only(top: 14, bottom: 8),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Constraints',
+                                  style: TextStyle(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.4,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(child: Divider()),
+                              ],
+                            ),
+                          ),
                           NumberTextField(
                             key: ValueKey('pathNodeMaxVelocity-${node.id}'),
                             initialValue: waypoint.maxVelocity,

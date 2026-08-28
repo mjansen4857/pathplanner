@@ -484,6 +484,7 @@ abstract final class Path2Simulator {
           !(waypoint.rotation?.radians.toDouble().isFinite ?? true) ||
           !(waypoint.pointTowardsTarget?.x.toDouble().isFinite ?? true) ||
           !(waypoint.pointTowardsTarget?.y.toDouble().isFinite ?? true) ||
+          !waypoint.pointTowardsRotationOffset.radians.toDouble().isFinite ||
           !waypoint.maxVelocity.isFinite ||
           waypoint.maxVelocity < 0 ||
           !waypoint.handoffDistance.isFinite ||

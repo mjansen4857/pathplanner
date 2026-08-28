@@ -90,6 +90,9 @@ abstract class Waypoint {
         targetPosition: this is PointTowardsWaypoint
             ? (this as PointTowardsWaypoint).targetPosition
             : PointTowardsWaypoint.defaultTargetPosition,
+        rotationOffset: this is PointTowardsWaypoint
+            ? (this as PointTowardsWaypoint).rotationOffset
+            : const Rotation2d(),
         unprofiled: this is PointTowardsWaypoint
             ? (this as PointTowardsWaypoint).unprofiled
             : false,
@@ -282,12 +285,14 @@ class PointTowardsWaypoint extends Waypoint {
   static const Translation2d defaultTargetPosition = Translation2d(-7.6, 1.5);
 
   Translation2d targetPosition;
+  Rotation2d rotationOffset;
   bool unprofiled;
   bool inheritTargetFromParent;
 
   PointTowardsWaypoint({
     required super.position,
     this.targetPosition = defaultTargetPosition,
+    this.rotationOffset = const Rotation2d(),
     this.unprofiled = false,
     this.inheritTargetFromParent = false,
     super.maxVelocity,
@@ -296,6 +301,7 @@ class PointTowardsWaypoint extends Waypoint {
   }) {
     _validateFinite(targetPosition.x, 'targetPosition.x');
     _validateFinite(targetPosition.y, 'targetPosition.y');
+    _validateFinite(rotationOffset.radians, 'rotationOffset');
   }
 
   PointTowardsWaypoint.fromJson(Map<String, dynamic> json)
@@ -305,6 +311,9 @@ class PointTowardsWaypoint extends Waypoint {
           json,
           'targetPosition',
           'Point-towards waypoint target position',
+        ),
+        rotationOffset: Rotation2d.fromDegrees(
+          _optionalFiniteNum(json, 'rotationOffset', 0),
         ),
         unprofiled: _optionalBool(json, 'unprofiled', false),
         inheritTargetFromParent: _optionalBool(
@@ -343,6 +352,7 @@ class PointTowardsWaypoint extends Waypoint {
     return PointTowardsWaypoint(
       position: position,
       targetPosition: targetPosition,
+      rotationOffset: rotationOffset,
       unprofiled: unprofiled,
       inheritTargetFromParent: inheritTargetFromParent,
       maxVelocity: maxVelocity,
@@ -356,6 +366,7 @@ class PointTowardsWaypoint extends Waypoint {
     return {
       ...commonJson('pointTowards'),
       'targetPosition': targetPosition.toJson(),
+      'rotationOffset': rotationOffset.degrees,
       'unprofiled': unprofiled,
       'inheritTargetFromParent': inheritTargetFromParent,
     };
@@ -366,6 +377,7 @@ class PointTowardsWaypoint extends Waypoint {
       other is PointTowardsWaypoint &&
       commonEquals(other) &&
       other.targetPosition == targetPosition &&
+      other.rotationOffset == rotationOffset &&
       other.unprofiled == unprofiled &&
       other.inheritTargetFromParent == inheritTargetFromParent;
 
@@ -373,6 +385,7 @@ class PointTowardsWaypoint extends Waypoint {
   int get hashCode => Object.hash(
     commonHashCode,
     targetPosition,
+    rotationOffset,
     unprofiled,
     inheritTargetFromParent,
   );
@@ -428,6 +441,21 @@ num _optionalNonNegativeNum(
   }
   if (value is! num || !value.isFinite || value < 0) {
     throw FormatException('$key must be a finite non-negative number');
+  }
+  return value;
+}
+
+num _optionalFiniteNum(
+  Map<String, dynamic> json,
+  String key,
+  num defaultValue,
+) {
+  final value = json[key];
+  if (value == null) {
+    return defaultValue;
+  }
+  if (value is! num || !value.isFinite) {
+    throw FormatException('$key must be a finite number');
   }
   return value;
 }

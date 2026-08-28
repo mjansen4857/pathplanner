@@ -11,6 +11,7 @@ import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/path2_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/split_path2_auto_editor.dart';
+import 'package:pathplanner/widgets/editor/graph_editor/visual_graph_editor.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path2_auto_tree.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,6 +54,12 @@ void main() {
     await tester.pump();
 
     expect(find.byType(Path2AutoTree), findsOneWidget);
+    expect(
+      tester
+          .widget<VisualGraphEditor>(find.byType(VisualGraphEditor))
+          .fitToContentOnInitialLayout,
+      isTrue,
+    );
     expect(find.byKey(const ValueKey('path2AutoEmptyGraph')), findsOneWidget);
     final painter = tester
         .widgetList<CustomPaint>(find.byType(CustomPaint))

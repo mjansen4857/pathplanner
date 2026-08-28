@@ -725,7 +725,8 @@ String? _pathNodeError(PathNode node) {
       (waypoint is PoseWaypoint && !waypoint.rotation.radians.isFinite) ||
       (waypoint is PointTowardsWaypoint &&
           (!waypoint.targetPosition.x.isFinite ||
-              !waypoint.targetPosition.y.isFinite)) ||
+              !waypoint.targetPosition.y.isFinite ||
+              !waypoint.rotationOffset.radians.isFinite)) ||
       (waypoint is! PoseWaypoint &&
           waypoint is! TranslationWaypoint &&
           waypoint is! PointTowardsWaypoint)) {

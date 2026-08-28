@@ -40,6 +40,7 @@ void main() {
       }) as PointTowardsWaypoint;
 
       expect(waypoint.targetPosition, const Translation2d(-3, 4.5));
+      expect(waypoint.rotationOffset, const Rotation2d());
       expect(waypoint.unprofiled, isFalse);
       expect(waypoint.inheritTargetFromParent, isFalse);
       expect(Waypoint.fromJson(waypoint.toJson()), waypoint);
@@ -47,6 +48,7 @@ void main() {
         'type': 'pointTowards',
         'position': {'x': 1.25, 'y': -2.5},
         'targetPosition': {'x': -3.0, 'y': 4.5},
+        'rotationOffset': 0.0,
         'unprofiled': false,
         'inheritTargetFromParent': false,
         'maxVelocity': Waypoint.defaultMaxVelocity,
@@ -59,6 +61,7 @@ void main() {
       final original = PointTowardsWaypoint(
         position: const Translation2d(1, 2),
         targetPosition: const Translation2d(3, 4),
+        rotationOffset: Rotation2d.fromDegrees(30),
         unprofiled: true,
         inheritTargetFromParent: true,
         maxVelocity: 1.5,
@@ -73,6 +76,7 @@ void main() {
 
       expect(original.targetPosition, const Translation2d(3, 4));
       expect(clone.targetPosition, const Translation2d(8, 9));
+      expect(clone.rotationOffset.degrees, closeTo(30, 0.001));
       expect(sameType, original);
       expect(sameType, isNot(same(original)));
       expect(converted, isA<TranslationWaypoint>());
@@ -85,6 +89,7 @@ void main() {
       );
       expect(newPoint.unprofiled, isFalse);
       expect(newPoint.inheritTargetFromParent, isFalse);
+      expect(newPoint.rotationOffset, const Rotation2d());
     });
 
     test('waypoint type conversion retains all motion limits', () {
@@ -133,6 +138,13 @@ void main() {
         throwsArgumentError,
       );
       expect(
+        () => PointTowardsWaypoint(
+          position: const Translation2d(),
+          rotationOffset: Rotation2d.fromRadians(double.nan),
+        ),
+        throwsArgumentError,
+      );
+      expect(
         () => Waypoint.fromJson({
           'type': 'pointTowards',
           'position': {'x': 0, 'y': 0},
@@ -146,6 +158,15 @@ void main() {
           'position': {'x': 0, 'y': 0},
           'targetPosition': {'x': 1, 'y': 2},
           'unprofiled': 'yes',
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => Waypoint.fromJson({
+          'type': 'pointTowards',
+          'position': {'x': 0, 'y': 0},
+          'targetPosition': {'x': 1, 'y': 2},
+          'rotationOffset': double.infinity,
         }),
         throwsFormatException,
       );

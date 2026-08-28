@@ -75,6 +75,8 @@ void main() {
 
   Future<void> pumpGraph(
     WidgetTester tester, {
+    VisualGraphController? controller,
+    bool fitToContentOnInitialLayout = false,
     GraphNodeMoved? onNodeMoved,
     Future<void> Function(GraphConnectionRequest)? onConnect,
     Future<void> Function(GraphEmptyConnectionRequest)? onConnectToEmpty,
@@ -86,6 +88,8 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: VisualGraphEditor(
+            controller: controller,
+            fitToContentOnInitialLayout: fitToContentOnInitialLayout,
             nodes: [
               VisualGraphNode(
                 id: 'one',
@@ -124,6 +128,19 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('can fit the graph on its initial layout', (tester) async {
+    final controller = VisualGraphController();
+    await pumpGraph(
+      tester,
+      controller: controller,
+      fitToContentOnInitialLayout: true,
+    );
+
+    final sceneCenter = controller.viewportCenterInScene!;
+    expect(sceneCenter.dx, inInclusiveRange(160, 200));
+    expect(sceneCenter.dy, inInclusiveRange(290, 330));
+  });
 
   testWidgets('renders independently clickable parallel branch badges', (
     tester,

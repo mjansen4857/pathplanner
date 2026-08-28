@@ -189,6 +189,7 @@ void main() {
         waypoint: PointTowardsWaypoint(
           position: const Translation2d(1, 0),
           inheritTargetFromParent: true,
+          rotationOffset: Rotation2d.fromDegrees(35),
           unprofiled: true,
         ),
         editorPosition: const Offset(0, 200),
@@ -205,12 +206,20 @@ void main() {
         const Translation2d(3, -2),
       );
       expect(traversal.waypoints.last.unprofiled, isTrue);
+      expect(
+        traversal.waypoints.last.pointTowardsRotationOffset.degrees,
+        closeTo(35, 0.001),
+      );
       final restored = Path2SimulationPathSnapshot.fromMap(traversal.toMap());
       expect(
         restored.waypoints.last.pointTowardsTarget,
         const Translation2d(3, -2),
       );
       expect(restored.waypoints.last.unprofiled, isTrue);
+      expect(
+        restored.waypoints.last.pointTowardsRotationOffset.degrees,
+        closeTo(35, 0.001),
+      );
     },
   );
 
@@ -265,6 +274,7 @@ void main() {
           handoffDistance: 0,
           rotation: null,
           pointTowardsTarget: const Translation2d(),
+          pointTowardsRotationOffset: Rotation2d.fromDegrees(90),
         ),
       ],
       endToleranceMeters: 0.1,
@@ -275,6 +285,30 @@ void main() {
     );
 
     expect(follower.calculate(currentPose).omega, closeTo(0, 1e-12));
+  });
+
+  test('point target rotation offset is added to the dynamic heading', () {
+    const currentPose = Pose2d(Translation2d(), Rotation2d());
+    final follower = Path2PathFollower(
+      waypoints: [
+        simulationWaypoint(-1, 0, handoffDistance: 0.2),
+        simulationWaypoint(
+          1,
+          0,
+          handoffDistance: 0,
+          rotation: null,
+          pointTowardsTarget: const Translation2d(2, 0),
+          pointTowardsRotationOffset: Rotation2d.fromDegrees(90),
+        ),
+      ],
+      endToleranceMeters: 0.1,
+      endAngleToleranceRadians: math.pi / 90,
+      initialPose: currentPose,
+      initialRobotRelativeSpeeds: const ChassisSpeeds(),
+      targetFirstWaypoint: false,
+    );
+
+    expect(follower.calculate(currentPose).omega, greaterThan(0));
   });
 
   test('unprofiled point target uses direct PID output', () {
@@ -441,6 +475,7 @@ Path2SimulationWaypoint simulationWaypoint(
   required double handoffDistance,
   Rotation2d? rotation = const Rotation2d(),
   Translation2d? pointTowardsTarget,
+  Rotation2d pointTowardsRotationOffset = const Rotation2d(),
   bool unprofiled = false,
   double maxAngularAcceleration = 4 * math.pi,
 }) {
@@ -448,6 +483,7 @@ Path2SimulationWaypoint simulationWaypoint(
     position: Translation2d(x, y),
     rotation: rotation,
     pointTowardsTarget: pointTowardsTarget,
+    pointTowardsRotationOffset: pointTowardsRotationOffset,
     unprofiled: unprofiled,
     maxVelocity: 3,
     handoffDistance: handoffDistance,

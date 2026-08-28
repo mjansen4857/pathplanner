@@ -283,6 +283,7 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
                   Positioned.fill(
                     child: VisualGraphEditor(
                       controller: _graphController,
+                      fitToContentOnInitialLayout: true,
                       nodes: [
                         for (final node in widget.path.nodes)
                           VisualGraphNode(
@@ -630,6 +631,12 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
         _fieldDragBefore = widget.path.snapshotGraph();
         _draggedTargetNodeId = targetNodeId;
         _dragOldTarget = waypoint.targetPosition;
+        setState(() {
+          widget.path.updatePointTowardsTarget(
+            targetNodeId,
+            _clampedFieldPosition(details.localPosition),
+          );
+        });
         return;
       }
     }

@@ -103,6 +103,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                 children: [
                   VisualGraphEditor(
                     controller: _graphController,
+                    fitToContentOnInitialLayout: true,
                     nodes: [
                       for (final node in widget.auto.nodes)
                         VisualGraphNode(

@@ -81,6 +81,12 @@ void main() {
     await pumpEditor(tester);
 
     expect(find.byType(VisualGraphEditor), findsOneWidget);
+    expect(
+      tester
+          .widget<VisualGraphEditor>(find.byType(VisualGraphEditor))
+          .fitToContentOnInitialLayout,
+      isTrue,
+    );
     expect(find.byType(Path2Painter), findsNothing);
     expect(
       find.byKey(ValueKey('graphNode-${path.nodes.first.id}')),
@@ -139,6 +145,7 @@ void main() {
     final waypoint = path.nodes.last.waypoint as PointTowardsWaypoint;
     expect(waypoint.position, const Translation2d());
     expect(waypoint.targetPosition, PointTowardsWaypoint.defaultTargetPosition);
+    expect(waypoint.rotationOffset, const Rotation2d());
     expect(waypoint.unprofiled, isFalse);
   });
 
@@ -188,6 +195,10 @@ void main() {
     final start = path.nodes.first;
     final card = find.byKey(ValueKey('graphNode-${start.id}'));
     final heading = find.byKey(ValueKey('pathNodeHeading-${start.id}'));
+    final constraintsSection = find.byKey(
+      ValueKey('pathNodeConstraintsSection-${start.id}'),
+    );
+    final maxVelocity = find.byKey(ValueKey('pathNodeMaxVelocity-${start.id}'));
 
     expect(PathGraphNodeCard.sizeFor(path, start), PathGraphNodeCard.cardSize);
     expect(heading, findsNothing);
@@ -197,6 +208,16 @@ void main() {
     final panel = find.byKey(ValueKey('pathNodeSettingsPanel-${start.id}'));
     expect(panel, findsOneWidget);
     expect(heading, findsOneWidget);
+    expect(constraintsSection, findsOneWidget);
+    expect(maxVelocity, findsOneWidget);
+    expect(
+      tester.getTopLeft(constraintsSection).dy,
+      greaterThanOrEqualTo(tester.getBottomLeft(heading).dy),
+    );
+    expect(
+      tester.getBottomLeft(constraintsSection).dy,
+      lessThanOrEqualTo(tester.getTopLeft(maxVelocity).dy),
+    );
     expect(
       tester.getRect(panel).contains(tester.getRect(heading).center),
       isTrue,
@@ -250,25 +271,81 @@ void main() {
       );
       await pumpEditor(tester);
 
+      expect(
+        find.byKey(ValueKey('pathNodeTargetPreview-${first.id}')),
+        findsOneWidget,
+      );
+      expect(find.text('Target: 1.00, 2.00'), findsOneWidget);
+      expect(
+        find.byKey(ValueKey('pathNodeInheritedTarget-${child.id}')),
+        findsOneWidget,
+      );
+      expect(find.text('Target inherited'), findsOneWidget);
+      expect(
+        find.byKey(ValueKey('pathNodeTargetPreview-${child.id}')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(ValueKey('pathNodeRotationOffsetPreview-${child.id}')),
+        findsOneWidget,
+      );
+      expect(find.text('Offset: 0.0°'), findsNWidgets(3));
+      expect(
+        tester
+            .getTopLeft(
+              find.byKey(ValueKey('pathNodeInheritedTarget-${child.id}')),
+            )
+            .dy,
+        lessThan(tester.getTopLeft(find.text('End')).dy),
+      );
+
+      BoxDecoration badgeDecoration(Finder badge) =>
+          tester
+                  .widget<Container>(
+                    find.descendant(
+                      of: badge,
+                      matching: find.byType(Container),
+                    ),
+                  )
+                  .decoration!
+              as BoxDecoration;
+      final targetDecoration = badgeDecoration(
+        find.byKey(ValueKey('pathNodeTargetPreview-${first.id}')),
+      );
+      final inheritedDecoration = badgeDecoration(
+        find.byKey(ValueKey('pathNodeInheritedTarget-${child.id}')),
+      );
+      final offsetDecoration = badgeDecoration(
+        find.byKey(ValueKey('pathNodeRotationOffsetPreview-${child.id}')),
+      );
+      expect(inheritedDecoration.color, targetDecoration.color);
+      expect(offsetDecoration.color, isNot(inheritedDecoration.color));
+
       await tester.tap(find.byKey(ValueKey('graphNode-${first.id}')));
       await tester.pump();
       expect(
         find.byKey(ValueKey('pathNodeInheritTarget-${first.id}')),
         findsNothing,
       );
+      expect(
+        find.byKey(ValueKey('pathNodeTargetX-${first.id}')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(ValueKey('pathNodeRotationOffset-${first.id}')),
+        findsOneWidget,
+      );
       await tester.tap(find.byKey(const ValueKey('closePathNodeSettings')));
       await tester.pump();
 
       await tester.tap(find.byKey(ValueKey('graphNode-${child.id}')));
       await tester.pump();
-      expect(
-        find.byKey(ValueKey('pathNodeTargetX-${child.id}')),
-        findsOneWidget,
+      expect(find.byKey(ValueKey('pathNodeTargetX-${child.id}')), findsNothing);
+      expect(find.byKey(ValueKey('pathNodeTargetY-${child.id}')), findsNothing);
+      final rotationOffset = find.byKey(
+        ValueKey('pathNodeRotationOffset-${child.id}'),
       );
-      expect(
-        find.byKey(ValueKey('pathNodeTargetY-${child.id}')),
-        findsOneWidget,
-      );
+      expect(rotationOffset, findsOneWidget);
       expect(
         find.byKey(ValueKey('pathNodeUnprofiled-${child.id}')),
         findsOneWidget,
@@ -286,10 +363,27 @@ void main() {
         const Translation2d(3, 4),
       );
 
+      await tester.enterText(rotationOffset, '45');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(
+        (child.waypoint as PointTowardsWaypoint).rotationOffset.degrees,
+        closeTo(45, 0.001),
+      );
+      expect(find.text('Offset: 45.0°'), findsOneWidget);
+
       await tester.ensureVisible(inheritToggle);
       await tester.tap(inheritToggle);
       await tester.pumpAndSettle();
       expect(warning, findsNothing);
+      expect(
+        find.byKey(ValueKey('pathNodeTargetX-${child.id}')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(ValueKey('pathNodeTargetY-${child.id}')),
+        findsOneWidget,
+      );
     },
   );
 

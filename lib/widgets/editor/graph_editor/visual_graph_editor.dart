@@ -334,6 +334,7 @@ class VisualGraphEditor extends StatefulWidget {
   final Color? branchColor;
   final Size canvasSize;
   final EdgeInsets contentPadding;
+  final bool fitToContentOnInitialLayout;
 
   const VisualGraphEditor({
     super.key,
@@ -348,6 +349,7 @@ class VisualGraphEditor extends StatefulWidget {
     this.branchColor,
     this.canvasSize = const Size(4000, 4000),
     this.contentPadding = const EdgeInsets.all(80),
+    this.fitToContentOnInitialLayout = false,
   });
 
   @override
@@ -369,6 +371,13 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
     super.initState();
     _syncPositions();
     widget.controller?._state = this;
+    if (widget.fitToContentOnInitialLayout) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _fitToContent();
+        }
+      });
+    }
   }
 
   @override

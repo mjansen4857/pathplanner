@@ -52,6 +52,7 @@ class Path2SimulationWaypoint {
   final Translation2d position;
   final Rotation2d? rotation;
   final Translation2d? pointTowardsTarget;
+  final Rotation2d pointTowardsRotationOffset;
   final bool unprofiled;
   final double maxVelocity;
   final double handoffDistance;
@@ -62,6 +63,7 @@ class Path2SimulationWaypoint {
     required this.position,
     required this.rotation,
     this.pointTowardsTarget,
+    this.pointTowardsRotationOffset = const Rotation2d(),
     this.unprofiled = false,
     required this.maxVelocity,
     required this.handoffDistance,
@@ -86,6 +88,9 @@ class Path2SimulationWaypoint {
       pointTowardsTarget: waypoint is PointTowardsWaypoint
           ? waypoint.targetPosition
           : null,
+      pointTowardsRotationOffset: waypoint is PointTowardsWaypoint
+          ? waypoint.rotationOffset
+          : const Rotation2d(),
       unprofiled: waypoint is PointTowardsWaypoint && waypoint.unprofiled,
       maxVelocity: waypoint.maxVelocity.toDouble(),
       handoffDistance: handoffDistance.toDouble(),
@@ -102,6 +107,8 @@ class Path2SimulationWaypoint {
     final rotation = map['rotationRadians'];
     final pointTowardsTargetX = map['pointTowardsTargetX'];
     final pointTowardsTargetY = map['pointTowardsTargetY'];
+    final pointTowardsRotationOffsetRadians =
+        map['pointTowardsRotationOffsetRadians'];
     return Path2SimulationWaypoint(
       position: Translation2d(
         (map['x'] as num).toDouble(),
@@ -117,6 +124,9 @@ class Path2SimulationWaypoint {
               pointTowardsTargetY.toDouble(),
             )
           : null,
+      pointTowardsRotationOffset: pointTowardsRotationOffsetRadians is num
+          ? Rotation2d.fromRadians(pointTowardsRotationOffsetRadians.toDouble())
+          : const Rotation2d(),
       unprofiled: map['unprofiled'] as bool? ?? false,
       maxVelocity: (map['maxVelocity'] as num).toDouble(),
       handoffDistance: (map['handoffDistance'] as num).toDouble(),
@@ -134,6 +144,8 @@ class Path2SimulationWaypoint {
     'rotationRadians': rotation?.radians.toDouble(),
     'pointTowardsTargetX': pointTowardsTarget?.x.toDouble(),
     'pointTowardsTargetY': pointTowardsTarget?.y.toDouble(),
+    'pointTowardsRotationOffsetRadians': pointTowardsRotationOffset.radians
+        .toDouble(),
     'unprofiled': unprofiled,
     'maxVelocity': maxVelocity,
     'handoffDistance': handoffDistance,
@@ -323,14 +335,14 @@ class Path2PathFollower {
   }
 
   Rotation2d _rotationTarget(Pose2d currentPose) {
-    final pointTowardsTarget =
-        waypoints[_targetWaypointIndex].pointTowardsTarget;
+    final activeWaypoint = waypoints[_targetWaypointIndex];
+    final pointTowardsTarget = activeWaypoint.pointTowardsTarget;
     if (pointTowardsTarget != null) {
       final toTarget = pointTowardsTarget - currentPose.translation;
       if (toTarget.norm <= 1e-9) {
         return currentPose.rotation;
       }
-      return toTarget.angle;
+      return toTarget.angle + activeWaypoint.pointTowardsRotationOffset;
     }
 
     for (var i = _targetWaypointIndex; i < waypoints.length; i++) {

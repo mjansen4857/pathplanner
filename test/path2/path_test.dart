@@ -42,6 +42,7 @@ void main() {
     String id,
     num x, {
     Translation2d target = const Translation2d(),
+    Rotation2d rotationOffset = const Rotation2d(),
     bool inherit = false,
     bool unprofiled = false,
   }) => path2.PathNode(
@@ -49,6 +50,7 @@ void main() {
     waypoint: PointTowardsWaypoint(
       position: Translation2d(x, 1),
       targetPosition: target,
+      rotationOffset: rotationOffset,
       inheritTargetFromParent: inherit,
       unprofiled: unprofiled,
     ),
@@ -381,7 +383,12 @@ void main() {
 
     test('serialization persists resolved inherited targets', () {
       final owner = pointNode(_nodeA, 1, target: const Translation2d(1, 1));
-      final child = pointNode(_nodeB, 2, inherit: true);
+      final child = pointNode(
+        _nodeB,
+        2,
+        rotationOffset: Rotation2d.fromDegrees(25),
+        inherit: true,
+      );
       final graph = path(
         nodes: [owner, child],
         branches: [
@@ -403,11 +410,18 @@ void main() {
 
       expect(childWaypoint['inheritTargetFromParent'], isTrue);
       expect(childWaypoint['targetPosition'], {'x': 7, 'y': -2});
+      expect(childWaypoint['rotationOffset'], closeTo(25, 0.001));
       final restored = path2.Path.fromJson(json, 'Restored', '/paths', fs);
       expect(
         (restored.nodeById(child.id)!.waypoint as PointTowardsWaypoint)
             .targetPosition,
         const Translation2d(7, -2),
+      );
+      expect(
+        (restored.nodeById(child.id)!.waypoint as PointTowardsWaypoint)
+            .rotationOffset
+            .degrees,
+        closeTo(25, 0.001),
       );
     });
 

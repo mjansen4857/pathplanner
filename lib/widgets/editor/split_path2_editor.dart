@@ -63,9 +63,11 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
   String? _hoveredNodeId;
   String? _selectedNodeId;
   String? _draggedNodeId;
+  String? _draggedTargetNodeId;
   String? _draggedRotationNodeId;
   path2.PathGraphSnapshot? _fieldDragBefore;
   Waypoint? _dragOldWaypoint;
+  Translation2d? _dragOldTarget;
   Rotation2d? _dragOldRotation;
   Offset? _panDownPosition;
 
@@ -228,14 +230,14 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
             padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
             child: Row(
               children: [
-                PopupMenuButton<_WaypointKind>(
+                PopupMenuButton<WaypointType>(
                   key: const ValueKey('addPathNodeButton'),
                   tooltip: 'Add Waypoint',
                   icon: const Icon(Icons.add_location_alt_outlined),
                   onSelected: _addToolbarNode,
                   itemBuilder: (context) => const [
                     PopupMenuItem(
-                      value: _WaypointKind.pose,
+                      value: WaypointType.pose,
                       child: ListTile(
                         leading: Icon(Icons.explore_outlined),
                         title: Text('Pose waypoint'),
@@ -243,10 +245,18 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
                       ),
                     ),
                     PopupMenuItem(
-                      value: _WaypointKind.translation,
+                      value: WaypointType.translation,
                       child: ListTile(
                         leading: Icon(Icons.location_on_outlined),
                         title: Text('Translation waypoint'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: WaypointType.pointTowards,
+                      child: ListTile(
+                        leading: Icon(Icons.gps_fixed_rounded),
+                        title: Text('Point towards waypoint'),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
@@ -424,7 +434,7 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     };
   }
 
-  void _addToolbarNode(_WaypointKind kind) {
+  void _addToolbarNode(WaypointType kind) {
     final graphCenter =
         _graphController.viewportCenterInScene ?? const Offset(300, 250);
     final node = path2.PathNode(
@@ -479,7 +489,7 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     }
 
     final position = _offsetWaypointPosition(existing.waypoint.position);
-    final kind = result.waypointKind ?? _WaypointKind.translation;
+    final kind = result.waypointKind ?? WaypointType.translation;
     final waypoint = _newWaypoint(kind, position);
     const newNodeSize = PathGraphNodeCard.cardSize;
     final cardOffset = request.existingNodeIsSource
@@ -579,6 +589,9 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
       _xPixelsToMeters(details.localPosition.dx),
       _yPixelsToMeters(details.localPosition.dy),
     );
+    if (_pointTowardsTargetHitTest(point.x, point.y) != null) {
+      return;
+    }
     final hitRadius = _pixelsToMeters(
       PathPainterUtil.uiPointSizeToPixels(
         25,
@@ -610,6 +623,16 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     _panDownPosition = null;
     final x = _xPixelsToMeters(startPosition.dx);
     final y = _yPixelsToMeters(startPosition.dy);
+    final targetNodeId = _pointTowardsTargetHitTest(x, y);
+    if (targetNodeId != null) {
+      final waypoint = widget.path.nodeById(targetNodeId)?.waypoint;
+      if (waypoint is PointTowardsWaypoint) {
+        _fieldDragBefore = widget.path.snapshotGraph();
+        _draggedTargetNodeId = targetNodeId;
+        _dragOldTarget = waypoint.targetPosition;
+        return;
+      }
+    }
     final hitRadius = _pixelsToMeters(
       PathPainterUtil.uiPointSizeToPixels(
         25,
@@ -644,6 +667,15 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
   }
 
   void _handleFieldPanUpdate(DragUpdateDetails details) {
+    final draggedTargetNodeId = _draggedTargetNodeId;
+    if (draggedTargetNodeId != null) {
+      final target = _clampedFieldPosition(details.localPosition);
+      setState(() {
+        widget.path.updatePointTowardsTarget(draggedTargetNodeId, target);
+      });
+      return;
+    }
+
     final draggedNodeId = _draggedNodeId;
     if (draggedNodeId != null) {
       final dragged = widget.path.nodeById(draggedNodeId)?.waypoint;
@@ -711,6 +743,18 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
 
   void _finishFieldDrag() {
     _panDownPosition = null;
+    final targetNodeId = _draggedTargetNodeId;
+    if (targetNodeId != null) {
+      final waypoint = widget.path.nodeById(targetNodeId)?.waypoint;
+      final changed =
+          waypoint is PointTowardsWaypoint &&
+          waypoint.targetPosition != _dragOldTarget;
+      _draggedTargetNodeId = null;
+      _dragOldTarget = null;
+      _finishTransientGraphEdit(changed);
+      return;
+    }
+
     final draggedId = _draggedNodeId;
     if (draggedId != null) {
       final waypoint = widget.path.nodeById(draggedId)?.waypoint;
@@ -736,8 +780,10 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
   void _cancelFieldDrag() {
     final before = _fieldDragBefore;
     _draggedNodeId = null;
+    _draggedTargetNodeId = null;
     _draggedRotationNodeId = null;
     _dragOldWaypoint = null;
+    _dragOldTarget = null;
     _dragOldRotation = null;
     _fieldDragBefore = null;
     if (before != null) {
@@ -778,6 +824,28 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     return null;
   }
 
+  String? _pointTowardsTargetHitTest(num x, num y) {
+    final selectedNodeId = _selectedNodeId;
+    if (selectedNodeId == null || !_isNodeVisibleOnField(selectedNodeId)) {
+      return null;
+    }
+    final waypoint = widget.path.nodeById(selectedNodeId)?.waypoint;
+    if (waypoint is! PointTowardsWaypoint) {
+      return null;
+    }
+    final hitRadius = _pixelsToMeters(
+      PathPainterUtil.uiPointSizeToPixels(
+        40,
+        Path2Painter.scale,
+        widget.fieldImage,
+      ),
+    );
+    final pointer = Translation2d(x, y);
+    return waypoint.targetPosition.getDistance(pointer) < hitRadius
+        ? selectedNodeId
+        : null;
+  }
+
   Translation2d _rotationHandlePosition(PoseWaypoint waypoint) {
     final handleOffset = Translation2d(
       (_robotSize.height / 2) + _bumperOffset.x,
@@ -807,13 +875,14 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     );
   }
 
-  Waypoint _newWaypoint(_WaypointKind kind, Translation2d position) {
+  Waypoint _newWaypoint(WaypointType kind, Translation2d position) {
     return switch (kind) {
-      _WaypointKind.pose => PoseWaypoint(
+      WaypointType.pose => PoseWaypoint(
         position: position,
         rotation: const Rotation2d(),
       ),
-      _WaypointKind.translation => TranslationWaypoint(position: position),
+      WaypointType.translation => TranslationWaypoint(position: position),
+      WaypointType.pointTowards => PointTowardsWaypoint(position: position),
     };
   }
 
@@ -834,6 +903,7 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
       widget.path.restoreGraph(before);
       return;
     }
+    widget.path.synchronizeInheritedTargets();
     final after = widget.path.snapshotGraph();
     widget.path.restoreGraph(before);
     _pushSnapshotChange(before, after);
@@ -952,11 +1022,9 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
       (pixels / Path2Painter.scale) / widget.fieldImage.pixelsPerMeter;
 }
 
-enum _WaypointKind { pose, translation }
-
 class _PathTransitionDialogResult {
   final PathTransition transition;
-  final _WaypointKind? waypointKind;
+  final WaypointType? waypointKind;
   final bool delete;
 
   const _PathTransitionDialogResult({
@@ -983,7 +1051,7 @@ class _PathTransitionDialog extends StatefulWidget {
 
 class _PathTransitionDialogState extends State<_PathTransitionDialog> {
   late String _transitionType;
-  late _WaypointKind _waypointKind;
+  late WaypointType _waypointKind;
   late final TextEditingController _distanceController;
   late final TextEditingController _conditionController;
   late final TextEditingController _previewDistanceController;
@@ -997,7 +1065,7 @@ class _PathTransitionDialogState extends State<_PathTransitionDialog> {
     _transitionType = widget.initialTransition is ConditionTransition
         ? 'condition'
         : 'distance';
-    _waypointKind = _WaypointKind.translation;
+    _waypointKind = WaypointType.translation;
     _distanceController = TextEditingController(
       text: widget.initialTransition is DistanceTransition
           ? (widget.initialTransition as DistanceTransition).distanceMeters
@@ -1039,20 +1107,25 @@ class _PathTransitionDialogState extends State<_PathTransitionDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.chooseWaypointKind) ...[
-              DropdownButtonFormField<_WaypointKind>(
+              DropdownButtonFormField<WaypointType>(
                 key: const ValueKey('newConnectedWaypointType'),
                 initialValue: _waypointKind,
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'New waypoint type',
                 ),
                 items: const [
                   DropdownMenuItem(
-                    value: _WaypointKind.translation,
+                    value: WaypointType.translation,
                     child: Text('Translation waypoint'),
                   ),
                   DropdownMenuItem(
-                    value: _WaypointKind.pose,
+                    value: WaypointType.pose,
                     child: Text('Pose waypoint'),
+                  ),
+                  DropdownMenuItem(
+                    value: WaypointType.pointTowards,
+                    child: Text('Point towards waypoint'),
                   ),
                 ],
                 onChanged: (value) {

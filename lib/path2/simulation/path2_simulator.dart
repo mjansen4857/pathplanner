@@ -191,6 +191,7 @@ abstract final class Path2Simulator {
   /// Enumerates every unique branch traversal from the single graph root to a
   /// leaf. Condition transitions use their configured preview distance.
   static List<Path2SimulationPathSnapshot> previewTraversals(path2.Path path) {
+    path.synchronizeInheritedTargets();
     final roots = path.rootNodes;
     if (roots.length != 1) {
       return const [];
@@ -481,6 +482,8 @@ abstract final class Path2Simulator {
       if (!waypoint.position.x.toDouble().isFinite ||
           !waypoint.position.y.toDouble().isFinite ||
           !(waypoint.rotation?.radians.toDouble().isFinite ?? true) ||
+          !(waypoint.pointTowardsTarget?.x.toDouble().isFinite ?? true) ||
+          !(waypoint.pointTowardsTarget?.y.toDouble().isFinite ?? true) ||
           !waypoint.maxVelocity.isFinite ||
           waypoint.maxVelocity < 0 ||
           !waypoint.handoffDistance.isFinite ||

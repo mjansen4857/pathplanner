@@ -118,6 +118,11 @@ class Path2Painter extends CustomPainter {
         }
       }
     }
+    if (!simple) {
+      for (final occurrence in paintPaths) {
+        _paintSelectedPointTowardsTarget(occurrence, canvas);
+      }
+    }
 
     final startingPose = autoStartingPose;
     if (startingPose != null) {
@@ -336,7 +341,8 @@ class Path2Painter extends CustomPainter {
             prefs.getBool(PrefsKeys.showRobotDetails) ??
             Defaults.showRobotDetails,
       );
-    } else if (waypoint is TranslationWaypoint) {
+    } else if (waypoint is TranslationWaypoint ||
+        waypoint is PointTowardsWaypoint) {
       canvas.drawCircle(
         center,
         PathPainterUtil.metersToPixels(robotRadius, scale, fieldImage),
@@ -370,6 +376,39 @@ class Path2Painter extends CustomPainter {
     if (!simple && waypoint is PoseWaypoint) {
       _paintPoseHeadingHandle(canvas, waypoint, color);
     }
+  }
+
+  void _paintSelectedPointTowardsTarget(
+    Path2PaintPath occurrence,
+    Canvas canvas,
+  ) {
+    final nodeId = selectedNodeId;
+    if (nodeId == null || !_isVisible(occurrence, nodeId)) {
+      return;
+    }
+    final waypoint = occurrence.path.nodeById(nodeId)?.waypoint;
+    if (waypoint is! PointTowardsWaypoint) {
+      return;
+    }
+
+    final center = PathPainterUtil.pointToPixelOffset(
+      waypoint.targetPosition,
+      scale,
+      fieldImage,
+    );
+    canvas.drawCircle(
+      center,
+      PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+      Paint()..color = Colors.orange,
+    );
+    canvas.drawCircle(
+      center,
+      PathPainterUtil.uiPointSizeToPixels(40, scale, fieldImage),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..color = Colors.orange,
+    );
   }
 
   void _paintPoseHeadingHandle(

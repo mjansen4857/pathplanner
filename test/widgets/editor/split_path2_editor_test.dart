@@ -127,6 +127,21 @@ void main() {
     expect(path.nodes, hasLength(3));
   });
 
+  testWidgets('toolbar creates a point-towards waypoint', (tester) async {
+    await pumpEditor(tester);
+    await tester.tap(find.byKey(const ValueKey('addPathNodeButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Point towards waypoint'), findsOneWidget);
+    await tester.tap(find.text('Point towards waypoint'));
+    await tester.pumpAndSettle();
+
+    final waypoint = path.nodes.last.waypoint as PointTowardsWaypoint;
+    expect(waypoint.position, const Translation2d());
+    expect(waypoint.targetPosition, PointTowardsWaypoint.defaultTargetPosition);
+    expect(waypoint.unprofiled, isFalse);
+  });
+
   testWidgets('leaf tolerances depend on node and waypoint type', (
     tester,
   ) async {
@@ -149,8 +164,11 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.ensureVisible(find.byKey(ValueKey('pathNodePose-${end.id}')));
-    await tester.tap(find.byKey(ValueKey('pathNodePose-${end.id}')));
+    final typeSelector = find.byKey(ValueKey('pathNodeType-${end.id}'));
+    await tester.ensureVisible(typeSelector);
+    await tester.tap(typeSelector);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Translation waypoint').last);
     await tester.pumpAndSettle();
     expect(path.nodeById(end.id)!.waypoint, isA<TranslationWaypoint>());
     expect(
@@ -194,6 +212,86 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'point-towards settings conditionally show inheritance and warnings',
+    (tester) async {
+      final fs = path.fs;
+      final first = path2.PathNode(
+        waypoint: PointTowardsWaypoint(
+          position: const Translation2d(-2, 1),
+          targetPosition: const Translation2d(1, 2),
+        ),
+        editorPosition: const Offset(80, 80),
+      );
+      final second = path2.PathNode(
+        waypoint: PointTowardsWaypoint(
+          position: const Translation2d(-2, -1),
+          targetPosition: const Translation2d(3, 4),
+        ),
+        editorPosition: const Offset(420, 80),
+      );
+      final child = path2.PathNode(
+        waypoint: PointTowardsWaypoint(
+          position: const Translation2d(),
+          inheritTargetFromParent: true,
+        ),
+        editorPosition: const Offset(250, 430),
+      );
+      path = path2.Path(
+        name: 'Point settings',
+        nodes: [first, second, child],
+        branches: [
+          path2.PathBranch(sourceId: second.id, targetId: child.id),
+          path2.PathBranch(sourceId: first.id, targetId: child.id),
+        ],
+        fs: fs,
+        pathDir: '/paths',
+      );
+      await pumpEditor(tester);
+
+      await tester.tap(find.byKey(ValueKey('graphNode-${first.id}')));
+      await tester.pump();
+      expect(
+        find.byKey(ValueKey('pathNodeInheritTarget-${first.id}')),
+        findsNothing,
+      );
+      await tester.tap(find.byKey(const ValueKey('closePathNodeSettings')));
+      await tester.pump();
+
+      await tester.tap(find.byKey(ValueKey('graphNode-${child.id}')));
+      await tester.pump();
+      expect(
+        find.byKey(ValueKey('pathNodeTargetX-${child.id}')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(ValueKey('pathNodeTargetY-${child.id}')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(ValueKey('pathNodeUnprofiled-${child.id}')),
+        findsOneWidget,
+      );
+      final inheritToggle = find.byKey(
+        ValueKey('pathNodeInheritTarget-${child.id}'),
+      );
+      final warning = find.byKey(
+        ValueKey('pathNodeMultiplePointParentsWarning-${child.id}'),
+      );
+      expect(inheritToggle, findsOneWidget);
+      expect(warning, findsOneWidget);
+      expect(
+        (child.waypoint as PointTowardsWaypoint).targetPosition,
+        const Translation2d(3, 4),
+      );
+
+      await tester.ensureVisible(inheritToggle);
+      await tester.tap(inheritToggle);
+      await tester.pumpAndSettle();
+      expect(warning, findsNothing);
+    },
+  );
 
   testWidgets('preview enables, animates, and displays the leaf runtime', (
     tester,
@@ -359,6 +457,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Create Branch'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('newConnectedWaypointType')));
+    await tester.pumpAndSettle();
+    expect(find.text('Point towards waypoint'), findsOneWidget);
+    await tester.tap(find.text('Translation waypoint').last);
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
@@ -406,6 +509,99 @@ void main() {
       closeTo(original.x, 0.01),
     );
   });
+
+  testWidgets(
+    'inherited target drag wins hit testing and commits one undo step',
+    (tester) async {
+      final fs = path.fs;
+      final parent = path2.PathNode(
+        waypoint: PointTowardsWaypoint(
+          position: const Translation2d(-2, 0),
+          targetPosition: const Translation2d(),
+        ),
+        editorPosition: const Offset(100, 80),
+      );
+      final child = path2.PathNode(
+        waypoint: PointTowardsWaypoint(
+          position: const Translation2d(),
+          targetPosition: const Translation2d(),
+          inheritTargetFromParent: true,
+        ),
+        editorPosition: const Offset(100, 500),
+      );
+      path = path2.Path(
+        name: 'Inherited drag',
+        nodes: [parent, child],
+        branches: [path2.PathBranch(sourceId: parent.id, targetId: child.id)],
+        fs: fs,
+        pathDir: '/paths',
+      );
+      await pumpEditor(tester);
+      await tester.tap(find.byKey(ValueKey('graphNode-${child.id}')));
+      await tester.pump();
+
+      final painterFinder = find.byWidgetPredicate(
+        (widget) => widget is CustomPaint && widget.painter is Path2Painter,
+      );
+      final targetLocation =
+          PathPainterUtil.pointToPixelOffset(
+            const Translation2d(),
+            Path2Painter.scale,
+            fieldImage,
+          ) +
+          tester.getTopLeft(painterFinder);
+      final meterPixels = PathPainterUtil.metersToPixels(
+        1,
+        Path2Painter.scale,
+        fieldImage,
+      );
+
+      await tester.dragFrom(
+        targetLocation,
+        Offset(meterPixels, 0),
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pumpAndSettle();
+
+      expect(path.nodeById(child.id)!.waypoint.position, const Translation2d());
+      expect(
+        (path.nodeById(parent.id)!.waypoint as PointTowardsWaypoint)
+            .targetPosition
+            .x,
+        closeTo(1, 0.06),
+      );
+      expect(
+        (path.nodeById(child.id)!.waypoint as PointTowardsWaypoint)
+            .targetPosition
+            .x,
+        closeTo(1, 0.06),
+      );
+      expect(undoStack.canUndo, isTrue);
+
+      undoStack.undo();
+      await tester.pumpAndSettle();
+      expect(undoStack.canUndo, isFalse);
+      expect(
+        (path.nodeById(parent.id)!.waypoint as PointTowardsWaypoint)
+            .targetPosition,
+        const Translation2d(),
+      );
+      expect(
+        (path.nodeById(child.id)!.waypoint as PointTowardsWaypoint)
+            .targetPosition,
+        const Translation2d(),
+      );
+
+      undoStack.redo();
+      await tester.pumpAndSettle();
+      expect(
+        (path.nodeById(child.id)!.waypoint as PointTowardsWaypoint)
+            .targetPosition
+            .x,
+        closeTo(1, 0.06),
+      );
+    },
+  );
 
   testWidgets('field click selects and centers by stable node id', (
     tester,

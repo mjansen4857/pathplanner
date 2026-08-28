@@ -51,6 +51,8 @@ class Path2SimulationConstraints {
 class Path2SimulationWaypoint {
   final Translation2d position;
   final Rotation2d? rotation;
+  final Translation2d? pointTowardsTarget;
+  final bool unprofiled;
   final double maxVelocity;
   final double handoffDistance;
   final double maxAngularVelocityRadiansPerSecond;
@@ -59,6 +61,8 @@ class Path2SimulationWaypoint {
   const Path2SimulationWaypoint({
     required this.position,
     required this.rotation,
+    this.pointTowardsTarget,
+    this.unprofiled = false,
     required this.maxVelocity,
     required this.handoffDistance,
     required this.maxAngularVelocityRadiansPerSecond,
@@ -79,6 +83,10 @@ class Path2SimulationWaypoint {
     return Path2SimulationWaypoint(
       position: waypoint.position,
       rotation: waypoint is PoseWaypoint ? waypoint.rotation : null,
+      pointTowardsTarget: waypoint is PointTowardsWaypoint
+          ? waypoint.targetPosition
+          : null,
+      unprofiled: waypoint is PointTowardsWaypoint && waypoint.unprofiled,
       maxVelocity: waypoint.maxVelocity.toDouble(),
       handoffDistance: handoffDistance.toDouble(),
       maxAngularVelocityRadiansPerSecond: _degreesToRadians(
@@ -92,6 +100,8 @@ class Path2SimulationWaypoint {
 
   factory Path2SimulationWaypoint.fromMap(Map<String, dynamic> map) {
     final rotation = map['rotationRadians'];
+    final pointTowardsTargetX = map['pointTowardsTargetX'];
+    final pointTowardsTargetY = map['pointTowardsTargetY'];
     return Path2SimulationWaypoint(
       position: Translation2d(
         (map['x'] as num).toDouble(),
@@ -100,6 +110,14 @@ class Path2SimulationWaypoint {
       rotation: rotation is num
           ? Rotation2d.fromRadians(rotation.toDouble())
           : null,
+      pointTowardsTarget:
+          pointTowardsTargetX is num && pointTowardsTargetY is num
+          ? Translation2d(
+              pointTowardsTargetX.toDouble(),
+              pointTowardsTargetY.toDouble(),
+            )
+          : null,
+      unprofiled: map['unprofiled'] as bool? ?? false,
       maxVelocity: (map['maxVelocity'] as num).toDouble(),
       handoffDistance: (map['handoffDistance'] as num).toDouble(),
       maxAngularVelocityRadiansPerSecond:
@@ -114,6 +132,9 @@ class Path2SimulationWaypoint {
     'x': position.x.toDouble(),
     'y': position.y.toDouble(),
     'rotationRadians': rotation?.radians.toDouble(),
+    'pointTowardsTargetX': pointTowardsTarget?.x.toDouble(),
+    'pointTowardsTargetY': pointTowardsTarget?.y.toDouble(),
+    'unprofiled': unprofiled,
     'maxVelocity': maxVelocity,
     'handoffDistance': handoffDistance,
     'maxAngularVelocityRadiansPerSecond': maxAngularVelocityRadiansPerSecond,
@@ -143,12 +164,17 @@ class Path2PathFollower {
     2.0,
     periodSeconds,
   );
+  final _PidController _unprofiledRotationController = _PidController(
+    5.0,
+    periodSeconds,
+  );
   late final _ProfiledPidController _rotationController;
 
   late int _targetWaypointIndex;
   late Translation2d _segmentStart;
   late Translation2d _segmentEnd;
   Rotation2d? _heldHeading;
+  bool _usingUnprofiledRotation = false;
 
   Path2PathFollower({
     required this.waypoints,
@@ -186,6 +212,10 @@ class Path2PathFollower {
     _crossTrackController
       ..setTolerance(endToleranceMeters)
       ..reset();
+    _unprofiledRotationController
+      ..enableContinuousInput(-math.pi, math.pi)
+      ..setTolerance(endAngleToleranceRadians)
+      ..reset();
     _updateHeldHeading(initialPose.rotation);
   }
 
@@ -194,7 +224,9 @@ class Path2PathFollower {
   bool get isFinished =>
       _targetWaypointIndex == waypoints.length - 1 &&
       _translationController.atSetpoint &&
-      _rotationController.atSetpoint;
+      (_usingUnprofiledRotation
+          ? _unprofiledRotationController.atSetpoint
+          : _rotationController.atSetpoint);
 
   /// Calculate the unconstrained robot-relative request for one 20 ms tick.
   ChassisSpeeds calculate(
@@ -202,7 +234,22 @@ class Path2PathFollower {
     ChassisSpeeds currentRobotRelativeSpeeds = const ChassisSpeeds(),
   ]) {
     _advanceTargetIfNeeded(currentPose);
-    final activeConstraints = waypoints[_targetWaypointIndex].constraints;
+    final activeWaypoint = waypoints[_targetWaypointIndex];
+    final useUnprofiledRotation =
+        activeWaypoint.pointTowardsTarget != null && activeWaypoint.unprofiled;
+    if (useUnprofiledRotation != _usingUnprofiledRotation) {
+      if (useUnprofiledRotation) {
+        _unprofiledRotationController.reset();
+      } else {
+        _rotationController.reset(
+          currentPose.rotation.radians.toDouble(),
+          currentRobotRelativeSpeeds.omega.toDouble(),
+        );
+      }
+      _usingUnprofiledRotation = useUnprofiledRotation;
+    }
+
+    final activeConstraints = activeWaypoint.constraints;
     _rotationController.setConstraints(
       _trapezoidConstraints(activeConstraints),
     );
@@ -232,10 +279,15 @@ class Path2PathFollower {
     vy += crossTrackOutput * perpendicular.sine;
 
     final targetHeading = _rotationTarget(currentPose);
-    final rotationOutput = _rotationController.calculate(
-      currentPose.rotation.radians.toDouble(),
-      targetHeading.radians.toDouble(),
-    );
+    final rotationOutput = _usingUnprofiledRotation
+        ? _unprofiledRotationController.calculate(
+            currentPose.rotation.radians.toDouble(),
+            targetHeading.radians.toDouble(),
+          )
+        : _rotationController.calculate(
+            currentPose.rotation.radians.toDouble(),
+            targetHeading.radians.toDouble(),
+          );
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(
       ChassisSpeeds(vx: vx, vy: vy, omega: rotationOutput),
@@ -271,6 +323,16 @@ class Path2PathFollower {
   }
 
   Rotation2d _rotationTarget(Pose2d currentPose) {
+    final pointTowardsTarget =
+        waypoints[_targetWaypointIndex].pointTowardsTarget;
+    if (pointTowardsTarget != null) {
+      final toTarget = pointTowardsTarget - currentPose.translation;
+      if (toTarget.norm <= 1e-9) {
+        return currentPose.rotation;
+      }
+      return toTarget.angle;
+    }
+
     for (var i = _targetWaypointIndex; i < waypoints.length; i++) {
       final rotation = waypoints[i].rotation;
       if (rotation != null) {

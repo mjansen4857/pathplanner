@@ -76,6 +76,7 @@ void main() {
     path2.Path path, {
     Set<String>? visibleNodeIds,
     bool simple = false,
+    String? selectedNodeId,
     List<Path2SimulationResult> simulations = const [],
   }) {
     return Path2Painter(
@@ -84,6 +85,7 @@ void main() {
       fieldImage: fieldImage,
       prefs: prefs,
       simple: simple,
+      selectedNodeId: selectedNodeId,
       showWaypointRobotPreviews: false,
       simulations: simulations,
       simulationDurationSeconds: 1,
@@ -225,6 +227,44 @@ void main() {
       reason: 'the heading control should be a drag dot without a line',
     );
   });
+
+  test(
+    'point-towards target renders only for the selected editable node',
+    () async {
+      final point = path2.PathNode(
+        id: 'point',
+        waypoint: PointTowardsWaypoint(
+          position: const Translation2d(2, 4),
+          targetPosition: const Translation2d(4, 2),
+        ),
+        editorPosition: Offset.zero,
+      );
+      final path = makePath(nodes: [point], branches: []);
+      final unselected = await _render(painter(path));
+      final selected = await _render(painter(path, selectedNodeId: point.id));
+      final simple = await _render(
+        painter(path, simple: true, selectedNodeId: point.id),
+      );
+      final target = PathPainterUtil.pointToPixelOffset(
+        const Translation2d(4, 2),
+        Path2Painter.scale,
+        fieldImage,
+      );
+
+      expect(
+        _hasDifferenceNear(unselected, selected, target, radius: 28),
+        isTrue,
+      );
+      expect(
+        _hasDifferenceNear(unselected, simple, target, radius: 28),
+        isFalse,
+      );
+      expect(
+        _containsColorNear(selected, target, _rgba(Colors.orange), 20),
+        isTrue,
+      );
+    },
+  );
 
   test(
     'all preview traces, robots, and swerve modules use one color',

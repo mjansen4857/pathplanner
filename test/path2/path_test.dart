@@ -38,6 +38,23 @@ void main() {
         endTolerance: EndTolerance(distanceMeters: 0.15, angleDegrees: 2.5),
       );
 
+  path2.PathNode pointNode(
+    String id,
+    num x, {
+    Translation2d target = const Translation2d(),
+    bool inherit = false,
+    bool unprofiled = false,
+  }) => path2.PathNode(
+    id: id,
+    waypoint: PointTowardsWaypoint(
+      position: Translation2d(x, 1),
+      targetPosition: target,
+      inheritTargetFromParent: inherit,
+      unprofiled: unprofiled,
+    ),
+    editorPosition: Offset(50, x.toDouble() * 100),
+  );
+
   path2.Path path({
     List<path2.PathNode>? nodes,
     List<path2.PathBranch>? branches,
@@ -290,6 +307,174 @@ void main() {
       expect(duplicate.nodes.first.id, original.nodes.first.id);
       expect(original.nodes.first.waypoint.position, const Translation2d(1, 1));
     });
+
+    test('point-towards parents follow saved incoming branch order', () {
+      final firstInFile = pointNode(
+        _nodeB,
+        2,
+        target: const Translation2d(20, 2),
+      );
+      final secondInFile = pointNode(
+        _nodeA,
+        1,
+        target: const Translation2d(10, 1),
+      );
+      final child = pointNode(_nodeC, 3, inherit: true);
+      final graph = path(
+        nodes: [secondInFile, firstInFile, child],
+        branches: [
+          path2.PathBranch(
+            id: _branchA,
+            sourceId: firstInFile.id,
+            targetId: child.id,
+          ),
+          path2.PathBranch(
+            id: _branchB,
+            sourceId: secondInFile.id,
+            targetId: child.id,
+          ),
+        ],
+      );
+
+      expect(graph.pointTowardsParentsOf(child.id).map((parent) => parent.id), [
+        firstInFile.id,
+        secondInFile.id,
+      ]);
+      expect(
+        (child.waypoint as PointTowardsWaypoint).targetPosition,
+        const Translation2d(20, 2),
+      );
+    });
+
+    test('chained inherited target edits redirect to the ultimate owner', () {
+      final owner = pointNode(_nodeA, 1, target: const Translation2d(4, 5));
+      final middle = pointNode(_nodeB, 2, inherit: true);
+      final child = pointNode(_nodeC, 3, inherit: true);
+      final graph = path(
+        nodes: [owner, middle, child],
+        branches: [
+          path2.PathBranch(
+            id: _branchA,
+            sourceId: owner.id,
+            targetId: middle.id,
+          ),
+          path2.PathBranch(
+            id: _branchB,
+            sourceId: middle.id,
+            targetId: child.id,
+          ),
+        ],
+      );
+
+      expect(graph.pointTowardsTargetOwner(child.id)?.id, owner.id);
+      expect(
+        graph.updatePointTowardsTarget(child.id, const Translation2d(-3, 2)),
+        isTrue,
+      );
+      for (final node in [owner, middle, child]) {
+        expect(
+          (node.waypoint as PointTowardsWaypoint).targetPosition,
+          const Translation2d(-3, 2),
+        );
+      }
+    });
+
+    test('serialization persists resolved inherited targets', () {
+      final owner = pointNode(_nodeA, 1, target: const Translation2d(1, 1));
+      final child = pointNode(_nodeB, 2, inherit: true);
+      final graph = path(
+        nodes: [owner, child],
+        branches: [
+          path2.PathBranch(
+            id: _branchA,
+            sourceId: owner.id,
+            targetId: child.id,
+          ),
+        ],
+      );
+      (owner.waypoint as PointTowardsWaypoint).targetPosition =
+          const Translation2d(7, -2);
+
+      final json = graph.toJson();
+      final childJson = (json['nodes'] as List<dynamic>)
+          .cast<Map<String, dynamic>>()
+          .singleWhere((node) => node['id'] == child.id);
+      final childWaypoint = childJson['waypoint'] as Map<String, dynamic>;
+
+      expect(childWaypoint['inheritTargetFromParent'], isTrue);
+      expect(childWaypoint['targetPosition'], {'x': 7, 'y': -2});
+      final restored = path2.Path.fromJson(json, 'Restored', '/paths', fs);
+      expect(
+        (restored.nodeById(child.id)!.waypoint as PointTowardsWaypoint)
+            .targetPosition,
+        const Translation2d(7, -2),
+      );
+    });
+
+    test(
+      'missing or converted parents disable inheritance and retain target',
+      () {
+        final owner = pointNode(_nodeA, 1, target: const Translation2d(6, 3));
+        final child = pointNode(_nodeB, 2, inherit: true);
+        final graph = path(
+          nodes: [owner, child],
+          branches: [
+            path2.PathBranch(
+              id: _branchA,
+              sourceId: owner.id,
+              targetId: child.id,
+            ),
+          ],
+        );
+
+        owner.waypoint = owner.waypoint.convertedTo(WaypointType.translation);
+        graph.synchronizeInheritedTargets();
+        final childWaypoint = child.waypoint as PointTowardsWaypoint;
+        expect(childWaypoint.inheritTargetFromParent, isFalse);
+        expect(childWaypoint.targetPosition, const Translation2d(6, 3));
+
+        final orphan = pointNode(
+          _nodeC,
+          3,
+          target: const Translation2d(8, 4),
+          inherit: true,
+        );
+        final orphanGraph = path(nodes: [orphan], branches: []);
+        expect(
+          (orphanGraph.nodes.single.waypoint as PointTowardsWaypoint)
+              .inheritTargetFromParent,
+          isFalse,
+        );
+        expect(
+          (orphanGraph.nodes.single.waypoint as PointTowardsWaypoint)
+              .targetPosition,
+          const Translation2d(8, 4),
+        );
+      },
+    );
+
+    test(
+      'parent deletion disables inheritance after preserving its target',
+      () {
+        final owner = pointNode(_nodeA, 1, target: const Translation2d(9, -1));
+        final child = pointNode(_nodeB, 2, inherit: true);
+        final graph = path(
+          nodes: [owner, child],
+          branches: [
+            path2.PathBranch(
+              id: _branchA,
+              sourceId: owner.id,
+              targetId: child.id,
+            ),
+          ],
+        );
+
+        expect(graph.removeNode(owner.id), isTrue);
+        final remaining = graph.nodes.single.waypoint as PointTowardsWaypoint;
+        expect(remaining.inheritTargetFromParent, isFalse);
+        expect(remaining.targetPosition, const Translation2d(9, -1));
+      },
+    );
 
     test('condition rename and deletion update matching transitions', () {
       final graph = path(

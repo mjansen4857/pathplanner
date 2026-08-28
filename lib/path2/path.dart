@@ -173,6 +173,7 @@ class Path {
     if (graphDiagnostics.hasHardErrors) {
       throw ArgumentError(graphDiagnostics.hardErrors.join('; '));
     }
+    synchronizeInheritedTargets();
     _collectConditionNames();
   }
 
@@ -238,6 +239,105 @@ class Path {
 
   PathNode? nodeById(String id) =>
       nodes.firstWhereOrNull((node) => node.id == id);
+
+  /// Direct point-towards parents, in the order their incoming branches are
+  /// stored in the path file.
+  List<PathNode> pointTowardsParentsOf(String nodeId) {
+    final parents = <PathNode>[];
+    final seenParentIds = <String>{};
+    for (final branch in branches) {
+      if (branch.targetId != nodeId || !seenParentIds.add(branch.sourceId)) {
+        continue;
+      }
+      final parent = nodeById(branch.sourceId);
+      if (parent?.waypoint is PointTowardsWaypoint) {
+        parents.add(parent!);
+      }
+    }
+    return parents;
+  }
+
+  /// The non-inheriting waypoint that owns [nodeId]'s editable target.
+  PathNode? pointTowardsTargetOwner(String nodeId) {
+    var current = nodeById(nodeId);
+    if (current?.waypoint is! PointTowardsWaypoint) {
+      return null;
+    }
+
+    final visited = <String>{};
+    while (current != null && visited.add(current.id)) {
+      final waypoint = current.waypoint as PointTowardsWaypoint;
+      if (!waypoint.inheritTargetFromParent) {
+        return current;
+      }
+      final parents = pointTowardsParentsOf(current.id);
+      if (parents.isEmpty) {
+        return current;
+      }
+      current = parents.first;
+    }
+    return current;
+  }
+
+  /// Updates the resolved target for [nodeId] and all waypoints inheriting it.
+  ///
+  /// Edits to an inheriting waypoint are redirected to its ultimate target
+  /// owner so fields and field dragging behave identically.
+  bool updatePointTowardsTarget(String nodeId, Translation2d target) {
+    synchronizeInheritedTargets();
+    final owner = pointTowardsTargetOwner(nodeId);
+    final waypoint = owner?.waypoint;
+    if (waypoint is! PointTowardsWaypoint ||
+        waypoint.targetPosition == target) {
+      return false;
+    }
+    waypoint.moveTarget(target.x, target.y);
+    synchronizeInheritedTargets();
+    return true;
+  }
+
+  /// Copies inherited targets into each waypoint so serialization is
+  /// self-contained. Missing eligible parents disable inheritance while
+  /// retaining the last resolved target.
+  void synchronizeInheritedTargets() {
+    final resolved = <String>{};
+    final resolving = <String>{};
+
+    void resolve(PathNode node) {
+      if (resolved.contains(node.id)) {
+        return;
+      }
+      final waypoint = node.waypoint;
+      if (waypoint is! PointTowardsWaypoint) {
+        resolved.add(node.id);
+        return;
+      }
+      if (!resolving.add(node.id)) {
+        return;
+      }
+
+      if (waypoint.inheritTargetFromParent) {
+        final parents = pointTowardsParentsOf(node.id);
+        if (parents.isEmpty) {
+          waypoint.inheritTargetFromParent = false;
+        } else {
+          final parent = parents.first;
+          resolve(parent);
+          final parentWaypoint = parent.waypoint;
+          if (parentWaypoint is PointTowardsWaypoint) {
+            waypoint.targetPosition = parentWaypoint.targetPosition;
+          }
+        }
+      }
+
+      resolving.remove(node.id);
+      resolved.add(node.id);
+    }
+
+    for (final node in nodes) {
+      resolve(node);
+    }
+  }
 
   List<PathNode> get rootNodes =>
       GraphAlgorithms.roots<PathNode, PathBranch>(nodes, branches);
@@ -343,6 +443,7 @@ class Path {
       return false;
     }
     branches.add(branch);
+    synchronizeInheritedTargets();
     _registerTransition(branch.transition);
     return true;
   }
@@ -359,13 +460,18 @@ class Path {
     branches.removeWhere(
       (branch) => branch.sourceId == nodeId || branch.targetId == nodeId,
     );
+    synchronizeInheritedTargets();
     return true;
   }
 
   bool removeBranch(String branchId) {
     final oldLength = branches.length;
     branches.removeWhere((branch) => branch.id == branchId);
-    return branches.length != oldLength;
+    final changed = branches.length != oldLength;
+    if (changed) {
+      synchronizeInheritedTargets();
+    }
+    return changed;
   }
 
   PathGraphSnapshot snapshotGraph() =>
@@ -382,6 +488,7 @@ class Path {
     }
     nodes = restoredNodes;
     branches = restoredBranches;
+    synchronizeInheritedTargets();
     _collectConditionNames();
   }
 
@@ -408,6 +515,7 @@ class Path {
 
   Map<String, dynamic> toJson() {
     _validatedSourceVersion(sourceVersion);
+    synchronizeInheritedTargets();
     final graphDiagnostics = diagnostics;
     if (graphDiagnostics.hasHardErrors) {
       throw FormatException(
@@ -615,7 +723,12 @@ String? _pathNodeError(PathNode node) {
       !waypoint.maxAngularAcceleration.isFinite ||
       waypoint.maxAngularAcceleration < 0 ||
       (waypoint is PoseWaypoint && !waypoint.rotation.radians.isFinite) ||
-      (waypoint is! PoseWaypoint && waypoint is! TranslationWaypoint)) {
+      (waypoint is PointTowardsWaypoint &&
+          (!waypoint.targetPosition.x.isFinite ||
+              !waypoint.targetPosition.y.isFinite)) ||
+      (waypoint is! PoseWaypoint &&
+          waypoint is! TranslationWaypoint &&
+          waypoint is! PointTowardsWaypoint)) {
     return 'Path node ${node.id} has an invalid waypoint payload';
   }
   if (!node.endTolerance.distanceMeters.isFinite ||

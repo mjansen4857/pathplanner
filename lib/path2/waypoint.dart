@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:pathplanner/util/wpimath/geometry.dart';
 
+enum WaypointType { pose, translation, pointTowards }
+
 abstract class Waypoint {
   static const num defaultMaxVelocity = 4.0;
   static const num defaultMaxAngularVelocity = 360.0;
@@ -62,7 +64,44 @@ abstract class Waypoint {
     _isDragging = false;
   }
 
+  WaypointType get type;
+
   Waypoint clone();
+
+  Waypoint convertedTo(WaypointType type) {
+    return switch (type) {
+      WaypointType.pose => PoseWaypoint(
+        position: position,
+        rotation: this is PoseWaypoint
+            ? (this as PoseWaypoint).rotation
+            : const Rotation2d(),
+        maxVelocity: maxVelocity,
+        maxAngularVelocity: maxAngularVelocity,
+        maxAngularAcceleration: maxAngularAcceleration,
+      ),
+      WaypointType.translation => TranslationWaypoint(
+        position: position,
+        maxVelocity: maxVelocity,
+        maxAngularVelocity: maxAngularVelocity,
+        maxAngularAcceleration: maxAngularAcceleration,
+      ),
+      WaypointType.pointTowards => PointTowardsWaypoint(
+        position: position,
+        targetPosition: this is PointTowardsWaypoint
+            ? (this as PointTowardsWaypoint).targetPosition
+            : PointTowardsWaypoint.defaultTargetPosition,
+        unprofiled: this is PointTowardsWaypoint
+            ? (this as PointTowardsWaypoint).unprofiled
+            : false,
+        inheritTargetFromParent: this is PointTowardsWaypoint
+            ? (this as PointTowardsWaypoint).inheritTargetFromParent
+            : false,
+        maxVelocity: maxVelocity,
+        maxAngularVelocity: maxAngularVelocity,
+        maxAngularAcceleration: maxAngularAcceleration,
+      ),
+    };
+  }
 
   Waypoint withRotation(Rotation2d? rotation) {
     if (rotation == null) {
@@ -94,6 +133,7 @@ abstract class Waypoint {
     return switch (type) {
       'pose' => PoseWaypoint.fromJson(json),
       'translation' => TranslationWaypoint.fromJson(json),
+      'pointTowards' => PointTowardsWaypoint.fromJson(json),
       _ => throw FormatException('Unknown waypoint type: $type'),
     };
   }
@@ -152,6 +192,9 @@ class TranslationWaypoint extends Waypoint {
       );
 
   @override
+  WaypointType get type => WaypointType.translation;
+
+  @override
   TranslationWaypoint clone() {
     return TranslationWaypoint(
       position: position,
@@ -207,6 +250,9 @@ class PoseWaypoint extends Waypoint {
       );
 
   @override
+  WaypointType get type => WaypointType.pose;
+
+  @override
   PoseWaypoint clone() {
     return PoseWaypoint(
       position: position,
@@ -232,18 +278,124 @@ class PoseWaypoint extends Waypoint {
   int get hashCode => Object.hash(commonHashCode, rotation);
 }
 
+class PointTowardsWaypoint extends Waypoint {
+  static const Translation2d defaultTargetPosition = Translation2d(-7.6, 1.5);
+
+  Translation2d targetPosition;
+  bool unprofiled;
+  bool inheritTargetFromParent;
+
+  PointTowardsWaypoint({
+    required super.position,
+    this.targetPosition = defaultTargetPosition,
+    this.unprofiled = false,
+    this.inheritTargetFromParent = false,
+    super.maxVelocity,
+    super.maxAngularVelocity,
+    super.maxAngularAcceleration,
+  }) {
+    _validateFinite(targetPosition.x, 'targetPosition.x');
+    _validateFinite(targetPosition.y, 'targetPosition.y');
+  }
+
+  PointTowardsWaypoint.fromJson(Map<String, dynamic> json)
+    : this(
+        position: _positionFromJson(json),
+        targetPosition: _translationFromJson(
+          json,
+          'targetPosition',
+          'Point-towards waypoint target position',
+        ),
+        unprofiled: _optionalBool(json, 'unprofiled', false),
+        inheritTargetFromParent: _optionalBool(
+          json,
+          'inheritTargetFromParent',
+          false,
+        ),
+        maxVelocity: _optionalNonNegativeNum(
+          json,
+          'maxVelocity',
+          Waypoint.defaultMaxVelocity,
+        ),
+        maxAngularVelocity: _optionalNonNegativeNum(
+          json,
+          'maxAngularVelocity',
+          Waypoint.defaultMaxAngularVelocity,
+        ),
+        maxAngularAcceleration: _optionalNonNegativeNum(
+          json,
+          'maxAngularAcceleration',
+          Waypoint.defaultMaxAngularAcceleration,
+        ),
+      );
+
+  @override
+  WaypointType get type => WaypointType.pointTowards;
+
+  void moveTarget(num x, num y) {
+    _validateFinite(x, 'x');
+    _validateFinite(y, 'y');
+    targetPosition = Translation2d(x, y);
+  }
+
+  @override
+  PointTowardsWaypoint clone() {
+    return PointTowardsWaypoint(
+      position: position,
+      targetPosition: targetPosition,
+      unprofiled: unprofiled,
+      inheritTargetFromParent: inheritTargetFromParent,
+      maxVelocity: maxVelocity,
+      maxAngularVelocity: maxAngularVelocity,
+      maxAngularAcceleration: maxAngularAcceleration,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      ...commonJson('pointTowards'),
+      'targetPosition': targetPosition.toJson(),
+      'unprofiled': unprofiled,
+      'inheritTargetFromParent': inheritTargetFromParent,
+    };
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is PointTowardsWaypoint &&
+      commonEquals(other) &&
+      other.targetPosition == targetPosition &&
+      other.unprofiled == unprofiled &&
+      other.inheritTargetFromParent == inheritTargetFromParent;
+
+  @override
+  int get hashCode => Object.hash(
+    commonHashCode,
+    targetPosition,
+    unprofiled,
+    inheritTargetFromParent,
+  );
+}
+
 Translation2d _positionFromJson(Map<String, dynamic> json) {
-  final position = json['position'];
+  return _translationFromJson(json, 'position', 'Waypoint position');
+}
+
+Translation2d _translationFromJson(
+  Map<String, dynamic> json,
+  String key,
+  String label,
+) {
+  final position = json[key];
   if (position is! Map<String, dynamic>) {
-    throw const FormatException('Waypoint position must be an object');
+    throw FormatException('$label must be an object');
   }
 
   final x = position['x'];
   final y = position['y'];
   if (x is! num || y is! num || !x.isFinite || !y.isFinite) {
-    throw const FormatException(
-      'Waypoint position must contain finite x and y values',
-    );
+    throw FormatException('$label must contain finite x and y values');
   }
 
   return Translation2d(x, y);
@@ -276,6 +428,17 @@ num _optionalNonNegativeNum(
   }
   if (value is! num || !value.isFinite || value < 0) {
     throw FormatException('$key must be a finite non-negative number');
+  }
+  return value;
+}
+
+bool _optionalBool(Map<String, dynamic> json, String key, bool defaultValue) {
+  final value = json[key];
+  if (value == null) {
+    return defaultValue;
+  }
+  if (value is! bool) {
+    throw FormatException('$key must be a boolean');
   }
   return value;
 }

@@ -12,6 +12,7 @@ import 'package:pathplanner/path2/waypoint.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/kinematics.dart';
 
 void main() {
   late Path2RobotConfigSnapshot robotConfig;
@@ -175,6 +176,212 @@ void main() {
   });
 
   test(
+    'traversal snapshots contain resolved point targets and controller mode',
+    () {
+      final parent = path2.PathNode(
+        waypoint: PointTowardsWaypoint(
+          position: const Translation2d(),
+          targetPosition: const Translation2d(3, -2),
+        ),
+        editorPosition: Offset.zero,
+      );
+      final child = path2.PathNode(
+        waypoint: PointTowardsWaypoint(
+          position: const Translation2d(1, 0),
+          inheritTargetFromParent: true,
+          unprofiled: true,
+        ),
+        editorPosition: const Offset(0, 200),
+      );
+      final traversal = Path2Simulator.previewTraversals(
+        graph(
+          [parent, child],
+          [path2.PathBranch(sourceId: parent.id, targetId: child.id)],
+        ),
+      ).single;
+
+      expect(
+        traversal.waypoints.last.pointTowardsTarget,
+        const Translation2d(3, -2),
+      );
+      expect(traversal.waypoints.last.unprofiled, isTrue);
+      final restored = Path2SimulationPathSnapshot.fromMap(traversal.toMap());
+      expect(
+        restored.waypoints.last.pointTowardsTarget,
+        const Translation2d(3, -2),
+      );
+      expect(restored.waypoints.last.unprofiled, isTrue);
+    },
+  );
+
+  test('active point target dynamically overrides future pose lookahead', () {
+    double omegaAt(double robotY) {
+      final currentPose = Pose2d(Translation2d(0, robotY), const Rotation2d());
+      final follower = Path2PathFollower(
+        waypoints: [
+          simulationWaypoint(0, robotY, handoffDistance: 0.2),
+          simulationWaypoint(
+            2,
+            robotY,
+            handoffDistance: 0.2,
+            rotation: null,
+            pointTowardsTarget: const Translation2d(),
+          ),
+          simulationWaypoint(
+            3,
+            robotY,
+            handoffDistance: 0,
+            rotation: Rotation2d.fromDegrees(90),
+          ),
+        ],
+        endToleranceMeters: 0.1,
+        endAngleToleranceRadians: math.pi / 90,
+        initialPose: currentPose,
+        initialRobotRelativeSpeeds: const ChassisSpeeds(),
+        targetFirstWaypoint: false,
+      );
+      return follower.calculate(currentPose).omega.toDouble();
+    }
+
+    expect(omegaAt(-1), greaterThan(0));
+    expect(
+      omegaAt(1),
+      lessThan(0),
+      reason: 'the active point target must override the future +90° pose',
+    );
+  });
+
+  test('coincident point target falls back to the current heading', () {
+    final currentPose = Pose2d(
+      const Translation2d(),
+      Rotation2d.fromRadians(0.7),
+    );
+    final follower = Path2PathFollower(
+      waypoints: [
+        simulationWaypoint(-1, 0, handoffDistance: 0.2),
+        simulationWaypoint(
+          1,
+          0,
+          handoffDistance: 0,
+          rotation: null,
+          pointTowardsTarget: const Translation2d(),
+        ),
+      ],
+      endToleranceMeters: 0.1,
+      endAngleToleranceRadians: math.pi / 90,
+      initialPose: currentPose,
+      initialRobotRelativeSpeeds: const ChassisSpeeds(),
+      targetFirstWaypoint: false,
+    );
+
+    expect(follower.calculate(currentPose).omega, closeTo(0, 1e-12));
+  });
+
+  test('unprofiled point target uses direct PID output', () {
+    double firstOmega(bool unprofiled) {
+      const currentPose = Pose2d(Translation2d(), Rotation2d());
+      final follower = Path2PathFollower(
+        waypoints: [
+          simulationWaypoint(-1, 0, handoffDistance: 0.2),
+          simulationWaypoint(
+            1,
+            0,
+            handoffDistance: 0,
+            rotation: null,
+            pointTowardsTarget: const Translation2d(0, 1),
+            unprofiled: unprofiled,
+            maxAngularAcceleration: 1,
+          ),
+        ],
+        endToleranceMeters: 0.1,
+        endAngleToleranceRadians: math.pi / 90,
+        initialPose: currentPose,
+        initialRobotRelativeSpeeds: const ChassisSpeeds(),
+        targetFirstWaypoint: false,
+      );
+      return follower.calculate(currentPose).omega.toDouble();
+    }
+
+    final profiled = firstOmega(false);
+    final unprofiled = firstOmega(true);
+    expect(profiled, greaterThan(0));
+    expect(unprofiled, greaterThan(profiled * 100));
+  });
+
+  test('returning to profiled rotation resets its prior controller state', () {
+    const currentPose = Pose2d(Translation2d(), Rotation2d());
+    final follower = Path2PathFollower(
+      waypoints: [
+        simulationWaypoint(0, 0, handoffDistance: 0.2),
+        simulationWaypoint(
+          1,
+          0,
+          handoffDistance: 0.2,
+          rotation: null,
+          pointTowardsTarget: const Translation2d(0, 2),
+        ),
+        simulationWaypoint(
+          2,
+          0,
+          handoffDistance: 0.2,
+          rotation: null,
+          pointTowardsTarget: const Translation2d(0, -2),
+          unprofiled: true,
+        ),
+        simulationWaypoint(
+          3,
+          0,
+          handoffDistance: 0,
+          rotation: const Rotation2d(),
+        ),
+      ],
+      endToleranceMeters: 0.1,
+      endAngleToleranceRadians: math.pi / 90,
+      initialPose: currentPose,
+      initialRobotRelativeSpeeds: const ChassisSpeeds(),
+      targetFirstWaypoint: false,
+    );
+    for (var i = 0; i < 20; i++) {
+      follower.calculate(currentPose);
+    }
+    follower.calculate(const Pose2d(Translation2d(0.9, 0), Rotation2d()));
+    expect(follower.targetWaypointIndex, 2);
+
+    final output = follower.calculate(
+      const Pose2d(Translation2d(1.9, 0), Rotation2d()),
+    );
+    expect(follower.targetWaypointIndex, 3);
+    expect(output.omega, closeTo(0, 1e-12));
+  });
+
+  test('completion uses the active unprofiled controller tolerance', () {
+    final follower = Path2PathFollower(
+      waypoints: [
+        simulationWaypoint(
+          0,
+          0,
+          handoffDistance: 0,
+          rotation: null,
+          pointTowardsTarget: const Translation2d(0, 1),
+          unprofiled: true,
+        ),
+      ],
+      endToleranceMeters: 0.1,
+      endAngleToleranceRadians: math.pi / 90,
+      initialPose: const Pose2d(Translation2d(), Rotation2d()),
+      initialRobotRelativeSpeeds: const ChassisSpeeds(),
+      targetFirstWaypoint: true,
+    );
+
+    follower.calculate(const Pose2d(Translation2d(), Rotation2d()));
+    expect(follower.isFinished, isFalse);
+    follower.calculate(
+      Pose2d(const Translation2d(), Rotation2d.fromDegrees(90)),
+    );
+    expect(follower.isFinished, isTrue);
+  });
+
+  test(
     'simulates all traversals from time zero and uses the longest duration',
     () {
       final short = Path2SimulationPathSnapshot(
@@ -232,13 +439,19 @@ Path2SimulationWaypoint simulationWaypoint(
   double x,
   double y, {
   required double handoffDistance,
+  Rotation2d? rotation = const Rotation2d(),
+  Translation2d? pointTowardsTarget,
+  bool unprofiled = false,
+  double maxAngularAcceleration = 4 * math.pi,
 }) {
   return Path2SimulationWaypoint(
     position: Translation2d(x, y),
-    rotation: const Rotation2d(),
+    rotation: rotation,
+    pointTowardsTarget: pointTowardsTarget,
+    unprofiled: unprofiled,
     maxVelocity: 3,
     handoffDistance: handoffDistance,
     maxAngularVelocityRadiansPerSecond: 2 * math.pi,
-    maxAngularAccelerationRadiansPerSecondSquared: 4 * math.pi,
+    maxAngularAccelerationRadiansPerSecondSquared: maxAngularAcceleration,
   );
 }

@@ -331,6 +331,21 @@ void main() {
         startsWith('text/plain; charset=utf-8'));
   });
 
+  test('putFile percent-encodes path segments but not separators', () async {
+    late http.Request captured;
+    final mock = MockClient((request) async {
+      captured = request;
+      return http.Response(jsonEncode({'ok': true}), 200);
+    });
+    final client = DeployFilesClient(baseUrl: base, httpClient: mock);
+
+    await client.putFile(
+        'src/main/deploy/pathplanner/paths/Two Piece (Left).path', '{}');
+
+    expect(captured.url.toString(),
+        contains('/pathplanner/paths/Two%20Piece%20%28Left%29.path'));
+  });
+
   test('putFile throws on error status', () async {
     final mock = MockClient(
         (request) async => http.Response(jsonEncode({'error': 'bad'}), 400));
@@ -415,9 +430,14 @@ class DeployFilesClient {
     ];
   }
 
+  /// Percent-encode each segment (path/auto names can contain spaces and
+  /// parens) while keeping the '/' separators literal.
+  Uri _fileUri(String path) => Uri.parse(
+      '$baseUrl/${path.split('/').map(Uri.encodeComponent).join('/')}');
+
   Future<void> putFile(String path, String content) async {
     final response = await _http.put(
-      Uri.parse('$baseUrl/$path'),
+      _fileUri(path),
       headers: {'Content-Type': 'text/plain; charset=utf-8'},
       body: content,
     );
@@ -427,7 +447,7 @@ class DeployFilesClient {
   }
 
   Future<void> deleteFile(String path) async {
-    final response = await _http.delete(Uri.parse('$baseUrl/$path'));
+    final response = await _http.delete(_fileUri(path));
     // 404 means the file never reached the server (e.g. created and
     // deleted before its first PUT was flushed) — the end state matches.
     if (response.statusCode != 200 && response.statusCode != 404) {
@@ -454,7 +474,7 @@ class DeployFilesClient {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `flutter test test/coderunner/deploy_files_client_test.dart`
-Expected: PASS (6 tests).
+Expected: PASS (7 tests).
 
 - [ ] **Step 5: Commit**
 

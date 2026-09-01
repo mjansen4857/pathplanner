@@ -85,3 +85,24 @@ Path and auto files carry a `version` field checked against the `fileVersion` co
 ### Lints
 
 `analysis_options.yaml` enables extras beyond `flutter_lints`, notably `always_use_package_imports` (no relative imports), `prefer_single_quotes`, and the `prefer_const_*` family.
+
+## CodeRunner web build (this fork)
+
+This fork adds a web target that runs PathPlanner inside CodeRunner
+(the browser IDE). Design spec:
+`docs/superpowers/specs/2026-08-30-coderunner-web-design.md`.
+
+- All CodeRunner-specific code lives in `lib/coderunner/` (entrypoint
+  `main_coderunner.dart`, deploy-files API client, write-through
+  `CodeRunnerFileSystem` over a hydrated `MemoryFileSystem`, sync queue,
+  no-op telemetry/update-checker). Upstream files carry only guard-style
+  edits behind `CodeRunnerWebMode.enabled` and `PlatformShim` — keep it
+  that way to make upstream merges cheap.
+- Build: `flutter build web -t lib/coderunner/main_coderunner.dart
+  --base-href /pathplanner/ --no-web-resources-cdn`. CodeRunner serves
+  `build/web/` at `/pathplanner/` and iframes it with `?ws=<slug>`.
+- v1 web scope: path/auto editing + save, Choreo read-only. Telemetry,
+  hot reload, navgrid editor, path optimizer, custom field images, and
+  GIF export are gated off on web (still work on desktop).
+- Tests for the layer are in `test/coderunner/`; the upstream suite must
+  keep passing with `CodeRunnerWebMode.enabled == false`.

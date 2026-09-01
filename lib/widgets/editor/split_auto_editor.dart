@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/coderunner/web_mode.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/trajectory/auto_simulator.dart';
@@ -167,19 +168,21 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                     auto: widget.auto,
                     autoRuntime: _simTraj?.states.last.timeSeconds,
                     allPathNames: widget.allPathNames,
-                    onRenderAuto: () {
-                      if (_simTraj != null) {
-                        showDialog(
-                            context: context,
-                            builder: (context) {
-                              return TrajectoryRenderDialog(
-                                fieldImage: widget.fieldImage,
-                                prefs: widget.prefs,
-                                trajectory: _simTraj!,
-                              );
-                            });
-                      }
-                    },
+                    onRenderAuto: CodeRunnerWebMode.enabled
+                        ? null
+                        : () {
+                            if (_simTraj != null) {
+                              showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return TrajectoryRenderDialog(
+                                      fieldImage: widget.fieldImage,
+                                      prefs: widget.prefs,
+                                      trajectory: _simTraj!,
+                                    );
+                                  });
+                            }
+                          },
                     onPathHovered: (value) {
                       setState(() {
                         _hoveredPath = value;

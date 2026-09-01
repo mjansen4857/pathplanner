@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/coderunner/web_mode.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/dialogs/edit_field_dialog.dart';
 import 'package:pathplanner/widgets/dialogs/import_field_dialog.dart';
@@ -530,6 +531,11 @@ class _AppSettingsState extends State<AppSettings> {
   }
 
   void _showFieldImportDialog(BuildContext context) {
+    if (CodeRunnerWebMode.enabled) {
+      // Custom field import needs local file access; not supported on web.
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {

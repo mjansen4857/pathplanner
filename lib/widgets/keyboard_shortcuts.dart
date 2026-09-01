@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pathplanner/coderunner/platform/platform_shim.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 List<_KeyBoardShortcuts> _keyBoardShortcuts = [];
@@ -120,13 +119,13 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
 Set<LogicalKeyboardKey> shortCut(BasicShortCuts basicShortCuts) {
   switch (basicShortCuts) {
     case BasicShortCuts.undo:
-      if (Platform.isMacOS) {
+      if (PlatformShim.isMacOS) {
         return {LogicalKeyboardKey.meta, LogicalKeyboardKey.keyZ};
       } else {
         return {LogicalKeyboardKey.control, LogicalKeyboardKey.keyZ};
       }
     case BasicShortCuts.redo:
-      if (Platform.isMacOS) {
+      if (PlatformShim.isMacOS) {
         return {LogicalKeyboardKey.meta, LogicalKeyboardKey.keyY};
       } else {
         return {LogicalKeyboardKey.control, LogicalKeyboardKey.keyY};

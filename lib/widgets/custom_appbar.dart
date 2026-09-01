@@ -1,6 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:pathplanner/coderunner/platform/platform_shim.dart';
+import 'package:pathplanner/coderunner/web_mode.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:pathplanner/widgets/window_buttons.dart';
 
@@ -14,9 +14,12 @@ class CustomAppBar extends AppBar {
     super.automaticallyImplyLeading,
   }) : super(
           actions: [
-            if (!Platform.isMacOS) MinimizeWindowButton(),
-            if (!Platform.isMacOS) MaximizeWindowButton(),
-            if (!Platform.isMacOS) CloseWindowButton(),
+            if (!CodeRunnerWebMode.enabled && !PlatformShim.isMacOS)
+              MinimizeWindowButton(),
+            if (!CodeRunnerWebMode.enabled && !PlatformShim.isMacOS)
+              MaximizeWindowButton(),
+            if (!CodeRunnerWebMode.enabled && !PlatformShim.isMacOS)
+              CloseWindowButton(),
           ],
           title: SizedBox(
             height: 48,
@@ -44,6 +47,10 @@ class _MoveWindowArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (CodeRunnerWebMode.enabled) {
+      return child ?? Container();
+    }
+
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onPanStart: (details) {

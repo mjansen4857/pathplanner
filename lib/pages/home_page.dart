@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file/file.dart';
 import 'package:file/local.dart';
@@ -8,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/coderunner/platform/platform_shim.dart';
+import 'package:pathplanner/coderunner/web_mode.dart';
 import 'package:pathplanner/pages/nav_grid_page.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/pages/telemetry_page.dart';
@@ -54,7 +55,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Directory _pathplannerDir;
   late Directory _choreoDir;
   final SecureBookmarks? _bookmarks =
-      Platform.isMacOS ? SecureBookmarks() : null;
+      PlatformShim.isMacOS ? SecureBookmarks() : null;
   final List<FieldImage> _fieldImages = FieldImage.offialFields();
   FieldImage? _fieldImage;
   late AnimationController _animController;
@@ -78,7 +79,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _loadFieldImages().then((_) async {
       String? projectDir = widget.prefs.getString(PrefsKeys.currentProjectDir);
-      if (projectDir != null && Platform.isMacOS && fs is LocalFileSystem) {
+      if (projectDir != null && PlatformShim.isMacOS && fs is LocalFileSystem) {
         if (widget.prefs.getString(PrefsKeys.macOSBookmark) != null) {
           try {
             await _bookmarks!.resolveBookmark(
@@ -206,7 +207,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    if (Platform.isMacOS && _projectDir != null) {
+    if (PlatformShim.isMacOS && _projectDir != null) {
       _bookmarks!
           .stopAccessingSecurityScopedResource(fs.file(_projectDir!.path));
     }
@@ -272,11 +273,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 'v${widget.appVersion}',
                 style: TextStyle(color: colorScheme.onSurface),
               ),
-              IconButton(
-                icon: const Icon(Icons.open_in_new_rounded, size: 20),
-                tooltip: 'Open Project',
-                onPressed: () => _openProjectDialog(),
-              ),
+              if (!CodeRunnerWebMode.enabled)
+                IconButton(
+                  icon: const Icon(Icons.open_in_new_rounded, size: 20),
+                  tooltip: 'Open Project',
+                  onPressed: () => _openProjectDialog(),
+                ),
             ],
           ),
         ],
@@ -290,19 +292,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         icon: Icon(Icons.folder_rounded),
         label: Text('Project Browser'),
       ),
-      const SizedBox(height: 5),
-      NavigationDrawerDestination(
-        icon: Icon(
-          _getConnectedIcon(widget.telemetry.isConnected),
-          color: _getConnectedIconColor(widget.telemetry.isConnected),
+      if (!CodeRunnerWebMode.enabled) ...[
+        const SizedBox(height: 5),
+        NavigationDrawerDestination(
+          icon: Icon(
+            _getConnectedIcon(widget.telemetry.isConnected),
+            color: _getConnectedIconColor(widget.telemetry.isConnected),
+          ),
+          label: const Text('Telemetry'),
         ),
-        label: const Text('Telemetry'),
-      ),
-      const SizedBox(height: 5),
-      const NavigationDrawerDestination(
-        icon: Icon(Icons.grid_on_rounded),
-        label: Text('Navigation Grid'),
-      ),
+        const SizedBox(height: 5),
+        const NavigationDrawerDestination(
+          icon: Icon(Icons.grid_on_rounded),
+          label: Text('Navigation Grid'),
+        ),
+      ],
     ];
   }
 
@@ -437,18 +441,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   onFoldersChanged: () =>
                       _saveProjectSettingsToFile(_projectDir!),
                   simulatePath: true,
-                  watchChorDir: true,
+                  watchChorDir: !CodeRunnerWebMode.enabled,
                 ),
-                TelemetryPage(
-                  fieldImage: _fieldImage ?? FieldImage.defaultField,
-                  telemetry: widget.telemetry,
-                  prefs: widget.prefs,
-                ),
-                NavGridPage(
-                  deployDirectory: _pathplannerDir,
-                  fs: fs,
-                  fieldImage: _fieldImage ?? FieldImage.defaultField,
-                ),
+                if (!CodeRunnerWebMode.enabled)
+                  TelemetryPage(
+                    fieldImage: _fieldImage ?? FieldImage.defaultField,
+                    telemetry: widget.telemetry,
+                    prefs: widget.prefs,
+                  ),
+                if (!CodeRunnerWebMode.enabled)
+                  NavGridPage(
+                    deployDirectory: _pathplannerDir,
+                    fs: fs,
+                    fieldImage: _fieldImage ?? FieldImage.defaultField,
+                  ),
               ],
             ),
           ),
@@ -694,7 +700,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _initFromProjectDir(String projectDir) async {
     widget.prefs.setString(PrefsKeys.currentProjectDir, projectDir);
 
-    if (Platform.isMacOS) {
+    if (PlatformShim.isMacOS) {
       // Bookmark project on macos so it can be accessed again later
       String bookmark = await _bookmarks!.bookmark(fs.file(projectDir));
       widget.prefs.setString(PrefsKeys.macOSBookmark, bookmark);
@@ -742,6 +748,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadFieldImages() async {
+    if (CodeRunnerWebMode.enabled) {
+      // Custom field images are not supported in the CodeRunner web build.
+      return;
+    }
+
     Directory appDir =
         fs.directory((await getApplicationSupportDirectory()).path);
     Directory imagesDir = fs.directory(join(appDir.path, 'custom_fields'));

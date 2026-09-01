@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:pathplanner/coderunner/web_mode.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/path_constraints.dart';
@@ -538,19 +539,21 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     defaultConstraints: _getDefaultConstraints(),
                     prefs: widget.prefs,
                     fieldSizeMeters: widget.fieldImage.getFieldSizeMeters(),
-                    onRenderPath: () {
-                      if (_simTraj != null) {
-                        showDialog(
-                            context: context,
-                            builder: (context) {
-                              return TrajectoryRenderDialog(
-                                fieldImage: widget.fieldImage,
-                                prefs: widget.prefs,
-                                trajectory: _simTraj!,
-                              );
-                            });
-                      }
-                    },
+                    onRenderPath: CodeRunnerWebMode.enabled
+                        ? null
+                        : () {
+                            if (_simTraj != null) {
+                              showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return TrajectoryRenderDialog(
+                                      fieldImage: widget.fieldImage,
+                                      prefs: widget.prefs,
+                                      trajectory: _simTraj!,
+                                    );
+                                  });
+                            }
+                          },
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();

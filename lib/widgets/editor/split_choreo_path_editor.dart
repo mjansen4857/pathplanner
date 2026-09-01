@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:pathplanner/coderunner/web_mode.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/dialogs/trajectory_render_dialog.dart';
@@ -154,17 +155,19 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
                       widget.prefs.setBool(PrefsKeys.treeOnRight, _treeOnRight);
                       _controller.areas = _controller.areas.reversed.toList();
                     }),
-                    onRenderPath: () {
-                      showDialog(
-                          context: context,
-                          builder: (context) {
-                            return TrajectoryRenderDialog(
-                              fieldImage: widget.fieldImage,
-                              prefs: widget.prefs,
-                              trajectory: widget.path.trajectory,
-                            );
-                          });
-                    },
+                    onRenderPath: CodeRunnerWebMode.enabled
+                        ? null
+                        : () {
+                            showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return TrajectoryRenderDialog(
+                                    fieldImage: widget.fieldImage,
+                                    prefs: widget.prefs,
+                                    trajectory: widget.path.trajectory,
+                                  );
+                                });
+                          },
                   ),
                 ),
               ),

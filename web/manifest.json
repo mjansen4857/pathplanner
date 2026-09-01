@@ -1,11 +1,11 @@
 {
-    "name": "pathplanner",
-    "short_name": "pathplanner",
+    "name": "PathPlanner",
+    "short_name": "PathPlanner",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#2C3AAD",
+    "theme_color": "#2C3AAD",
+    "description": "FRC path planning and autonomous routine editor.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

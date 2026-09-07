@@ -5,6 +5,7 @@
 <tr><td>Double-Click on Field</td><td>Add Waypoint at Click Location</td></tr>
 <tr><td>Ctrl/⌘ + Z</td><td>Undo</td></tr>
 <tr><td>Ctrl/⌘ + Y</td><td>Redo</td></tr>
+<tr><td>Ctrl/⌘ + ,</td><td>Open Settings</td></tr>
 </table>
 
 ## UI Controls

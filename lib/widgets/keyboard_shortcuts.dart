@@ -13,6 +13,7 @@ enum BasicShortCuts {
   save,
   undo,
   redo,
+  settings,
 }
 
 bool _isPressed(
@@ -139,5 +140,17 @@ Set<LogicalKeyboardKey> shortCut(BasicShortCuts basicShortCuts) {
       return {LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.arrowRight};
     case BasicShortCuts.save:
       return {LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.keyS};
+    case BasicShortCuts.settings:
+      if (Platform.isMacOS) {
+        return {
+          LogicalKeyboardKey.meta,
+          LogicalKeyboardKey.comma,
+        };
+      }
+
+      return {
+        LogicalKeyboardKey.control,
+        LogicalKeyboardKey.comma,
+      };
   }
 }

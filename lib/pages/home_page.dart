@@ -19,6 +19,7 @@ import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/pplib_update_card.dart';
 import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -229,7 +230,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       drawer: _projectDir == null ? null : _buildDrawer(context),
       body: ScaleTransition(
         scale: _scaleAnimation,
-        child: _buildBody(context),
+        child: KeyBoardShortcuts(
+          keysToPress: shortCut(BasicShortCuts.settings),
+          onKeysPressed: _showSettingsDialog,
+          child: _buildBody(context),
+        ),
       ),
     );
   }

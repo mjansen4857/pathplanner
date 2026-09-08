@@ -39,7 +39,7 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
   late num _moi;
   late num _wheelRadius;
   late num _driveGearing;
-  late num _maxDriveSpeed;
+  late num _frictionTorqueCurrent;
   late num _wheelCOF;
   late String _driveMotor;
   late num _currentLimit;
@@ -74,9 +74,9 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
         Defaults.driveWheelRadius;
     _driveGearing =
         widget.prefs.getDouble(PrefsKeys.driveGearing) ?? Defaults.driveGearing;
-    _maxDriveSpeed =
-        widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
-        Defaults.maxDriveSpeed;
+    _frictionTorqueCurrent =
+        widget.prefs.getDouble(PrefsKeys.frictionTorqueCurrent) ??
+        Defaults.frictionTorqueCurrent;
     _wheelCOF = widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF;
     _driveMotor =
         widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor;
@@ -335,17 +335,17 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                       children: [
                         Expanded(
                           child: NumberTextField(
-                            initialValue: _maxDriveSpeed,
-                            label: 'True Max Drive Speed (M/S)',
+                            initialValue: _frictionTorqueCurrent,
+                            label: 'Friction Torque Current (Amps)',
                             minValue: 0.0,
                             onSubmitted: (value) {
                               if (value != null) {
                                 widget.prefs.setDouble(
-                                  PrefsKeys.maxDriveSpeed,
+                                  PrefsKeys.frictionTorqueCurrent,
                                   value.toDouble(),
                                 );
                                 setState(() {
-                                  _maxDriveSpeed = value;
+                                  _frictionTorqueCurrent = value;
                                   _optimalCurrentLimit =
                                       _calculateOptimalCurrentLimit();
                                   _maxAccel = _calculateMaxAccel();
@@ -842,7 +842,41 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 250),
                     child: Text(
-                      'The real max acceleration of the robot, calculated from the config values. If this is too slow, ensure that your True Max Drive Speed is correct. This should be the actual measured max speed of the robot under load.',
+                      'The calculated max speed of the robot at 12 volts, where drive motor torque balances the friction torque from the configured friction torque current.',
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.help_outline,
+                      size: 16.0,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(width: 2),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Text(
+                        'Max Linear Velocity: ${_calculateMaxVelocity().toStringAsFixed(1)}M/S',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Tooltip(
+                richMessage: WidgetSpan(
+                  alignment: PlaceholderAlignment.baseline,
+                  baseline: TextBaseline.alphabetic,
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 250),
+                    child: Text(
+                      'The max acceleration of the robot, calculated from the motor current limit, friction torque current, and wheel traction.',
                       style: TextStyle(color: colorScheme.onSurfaceVariant),
                     ),
                   ),
@@ -1391,6 +1425,18 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
     ]);
   }
 
+  num _calculateMaxVelocity() {
+    final motor = DCMotor.fromString(
+      _driveMotor,
+      1,
+    ).withReduction(_driveGearing);
+    return max(
+          motor.getSpeed(motor.getTorque(_frictionTorqueCurrent), 12.0),
+          0.0,
+        ) *
+        _wheelRadius;
+  }
+
   num _calculateOptimalCurrentLimit() {
     final int numModules = _modulePositions.length;
     const int numMotors = 1;
@@ -1398,11 +1444,7 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
       _driveMotor,
       numMotors,
     ).withReduction(_driveGearing);
-    final maxVelCurrent = min(
-      driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
-      _currentLimit * numMotors,
-    );
-    final torqueLoss = max(driveMotor.getTorque(maxVelCurrent), 0.0);
+    final torqueLoss = driveMotor.getTorque(_frictionTorqueCurrent * numMotors);
     final num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
     final num maxFrictionTorque = moduleFrictionForce * _wheelRadius;
     return ((maxFrictionTorque + torqueLoss) / driveMotor.kTNMPerAmp) /
@@ -1417,11 +1459,7 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
       numMotors,
     ).withReduction(_driveGearing);
 
-    final maxVelCurrent = min(
-      driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
-      _currentLimit * numMotors,
-    );
-    final torqueLoss = max(driveMotor.getTorque(maxVelCurrent), 0.0);
+    final torqueLoss = driveMotor.getTorque(_frictionTorqueCurrent * numMotors);
     final num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
     final maxCurrent = min(
       driveMotor.getCurrent(0.0, 12.0),
@@ -1445,11 +1483,7 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
       numMotors,
     ).withReduction(_driveGearing);
 
-    final maxVelCurrent = min(
-      driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
-      _currentLimit * numMotors,
-    );
-    final torqueLoss = max(driveMotor.getTorque(maxVelCurrent), 0.0);
+    final torqueLoss = driveMotor.getTorque(_frictionTorqueCurrent * numMotors);
     final num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
     final maxCurrent = min(
       driveMotor.getCurrent(0.0, 12.0),

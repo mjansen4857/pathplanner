@@ -61,6 +61,44 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets(
+    'project defaults are saved into waypoint fields and update only default waypoints',
+    (tester) async {
+      final directory = fs.directory(join(deployPath, 'paths'))
+        ..createSync(recursive: true);
+      final path = path2.Path.defaultPath(
+        name: 'Limits',
+        pathDir: directory.path,
+        fs: fs,
+      );
+      path.nodes.last.waypoint
+        ..useDefaultConstraints = false
+        ..maxVelocity = 1.25;
+      path.saveFile();
+      await prefs.setDouble(PrefsKeys.defaultMaxVel, 2.5);
+      await prefs.setDouble(PrefsKeys.defaultMaxAngVel, 180);
+      await prefs.setDouble(PrefsKeys.defaultMaxAngAccel, 360);
+      await pumpProject(tester);
+      Map<String, dynamic> saved() => jsonDecode(
+        fs.file(join(directory.path, 'Limits.path')).readAsStringSync(),
+      ) as Map<String, dynamic>;
+      var data = saved();
+      expect(data, isNot(contains('defaultConstraints')));
+      expect(data['nodes'][0]['waypoint']['useDefaultConstraints'], isTrue);
+      expect(data['nodes'][0]['waypoint']['maxVelocity'], 2.5);
+      expect(data['nodes'][0]['waypoint']['maxAngularVelocity'], 180);
+      expect(data['nodes'][0]['waypoint']['maxAngularAcceleration'], 360);
+      expect(data['nodes'][1]['waypoint']['maxVelocity'], 1.25);
+      await prefs.setDouble(PrefsKeys.defaultMaxVel, 4.5);
+      Path2ProjectPage.settingsUpdated = true;
+      await tester.pumpWidget(project());
+      await tester.pumpAndSettle();
+      data = saved();
+      expect(data['nodes'][0]['waypoint']['maxVelocity'], 4.5);
+      expect(data['nodes'][1]['waypoint']['maxVelocity'], 1.25);
+    },
+  );
+
   testWidgets('event manager persists rename and removal across paths', (
     tester,
   ) async {

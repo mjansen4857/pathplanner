@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:pathplanner/path2/simulation/swerve_module_state.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
@@ -15,6 +13,7 @@ class Path2RobotConfigSnapshot {
   final double wheelRadiusMeters;
   final double maxDriveVelocityMetersPerSecond;
   final double driveCurrentLimitAmps;
+  final double frictionTorqueCurrentAmps;
   final double wheelCoefficientOfFriction;
   final double motorNominalVoltage;
   final double motorStallTorqueNewtonMeters;
@@ -29,6 +28,7 @@ class Path2RobotConfigSnapshot {
     required this.wheelRadiusMeters,
     required this.maxDriveVelocityMetersPerSecond,
     required this.driveCurrentLimitAmps,
+    this.frictionTorqueCurrentAmps = 0.0,
     required this.wheelCoefficientOfFriction,
     required this.motorNominalVoltage,
     required this.motorStallTorqueNewtonMeters,
@@ -49,6 +49,8 @@ class Path2RobotConfigSnapshot {
       maxDriveVelocityMetersPerSecond: config.moduleConfig.maxDriveVelocityMPS
           .toDouble(),
       driveCurrentLimitAmps: config.moduleConfig.driveCurrentLimit.toDouble(),
+      frictionTorqueCurrentAmps: config.moduleConfig.frictionTorqueCurrent
+          .toDouble(),
       wheelCoefficientOfFriction: config.moduleConfig.wheelCOF.toDouble(),
       motorNominalVoltage: motor.nominalVoltageVolts.toDouble(),
       motorStallTorqueNewtonMeters: motor.stallTorqueNM.toDouble(),
@@ -68,6 +70,8 @@ class Path2RobotConfigSnapshot {
       maxDriveVelocityMetersPerSecond:
           (map['maxDriveVelocityMetersPerSecond'] as num).toDouble(),
       driveCurrentLimitAmps: (map['driveCurrentLimitAmps'] as num).toDouble(),
+      frictionTorqueCurrentAmps:
+          (map['frictionTorqueCurrentAmps'] as num? ?? 0.0).toDouble(),
       wheelCoefficientOfFriction: (map['wheelCoefficientOfFriction'] as num)
           .toDouble(),
       motorNominalVoltage: (map['motorNominalVoltage'] as num).toDouble(),
@@ -110,10 +114,7 @@ class Path2RobotConfigSnapshot {
   double get maxDriveVelocityRadiansPerSecond =>
       maxDriveVelocityMetersPerSecond / wheelRadiusMeters;
 
-  double get torqueLoss {
-    final current = motorCurrent(maxDriveVelocityRadiansPerSecond, 12.0);
-    return math.max(motorTorque(math.min(current, driveCurrentLimitAmps)), 0.0);
-  }
+  double get torqueLoss => motorTorque(frictionTorqueCurrentAmps);
 
   double motorCurrent(double speedRadiansPerSecond, double voltage) {
     return -speedRadiansPerSecond /
@@ -131,6 +132,7 @@ class Path2RobotConfigSnapshot {
     'wheelRadiusMeters': wheelRadiusMeters,
     'maxDriveVelocityMetersPerSecond': maxDriveVelocityMetersPerSecond,
     'driveCurrentLimitAmps': driveCurrentLimitAmps,
+    'frictionTorqueCurrentAmps': frictionTorqueCurrentAmps,
     'wheelCoefficientOfFriction': wheelCoefficientOfFriction,
     'motorNominalVoltage': motorNominalVoltage,
     'motorStallTorqueNewtonMeters': motorStallTorqueNewtonMeters,
@@ -158,6 +160,12 @@ class Path2RobotConfigSnapshot {
     if (positiveValues.any((value) => !value.isFinite || value <= 0.0)) {
       throw ArgumentError(
         'Path2 robot configuration must be finite and positive',
+      );
+    }
+    if (!frictionTorqueCurrentAmps.isFinite ||
+        frictionTorqueCurrentAmps < 0.0) {
+      throw ArgumentError(
+        'Friction torque current must be finite and non-negative',
       );
     }
     if (!motorFreeCurrentAmps.isFinite || motorFreeCurrentAmps < 0.0) {

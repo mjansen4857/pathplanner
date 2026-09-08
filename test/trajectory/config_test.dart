@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/trajectory/config.dart';
+import 'package:pathplanner/path2/simulation/simulation_state.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -39,6 +40,48 @@ void main() {
       expect(config.moduleConfig.driveCurrentLimit, 47.0);
       expect(prefs.getBool(PrefsKeys.holonomicMode), true);
       expect(prefs.getDouble(PrefsKeys.robotTrackwidth), 1.5);
+    },
+  );
+  test('friction current defaults to zero and ignores legacy speed', () async {
+    SharedPreferences.setMockInitialValues({'maxDriveSpeed': 0.1});
+    final prefs = await SharedPreferences.getInstance();
+    final config = RobotConfig.fromPrefs(prefs);
+    final module = config.moduleConfig;
+    expect(module.frictionTorqueCurrent, 0.0);
+    expect(
+      module.driveMotor.getCurrent(module.maxDriveVelocityRadPerSec, 12.0),
+      closeTo(0.0, 1e-9),
+    );
+    expect(Path2RobotConfigSnapshot.fromRobotConfig(config).torqueLoss, 0.0);
+  });
+
+  test(
+    'configured friction sets equilibrium speed and survives serialization',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        PrefsKeys.frictionTorqueCurrent: 15.0,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final config = RobotConfig.fromPrefs(prefs);
+      final module = config.moduleConfig;
+      expect(module.frictionTorqueCurrent, 15.0);
+      expect(
+        module.driveMotor.getCurrent(module.maxDriveVelocityRadPerSec, 12.0),
+        closeTo(15.0, 1e-9),
+      );
+      final snapshot = Path2RobotConfigSnapshot.fromMap(
+        Path2RobotConfigSnapshot.fromRobotConfig(config).toMap(),
+      );
+      expect(snapshot.frictionTorqueCurrentAmps, 15.0);
+      expect(
+        snapshot.torqueLoss,
+        closeTo(module.driveMotor.getTorque(15.0), 1e-9),
+      );
+      await prefs.setDouble(PrefsKeys.frictionTorqueCurrent, 30.0);
+      expect(
+        ModuleConfig.fromPrefs(prefs, 1).maxDriveVelocityMPS,
+        lessThan(module.maxDriveVelocityMPS),
+      );
     },
   );
 }

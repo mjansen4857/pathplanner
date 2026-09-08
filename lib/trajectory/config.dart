@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -72,14 +74,14 @@ class RobotConfig {
 
 class ModuleConfig {
   final num wheelRadiusMeters;
-  final num maxDriveVelocityMPS;
+  final num frictionTorqueCurrent;
   final DCMotor driveMotor;
   final num driveCurrentLimit;
   final num wheelCOF;
 
   const ModuleConfig({
     required this.wheelRadiusMeters,
-    required this.maxDriveVelocityMPS,
+    this.frictionTorqueCurrent = 0.0,
     required this.driveMotor,
     required this.driveCurrentLimit,
     required this.wheelCOF,
@@ -90,8 +92,10 @@ class ModuleConfig {
         wheelRadiusMeters:
             prefs.getDouble(PrefsKeys.driveWheelRadius) ??
             Defaults.driveWheelRadius,
-        maxDriveVelocityMPS:
-            prefs.getDouble(PrefsKeys.maxDriveSpeed) ?? Defaults.maxDriveSpeed,
+        frictionTorqueCurrent:
+            (prefs.getDouble(PrefsKeys.frictionTorqueCurrent) ??
+                Defaults.frictionTorqueCurrent) *
+            numMotors,
         driveMotor:
             DCMotor.fromString(
               prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
@@ -106,5 +110,10 @@ class ModuleConfig {
         wheelCOF: prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
       );
 
-  num get maxDriveVelocityRadPerSec => maxDriveVelocityMPS / wheelRadiusMeters;
+  num get maxDriveVelocityMPS => maxDriveVelocityRadPerSec * wheelRadiusMeters;
+
+  num get maxDriveVelocityRadPerSec => max(
+    driveMotor.getSpeed(driveMotor.getTorque(frictionTorqueCurrent), 12.0),
+    0.0,
+  );
 }

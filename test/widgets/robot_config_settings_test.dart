@@ -28,7 +28,7 @@ void main() {
       PrefsKeys.robotTrackwidth: 0.7,
       PrefsKeys.driveWheelRadius: 0.05,
       PrefsKeys.driveGearing: 5.143,
-      PrefsKeys.maxDriveSpeed: 5.4,
+      PrefsKeys.frictionTorqueCurrent: 5.4,
       PrefsKeys.wheelCOF: 1.2,
       PrefsKeys.driveMotor: 'krakenX60',
       PrefsKeys.driveCurrentLimit: 60.0,
@@ -342,7 +342,7 @@ void main() {
       expect(prefs.getDouble(PrefsKeys.driveGearing), 1.0);
     });
 
-    testWidgets('max drive speed field', (widgetTester) async {
+    testWidgets('friction torque current field', (widgetTester) async {
       await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
 
       await widgetTester.pumpWidget(
@@ -356,9 +356,14 @@ void main() {
         ),
       );
 
+      expect(find.textContaining('Max Linear Velocity:'), findsOneWidget);
+      final initialVelocity = widgetTester
+          .widget<Text>(find.textContaining('Max Linear Velocity:'))
+          .data;
+
       final textField = find.widgetWithText(
         NumberTextField,
-        'True Max Drive Speed (M/S)',
+        'Friction Torque Current (Amps)',
       );
 
       expect(textField, findsOneWidget);
@@ -367,12 +372,26 @@ void main() {
         findsOneWidget,
       );
 
-      await widgetTester.enterText(textField, '1.0');
+      await widgetTester.enterText(textField, '30.0');
       await widgetTester.testTextInput.receiveAction(TextInputAction.done);
       await widgetTester.pump();
 
+      expect(
+        widgetTester
+            .widget<Text>(find.textContaining('Max Linear Velocity:'))
+            .data,
+        isNot(initialVelocity),
+      );
+      expect(
+        widgetTester.getTopLeft(find.textContaining('Max Linear Velocity:')).dy,
+        lessThan(
+          widgetTester
+              .getTopLeft(find.textContaining('Max Linear Acceleration:'))
+              .dy,
+        ),
+      );
       expect(settingsChanged, true);
-      expect(prefs.getDouble(PrefsKeys.maxDriveSpeed), 1.0);
+      expect(prefs.getDouble(PrefsKeys.frictionTorqueCurrent), 30.0);
     });
 
     testWidgets('wheel cof text field', (widgetTester) async {

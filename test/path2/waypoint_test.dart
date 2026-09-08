@@ -1,9 +1,45 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path2/waypoint.dart';
+import 'package:pathplanner/path2/waypoint_constraints.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 
 void main() {
   group('Path 2 waypoints', () {
+    test(
+      'default selection and resolved limits survive all waypoint conversions',
+      () {
+        final waypoint = TranslationWaypoint(position: const Translation2d());
+        expect(waypoint.useDefaultConstraints, isTrue);
+        waypoint.applyDefaultConstraints(
+          const WaypointConstraints(
+            maxVelocity: 2.5,
+            maxAngularVelocity: 180,
+            maxAngularAcceleration: 360,
+          ),
+        );
+        for (final type in WaypointType.values) {
+          final converted = waypoint.convertedTo(type);
+          final restored = Waypoint.fromJson(converted.toJson());
+          expect(restored.useDefaultConstraints, isTrue);
+          expect(restored.maxVelocity, 2.5);
+          expect(restored.maxAngularVelocity, 180);
+          expect(restored.maxAngularAcceleration, 360);
+          restored.useDefaultConstraints = false;
+          expect(restored.clone().useDefaultConstraints, isFalse);
+          expect(restored.withRotation(null).useDefaultConstraints, isFalse);
+          expect(
+            Waypoint.fromJson(restored.toJson()).useDefaultConstraints,
+            isFalse,
+          );
+          expect(
+            restored.applyDefaultConstraints(const WaypointConstraints()),
+            isFalse,
+          );
+          expect(restored.maxVelocity, 2.5);
+        }
+      },
+    );
+
     test('translation waypoint round trips without handoff state', () {
       final waypoint = TranslationWaypoint(
         position: const Translation2d(1.25, 2.5),
@@ -52,6 +88,7 @@ void main() {
         'rotationOffset': 0.0,
         'unprofiled': false,
         'inheritTargetFromParent': false,
+        'useDefaultConstraints': true,
         'maxVelocity': Waypoint.defaultMaxVelocity,
         'maxAngularVelocity': Waypoint.defaultMaxAngularVelocity,
         'maxAngularAcceleration': Waypoint.defaultMaxAngularAcceleration,

@@ -1,3 +1,5 @@
+import 'package:pathplanner/path2/waypoint_constraints.dart';
+
 import 'dart:math';
 
 import 'package:pathplanner/widgets/editor/graph_editor/path_branch_event_chips.dart';
@@ -109,6 +111,7 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
         minimalWeight: 0.35,
       ),
     ];
+    if (_applyDefaultConstraints()) widget.path.saveFile();
     WidgetsBinding.instance.addPostFrameCallback((_) => _simulatePath());
   }
 
@@ -390,6 +393,9 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
                           ),
                         ),
                         child: PathGraphNodeSettingsPanel(
+                          defaultConstraints: WaypointConstraints.fromPrefs(
+                            widget.prefs,
+                          ),
                           path: widget.path,
                           node: selectedNode,
                           onEdit: _editNode,
@@ -1087,7 +1093,17 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     });
   }
 
+  bool _applyDefaultConstraints() {
+    final defaults = WaypointConstraints.fromPrefs(widget.prefs);
+    var changed = false;
+    for (final node in widget.path.nodes) {
+      changed = node.waypoint.applyDefaultConstraints(defaults) || changed;
+    }
+    return changed;
+  }
+
   void _saveAndNotify() {
+    _applyDefaultConstraints();
     widget.path.saveFile();
     widget.onPathChanged?.call();
     _simulatePath();

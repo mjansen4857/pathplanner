@@ -5,6 +5,7 @@ import 'package:pathplanner/widgets/editor/event_names_editor.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
 import 'package:pathplanner/path2/waypoint.dart';
+import 'package:pathplanner/path2/waypoint_constraints.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/graph_editor/visual_graph_editor.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -284,6 +285,7 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
   final path2.PathNode node;
   final PathNodeEdit onEdit;
   final VoidCallback onClose;
+  final WaypointConstraints defaultConstraints;
 
   const PathGraphNodeSettingsPanel({
     super.key,
@@ -291,6 +293,7 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
     required this.node,
     required this.onEdit,
     required this.onClose,
+    this.defaultConstraints = const WaypointConstraints(),
   });
 
   @override
@@ -628,9 +631,24 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                               ],
                             ),
                           ),
+                          SwitchListTile(
+                            key: ValueKey(
+                              'pathNodeUseDefaultConstraints-${node.id}',
+                            ),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Use Default Constraints'),
+                            value: waypoint.useDefaultConstraints,
+                            onChanged: (value) => onEdit(node.id, (current) {
+                              current.waypoint.useDefaultConstraints = value;
+                            }),
+                          ),
                           NumberTextField(
                             key: ValueKey('pathNodeMaxVelocity-${node.id}'),
-                            initialValue: waypoint.maxVelocity,
+                            initialValue: waypoint.useDefaultConstraints
+                                ? defaultConstraints.maxVelocity
+                                : waypoint.maxVelocity,
+                            enabled: !waypoint.useDefaultConstraints,
                             label: 'Max Velocity (m/s)',
                             minValue: 0,
                             onSubmitted: (value) {
@@ -653,7 +671,10 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                                   key: ValueKey(
                                     'pathNodeMaxAngularVelocity-${node.id}',
                                   ),
-                                  initialValue: waypoint.maxAngularVelocity,
+                                  initialValue: waypoint.useDefaultConstraints
+                                      ? defaultConstraints.maxAngularVelocity
+                                      : waypoint.maxAngularVelocity,
+                                  enabled: !waypoint.useDefaultConstraints,
                                   label: 'Max Angular Vel. (deg/s)',
                                   minValue: 0,
                                   arrowKeyIncrement: 1,
@@ -679,7 +700,11 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                                   key: ValueKey(
                                     'pathNodeMaxAngularAcceleration-${node.id}',
                                   ),
-                                  initialValue: waypoint.maxAngularAcceleration,
+                                  initialValue: waypoint.useDefaultConstraints
+                                      ? defaultConstraints
+                                            .maxAngularAcceleration
+                                      : waypoint.maxAngularAcceleration,
+                                  enabled: !waypoint.useDefaultConstraints,
                                   label: 'Max Angular Acc. (deg/s²)',
                                   minValue: 0,
                                   arrowKeyIncrement: 1,
@@ -702,7 +727,27 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                             ],
                           ),
                           if (isLeaf) ...[
-                            const SizedBox(height: 8),
+                            Padding(
+                              key: ValueKey(
+                                'pathNodeToleranceSection-${node.id}',
+                              ),
+                              padding: const EdgeInsets.only(top: 14, bottom: 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Tolerance',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(child: Divider()),
+                                ],
+                              ),
+                            ),
                             Row(
                               children: [
                                 Expanded(

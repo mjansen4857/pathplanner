@@ -26,7 +26,7 @@ void main() {
         bumperOffset: const Translation2d(),
         moduleConfig: ModuleConfig(
           wheelRadiusMeters: 0.048,
-          maxDriveVelocityMPS: 5,
+
           driveMotor: DCMotor.getKrakenX60(1).withReduction(5.14),
           driveCurrentLimit: 60,
           wheelCOF: 1.2,

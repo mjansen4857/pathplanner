@@ -58,6 +58,14 @@ void main() {
       'Max Velocity (M/S)',
     );
 
+    expect(
+      find.widgetWithText(NumberTextField, 'Max Acceleration (M/S²)'),
+      findsNothing,
+    );
+    expect(
+      find.widgetWithText(NumberTextField, 'Nominal Voltage (Volts)'),
+      findsNothing,
+    );
     expect(textField, findsOneWidget);
     expect(
       find.descendant(of: textField, matching: find.text('1.000')),
@@ -70,43 +78,6 @@ void main() {
 
     expect(settingsChanged, true);
     expect(prefs.getDouble(PrefsKeys.defaultMaxVel), 1.1);
-  });
-
-  testWidgets('default max accel text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
-
-    await widgetTester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: AppSettings(
-            onSettingsChanged: () => settingsChanged = true,
-            onFieldSelected: (value) => selectedField = value,
-            fieldImages: FieldImage.offialFields(),
-            selectedField: FieldImage.official(OfficialField.chargedUp),
-            prefs: prefs,
-            onTeamColorChanged: (value) => teamColor = value,
-          ),
-        ),
-      ),
-    );
-
-    final textField = find.widgetWithText(
-      NumberTextField,
-      'Max Acceleration (M/S²)',
-    );
-
-    expect(textField, findsOneWidget);
-    expect(
-      find.descendant(of: textField, matching: find.text('2.000')),
-      findsOneWidget,
-    );
-
-    await widgetTester.enterText(textField, '2.2');
-    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
-    await widgetTester.pump();
-
-    expect(settingsChanged, true);
-    expect(prefs.getDouble(PrefsKeys.defaultMaxAccel), 2.2);
   });
 
   testWidgets('default max ang vel text field', (widgetTester) async {
@@ -181,43 +152,6 @@ void main() {
 
     expect(settingsChanged, true);
     expect(prefs.getDouble(PrefsKeys.defaultMaxAngAccel), 4.4);
-  });
-
-  testWidgets('default voltage text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
-
-    await widgetTester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: AppSettings(
-            onSettingsChanged: () => settingsChanged = true,
-            onFieldSelected: (value) => selectedField = value,
-            fieldImages: FieldImage.offialFields(),
-            selectedField: FieldImage.official(OfficialField.chargedUp),
-            prefs: prefs,
-            onTeamColorChanged: (value) => teamColor = value,
-          ),
-        ),
-      ),
-    );
-
-    final textField = find.widgetWithText(
-      NumberTextField,
-      'Nominal Voltage (Volts)',
-    );
-
-    expect(textField, findsOneWidget);
-    expect(
-      find.descendant(of: textField, matching: find.text('12.000')),
-      findsOneWidget,
-    );
-
-    await widgetTester.enterText(textField, '10.0');
-    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
-    await widgetTester.pump();
-
-    expect(settingsChanged, true);
-    expect(prefs.getDouble(PrefsKeys.defaultNominalVoltage), 10.0);
   });
 
   testWidgets('field image dropdown', (widgetTester) async {

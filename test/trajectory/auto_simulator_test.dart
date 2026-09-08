@@ -92,7 +92,8 @@ void main() {
         wheelRadiusMeters: 0.048,
         driveMotor: DCMotor.getKrakenX60(1).withReduction(5.12),
         driveCurrentLimit: 60,
-        maxDriveVelocityMPS: 5.4,
+        // Preserves the fixture's approximately 5.4 m/s loaded speed.
+        frictionTorqueCurrent: 32.3,
         wheelCOF: 1.2,
       ),
       moduleLocations: const [

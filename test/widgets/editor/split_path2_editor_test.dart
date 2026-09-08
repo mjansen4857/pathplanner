@@ -17,6 +17,7 @@ import 'package:pathplanner/widgets/editor/path2_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/split_path2_editor.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
@@ -427,6 +428,34 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets(
+    'waypoint constraint toggle enables manual edits and supports undo',
+    (tester) async {
+      await prefs.setDouble(PrefsKeys.defaultMaxVel, 2.5);
+      await pumpEditor(tester);
+      final id = path.nodes.first.id;
+      await tester.tap(find.byKey(ValueKey('graphNode-$id')));
+      await tester.pump();
+      final toggle = find.byKey(ValueKey('pathNodeUseDefaultConstraints-$id'));
+      final field = find.byKey(ValueKey('pathNodeMaxVelocity-$id'));
+      expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+      expect(tester.widget<NumberTextField>(field).enabled, isFalse);
+      expect(path.nodeById(id)!.waypoint.maxVelocity, 2.5);
+      await tester.ensureVisible(toggle);
+      await tester.tap(toggle);
+      await tester.pump();
+      expect(path.nodeById(id)!.waypoint.useDefaultConstraints, isFalse);
+      expect(tester.widget<NumberTextField>(field).enabled, isTrue);
+      undoStack.undo();
+      await tester.pump();
+      expect(path.nodeById(id)!.waypoint.useDefaultConstraints, isTrue);
+      expect(tester.widget<NumberTextField>(field).enabled, isFalse);
+      undoStack.redo();
+      await tester.pump();
+      expect(path.nodeById(id)!.waypoint.useDefaultConstraints, isFalse);
+    },
+  );
 
   testWidgets('selected pose node opens its settings in a floating panel', (
     tester,

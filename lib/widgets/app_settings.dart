@@ -38,10 +38,8 @@ class AppSettings extends StatefulWidget {
 
 class _AppSettingsState extends State<AppSettings> {
   late num _defaultMaxVel;
-  late num _defaultMaxAccel;
   late num _defaultMaxAngVel;
   late num _defaultMaxAngAccel;
-  late num _defaultNominalVoltage;
   late FieldImage _selectedField;
   late Color _teamColor;
   late String _pplibClientHost;
@@ -53,18 +51,12 @@ class _AppSettingsState extends State<AppSettings> {
     _defaultMaxVel =
         widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
         Defaults.defaultMaxVel;
-    _defaultMaxAccel =
-        widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
-        Defaults.defaultMaxAccel;
     _defaultMaxAngVel =
         widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
         Defaults.defaultMaxAngVel;
     _defaultMaxAngAccel =
         widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
         Defaults.defaultMaxAngAccel;
-    _defaultNominalVoltage =
-        widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ??
-        Defaults.defaultNominalVoltage;
     // PathPlanner's active editor only supports swerve robots. Keep this
     // compatibility preference normalized because robot-side settings readers
     // still expect the key to be present.
@@ -102,26 +94,6 @@ class _AppSettingsState extends State<AppSettings> {
                       );
                       setState(() {
                         _defaultMaxVel = value;
-                      });
-                    }
-                    widget.onSettingsChanged();
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: NumberTextField(
-                  initialValue: _defaultMaxAccel,
-                  label: 'Max Acceleration (M/S²)',
-                  minValue: 0.1,
-                  onSubmitted: (value) {
-                    if (value != null) {
-                      widget.prefs.setDouble(
-                        PrefsKeys.defaultMaxAccel,
-                        value.toDouble(),
-                      );
-                      setState(() {
-                        _defaultMaxAccel = value;
                       });
                     }
                     widget.onSettingsChanged();
@@ -168,36 +140,6 @@ class _AppSettingsState extends State<AppSettings> {
                           );
                           setState(() {
                             _defaultMaxAngAccel = value;
-                          });
-                        }
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: NumberTextField(
-                      initialValue: _defaultNominalVoltage,
-                      label: 'Nominal Voltage (Volts)',
-                      minValue: 6.0,
-                      maxValue: 13.0,
-                      arrowKeyIncrement: 0.1,
-                      onSubmitted: (value) {
-                        if (value != null) {
-                          widget.prefs.setDouble(
-                            PrefsKeys.defaultNominalVoltage,
-                            value.toDouble(),
-                          );
-                          setState(() {
-                            _defaultNominalVoltage = value;
                           });
                         }
                         widget.onSettingsChanged();

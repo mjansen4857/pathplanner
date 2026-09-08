@@ -59,6 +59,11 @@ class DCMotor {
     return currentAmps * kTNMPerAmp;
   }
 
+  /// Angular speed at the given output torque and applied voltage.
+  num getSpeed(num torqueNM, num voltage) {
+    return (voltage - (torqueNM / kTNMPerAmp) * rOhms) * kVRadPerSecPerVolt;
+  }
+
   DCMotor withReduction(num gearboxReduction) {
     return DCMotor(
       nominalVoltageVolts,

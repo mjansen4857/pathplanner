@@ -541,11 +541,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
     _setPrefDoubleFromJSON(
       json,
-      PrefsKeys.defaultMaxAccel,
-      Defaults.defaultMaxAccel,
-    );
-    _setPrefDoubleFromJSON(
-      json,
       PrefsKeys.defaultMaxAngVel,
       Defaults.defaultMaxAngVel,
     );
@@ -553,11 +548,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       json,
       PrefsKeys.defaultMaxAngAccel,
       Defaults.defaultMaxAngAccel,
-    );
-    _setPrefDoubleFromJSON(
-      json,
-      PrefsKeys.defaultNominalVoltage,
-      Defaults.defaultNominalVoltage,
     );
     _setPrefDoubleFromJSON(json, PrefsKeys.robotMass, Defaults.robotMass);
     _setPrefDoubleFromJSON(json, PrefsKeys.robotMOI, Defaults.robotMOI);
@@ -574,8 +564,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _setPrefDoubleFromJSON(json, PrefsKeys.driveGearing, Defaults.driveGearing);
     _setPrefDoubleFromJSON(
       json,
-      PrefsKeys.maxDriveSpeed,
-      Defaults.maxDriveSpeed,
+      PrefsKeys.frictionTorqueCurrent,
+      Defaults.frictionTorqueCurrent,
     );
     widget.prefs.setString(
       PrefsKeys.driveMotor,
@@ -649,18 +639,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.defaultMaxVel:
           widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
           Defaults.defaultMaxVel,
-      PrefsKeys.defaultMaxAccel:
-          widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
-          Defaults.defaultMaxAccel,
       PrefsKeys.defaultMaxAngVel:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
           Defaults.defaultMaxAngVel,
       PrefsKeys.defaultMaxAngAccel:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
-          Defaults.defaultMaxAccel,
-      PrefsKeys.defaultNominalVoltage:
-          widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ??
-          Defaults.defaultNominalVoltage,
+          Defaults.defaultMaxAngAccel,
       PrefsKeys.robotMass:
           widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
       PrefsKeys.robotMOI:
@@ -674,9 +658,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.driveGearing:
           widget.prefs.getDouble(PrefsKeys.driveGearing) ??
           Defaults.driveGearing,
-      PrefsKeys.maxDriveSpeed:
-          widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
-          Defaults.maxDriveSpeed,
+      PrefsKeys.frictionTorqueCurrent:
+          widget.prefs.getDouble(PrefsKeys.frictionTorqueCurrent) ??
+          Defaults.frictionTorqueCurrent,
       PrefsKeys.driveMotor:
           widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
       PrefsKeys.driveCurrentLimit:

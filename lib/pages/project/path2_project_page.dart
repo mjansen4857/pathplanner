@@ -1,3 +1,4 @@
+import 'package:pathplanner/path2/waypoint_constraints.dart';
 import 'package:collection/collection.dart';
 import 'package:file/file.dart';
 import 'package:material_ui/material_ui.dart';
@@ -137,6 +138,7 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
     );
 
     for (final path in paths) {
+      _syncDefaultConstraints(path);
       if (!_pathFolders.contains(path.folder)) {
         path.folder = null;
       }
@@ -158,6 +160,7 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
         name: 'Example Path',
         fs: fs,
       );
+      _syncDefaultConstraints(example);
       example.saveFile();
       paths.add(example);
       reservedPaths.add(example.name);
@@ -191,9 +194,12 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    // Project settings remain available, but Path2 has no global-constraint
-    // migration to apply.
-    Path2ProjectPage.settingsUpdated = false;
+    if (Path2ProjectPage.settingsUpdated) {
+      for (final path in _paths) {
+        _syncDefaultConstraints(path);
+      }
+      Path2ProjectPage.settingsUpdated = false;
+    }
 
     final colorScheme = Theme.of(context).colorScheme;
     return Stack(
@@ -716,6 +722,15 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
     );
   }
 
+  void _syncDefaultConstraints(path2.Path path) {
+    final defaults = WaypointConstraints.fromPrefs(widget.prefs);
+    var changed = false;
+    for (final node in path.nodes) {
+      changed = node.waypoint.applyDefaultConstraints(defaults) || changed;
+    }
+    if (changed) path.saveFile();
+  }
+
   void _createPath() {
     final name = _uniqueName('New Path', _reservedPathNames);
     final path = path2.Path.defaultPath(
@@ -723,7 +738,9 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
       name: name,
       fs: fs,
       folder: _pathFolder,
-    )..saveFile();
+    );
+    _syncDefaultConstraints(path);
+    path.saveFile();
     setState(() {
       _paths.add(path);
       _reservedPathNames.add(name);

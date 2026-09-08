@@ -164,17 +164,9 @@ class PathPlannerTrajectory {
     states[0].timeSeconds = 0.0;
     states[0].fieldSpeeds = startingSpeeds;
 
-    num maxVelCurrent = min(
-      robotConfig.moduleConfig.driveMotor.getCurrent(
-        robotConfig.moduleConfig.maxDriveVelocityRadPerSec,
-        12.0,
-      ),
-      robotConfig.moduleConfig.driveCurrentLimit,
+    final torqueLoss = robotConfig.moduleConfig.driveMotor.getTorque(
+      robotConfig.moduleConfig.frictionTorqueCurrent,
     );
-    num torqueLoss = robotConfig.moduleConfig.driveMotor.getTorque(
-      maxVelCurrent,
-    );
-    torqueLoss = max(torqueLoss, 0.0);
 
     num moduleFrictionForce =
         (robotConfig.moduleConfig.wheelCOF * (robotConfig.massKG * 9.8)) /

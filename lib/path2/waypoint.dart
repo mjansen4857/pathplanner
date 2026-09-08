@@ -3,16 +3,19 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/path2/waypoint_constraints.dart';
 
 enum WaypointType { pose, translation, pointTowards }
 
 abstract class Waypoint {
-  static const num defaultMaxVelocity = 4.0;
-  static const num defaultMaxAngularVelocity = 360.0;
-  static const num defaultMaxAngularAcceleration = 720.0;
+  static const num defaultMaxVelocity = Defaults.defaultMaxVel;
+  static const num defaultMaxAngularVelocity = Defaults.defaultMaxAngVel;
+  static const num defaultMaxAngularAcceleration = Defaults.defaultMaxAngAccel;
 
   List<String> events;
   Translation2d position;
+  bool useDefaultConstraints;
   num maxVelocity;
   num maxAngularVelocity;
   num maxAngularAcceleration;
@@ -22,6 +25,7 @@ abstract class Waypoint {
   Waypoint({
     required this.position,
     List<String> events = const [],
+    this.useDefaultConstraints = true,
     this.maxVelocity = defaultMaxVelocity,
     this.maxAngularVelocity = defaultMaxAngularVelocity,
     this.maxAngularAcceleration = defaultMaxAngularAcceleration,
@@ -37,6 +41,19 @@ abstract class Waypoint {
       maxAngularAcceleration,
       'maxAngularAcceleration',
     );
+  }
+
+  /// Materialize project defaults so saved waypoints are self-contained.
+  bool applyDefaultConstraints(WaypointConstraints defaults) {
+    if (!useDefaultConstraints) return false;
+    final changed =
+        maxVelocity != defaults.maxVelocity ||
+        maxAngularVelocity != defaults.maxAngularVelocity ||
+        maxAngularAcceleration != defaults.maxAngularAcceleration;
+    maxVelocity = defaults.maxVelocity;
+    maxAngularVelocity = defaults.maxAngularVelocity;
+    maxAngularAcceleration = defaults.maxAngularAcceleration;
+    return changed;
   }
 
   bool get isDragging => _isDragging;
@@ -83,6 +100,7 @@ abstract class Waypoint {
         rotation: this is PoseWaypoint
             ? (this as PoseWaypoint).rotation
             : const Rotation2d(),
+        useDefaultConstraints: useDefaultConstraints,
         maxVelocity: maxVelocity,
         maxAngularVelocity: maxAngularVelocity,
         maxAngularAcceleration: maxAngularAcceleration,
@@ -90,6 +108,7 @@ abstract class Waypoint {
       WaypointType.translation => TranslationWaypoint(
         position: position,
         events: events,
+        useDefaultConstraints: useDefaultConstraints,
         maxVelocity: maxVelocity,
         maxAngularVelocity: maxAngularVelocity,
         maxAngularAcceleration: maxAngularAcceleration,
@@ -109,6 +128,7 @@ abstract class Waypoint {
         inheritTargetFromParent: this is PointTowardsWaypoint
             ? (this as PointTowardsWaypoint).inheritTargetFromParent
             : false,
+        useDefaultConstraints: useDefaultConstraints,
         maxVelocity: maxVelocity,
         maxAngularVelocity: maxAngularVelocity,
         maxAngularAcceleration: maxAngularAcceleration,
@@ -121,6 +141,7 @@ abstract class Waypoint {
       return TranslationWaypoint(
         position: position,
         events: events,
+        useDefaultConstraints: useDefaultConstraints,
         maxVelocity: maxVelocity,
         maxAngularVelocity: maxAngularVelocity,
         maxAngularAcceleration: maxAngularAcceleration,
@@ -131,6 +152,7 @@ abstract class Waypoint {
       position: position,
       events: events,
       rotation: rotation,
+      useDefaultConstraints: useDefaultConstraints,
       maxVelocity: maxVelocity,
       maxAngularVelocity: maxAngularVelocity,
       maxAngularAcceleration: maxAngularAcceleration,
@@ -158,6 +180,7 @@ abstract class Waypoint {
       'type': type,
       'events': List<String>.of(events),
       'position': position.toJson(),
+      'useDefaultConstraints': useDefaultConstraints,
       'maxVelocity': maxVelocity,
       'maxAngularVelocity': maxAngularVelocity,
       'maxAngularAcceleration': maxAngularAcceleration,
@@ -167,6 +190,7 @@ abstract class Waypoint {
   bool commonEquals(Waypoint other) {
     return const ListEquality<String>().equals(other.events, events) &&
         other.position == position &&
+        other.useDefaultConstraints == useDefaultConstraints &&
         other.maxVelocity == maxVelocity &&
         other.maxAngularVelocity == maxAngularVelocity &&
         other.maxAngularAcceleration == maxAngularAcceleration;
@@ -175,6 +199,7 @@ abstract class Waypoint {
   int get commonHashCode => Object.hash(
     const ListEquality<String>().hash(events),
     position,
+    useDefaultConstraints,
     maxVelocity,
     maxAngularVelocity,
     maxAngularAcceleration,
@@ -185,6 +210,7 @@ class TranslationWaypoint extends Waypoint {
   TranslationWaypoint({
     required super.position,
     super.events,
+    super.useDefaultConstraints,
     super.maxVelocity,
     super.maxAngularVelocity,
     super.maxAngularAcceleration,
@@ -194,6 +220,11 @@ class TranslationWaypoint extends Waypoint {
     : this(
         position: _positionFromJson(json),
         events: _eventsFromJson(json['events']),
+        useDefaultConstraints: _optionalBool(
+          json,
+          'useDefaultConstraints',
+          true,
+        ),
         maxVelocity: _optionalNonNegativeNum(
           json,
           'maxVelocity',
@@ -219,6 +250,7 @@ class TranslationWaypoint extends Waypoint {
     return TranslationWaypoint(
       position: position,
       events: events,
+      useDefaultConstraints: useDefaultConstraints,
       maxVelocity: maxVelocity,
       maxAngularVelocity: maxAngularVelocity,
       maxAngularAcceleration: maxAngularAcceleration,
@@ -243,6 +275,7 @@ class PoseWaypoint extends Waypoint {
     required super.position,
     super.events,
     required this.rotation,
+    super.useDefaultConstraints,
     super.maxVelocity,
     super.maxAngularVelocity,
     super.maxAngularAcceleration,
@@ -255,6 +288,11 @@ class PoseWaypoint extends Waypoint {
         position: _positionFromJson(json),
         events: _eventsFromJson(json['events']),
         rotation: _rotationFromJson(json),
+        useDefaultConstraints: _optionalBool(
+          json,
+          'useDefaultConstraints',
+          true,
+        ),
         maxVelocity: _optionalNonNegativeNum(
           json,
           'maxVelocity',
@@ -281,6 +319,7 @@ class PoseWaypoint extends Waypoint {
       position: position,
       events: events,
       rotation: rotation,
+      useDefaultConstraints: useDefaultConstraints,
       maxVelocity: maxVelocity,
       maxAngularVelocity: maxAngularVelocity,
       maxAngularAcceleration: maxAngularAcceleration,
@@ -317,6 +356,7 @@ class PointTowardsWaypoint extends Waypoint {
     this.rotationOffset = const Rotation2d(),
     this.unprofiled = false,
     this.inheritTargetFromParent = false,
+    super.useDefaultConstraints,
     super.maxVelocity,
     super.maxAngularVelocity,
     super.maxAngularAcceleration,
@@ -343,6 +383,11 @@ class PointTowardsWaypoint extends Waypoint {
           json,
           'inheritTargetFromParent',
           false,
+        ),
+        useDefaultConstraints: _optionalBool(
+          json,
+          'useDefaultConstraints',
+          true,
         ),
         maxVelocity: _optionalNonNegativeNum(
           json,
@@ -379,6 +424,7 @@ class PointTowardsWaypoint extends Waypoint {
       rotationOffset: rotationOffset,
       unprofiled: unprofiled,
       inheritTargetFromParent: inheritTargetFromParent,
+      useDefaultConstraints: useDefaultConstraints,
       maxVelocity: maxVelocity,
       maxAngularVelocity: maxAngularVelocity,
       maxAngularAcceleration: maxAngularAcceleration,

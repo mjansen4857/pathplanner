@@ -31,6 +31,8 @@ class VisualGraphBranch {
   final String sourceId;
   final String targetId;
   final Widget badge;
+  final Size badgeSize;
+  final bool customBadge;
   final Color? color;
 
   const VisualGraphBranch({
@@ -38,6 +40,8 @@ class VisualGraphBranch {
     required this.sourceId,
     required this.targetId,
     required this.badge,
+    this.badgeSize = const Size(_branchBadgeWidth, _branchBadgeHeight),
+    this.customBadge = false,
     this.color,
   });
 }
@@ -434,8 +438,8 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
       bounds = bounds.expandToInclude(
         Rect.fromCenter(
           center: branch.badgeCenter,
-          width: _branchBadgeWidth,
-          height: _branchBadgeHeight,
+          width: branch.branch.badgeSize.width,
+          height: branch.branch.badgeSize.height,
         ),
       );
     }
@@ -530,32 +534,38 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
                       for (final layout in branchLayouts)
                         Positioned(
                           key: ValueKey('graphBranchBadge-${layout.branch.id}'),
-                          left: layout.badgeCenter.dx - _branchBadgeWidth / 2,
-                          top: layout.badgeCenter.dy - _branchBadgeHeight / 2,
-                          width: _branchBadgeWidth,
-                          height: _branchBadgeHeight,
-                          child: Center(
-                            child: Material(
-                              color: colorScheme.surfaceContainerHighest,
-                              elevation: 2,
-                              borderRadius: BorderRadius.circular(14),
-                              clipBehavior: Clip.antiAlias,
-                              child: InkWell(
-                                onTapDown: (details) =>
-                                    widget.onBranchTap?.call(
-                                      layout.branch.id,
-                                      details.globalPosition,
+                          left:
+                              layout.badgeCenter.dx -
+                              layout.branch.badgeSize.width / 2,
+                          top:
+                              layout.badgeCenter.dy -
+                              layout.branch.badgeSize.height / 2,
+                          width: layout.branch.badgeSize.width,
+                          height: layout.branch.badgeSize.height,
+                          child: layout.branch.customBadge
+                              ? layout.branch.badge
+                              : Center(
+                                  child: Material(
+                                    color: colorScheme.surfaceContainerHighest,
+                                    elevation: 2,
+                                    borderRadius: BorderRadius.circular(14),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: InkWell(
+                                      onTapDown: (details) =>
+                                          widget.onBranchTap?.call(
+                                            layout.branch.id,
+                                            details.globalPosition,
+                                          ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 9,
+                                          vertical: 5,
+                                        ),
+                                        child: layout.branch.badge,
+                                      ),
                                     ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 9,
-                                    vertical: 5,
                                   ),
-                                  child: layout.branch.badge,
                                 ),
-                              ),
-                            ),
-                          ),
                         ),
                       for (final node in widget.nodes)
                         Positioned(
@@ -647,12 +657,13 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
           points,
           nodeRects,
           occupiedBadgeRects,
+          branch.badgeSize,
         );
         occupiedBadgeRects.add(
           Rect.fromCenter(
             center: badgeCenter,
-            width: _branchBadgeWidth,
-            height: _branchBadgeHeight,
+            width: branch.badgeSize.width,
+            height: branch.badgeSize.height,
           ),
         );
         layouts.add(_BranchLayout(branch, points, badgeCenter));
@@ -676,7 +687,12 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
         continue;
       }
       while (result.length >= 2 &&
-          _pointsAreCollinear(result[result.length - 2], result.last, point)) {
+          _pointsAreCollinear(result[result.length - 2], result.last, point) &&
+          (result.last - result[result.length - 2]).dx *
+                      (point - result.last).dx +
+                  (result.last - result[result.length - 2]).dy *
+                      (point - result.last).dy >=
+              0) {
         result.removeLast();
       }
       result.add(point);
@@ -692,6 +708,7 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
     List<Offset> points,
     List<Rect> nodeRects,
     List<Rect> occupiedBadgeRects,
+    Size badgeSize,
   ) {
     final candidates = <({Offset point, double distanceFromMiddle})>[];
     final totalLength = _polylineLength(points);
@@ -715,8 +732,8 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
     for (final candidate in candidates) {
       final rect = Rect.fromCenter(
         center: candidate.point,
-        width: _branchBadgeWidth,
-        height: _branchBadgeHeight,
+        width: badgeSize.width,
+        height: badgeSize.height,
       );
       if (nodeRects.every((node) => !rect.overlaps(node.inflate(4))) &&
           occupiedBadgeRects.every(
@@ -857,8 +874,8 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
     if (_branchLayouts().any(
       (layout) => Rect.fromCenter(
         center: layout.badgeCenter,
-        width: _branchBadgeWidth,
-        height: _branchBadgeHeight,
+        width: layout.branch.badgeSize.width,
+        height: layout.branch.badgeSize.height,
       ).contains(scenePosition),
     )) {
       return;

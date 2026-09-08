@@ -360,14 +360,55 @@ class Path2SimulationMarkerActivation {
   };
 }
 
+/// A transient first-match location for one branch event assignment.
+class Path2BranchEventMarker {
+  final String branchId;
+  final int eventIndex;
+  final String name;
+  final double timeSeconds;
+  final Pose2d pose;
+
+  const Path2BranchEventMarker({
+    required this.branchId,
+    required this.eventIndex,
+    required this.name,
+    required this.timeSeconds,
+    required this.pose,
+  });
+
+  factory Path2BranchEventMarker.fromMap(Map<String, dynamic> map) =>
+      Path2BranchEventMarker(
+        branchId: map['branchId'] as String,
+        eventIndex: (map['eventIndex'] as num).toInt(),
+        name: map['name'] as String,
+        timeSeconds: (map['timeSeconds'] as num).toDouble(),
+        pose: Pose2d(
+          Translation2d((map['x'] as num), (map['y'] as num)),
+          Rotation2d.fromRadians(map['rotation'] as num),
+        ),
+      );
+  Map<String, dynamic> toMap() => {
+    'branchId': branchId,
+    'eventIndex': eventIndex,
+    'name': name,
+    'timeSeconds': timeSeconds,
+    'x': pose.translation.x,
+    'y': pose.translation.y,
+    'rotation': pose.rotation.radians,
+  };
+}
+
 class Path2SimulationResult {
   final List<Path2SimulationSample> samples;
   final List<Path2SimulationMarkerActivation> markerActivations;
+  final List<Path2BranchEventMarker> branchEventMarkers;
 
   Path2SimulationResult(
     List<Path2SimulationSample> samples, {
     List<Path2SimulationMarkerActivation> markerActivations = const [],
+    List<Path2BranchEventMarker> branchEventMarkers = const [],
   }) : samples = List.unmodifiable(samples),
+       branchEventMarkers = List.unmodifiable(branchEventMarkers),
        markerActivations = List.unmodifiable(markerActivations) {
     if (samples.isEmpty) {
       throw ArgumentError('A simulation result requires at least one sample');
@@ -409,6 +450,13 @@ class Path2SimulationResult {
             ),
           )
           .toList(growable: false),
+      branchEventMarkers: (map['branchEventMarkers'] as List? ?? [])
+          .map(
+            (value) => Path2BranchEventMarker.fromMap(
+              Map<String, dynamic>.from(value as Map),
+            ),
+          )
+          .toList(),
       markerActivations:
           (map['markerActivations'] as List<dynamic>? ?? const [])
               .map(
@@ -460,6 +508,9 @@ class Path2SimulationResult {
 
   Map<String, dynamic> toMap() => {
     'samples': samples.map((sample) => sample.toMap()).toList(growable: false),
+    'branchEventMarkers': branchEventMarkers
+        .map((marker) => marker.toMap())
+        .toList(),
     'markerActivations': markerActivations
         .map((activation) => activation.toMap())
         .toList(growable: false),

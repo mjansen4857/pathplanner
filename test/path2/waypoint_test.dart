@@ -45,6 +45,7 @@ void main() {
       expect(waypoint.inheritTargetFromParent, isFalse);
       expect(Waypoint.fromJson(waypoint.toJson()), waypoint);
       expect(waypoint.toJson(), {
+        'events': <String>[],
         'type': 'pointTowards',
         'position': {'x': 1.25, 'y': -2.5},
         'targetPosition': {'x': -3.0, 'y': 4.5},

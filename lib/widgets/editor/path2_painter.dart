@@ -128,7 +128,53 @@ class Path2Painter extends CustomPainter {
     if (startingPose != null) {
       _paintAutoStartingPose(canvas, startingPose);
     }
+    _paintBranchEvents(canvas);
     _paintSimulationPreviews(canvas);
+  }
+
+  void _paintBranchEvents(Canvas canvas) {
+    final groups = <Offset, List<String>>{};
+    for (final simulation in simulations) {
+      for (final marker in simulation.branchEventMarkers) {
+        final point = PathPainterUtil.pointToPixelOffset(
+          marker.pose.translation,
+          scale,
+          fieldImage,
+        );
+        groups.putIfAbsent(point, () => []).add(marker.name);
+      }
+    }
+    for (final entry in groups.entries) {
+      final point = entry.key;
+      final symbol = Path()
+        ..moveTo(point.dx, point.dy - 7)
+        ..lineTo(point.dx + 7, point.dy)
+        ..lineTo(point.dx, point.dy + 7)
+        ..lineTo(point.dx - 7, point.dy)
+        ..close();
+      canvas.drawPath(symbol, Paint()..color = colorScheme.tertiary);
+      canvas.drawPath(
+        symbol,
+        Paint()
+          ..color = colorScheme.onTertiary
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
+      if (!simple) {
+        final text = TextPainter(
+          text: TextSpan(
+            text: entry.value.join(', '),
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              backgroundColor: colorScheme.surface,
+              fontSize: 12,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: 220);
+        text.paint(canvas, point + const Offset(10, -8));
+      }
+    }
   }
 
   void _paintSimulationTraces(Canvas canvas) {

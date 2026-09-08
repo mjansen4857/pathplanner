@@ -1076,10 +1076,18 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
     showDialog<void>(
       context: context,
       builder: (context) => ProjectEventsDialog(
-        onEventRenamed: (_, __) => setState(() {}),
-        onEventDeleted: (_) => setState(() {}),
+        onEventRenamed: (oldName, newName) =>
+            _replaceEventName(oldName, newName),
+        onEventDeleted: (name) => _replaceEventName(name, null),
       ),
     );
+  }
+
+  void _replaceEventName(String oldName, String? newName) {
+    for (final path in _paths) {
+      if (path.replaceEventName(oldName, newName)) path.saveFile();
+    }
+    setState(() {});
   }
 
   void _showConditionsDialog() {

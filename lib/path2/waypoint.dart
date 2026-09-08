@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
+
 import 'package:pathplanner/util/wpimath/geometry.dart';
 
 enum WaypointType { pose, translation, pointTowards }
@@ -9,6 +11,7 @@ abstract class Waypoint {
   static const num defaultMaxAngularVelocity = 360.0;
   static const num defaultMaxAngularAcceleration = 720.0;
 
+  List<String> events;
   Translation2d position;
   num maxVelocity;
   num maxAngularVelocity;
@@ -18,10 +21,14 @@ abstract class Waypoint {
 
   Waypoint({
     required this.position,
+    List<String> events = const [],
     this.maxVelocity = defaultMaxVelocity,
     this.maxAngularVelocity = defaultMaxAngularVelocity,
     this.maxAngularAcceleration = defaultMaxAngularAcceleration,
-  }) {
+  }) : events = List.of(events) {
+    if (events.any((name) => name.trim().isEmpty)) {
+      throw ArgumentError('Event names must be nonempty');
+    }
     _validateFinite(position.x, 'position.x');
     _validateFinite(position.y, 'position.y');
     _validateNonNegativeFinite(maxVelocity, 'maxVelocity');
@@ -72,6 +79,7 @@ abstract class Waypoint {
     return switch (type) {
       WaypointType.pose => PoseWaypoint(
         position: position,
+        events: events,
         rotation: this is PoseWaypoint
             ? (this as PoseWaypoint).rotation
             : const Rotation2d(),
@@ -81,12 +89,14 @@ abstract class Waypoint {
       ),
       WaypointType.translation => TranslationWaypoint(
         position: position,
+        events: events,
         maxVelocity: maxVelocity,
         maxAngularVelocity: maxAngularVelocity,
         maxAngularAcceleration: maxAngularAcceleration,
       ),
       WaypointType.pointTowards => PointTowardsWaypoint(
         position: position,
+        events: events,
         targetPosition: this is PointTowardsWaypoint
             ? (this as PointTowardsWaypoint).targetPosition
             : PointTowardsWaypoint.defaultTargetPosition,
@@ -110,6 +120,7 @@ abstract class Waypoint {
     if (rotation == null) {
       return TranslationWaypoint(
         position: position,
+        events: events,
         maxVelocity: maxVelocity,
         maxAngularVelocity: maxAngularVelocity,
         maxAngularAcceleration: maxAngularAcceleration,
@@ -118,6 +129,7 @@ abstract class Waypoint {
 
     return PoseWaypoint(
       position: position,
+      events: events,
       rotation: rotation,
       maxVelocity: maxVelocity,
       maxAngularVelocity: maxAngularVelocity,
@@ -144,6 +156,7 @@ abstract class Waypoint {
   Map<String, dynamic> commonJson(String type) {
     return {
       'type': type,
+      'events': List<String>.of(events),
       'position': position.toJson(),
       'maxVelocity': maxVelocity,
       'maxAngularVelocity': maxAngularVelocity,
@@ -152,13 +165,15 @@ abstract class Waypoint {
   }
 
   bool commonEquals(Waypoint other) {
-    return other.position == position &&
+    return const ListEquality<String>().equals(other.events, events) &&
+        other.position == position &&
         other.maxVelocity == maxVelocity &&
         other.maxAngularVelocity == maxAngularVelocity &&
         other.maxAngularAcceleration == maxAngularAcceleration;
   }
 
   int get commonHashCode => Object.hash(
+    const ListEquality<String>().hash(events),
     position,
     maxVelocity,
     maxAngularVelocity,
@@ -169,6 +184,7 @@ abstract class Waypoint {
 class TranslationWaypoint extends Waypoint {
   TranslationWaypoint({
     required super.position,
+    super.events,
     super.maxVelocity,
     super.maxAngularVelocity,
     super.maxAngularAcceleration,
@@ -177,6 +193,7 @@ class TranslationWaypoint extends Waypoint {
   TranslationWaypoint.fromJson(Map<String, dynamic> json)
     : this(
         position: _positionFromJson(json),
+        events: _eventsFromJson(json['events']),
         maxVelocity: _optionalNonNegativeNum(
           json,
           'maxVelocity',
@@ -201,6 +218,7 @@ class TranslationWaypoint extends Waypoint {
   TranslationWaypoint clone() {
     return TranslationWaypoint(
       position: position,
+      events: events,
       maxVelocity: maxVelocity,
       maxAngularVelocity: maxAngularVelocity,
       maxAngularAcceleration: maxAngularAcceleration,
@@ -223,6 +241,7 @@ class PoseWaypoint extends Waypoint {
 
   PoseWaypoint({
     required super.position,
+    super.events,
     required this.rotation,
     super.maxVelocity,
     super.maxAngularVelocity,
@@ -234,6 +253,7 @@ class PoseWaypoint extends Waypoint {
   PoseWaypoint.fromJson(Map<String, dynamic> json)
     : this(
         position: _positionFromJson(json),
+        events: _eventsFromJson(json['events']),
         rotation: _rotationFromJson(json),
         maxVelocity: _optionalNonNegativeNum(
           json,
@@ -259,6 +279,7 @@ class PoseWaypoint extends Waypoint {
   PoseWaypoint clone() {
     return PoseWaypoint(
       position: position,
+      events: events,
       rotation: rotation,
       maxVelocity: maxVelocity,
       maxAngularVelocity: maxAngularVelocity,
@@ -291,6 +312,7 @@ class PointTowardsWaypoint extends Waypoint {
 
   PointTowardsWaypoint({
     required super.position,
+    super.events,
     this.targetPosition = defaultTargetPosition,
     this.rotationOffset = const Rotation2d(),
     this.unprofiled = false,
@@ -307,6 +329,7 @@ class PointTowardsWaypoint extends Waypoint {
   PointTowardsWaypoint.fromJson(Map<String, dynamic> json)
     : this(
         position: _positionFromJson(json),
+        events: _eventsFromJson(json['events']),
         targetPosition: _translationFromJson(
           json,
           'targetPosition',
@@ -351,6 +374,7 @@ class PointTowardsWaypoint extends Waypoint {
   PointTowardsWaypoint clone() {
     return PointTowardsWaypoint(
       position: position,
+      events: events,
       targetPosition: targetPosition,
       rotationOffset: rotationOffset,
       unprofiled: unprofiled,
@@ -481,4 +505,13 @@ void _validateNonNegativeFinite(num value, String name) {
   if (!value.isFinite || value < 0) {
     throw ArgumentError.value(value, name, 'Must be finite and non-negative');
   }
+}
+
+List<String> _eventsFromJson(Object? value) {
+  if (value == null) return [];
+  if (value is! List ||
+      value.any((name) => name is! String || name.trim().isEmpty)) {
+    throw const FormatException('Events must be a list of nonempty strings');
+  }
+  return List<String>.from(value);
 }

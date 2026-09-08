@@ -4,12 +4,16 @@ import 'dart:ui';
 import 'package:collection/collection.dart';
 import 'package:file/file.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/path2/branch_event.dart';
 import 'package:pathplanner/path2/graph.dart';
 import 'package:pathplanner/path2/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/project_condition_registry.dart';
+import 'package:pathplanner/services/project_event_registry.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:version/version.dart';
+
+export 'package:pathplanner/path2/branch_event.dart';
 
 const String fileVersion = '2027.1';
 
@@ -81,13 +85,16 @@ class PathBranch implements GraphBranchData {
   @override
   final String targetId;
   PathTransition transition;
+  List<BranchEvent> events;
 
   PathBranch({
     String? id,
     required this.sourceId,
     required this.targetId,
+    List<BranchEvent> events = const [],
     PathTransition? transition,
-  }) : id = id ?? generateGraphId(),
+  }) : events = [for (final event in events) event.clone()],
+       id = id ?? generateGraphId(),
        transition = transition ?? DistanceTransition() {
     _validateId(this.id, 'Path branch ID');
     _validateId(sourceId, 'Path branch source ID');
@@ -101,6 +108,7 @@ class PathBranch implements GraphBranchData {
       sourceId: _requiredId(json, 'sourceId', 'Path branch source ID'),
       targetId: _requiredId(json, 'targetId', 'Path branch target ID'),
       transition: PathTransition.fromJson(json['transition']),
+      events: BranchEvent.listFromJson(json['events']),
     );
   }
 
@@ -109,6 +117,7 @@ class PathBranch implements GraphBranchData {
     sourceId: sourceId,
     targetId: targetId,
     transition: transition.clone(),
+    events: events,
   );
 
   Map<String, dynamic> toJson() => {
@@ -116,6 +125,7 @@ class PathBranch implements GraphBranchData {
     'sourceId': sourceId,
     'targetId': targetId,
     'transition': transition.toJson(),
+    'events': [for (final event in events) event.toJson()],
   };
 
   @override
@@ -124,10 +134,17 @@ class PathBranch implements GraphBranchData {
       other.id == id &&
       other.sourceId == sourceId &&
       other.targetId == targetId &&
-      other.transition == transition;
+      other.transition == transition &&
+      const ListEquality<BranchEvent>().equals(other.events, events);
 
   @override
-  int get hashCode => Object.hash(id, sourceId, targetId, transition);
+  int get hashCode => Object.hash(
+    id,
+    sourceId,
+    targetId,
+    transition,
+    const ListEquality<BranchEvent>().hash(events),
+  );
 }
 
 class PathGraphSnapshot {
@@ -175,6 +192,7 @@ class Path {
     }
     synchronizeInheritedTargets();
     _collectConditionNames();
+    registerEvents();
   }
 
   factory Path.defaultPath({
@@ -233,6 +251,44 @@ class Path {
     } on ArgumentError catch (error) {
       throw FormatException('Invalid path graph: ${error.message}');
     }
+  }
+
+  void registerEvents() {
+    for (final node in nodes) {
+      ProjectEventRegistry.events.addAll(node.waypoint.events);
+    }
+    for (final branch in branches) {
+      ProjectEventRegistry.events.addAll(
+        branch.events.map((event) => event.name),
+      );
+    }
+  }
+
+  bool replaceEventName(String oldName, String? newName) {
+    var changed = false;
+    for (final node in nodes) {
+      if (node.waypoint.events.contains(oldName)) {
+        changed = true;
+        node.waypoint.events = [
+          for (final name in node.waypoint.events)
+            if (name != oldName) name else if (newName != null) newName,
+        ];
+      }
+    }
+    for (final branch in branches) {
+      if (branch.events.any((event) => event.name == oldName)) {
+        changed = true;
+        branch.events = [
+          for (final event in branch.events)
+            if (event.name != oldName)
+              event
+            else if (newName != null)
+              BranchEvent(name: newName, position: event.position),
+        ];
+      }
+    }
+    if (changed) registerEvents();
+    return changed;
   }
 
   String get version => sourceVersion;
@@ -490,6 +546,7 @@ class Path {
     branches = restoredBranches;
     synchronizeInheritedTargets();
     _collectConditionNames();
+    registerEvents();
   }
 
   List<String> getAllConditionNames() => [
@@ -531,6 +588,7 @@ class Path {
   }
 
   void saveFile() {
+    registerEvents();
     try {
       final pathFile = fs.file(join(pathDir, '$name.path'));
       pathFile.parent.createSync(recursive: true);

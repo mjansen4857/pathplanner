@@ -75,6 +75,246 @@ void main() {
     },
   );
 
+  Future<void> doubleClickField(
+    WidgetTester tester,
+    Translation2d position,
+  ) async {
+    final field = find.byKey(const ValueKey('path2FieldGesture'));
+    final box = tester.renderObject<RenderBox>(field);
+    final location = box.localToGlobal(
+      PathPainterUtil.pointToPixelOffset(
+        position,
+        Path2Painter.scale,
+        fieldImage,
+      ),
+    );
+    await tester.tapAt(location, kind: PointerDeviceKind.mouse);
+    await tester.pump(const Duration(milliseconds: 60));
+    await tester.tapAt(location, kind: PointerDeviceKind.mouse);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    'field double click appends a pose to the sole end in one undo step',
+    (tester) async {
+      await pumpEditor(tester);
+      final endId = path.leafNodes.single.id;
+      const position = Translation2d(1.3, -0.8);
+      await doubleClickField(tester, position);
+      expect(path.nodes, hasLength(3));
+      final added = path.nodes.last;
+      expect(added.waypoint, isA<PoseWaypoint>());
+      expect(added.waypoint.position.x, closeTo(position.x, 1e-8));
+      expect(added.waypoint.position.y, closeTo(position.y, 1e-8));
+      expect((added.waypoint as PoseWaypoint).rotation, const Rotation2d());
+      expect(path.branches.last.sourceId, endId);
+      expect(path.branches.last.targetId, added.id);
+      expect(path.branches.last.transition, isA<DistanceTransition>());
+      expect(
+        path.fs.file('/paths/Path2.path').readAsStringSync(),
+        contains(added.id),
+      );
+      undoStack.undo();
+      await tester.pumpAndSettle();
+      expect(path.nodes, hasLength(2));
+      expect(path.branches, hasLength(1));
+      expect(undoStack.canUndo, isFalse);
+      undoStack.redo();
+      await tester.pumpAndSettle();
+      expect(path.nodes.last.id, added.id);
+      expect(path.branches.last.targetId, added.id);
+    },
+  );
+
+  testWidgets(
+    'field double click leaves a new pose unconnected with multiple ends',
+    (tester) async {
+      final extra = path2.PathNode(
+        waypoint: TranslationWaypoint(position: const Translation2d(-2, -1)),
+        editorPosition: const Offset(480, 600),
+      );
+      path.addNode(extra);
+      path.addBranch(
+        path2.PathBranch(sourceId: path.nodes.first.id, targetId: extra.id),
+      );
+      await pumpEditor(tester);
+      expect(path.leafNodes, hasLength(2));
+      await doubleClickField(tester, const Translation2d(2, 1));
+      expect(path.nodes, hasLength(4));
+      expect(path.branches, hasLength(2));
+      expect(path.nodes.last.waypoint, isA<PoseWaypoint>());
+      expect(
+        path.branches.any((branch) => branch.targetId == path.nodes.last.id),
+        isFalse,
+      );
+      expect(find.byType(AlertDialog), findsNothing);
+    },
+  );
+
+  testWidgets('a single-node path is treated as the sole end', (tester) async {
+    path.removeNode(path.nodes.last.id);
+    final rootId = path.nodes.single.id;
+    await pumpEditor(tester);
+    await doubleClickField(tester, const Translation2d(0, -1));
+    expect(path.branches.single.sourceId, rootId);
+    expect(path.branches.single.targetId, path.nodes.last.id);
+  });
+
+  testWidgets('waypoint chips edit directly on the card and support undo', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final id = path.nodes.first.id;
+    final section = find.byKey(ValueKey('waypointEvents-$id'));
+    await tester.tap(
+      find.descendant(of: section, matching: find.byIcon(Icons.add_rounded)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byKey(ValueKey('pathNodeSettingsPanel-$id')), findsNothing);
+    await tester.enterText(find.byType(TextField).last, '  Intake  ');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create “Intake”'));
+    await tester.pumpAndSettle();
+    expect(path.nodes.first.waypoint.events, ['Intake']);
+    expect(
+      find.descendant(of: section, matching: find.text('Intake')),
+      findsOneWidget,
+    );
+    undoStack.undo();
+    await tester.pumpAndSettle();
+    expect(path.nodes.first.waypoint.events, isEmpty);
+    undoStack.redo();
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(of: section, matching: find.byIcon(Icons.close_rounded)),
+    );
+    await tester.pumpAndSettle();
+    expect(path.nodes.first.waypoint.events, isEmpty);
+  });
+
+  testWidgets(
+    'branch chips edit inline, preserve duplicate positions and undo once per drag',
+    (tester) async {
+      path.branches.first.events = [
+        path2.BranchEvent(name: 'Intake', position: 0.2),
+        path2.BranchEvent(name: 'Intake', position: 0.8),
+      ];
+      await pumpEditor(tester);
+      final id = path.branches.first.id;
+      final first = find.byKey(ValueKey('branchEventChip-$id-0'));
+      expect(first, findsOneWidget);
+      expect(find.byType(AlertDialog), findsNothing);
+      await tester.tap(
+        find.descendant(of: first, matching: find.byIcon(Icons.close_rounded)),
+      );
+      await tester.pumpAndSettle();
+      expect(path.branches.first.events.single.position, 0.8);
+      final chipBounds = tester.getRect(first);
+      await tester.tap(find.byKey(ValueKey('branchEventPercent-$id-0')));
+      await tester.pumpAndSettle();
+      final slider = tester.widget<Slider>(
+        find.byKey(ValueKey('branchEventPosition-$id-0')),
+      );
+      final sliderBounds = tester.getRect(
+        find.byKey(ValueKey('branchEventPosition-$id-0')),
+      );
+      expect(tester.getRect(first), chipBounds);
+      expect(sliderBounds.left, greaterThanOrEqualTo(chipBounds.right));
+      expect(sliderBounds.top, lessThan(chipBounds.bottom));
+      slider.onChanged!(0.6);
+      await tester.pump();
+      expect(path.branches.first.events.single.position, 0.8);
+      slider.onChangeEnd!(0.6);
+      await tester.pumpAndSettle();
+      expect(path.branches.first.events.single.position, 0.6);
+      undoStack.undo();
+      await tester.pumpAndSettle();
+      expect(path.branches.first.events.single.position, 0.8);
+      undoStack.undo();
+      await tester.pumpAndSettle();
+      expect(path.branches.first.events.map((event) => event.position), [
+        0.2,
+        0.8,
+      ]);
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ValueKey('editBranchTransition-$id')));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit Branch'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('Events'),
+        ),
+        findsNothing,
+      );
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'long event stacks stay on the existing branch without rerouting',
+    (tester) async {
+      path.nodes.first.waypoint.events = [
+        'Deploy the intake mechanism',
+        'Prepare the shooter for scoring',
+        'Acquire',
+        'Acquire',
+      ];
+      path.branches.first.events = [
+        for (var index = 0; index < 8; index++)
+          path2.BranchEvent(name: 'Event $index', position: index / 8),
+      ];
+      await pumpEditor(tester);
+      // Check the actual painted route, not just the badge's collision box.
+      final dynamic painter = tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((paint) => paint.painter)
+          .firstWhere(
+            (painter) =>
+                painter.runtimeType.toString() == '_GraphBranchPainter',
+          );
+      final dynamic layout = painter.layouts.first;
+      final points = (layout.points as List).cast<Offset>();
+      final center = layout.badgeCenter as Offset;
+      expect(
+        List.generate(points.length - 1, (index) {
+          final a = points[index];
+          final b = points[index + 1];
+          final vertical =
+              (a.dx - center.dx).abs() < 0.001 &&
+              (b.dx - center.dx).abs() < 0.001 &&
+              (center.dy - a.dy) * (center.dy - b.dy) <= 0;
+          final horizontal =
+              (a.dy - center.dy).abs() < 0.001 &&
+              (b.dy - center.dy).abs() < 0.001 &&
+              (center.dx - a.dx) * (center.dx - b.dx) <= 0;
+          return vertical || horizontal;
+        }).any((crossesBadge) => crossesBadge),
+        isTrue,
+        reason: 'the event stack must be centered on the existing branch',
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.byIcon(Icons.close_rounded), findsNWidgets(12));
+      path.branches.first.events.clear();
+      await pumpEditor(tester);
+      final dynamic plainPainter = tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((paint) => paint.painter)
+          .firstWhere(
+            (painter) =>
+                painter.runtimeType.toString() == '_GraphBranchPainter',
+          );
+      expect(
+        plainPainter.layouts.first.points,
+        points,
+        reason: 'event labels must not change branch routing',
+      );
+    },
+  );
+
   testWidgets('shows graph cards and a stopped zero-time seekbar', (
     tester,
   ) async {
@@ -200,7 +440,10 @@ void main() {
     );
     final maxVelocity = find.byKey(ValueKey('pathNodeMaxVelocity-${start.id}'));
 
-    expect(PathGraphNodeCard.sizeFor(path, start), PathGraphNodeCard.cardSize);
+    expect(
+      PathGraphNodeCard.sizeFor(path, start).height,
+      greaterThan(PathGraphNodeCard.cardSize.height),
+    );
     expect(heading, findsNothing);
     await tester.tap(card);
     await tester.pump();
@@ -450,7 +693,7 @@ void main() {
   ) async {
     await pumpEditor(tester);
     final branch = path.branches.single;
-    await tester.tap(find.byKey(ValueKey('graphBranchBadge-${branch.id}')));
+    await tester.tap(find.byKey(ValueKey('editBranchTransition-${branch.id}')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('pathTransitionType')));
     await tester.pumpAndSettle();
@@ -500,7 +743,7 @@ void main() {
   ) async {
     await pumpEditor(tester);
     final branchId = path.branches.single.id;
-    await tester.tap(find.byKey(ValueKey('graphBranchBadge-$branchId')));
+    await tester.tap(find.byKey(ValueKey('editBranchTransition-$branchId')));
     await tester.pumpAndSettle();
     expect(find.text('Edit Branch'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('deletePathBranchButton')));
@@ -714,6 +957,7 @@ void main() {
         tester.getTopLeft(painterFinder);
 
     await tester.tapAt(location);
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
 
     final paint = tester.widget<CustomPaint>(painterFinder);

@@ -92,6 +92,66 @@ void main() {
     );
   }
 
+  test('event diamonds are anchored at the recorded robot pose', () async {
+    final path = makePath();
+    const pose = Pose2d(Translation2d(2, 3), Rotation2d());
+    final samples = [
+      Path2SimulationSample(
+        timeSeconds: 0,
+        state: Path2SimulationState.atRest(pose),
+      ),
+    ];
+    final before = await _render(
+      painter(
+        path,
+        simple: true,
+        simulations: [Path2SimulationResult(samples)],
+      ),
+    );
+    final after = await _render(
+      painter(
+        path,
+        simple: true,
+        simulations: [
+          Path2SimulationResult(
+            samples,
+            branchEventMarkers: [
+              const Path2BranchEventMarker(
+                branchId: 'ab',
+                eventIndex: 0,
+                name: 'Intake',
+                timeSeconds: 0,
+                pose: pose,
+              ),
+              const Path2BranchEventMarker(
+                branchId: 'ab',
+                eventIndex: 1,
+                name: 'Score',
+                timeSeconds: 0,
+                pose: pose,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    final point = PathPainterUtil.pointToPixelOffset(
+      pose.translation,
+      Path2Painter.scale,
+      fieldImage,
+    );
+    expect(_hasDifferenceNear(before, after, point, radius: 9), isTrue);
+    expect(
+      _containsColorNear(
+        after,
+        point,
+        _rgba(const ColorScheme.light().tertiary),
+        5,
+      ),
+      isTrue,
+    );
+  });
+
   test('renders only branches and nodes in the visible ancestor set', () async {
     final a = path2.PathNode(
       id: 'a',

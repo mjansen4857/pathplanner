@@ -15,6 +15,7 @@ class Path2SimulationPathSnapshot {
   final String name;
   final List<String> nodeIds;
   final List<String> branchIds;
+  final List<List<path2.BranchEvent>> branchEvents;
   final List<Path2SimulationWaypoint> waypoints;
   final double endToleranceMeters;
   final double endAngleToleranceRadians;
@@ -23,11 +24,20 @@ class Path2SimulationPathSnapshot {
     required this.name,
     required List<String> nodeIds,
     required List<String> branchIds,
+    List<List<path2.BranchEvent>>? branchEvents,
     required List<Path2SimulationWaypoint> waypoints,
     required this.endToleranceMeters,
     required this.endAngleToleranceRadians,
   }) : nodeIds = List.unmodifiable(nodeIds),
        branchIds = List.unmodifiable(branchIds),
+       branchEvents = List.unmodifiable(
+         branchEvents == null
+             ? [for (final _ in branchIds) <path2.BranchEvent>[]]
+             : [
+                 for (final events in branchEvents)
+                   List<path2.BranchEvent>.unmodifiable(events),
+               ],
+       ),
        waypoints = List.unmodifiable(waypoints);
 
   factory Path2SimulationPathSnapshot.fromMap(Map<String, dynamic> map) {
@@ -35,6 +45,9 @@ class Path2SimulationPathSnapshot {
       name: map['name'] as String,
       nodeIds: List<String>.from(map['nodeIds'] as List<dynamic>),
       branchIds: List<String>.from(map['branchIds'] as List<dynamic>),
+      branchEvents: (map['branchEvents'] as List?)
+          ?.map(path2.BranchEvent.listFromJson)
+          .toList(),
       waypoints: (map['waypoints'] as List<dynamic>)
           .map(
             (waypoint) => Path2SimulationWaypoint.fromMap(
@@ -52,6 +65,10 @@ class Path2SimulationPathSnapshot {
     'name': name,
     'nodeIds': nodeIds,
     'branchIds': branchIds,
+    'branchEvents': [
+      for (final events in branchEvents)
+        [for (final event in events) event.toJson()],
+    ],
     'waypoints': waypoints
         .map((waypoint) => waypoint.toMap())
         .toList(growable: false),
@@ -329,6 +346,7 @@ abstract final class Path2Simulator {
       name: path.name,
       nodeIds: [for (final node in nodes) node.id],
       branchIds: [for (final branch in branches) branch.id],
+      branchEvents: [for (final branch in branches) branch.events],
       waypoints: [
         for (var index = 0; index < nodes.length; index++)
           Path2SimulationWaypoint.fromWaypoint(
@@ -370,15 +388,52 @@ abstract final class Path2Simulator {
     var currentState = initialState;
     var lastProgressState = initialState;
     var stalledSteps = 0;
+    final eventMarkers = <Path2BranchEventMarker>[];
+    final triggered = <(int, int)>{};
+
+    void evaluateEvents(int targetIndex, double time) {
+      final branchIndex = targetIndex - 1;
+      if (branchIndex < 0 || branchIndex >= path.branchIds.length) return;
+      final source = path.waypoints[branchIndex].position;
+      final target = path.waypoints[targetIndex].position;
+      final distance = source.getDistance(target);
+      if (distance == 0) return;
+      final ratio =
+          currentState.pose.translation.getDistance(target) / distance;
+      final events = path.branchEvents[branchIndex];
+      for (var index = 0; index < events.length; index++) {
+        final event = events[index];
+        if (!triggered.contains((branchIndex, index)) &&
+            ratio <= 1 - event.position) {
+          triggered.add((branchIndex, index));
+          eventMarkers.add(
+            Path2BranchEventMarker(
+              branchId: path.branchIds[branchIndex],
+              eventIndex: index,
+              name: event.name,
+              timeSeconds: time,
+              pose: currentState.pose,
+            ),
+          );
+        }
+      }
+    }
+
     final samples = <Path2SimulationSample>[
       Path2SimulationSample(timeSeconds: 0, state: initialState),
     ];
 
     for (var step = 1; step <= maximumStepsPerPath; step++) {
+      final previousTarget = follower.targetWaypointIndex;
+      final evaluationTime = (step - 1) * periodSeconds;
+      evaluateEvents(previousTarget, evaluationTime);
       final desiredSpeeds = follower.calculate(
         currentState.pose,
         currentState.robotRelativeSpeeds,
       );
+      if (follower.targetWaypointIndex != previousTarget) {
+        evaluateEvents(follower.targetWaypointIndex, evaluationTime);
+      }
       setpoint = generator.generateSetpoint(setpoint, desiredSpeeds);
       currentState = Path2SimulationState(
         pose: Path2SimulationMath.integratePose(
@@ -405,7 +460,7 @@ abstract final class Path2Simulator {
       }
 
       if (follower.isFinished) {
-        return Path2SimulationResult(samples);
+        return Path2SimulationResult(samples, branchEventMarkers: eventMarkers);
       }
       if (stalledSteps >= stalledStepLimit) {
         throw Path2SimulationFailure(
@@ -463,7 +518,8 @@ abstract final class Path2Simulator {
   static void _validatePath(Path2SimulationPathSnapshot path) {
     if (path.waypoints.isEmpty ||
         path.nodeIds.length != path.waypoints.length ||
-        path.branchIds.length != path.waypoints.length - 1) {
+        path.branchIds.length != path.waypoints.length - 1 ||
+        path.branchEvents.length != path.branchIds.length) {
       throw Path2SimulationFailure(
         Path2SimulationFailureKind.invalidPath,
         'Path "${path.name}" has an invalid traversal.',

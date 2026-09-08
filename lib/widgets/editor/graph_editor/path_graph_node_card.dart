@@ -1,5 +1,7 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:pathplanner/widgets/editor/event_names_editor.dart';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
 import 'package:pathplanner/path2/waypoint.dart';
@@ -26,14 +28,26 @@ IconData _waypointIcon(Waypoint waypoint) => switch (waypoint.type) {
 
 /// Compact graph representation of a waypoint.
 ///
-/// Editable values deliberately live in [PathGraphNodeSettingsPanel]. Cards
-/// only surface the small amount of preview information useful at a glance.
+/// Geometry settings live in [PathGraphNodeSettingsPanel]. Event assignments
+/// remain directly editable in a separate footer on the graph card.
 class PathGraphNodeCard extends StatelessWidget {
   static const Size cardSize = Size(300, 142);
   static const Size pointTowardsCardSize = Size(300, 172);
 
-  static Size sizeFor(path2.Path path, path2.PathNode node) =>
-      node.waypoint is PointTowardsWaypoint ? pointTowardsCardSize : cardSize;
+  static Size sizeFor(
+    path2.Path path,
+    path2.PathNode node, {
+    TextScaler textScaler = TextScaler.noScaling,
+  }) {
+    final base = node.waypoint is PointTowardsWaypoint
+        ? pointTowardsCardSize
+        : cardSize;
+    return Size(
+      base.width,
+      base.height +
+          WaypointEventsSection.heightFor(node.waypoint.events, textScaler),
+    );
+  }
 
   final path2.Path path;
   final path2.PathNode node;
@@ -41,6 +55,7 @@ class PathGraphNodeCard extends StatelessWidget {
   final ValueChanged<String> onDelete;
   final ValueChanged<String?> onHovered;
   final ValueChanged<String> onSelected;
+  final PathNodeEdit onEdit;
   final List<double> estimatedRuntimeSeconds;
 
   const PathGraphNodeCard({
@@ -51,6 +66,7 @@ class PathGraphNodeCard extends StatelessWidget {
     required this.onDelete,
     required this.onHovered,
     required this.onSelected,
+    required this.onEdit,
     this.estimatedRuntimeSeconds = const [],
   });
 
@@ -216,6 +232,18 @@ class PathGraphNodeCard extends StatelessWidget {
                               ),
                           ],
                         ),
+                      ),
+                    ),
+                    WaypointEventsSection(
+                      key: ValueKey('waypointEvents-${node.id}'),
+                      names: waypoint.events,
+                      onAdd: (name) => onEdit(
+                        node.id,
+                        (current) => current.waypoint.events.add(name),
+                      ),
+                      onRemove: (index) => onEdit(
+                        node.id,
+                        (current) => current.waypoint.events.removeAt(index),
                       ),
                     ),
                   ],

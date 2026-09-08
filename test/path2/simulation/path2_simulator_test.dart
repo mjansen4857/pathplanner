@@ -67,6 +67,129 @@ void main() {
     );
   }
 
+  test(
+    'branch event markers use the first evaluation pose and survive transport',
+    () {
+      final root = node(0, 0);
+      final leaf = node(3, 0);
+      final branch = path2.PathBranch(
+        sourceId: root.id,
+        targetId: leaf.id,
+        events: [
+          path2.BranchEvent(name: 'Start', position: 0),
+          path2.BranchEvent(name: 'Intake', position: 0.2),
+          path2.BranchEvent(name: 'Intake', position: 0.2),
+          path2.BranchEvent(name: 'End', position: 1),
+        ],
+      );
+      final snapshots = Path2Simulator.previewTraversals(
+        graph([root, leaf], [branch]),
+      );
+      final snapshot = Path2SimulationPathSnapshot.fromMap(
+        snapshots.single.toMap(),
+      );
+      expect(snapshot.branchEvents.single, branch.events);
+      final outcome = Path2Simulator.simulateTraversals([
+        snapshot,
+      ], robotConfig);
+      expect(outcome.failure, isNull);
+      final result = outcome.result!.traversals.single;
+      final markers = result.branchEventMarkers;
+      expect(markers.first.timeSeconds, 0);
+      expect(markers.first.pose.translation, root.waypoint.position);
+      final expected = result.samples.firstWhere(
+        (sample) =>
+            sample.pose.translation.getDistance(leaf.waypoint.position) / 3 <=
+            0.8,
+      );
+      final intake = markers
+          .where((marker) => marker.name == 'Intake')
+          .toList();
+      expect(intake, hasLength(2));
+      expect(intake.map((marker) => marker.eventIndex), [1, 2]);
+      for (final marker in intake) {
+        expect(marker.timeSeconds, expected.timeSeconds);
+        expect(marker.pose, expected.pose);
+      }
+      expect(markers.where((marker) => marker.name == 'End'), isEmpty);
+      final restored = Path2SimulationOutcome.fromMap(outcome.toMap())
+          .result!
+          .traversals
+          .single;
+      expect(
+        restored.branchEventMarkers.map((marker) => marker.toMap()).toList(),
+        markers.map((marker) => marker.toMap()).toList(),
+      );
+    },
+  );
+
+  test(
+    'curved traversals respect active branches and never force unmet events',
+    () {
+      final root = node(0, 0);
+      final middle = node(2, 0, pose: false);
+      final upper = node(3, 2);
+      final lower = node(3, -2);
+      final incoming = path2.PathBranch(
+        sourceId: root.id,
+        targetId: middle.id,
+        events: [
+          path2.BranchEvent(name: 'Early', position: 0.2),
+          path2.BranchEvent(name: 'Unreached', position: 1),
+        ],
+      );
+      final outgoing = [
+        for (final leaf in [upper, lower])
+          path2.PathBranch(
+            sourceId: middle.id,
+            targetId: leaf.id,
+            transition: DistanceTransition(distanceMeters: 0.8),
+            events: [path2.BranchEvent(name: 'Curve', position: 0.5)],
+          ),
+      ];
+      final traversals = Path2Simulator.previewTraversals(
+        graph([root, middle, upper, lower], [incoming, ...outgoing]),
+      );
+      final outcome = Path2Simulator.simulateTraversals(
+        traversals,
+        robotConfig,
+      );
+      expect(outcome.failure, isNull);
+      expect(outcome.result!.traversals, hasLength(2));
+      for (final traversal in outcome.result!.simulatedTraversals) {
+        final markers = traversal.simulation.branchEventMarkers;
+        expect(markers.where((m) => m.name == 'Early'), hasLength(1));
+        expect(markers.where((m) => m.name == 'Unreached'), isEmpty);
+        final curve = markers.singleWhere((m) => m.name == 'Curve');
+        expect(curve.branchId, traversal.path.branchIds.last);
+        final target = traversal.path.waypoints.last.position;
+        final distance = middle.waypoint.position.getDistance(target);
+        final expected = traversal.simulation.samples.firstWhere(
+          (sample) =>
+              sample.pose.translation.getDistance(target) / distance <= 0.5,
+        );
+        expect(curve.pose, expected.pose);
+        expect(curve.timeSeconds, expected.timeSeconds);
+      }
+    },
+  );
+
+  test('coincident branch endpoints produce no event markers', () {
+    final root = node(0, 0);
+    final leaf = node(0, 0);
+    final branch = path2.PathBranch(
+      sourceId: root.id,
+      targetId: leaf.id,
+      events: [path2.BranchEvent(name: 'Undefined', position: 0)],
+    );
+    final outcome = Path2Simulator.simulateTraversals(
+      Path2Simulator.previewTraversals(graph([root, leaf], [branch])),
+      robotConfig,
+    );
+    expect(outcome.failure, isNull);
+    expect(outcome.result!.traversals.single.branchEventMarkers, isEmpty);
+  });
+
   test('enumerates every root-to-leaf preview traversal', () {
     final root = node(0, 0);
     final middle = node(1, 0, pose: false);

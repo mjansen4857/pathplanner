@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:pathplanner/widgets/editor/graph_editor/path_branch_event_chips.dart';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -70,6 +72,7 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
   Translation2d? _dragOldTarget;
   Rotation2d? _dragOldRotation;
   Offset? _panDownPosition;
+  Offset? _doubleTapPosition;
 
   Set<String>? get _visibleFieldNodeIds => _hoveredNodeId == null
       ? null
@@ -156,6 +159,10 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
                     key: const ValueKey('path2FieldGesture'),
                     behavior: HitTestBehavior.opaque,
                     onTapDown: _handleFieldTapDown,
+                    onDoubleTapDown: (details) =>
+                        _doubleTapPosition = details.localPosition,
+                    onDoubleTap: _addFieldWaypoint,
+                    onDoubleTapCancel: () => _doubleTapPosition = null,
                     onPanDown: (details) =>
                         _panDownPosition = details.localPosition,
                     onPanStart: _handleFieldPanStart,
@@ -289,12 +296,17 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
                           VisualGraphNode(
                             id: node.id,
                             position: node.editorPosition,
-                            size: PathGraphNodeCard.sizeFor(widget.path, node),
+                            size: PathGraphNodeCard.sizeFor(
+                              widget.path,
+                              node,
+                              textScaler: MediaQuery.textScalerOf(context),
+                            ),
                             child: PathGraphNodeCard(
                               path: widget.path,
                               node: node,
                               selected: node.id == _selectedNodeId,
                               onDelete: _deleteNode,
+                              onEdit: _editNode,
                               onHovered: (id) {
                                 if (_hoveredNodeId != id) {
                                   setState(() => _hoveredNodeId = id);
@@ -316,7 +328,39 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
                             id: branch.id,
                             sourceId: branch.sourceId,
                             targetId: branch.targetId,
-                            badge: _transitionBadge(branch.transition),
+                            customBadge: true,
+                            badgeSize: PathBranchEventChips.sizeFor(
+                              branch.events.length,
+                            ),
+                            badge: PathBranchEventChips(
+                              key: ValueKey('branchEvents-${branch.id}'),
+                              branch: branch,
+                              transitionBadge: _transitionBadge(
+                                branch.transition,
+                              ),
+                              onEditTransition: () => _editBranch(branch.id),
+                              status: _branchEventStatus(branch),
+                              onAdd: (name) => _editBranchEvents(
+                                branch.id,
+                                (events) =>
+                                    events.add(path2.BranchEvent(name: name)),
+                              ),
+                              onRemove: (index) {
+                                _editBranchEvents(
+                                  branch.id,
+                                  (events) => events.removeAt(index),
+                                );
+                              },
+                              onPositionChanged: (index, position) =>
+                                  _editBranchEvents(
+                                    branch.id,
+                                    (events) =>
+                                        events[index] = path2.BranchEvent(
+                                          name: events[index].name,
+                                          position: position,
+                                        ),
+                                  ),
+                            ),
                           ),
                       ],
                       onNodeMoved: (id, _, position) => _editNode(
@@ -518,6 +562,48 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     setState(() => _selectedNodeId = node.id);
   }
 
+  void _editBranchEvents(
+    String branchId,
+    void Function(List<path2.BranchEvent>) edit,
+  ) {
+    _commitGraphMutation(() {
+      final branch = _branchById(branchId);
+      if (branch == null) return false;
+      edit(branch.events);
+      return true;
+    });
+  }
+
+  Map<int, String> _branchEventStatus(path2.PathBranch branch) {
+    final simulation = _simulation;
+    if (simulation == null) return {};
+    final status = <int, String>{};
+    for (var index = 0; index < branch.events.length; index++) {
+      final unreached = <String>[];
+      for (
+        var traversalIndex = 0;
+        traversalIndex < simulation.simulatedTraversals.length;
+        traversalIndex++
+      ) {
+        final traversal = simulation.simulatedTraversals[traversalIndex];
+        if (!traversal.path.branchIds.contains(branch.id)) continue;
+        if (!traversal.simulation.branchEventMarkers.any(
+          (marker) =>
+              marker.branchId == branch.id && marker.eventIndex == index,
+        )) {
+          unreached.add('Traversal ${traversalIndex + 1}');
+        }
+      }
+      if (unreached.isNotEmpty) {
+        final source = widget.path.nodeById(branch.sourceId)!.waypoint.position;
+        final target = widget.path.nodeById(branch.targetId)!.waypoint.position;
+        status[index] =
+            'Unreached: ${unreached.join(', ')}${source.getDistance(target) == 0 ? ' (waypoints coincide; distance ratio is undefined)' : ''}';
+      }
+    }
+    return status;
+  }
+
   Future<void> _editBranch(String branchId) async {
     final branch = _branchById(branchId);
     if (branch == null) {
@@ -582,6 +668,71 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
         }
       });
     }
+  }
+
+  void _addFieldWaypoint() {
+    final position = _doubleTapPosition;
+    _doubleTapPosition = null;
+    _panDownPosition = null;
+    if (position == null) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    // Capture the ends before adding the new node, which is itself a leaf.
+    final ends = widget.path.leafNodes;
+    final parent = ends.length == 1 ? ends.single : null;
+    final node = path2.PathNode(
+      waypoint: PoseWaypoint(
+        position: _clampedFieldPosition(position),
+        rotation: const Rotation2d(),
+      ),
+      editorPosition: Offset.zero,
+    );
+    final textScaler = MediaQuery.textScalerOf(context);
+    final size = PathGraphNodeCard.sizeFor(
+      widget.path,
+      node,
+      textScaler: textScaler,
+    );
+    node.editorPosition = parent == null
+        ? (_graphController.viewportCenterInScene ?? const Offset(300, 250)) -
+              Offset(size.width / 2, size.height / 2)
+        : parent.editorPosition +
+              Offset(
+                0,
+                PathGraphNodeCard.sizeFor(
+                      widget.path,
+                      parent,
+                      textScaler: textScaler,
+                    ).height +
+                    120,
+              );
+    while (widget.path.nodes.any(
+      (existing) =>
+          (existing.editorPosition &
+                  PathGraphNodeCard.sizeFor(
+                    widget.path,
+                    existing,
+                    textScaler: textScaler,
+                  ))
+              .inflate(16)
+              .overlaps(node.editorPosition & size),
+    )) {
+      node.editorPosition += Offset(size.width + 40, 0);
+    }
+    _commitGraphMutation(() {
+      if (!widget.path.addNode(node)) return false;
+      return parent == null ||
+          widget.path.addBranch(
+            path2.PathBranch(sourceId: parent.id, targetId: node.id),
+          );
+    });
+    setState(() {
+      _selectedNodeId = node.id;
+      _hoveredNodeId = null;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _graphController.centerNode(node.id);
+    });
   }
 
   void _handleFieldTapDown(TapDownDetails details) {
@@ -1108,6 +1259,7 @@ class _PathTransitionDialogState extends State<_PathTransitionDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.allowDelete ? 'Edit Branch' : 'Create Branch'),
+      scrollable: true,
       content: SizedBox(
         width: 360,
         child: Column(

@@ -61,6 +61,60 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('event manager persists rename and removal across paths', (
+    tester,
+  ) async {
+    final directory = fs.directory(join(deployPath, 'paths'))
+      ..createSync(recursive: true);
+    for (final name in ['First', 'Second']) {
+      final path = path2.Path.defaultPath(
+        name: name,
+        pathDir: directory.path,
+        fs: fs,
+      );
+      path.nodes.first.waypoint.events = ['Intake', 'Other'];
+      path.branches.first.events = [
+        path2.BranchEvent(name: 'Intake', position: 0.2),
+      ];
+      path.saveFile();
+    }
+    ProjectEventRegistry.clear();
+    await pumpProject(tester);
+    await tester.tap(find.byTooltip('Manage Events'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Rename event').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Event Name'),
+      'Acquire',
+    );
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+    for (final name in ['First', 'Second']) {
+      final data = jsonDecode(
+        fs.file(join(directory.path, '$name.path')).readAsStringSync(),
+      ) as Map<String, dynamic>;
+      final path = path2.Path.fromJson(data, name, directory.path, fs);
+      expect(path.nodes.first.waypoint.events, ['Acquire', 'Other']);
+      expect(path.branches.first.events, [
+        path2.BranchEvent(name: 'Acquire', position: 0.2),
+      ]);
+    }
+    await tester.tap(find.byTooltip('Remove event').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+    for (final name in ['First', 'Second']) {
+      final data = jsonDecode(
+        fs.file(join(directory.path, '$name.path')).readAsStringSync(),
+      ) as Map<String, dynamic>;
+      final path = path2.Path.fromJson(data, name, directory.path, fs);
+      expect(path.nodes.first.waypoint.events, ['Other']);
+      expect(path.branches.first.events, isEmpty);
+    }
+    expect(ProjectEventRegistry.events, isNot(contains('Acquire')));
+  });
+
   testWidgets('creates a graph example only for a physically empty directory', (
     tester,
   ) async {

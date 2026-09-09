@@ -325,6 +325,27 @@ class VisualGraphController {
   void centerNode(String nodeId) => _state?._centerNode(nodeId);
 }
 
+/// Whether the pointer is near this connection or its event controls.
+class GraphBranchProximity extends InheritedWidget {
+  final bool near;
+
+  const GraphBranchProximity({
+    super.key,
+    required this.near,
+    required super.child,
+  });
+
+  static bool of(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<GraphBranchProximity>()
+          ?.near ??
+      false;
+
+  @override
+  bool updateShouldNotify(GraphBranchProximity oldWidget) =>
+      near != oldWidget.near;
+}
+
 class VisualGraphEditor extends StatefulWidget {
   final List<VisualGraphNode> nodes;
   final List<VisualGraphBranch> branches;
@@ -364,6 +385,7 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
   final TransformationController _transformationController =
       TransformationController();
   final GlobalKey _viewportKey = GlobalKey();
+  final ValueNotifier<Offset?> _pointerPosition = ValueNotifier(null);
   final Map<String, Offset> _positions = {};
 
   _ConnectionDrag? _connectionDrag;
@@ -401,6 +423,7 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
     if (widget.controller?._state == this) {
       widget.controller?._state = null;
     }
+    _pointerPosition.dispose();
     _transformationController.dispose();
     super.dispose();
   }
@@ -504,79 +527,94 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: widget.onCanvasTap,
-              child: InteractiveViewer(
-                key: _viewportKey,
-                transformationController: _transformationController,
-                constrained: false,
-                minScale: 0.1,
-                maxScale: 3,
-                boundaryMargin: const EdgeInsets.all(1200),
-                child: SizedBox.fromSize(
-                  size: widget.canvasSize,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: CustomPaint(
-                            painter: _GraphBranchPainter(
-                              layouts: branchLayouts,
-                              provisional: _connectionDrag == null
-                                  ? null
-                                  : _provisionalLine(_connectionDrag!),
-                              defaultColor:
-                                  widget.branchColor ??
-                                  colorScheme.outlineVariant,
+              child: MouseRegion(
+                onHover: (event) => _pointerPosition.value = event.position,
+                onExit: (_) => _pointerPosition.value = null,
+                child: InteractiveViewer(
+                  key: _viewportKey,
+                  transformationController: _transformationController,
+                  constrained: false,
+                  minScale: 0.1,
+                  maxScale: 3,
+                  boundaryMargin: const EdgeInsets.all(1200),
+                  child: SizedBox.fromSize(
+                    size: widget.canvasSize,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: CustomPaint(
+                              painter: _GraphBranchPainter(
+                                layouts: branchLayouts,
+                                provisional: _connectionDrag == null
+                                    ? null
+                                    : _provisionalLine(_connectionDrag!),
+                                defaultColor:
+                                    widget.branchColor ??
+                                    colorScheme.outlineVariant,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      for (final layout in branchLayouts)
-                        Positioned(
-                          key: ValueKey('graphBranchBadge-${layout.branch.id}'),
-                          left:
-                              layout.badgeCenter.dx -
-                              layout.branch.badgeSize.width / 2,
-                          top:
-                              layout.badgeCenter.dy -
-                              layout.branch.badgeSize.height / 2,
-                          width: layout.branch.badgeSize.width,
-                          height: layout.branch.badgeSize.height,
-                          child: layout.branch.customBadge
-                              ? layout.branch.badge
-                              : Center(
-                                  child: Material(
-                                    color: colorScheme.surfaceContainerHighest,
-                                    elevation: 2,
-                                    borderRadius: BorderRadius.circular(14),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: InkWell(
-                                      onTapDown: (details) =>
-                                          widget.onBranchTap?.call(
-                                            layout.branch.id,
-                                            details.globalPosition,
-                                          ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 9,
-                                          vertical: 5,
+                        for (final layout in branchLayouts)
+                          Positioned(
+                            key: ValueKey(
+                              'graphBranchBadge-${layout.branch.id}',
+                            ),
+                            left:
+                                layout.badgeCenter.dx -
+                                layout.branch.badgeSize.width / 2,
+                            top:
+                                layout.badgeCenter.dy -
+                                layout.branch.badgeSize.height / 2,
+                            width: layout.branch.badgeSize.width,
+                            height: layout.branch.badgeSize.height,
+                            child: layout.branch.customBadge
+                                ? ValueListenableBuilder<Offset?>(
+                                    valueListenable: _pointerPosition,
+                                    child: layout.branch.badge,
+                                    builder: (context, pointer, child) =>
+                                        GraphBranchProximity(
+                                          near: _isNearBranch(layout, pointer),
+                                          child: child!,
                                         ),
-                                        child: layout.branch.badge,
+                                  )
+                                : Center(
+                                    child: Material(
+                                      color:
+                                          colorScheme.surfaceContainerHighest,
+                                      elevation: 2,
+                                      borderRadius: BorderRadius.circular(14),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: InkWell(
+                                        onTapDown: (details) =>
+                                            widget.onBranchTap?.call(
+                                              layout.branch.id,
+                                              details.globalPosition,
+                                            ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 9,
+                                            vertical: 5,
+                                          ),
+                                          child: layout.branch.badge,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                        ),
-                      for (final node in widget.nodes)
-                        Positioned(
-                          key: ValueKey('graphNode-${node.id}'),
-                          left: _positions[node.id]!.dx,
-                          top: _positions[node.id]!.dy,
-                          width: node.size.width,
-                          height: node.size.height,
-                          child: node.child,
-                        ),
-                    ],
+                          ),
+                        for (final node in widget.nodes)
+                          Positioned(
+                            key: ValueKey('graphNode-${node.id}'),
+                            left: _positions[node.id]!.dx,
+                            top: _positions[node.id]!.dy,
+                            width: node.size.width,
+                            height: node.size.height,
+                            child: node.child,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -597,6 +635,30 @@ class _VisualGraphEditorState extends State<VisualGraphEditor> {
         ],
       ),
     );
+  }
+
+  bool _isNearBranch(_BranchLayout layout, Offset? pointer) {
+    if (pointer == null) return false;
+    final point = _globalToScene(pointer);
+    final radius = 18 / _transformationController.value.getMaxScaleOnAxis();
+    final badge = Rect.fromCenter(
+      center: layout.badgeCenter,
+      width: layout.branch.badgeSize.width,
+      height: layout.branch.badgeSize.height,
+    );
+    if (badge.inflate(radius).contains(point)) return true;
+    for (var i = 1; i < layout.points.length; i++) {
+      final start = layout.points[i - 1];
+      final delta = layout.points[i] - start;
+      final lengthSquared = delta.dx * delta.dx + delta.dy * delta.dy;
+      final offset = point - start;
+      final t = lengthSquared == 0
+          ? 0.0
+          : ((offset.dx * delta.dx + offset.dy * delta.dy) / lengthSquared)
+                .clamp(0.0, 1.0);
+      if ((point - (start + delta * t)).distance <= radius) return true;
+    }
+    return false;
   }
 
   List<_BranchLayout> _branchLayouts() {

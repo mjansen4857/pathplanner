@@ -88,12 +88,14 @@ class EventAddButton extends StatefulWidget {
   final Iterable<String> names;
   final ValueChanged<String> onSelected;
   final bool compact;
+  final ValueChanged<bool>? onMenuOpenChanged;
 
   const EventAddButton({
     super.key,
     this.names = const [],
     required this.onSelected,
     this.compact = false,
+    this.onMenuOpenChanged,
   });
   @override
   State<EventAddButton> createState() => _EventAddButtonState();
@@ -106,6 +108,8 @@ class _EventAddButtonState extends State<EventAddButton> {
   @override
   Widget build(BuildContext context) => MenuAnchor(
     controller: _menu,
+    onOpen: () => widget.onMenuOpenChanged?.call(true),
+    onClose: () => widget.onMenuOpenChanged?.call(false),
     useRootOverlay: true,
     consumeOutsideTap: true,
     alignmentOffset: const Offset(0, 5),

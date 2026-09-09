@@ -61,7 +61,12 @@ void main() {
       await tester.pumpAndSettle();
       final section = find.byKey(ValueKey('autoNodeEvents-${source.id}'));
       final connection = find.byType(BranchEventChips);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
       for (final scope in [section, connection]) {
+        await mouse.moveTo(tester.getCenter(scope));
+        await tester.pumpAndSettle();
         await tester.tap(
           find.descendant(of: scope, matching: find.byIcon(Icons.add_rounded)),
         );

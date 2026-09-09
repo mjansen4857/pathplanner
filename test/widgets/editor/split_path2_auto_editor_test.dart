@@ -1,4 +1,6 @@
 import 'package:file/memory.dart';
+import 'package:pathplanner/widgets/editor/graph_editor/path_branch_event_chips.dart';
+import 'package:pathplanner/services/project_event_registry.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +20,102 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
 void main() {
+  testWidgets(
+    'auto node and branch events use inline pickers and undoable string lists',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      ProjectEventRegistry.clear();
+      final source = PathAutoNode(
+        pathName: 'First',
+        editorPosition: const Offset(100, 0),
+      );
+      final target = PathAutoNode(
+        pathName: 'Second',
+        editorPosition: const Offset(100, 450),
+      );
+      final branch = AutoBranch(
+        sourceId: source.id,
+        targetId: target.id,
+        transition: const FinishedTransition(),
+      );
+      final auto = Path2Auto(
+        name: 'Test',
+        nodes: [source, target],
+        branches: [branch],
+        autoDir: '/autos',
+        fs: MemoryFileSystem(),
+      );
+      final undo = ChangeStack();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Path2AutoTree(
+              auto: auto,
+              allPathNames: const ['First', 'Second'],
+              undoStack: undo,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final section = find.byKey(ValueKey('autoNodeEvents-${source.id}'));
+      final connection = find.byType(BranchEventChips);
+      for (final scope in [section, connection]) {
+        await tester.tap(
+          find.descendant(of: scope, matching: find.byIcon(Icons.add_rounded)),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField).last, '  Intake  ');
+        await tester.pumpAndSettle();
+        final create = find.text('Create “Intake”');
+        await tester.tap(
+          create.evaluate().isNotEmpty ? create : find.text('Intake').last,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: scope, matching: find.text('Intake')),
+          findsOneWidget,
+        );
+        final events = scope == section
+            ? auto.nodes.first.events
+            : auto.branches.first.events;
+        expect(events, ['Intake']);
+        expect(find.byType(Slider), findsNothing);
+        undo.undo();
+        await tester.pumpAndSettle();
+        expect(
+          scope == section
+              ? auto.nodes.first.events
+              : auto.branches.first.events,
+          isEmpty,
+        );
+        undo.redo();
+        await tester.pumpAndSettle();
+        expect(
+          scope == section
+              ? auto.nodes.first.events
+              : auto.branches.first.events,
+          ['Intake'],
+        );
+        await tester.tap(
+          find.descendant(
+            of: scope,
+            matching: find.byIcon(Icons.close_rounded),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          scope == section
+              ? auto.nodes.first.events
+              : auto.branches.first.events,
+          isEmpty,
+        );
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('shows an empty graph and a disabled zero-time seekbar', (
     tester,
   ) async {

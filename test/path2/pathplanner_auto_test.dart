@@ -95,6 +95,72 @@ void main() {
 
   Map<String, dynamic> validJson() => auto().toJson();
 
+  test(
+    'event lists round-trip, clone independently, and support project edits',
+    () {
+      final original = auto();
+      original.nodes.first.events = ['Intake', 'Intake'];
+      original.branches.first.events = ['Score'];
+      final loaded = path2_auto.Path2Auto.fromJson(
+        original.toJson(),
+        original.name,
+        '/autos',
+        fs,
+      );
+      expect(loaded, original);
+      final snapshot = original.snapshotGraph();
+      final copy = original.duplicate('Copy');
+      original.nodes.first.events.clear();
+      original.branches.first.events.clear();
+      expect(copy.nodes.first.events, ['Intake', 'Intake']);
+      expect(copy.branches.first.events, ['Score']);
+      original.restoreGraph(snapshot);
+      expect(original.nodes.first.events, ['Intake', 'Intake']);
+      expect(original.branches.first.events, ['Score']);
+      expect(original.replaceEventName('Intake', 'Score'), isTrue);
+      expect(original.nodes.first.events, ['Score', 'Score']);
+      expect(original.replaceEventName('Score', null), isTrue);
+      expect(original.nodes.first.events, isEmpty);
+      expect(original.branches.first.events, isEmpty);
+    },
+  );
+
+  test(
+    'older autos default to empty events and malformed events are rejected',
+    () {
+      final json = validJson();
+      for (final node in json['nodes']) {
+        node.remove('events');
+      }
+      for (final branch in json['branches']) {
+        branch.remove('events');
+      }
+      final loaded = path2_auto.Path2Auto.fromJson(json, 'Old', '/autos', fs);
+      expect(loaded.nodes.first.events, isEmpty);
+      expect(loaded.branches.first.events, isEmpty);
+      for (final invalid in [
+        42,
+        [''],
+        [true],
+        ['valid', null],
+      ]) {
+        for (final section in ['nodes', 'branches']) {
+          final malformed = validJson();
+          malformed[section][0]['events'] = invalid;
+          expect(
+            () => path2_auto.Path2Auto.fromJson(
+              malformed,
+              'Invalid',
+              '/autos',
+              fs,
+            ),
+            throwsFormatException,
+          );
+        }
+      }
+    },
+  );
+
   group('auto graph model', () {
     test('new autos are empty and valid', () {
       final empty = path2_auto.Path2Auto.defaultAuto(autoDir: '/autos', fs: fs);

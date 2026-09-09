@@ -1104,6 +1104,9 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
     for (final path in _paths) {
       if (path.replaceEventName(oldName, newName)) path.saveFile();
     }
+    for (final auto in _autos) {
+      if (auto.replaceEventName(oldName, newName)) auto.saveFile();
+    }
     setState(() {});
   }
 

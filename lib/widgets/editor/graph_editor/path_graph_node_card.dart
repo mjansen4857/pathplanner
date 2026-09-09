@@ -8,6 +8,7 @@ import 'package:pathplanner/path2/waypoint.dart';
 import 'package:pathplanner/path2/waypoint_constraints.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/graph_editor/visual_graph_editor.dart';
+import 'package:pathplanner/widgets/editor/graph_editor/graph_node_badges.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 
 typedef PathNodeEdit = void Function(
@@ -130,12 +131,12 @@ class PathGraphNodeCard extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            _CountBadge(
+                            GraphCountBadge(
                               icon: Icons.call_received_rounded,
                               count: incoming,
                               tooltip: '$incoming incoming branches',
                             ),
-                            _CountBadge(
+                            GraphCountBadge(
                               icon: Icons.call_made_rounded,
                               count: outgoing,
                               tooltip: '$outgoing outgoing branches',
@@ -223,14 +224,14 @@ class PathGraphNodeCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isRoot)
-                      const _CornerFlag(
+                      const GraphCornerFlag(
                         icon: Icons.start_rounded,
                         label: 'Start',
                         color: Colors.green,
                       ),
                     if (isRoot && isLeaf) const SizedBox(width: 4),
                     if (isLeaf)
-                      const _CornerFlag(
+                      const GraphCornerFlag(
                         icon: Icons.flag_outlined,
                         label: 'End',
                         color: Colors.red,
@@ -242,7 +243,7 @@ class PathGraphNodeCard extends StatelessWidget {
               Positioned(
                 top: -8,
                 right: 16,
-                child: _CornerFlag(
+                child: GraphCornerFlag(
                   key: ValueKey('pathNodeRuntime-${node.id}'),
                   icon: Icons.timer_outlined,
                   label: _runtimeLabel(estimatedRuntimeSeconds),
@@ -817,90 +818,6 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _CountBadge extends StatelessWidget {
-  final IconData icon;
-  final int count;
-  final String tooltip;
-
-  const _CountBadge({
-    required this.icon,
-    required this.count,
-    required this.tooltip,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 3),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14),
-            const SizedBox(width: 1),
-            Text('$count', style: const TextStyle(fontSize: 11)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A tab with a flat lower edge attached to the top of the card.
-class _CornerFlag extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _CornerFlag({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 22,
-      constraints: const BoxConstraints(maxWidth: 126),
-      padding: const EdgeInsets.symmetric(horizontal: 7),
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(
-          color.withAlpha(35),
-          Theme.of(context).colorScheme.surfaceContainerHighest,
-        ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
-        border: Border(
-          top: BorderSide(color: color.withAlpha(100)),
-          left: BorderSide(color: color.withAlpha(100)),
-          right: BorderSide(color: color.withAlpha(100)),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 3),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

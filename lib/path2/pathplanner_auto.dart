@@ -9,6 +9,7 @@ import 'package:pathplanner/path2/path.dart' as path2;
 import 'package:pathplanner/path2/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/project_condition_registry.dart';
+import 'package:pathplanner/services/project_event_registry.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:version/version.dart';
 
@@ -20,8 +21,15 @@ sealed class AutoNode implements GraphNodeData {
   @override
   Offset editorPosition;
 
-  AutoNode({String? id, required this.editorPosition})
-    : id = id ?? generateGraphId() {
+  List<String> events;
+
+  AutoNode({
+    String? id,
+    required this.editorPosition,
+    List<String> events = const [],
+  }) : id = id ?? generateGraphId(),
+       events = List.of(events) {
+    _validateEvents(events);
     _validateId(this.id, 'Auto node ID');
     validateFiniteOffset(editorPosition, 'editorPosition');
   }
@@ -48,7 +56,12 @@ sealed class AutoNode implements GraphNodeData {
 final class PathAutoNode extends AutoNode {
   String? pathName;
 
-  PathAutoNode({super.id, this.pathName, required super.editorPosition});
+  PathAutoNode({
+    super.id,
+    this.pathName,
+    required super.editorPosition,
+    super.events,
+  });
 
   factory PathAutoNode.fromJson(Map<String, dynamic> json) {
     final pathName = json['pathName'];
@@ -58,6 +71,7 @@ final class PathAutoNode extends AutoNode {
     return PathAutoNode(
       id: _requiredId(json, 'id', 'Auto node ID'),
       pathName: pathName as String?,
+      events: _eventsFromJson(json['events']),
       editorPosition: editorPositionFromJson(json['editorPosition']),
     );
   }
@@ -66,14 +80,19 @@ final class PathAutoNode extends AutoNode {
   String get type => 'path';
 
   @override
-  PathAutoNode clone() =>
-      PathAutoNode(id: id, pathName: pathName, editorPosition: editorPosition);
+  PathAutoNode clone() => PathAutoNode(
+    id: id,
+    pathName: pathName,
+    editorPosition: editorPosition,
+    events: events,
+  );
 
   @override
   Map<String, dynamic> toJson() => {
     'id': id,
     'type': type,
     'pathName': pathName,
+    'events': List<String>.of(events),
     'editorPosition': editorPositionToJson(editorPosition),
   };
 
@@ -82,10 +101,16 @@ final class PathAutoNode extends AutoNode {
       other is PathAutoNode &&
       other.id == id &&
       other.pathName == pathName &&
-      other.editorPosition == editorPosition;
+      other.editorPosition == editorPosition &&
+      const ListEquality<String>().equals(other.events, events);
 
   @override
-  int get hashCode => Object.hash(id, pathName, editorPosition);
+  int get hashCode => Object.hash(
+    id,
+    pathName,
+    editorPosition,
+    const ListEquality<String>().hash(events),
+  );
 }
 
 class AutoBranch implements GraphBranchData {
@@ -96,14 +121,18 @@ class AutoBranch implements GraphBranchData {
   @override
   final String targetId;
   AutoTransition transition;
+  List<String> events;
 
   AutoBranch({
     String? id,
     required this.sourceId,
     required this.targetId,
     AutoTransition? transition,
+    List<String> events = const [],
   }) : id = id ?? generateGraphId(),
+       events = List.of(events),
        transition = transition ?? ConditionTransition() {
+    _validateEvents(events);
     _validateId(this.id, 'Auto branch ID');
     _validateId(sourceId, 'Auto branch source ID');
     _validateId(targetId, 'Auto branch target ID');
@@ -116,6 +145,7 @@ class AutoBranch implements GraphBranchData {
       sourceId: _requiredId(json, 'sourceId', 'Auto branch source ID'),
       targetId: _requiredId(json, 'targetId', 'Auto branch target ID'),
       transition: AutoTransition.fromJson(json['transition']),
+      events: _eventsFromJson(json['events']),
     );
   }
 
@@ -124,6 +154,7 @@ class AutoBranch implements GraphBranchData {
     sourceId: sourceId,
     targetId: targetId,
     transition: transition.clone(),
+    events: events,
   );
 
   Map<String, dynamic> toJson() => {
@@ -131,6 +162,7 @@ class AutoBranch implements GraphBranchData {
     'sourceId': sourceId,
     'targetId': targetId,
     'transition': transition.toJson(),
+    'events': List<String>.of(events),
   };
 
   @override
@@ -139,10 +171,17 @@ class AutoBranch implements GraphBranchData {
       other.id == id &&
       other.sourceId == sourceId &&
       other.targetId == targetId &&
-      other.transition == transition;
+      other.transition == transition &&
+      const ListEquality<String>().equals(other.events, events);
 
   @override
-  int get hashCode => Object.hash(id, sourceId, targetId, transition);
+  int get hashCode => Object.hash(
+    id,
+    sourceId,
+    targetId,
+    transition,
+    const ListEquality<String>().hash(events),
+  );
 }
 
 class AutoGraphSnapshot {
@@ -196,6 +235,7 @@ class Path2Auto {
       throw ArgumentError(graphDiagnostics.hardErrors.join('; '));
     }
     _collectConditionNames();
+    registerEvents();
   }
 
   Path2Auto.defaultAuto({
@@ -241,6 +281,36 @@ class Path2Auto {
     } on ArgumentError catch (error) {
       throw FormatException('Invalid auto graph: ${error.message}');
     }
+  }
+
+  void registerEvents() {
+    for (final node in nodes) {
+      ProjectEventRegistry.events.addAll(node.events);
+    }
+    for (final branch in branches) {
+      ProjectEventRegistry.events.addAll(branch.events);
+    }
+  }
+
+  bool replaceEventName(String oldName, String? newName) {
+    var changed = false;
+    List<String> replace(List<String> events) {
+      if (!events.contains(oldName)) return events;
+      changed = true;
+      return [
+        for (final name in events)
+          if (name != oldName) name else if (newName != null) newName,
+      ];
+    }
+
+    for (final node in nodes) {
+      node.events = replace(node.events);
+    }
+    for (final branch in branches) {
+      branch.events = replace(branch.events);
+    }
+    if (changed) registerEvents();
+    return changed;
   }
 
   String get version => sourceVersion;
@@ -365,6 +435,7 @@ class Path2Auto {
       return false;
     }
     nodes.add(node);
+    ProjectEventRegistry.events.addAll(node.events);
     return true;
   }
 
@@ -378,6 +449,7 @@ class Path2Auto {
       return false;
     }
     branches.add(branch);
+    ProjectEventRegistry.events.addAll(branch.events);
     _registerTransition(branch.transition);
     return true;
   }
@@ -421,6 +493,7 @@ class Path2Auto {
     startingPose = snapshot.startingPose;
     startingPoseInitialized = snapshot.startingPoseInitialized;
     _collectConditionNames();
+    registerEvents();
   }
 
   Map<String, dynamic> toJson() {
@@ -432,6 +505,12 @@ class Path2Auto {
       );
     }
     _validatePose(startingPose);
+    for (final node in nodes) {
+      _validateEvents(node.events);
+    }
+    for (final branch in branches) {
+      _validateEvents(branch.events);
+    }
     return {
       'version': sourceVersion,
       'nodes': [for (final node in nodes) node.toJson()],
@@ -830,5 +909,20 @@ Map<String, dynamic> _jsonObject(Object? value, String label) {
 void _registerTransition(AutoTransition transition) {
   if (transition is ConditionTransition) {
     ProjectConditionRegistry.register(transition.conditionName);
+  }
+}
+
+List<String> _eventsFromJson(Object? value) {
+  if (value == null) return [];
+  if (value is! List ||
+      value.any((name) => name is! String || name.trim().isEmpty)) {
+    throw const FormatException('Events must be a list of nonempty strings');
+  }
+  return List<String>.from(value);
+}
+
+void _validateEvents(List<String> events) {
+  if (events.any((name) => name.trim().isEmpty)) {
+    throw ArgumentError('Events must be nonempty strings');
   }
 }

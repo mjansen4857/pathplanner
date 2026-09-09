@@ -23,6 +23,52 @@ class PathBranchEventChips extends StatelessWidget {
     this.status = const {},
   });
 
+  static Size sizeFor(int count) => BranchEventChips.sizeFor(count);
+
+  @override
+  Widget build(BuildContext context) => BranchEventChips(
+    branchId: branch.id,
+    names: branch.events.map((event) => event.name).toList(),
+    transitionBadge: transitionBadge,
+    onEditTransition: onEditTransition,
+    onAdd: onAdd,
+    onRemove: onRemove,
+    status: status,
+    trailingBuilder: (index) => Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: _EventPositionButton(
+        branchId: branch.id,
+        index: index,
+        position: branch.events[index].position,
+        onChanged: (value) => onPositionChanged(index, value),
+      ),
+    ),
+  );
+}
+
+/// Shared connection events, with optional extra controls for path positions.
+class BranchEventChips extends StatelessWidget {
+  final String branchId;
+  final List<String> names;
+  final Widget transitionBadge;
+  final VoidCallback onEditTransition;
+  final ValueChanged<String> onAdd;
+  final ValueChanged<int> onRemove;
+  final Map<int, String> status;
+  final Widget Function(int index)? trailingBuilder;
+
+  const BranchEventChips({
+    super.key,
+    required this.branchId,
+    required this.names,
+    required this.transitionBadge,
+    required this.onEditTransition,
+    required this.onAdd,
+    required this.onRemove,
+    this.status = const {},
+    this.trailingBuilder,
+  });
+
   static Size sizeFor(int count) =>
       Size(220, 28 + (count > 0 ? 8 + count * 36 : 0));
 
@@ -47,7 +93,7 @@ class PathBranchEventChips extends StatelessWidget {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
-                    key: ValueKey('editBranchTransition-${branch.id}'),
+                    key: ValueKey('editBranchTransition-$branchId'),
                     onTap: onEditTransition,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -78,7 +124,7 @@ class PathBranchEventChips extends StatelessWidget {
                   child: Tooltip(
                     message: 'Add event',
                     child: EventAddButton(
-                      names: branch.events.map((event) => event.name),
+                      names: names,
                       onSelected: onAdd,
                       compact: true,
                     ),
@@ -88,24 +134,16 @@ class PathBranchEventChips extends StatelessWidget {
             ),
           ],
         ),
-        if (branch.events.isNotEmpty) const SizedBox(height: 8),
-        for (var index = 0; index < branch.events.length; index++) ...[
+        if (names.isNotEmpty) const SizedBox(height: 8),
+        for (var index = 0; index < names.length; index++) ...[
           SizedBox(
             height: 30,
             child: EventChip(
-              key: ValueKey('branchEventChip-${branch.id}-$index'),
-              name: branch.events[index].name,
+              key: ValueKey('branchEventChip-$branchId-$index'),
+              name: names[index],
               status: status[index],
               onRemove: () => onRemove(index),
-              trailing: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: _EventPositionButton(
-                  branchId: branch.id,
-                  index: index,
-                  position: branch.events[index].position,
-                  onChanged: (value) => onPositionChanged(index, value),
-                ),
-              ),
+              trailing: trailingBuilder?.call(index),
             ),
           ),
           const SizedBox(height: 6),

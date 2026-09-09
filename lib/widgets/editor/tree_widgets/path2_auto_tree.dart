@@ -3,8 +3,11 @@ import 'package:pathplanner/path2/graph.dart';
 import 'package:pathplanner/path2/pathplanner_auto.dart';
 import 'package:pathplanner/services/project_condition_registry.dart';
 import 'package:pathplanner/widgets/editor/graph_editor/visual_graph_editor.dart';
+import 'package:pathplanner/widgets/editor/graph_editor/graph_node_badges.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path2_starting_pose_tree.dart';
 import 'package:undo/undo.dart';
+import 'package:pathplanner/widgets/editor/event_names_editor.dart';
+import 'package:pathplanner/widgets/editor/graph_editor/path_branch_event_chips.dart';
 
 /// Visual directed-graph editor for Path 2 autos.
 class Path2AutoTree extends StatefulWidget {
@@ -32,7 +35,7 @@ class Path2AutoTree extends StatefulWidget {
 }
 
 class _Path2AutoTreeState extends State<Path2AutoTree> {
-  static const Size _nodeSize = Size(300, 190);
+  static const Size _nodeSize = Size(300, 141);
 
   final VisualGraphController _graphController = VisualGraphController();
 
@@ -109,7 +112,15 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                         VisualGraphNode(
                           id: node.id,
                           position: node.editorPosition,
-                          size: _nodeSize,
+                          size: Size(
+                            _nodeSize.width,
+                            _nodeSize.height +
+                                (_isPathMissing(node) ? 28 : 0) +
+                                WaypointEventsSection.heightFor(
+                                  node.events,
+                                  MediaQuery.textScalerOf(context),
+                                ),
+                          ),
                           child: _buildNodeCard(node),
                         ),
                     ],
@@ -119,7 +130,30 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                           id: branch.id,
                           sourceId: branch.sourceId,
                           targetId: branch.targetId,
-                          badge: _buildBranchBadge(branch),
+                          customBadge: true,
+                          badgeSize: BranchEventChips.sizeFor(
+                            branch.events.length,
+                          ),
+                          badge: Builder(
+                            builder: (badgeContext) => BranchEventChips(
+                              branchId: branch.id,
+                              names: branch.events,
+                              transitionBadge: _buildBranchBadge(branch),
+                              onEditTransition: () => _editBranch(
+                                branch.id,
+                                (badgeContext.findRenderObject()! as RenderBox)
+                                    .localToGlobal(Offset.zero),
+                              ),
+                              onAdd: (name) => _editBranchEvents(
+                                branch.id,
+                                (events) => events.add(name),
+                              ),
+                              onRemove: (index) => _editBranchEvents(
+                                branch.id,
+                                (events) => events.removeAt(index),
+                              ),
+                            ),
+                          ),
                           color: _branchColor(branch),
                         ),
                     ],
@@ -162,9 +196,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
     final outgoing = widget.auto.branches
         .where((branch) => branch.sourceId == pathNode.id)
         .length;
-    final pathMissing =
-        pathNode.pathName == null ||
-        !widget.allPathNames.contains(pathNode.pathName);
+    final pathMissing = _isPathMissing(pathNode);
     final selectableNames = widget.allPathNames.toSet().toList()..sort();
     if (pathNode.pathName != null &&
         !selectableNames.contains(pathNode.pathName)) {
@@ -178,19 +210,11 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned(
-            top: 0,
-            left: (_nodeSize.width - 28) / 2,
-            child: GraphConnectorHandle(
-              nodeId: pathNode.id,
-              side: GraphConnectorSide.top,
-            ),
-          ),
           Positioned.fill(
             top: 10,
             bottom: 10,
             child: Card(
-              margin: const EdgeInsets.all(4),
+              margin: const EdgeInsets.symmetric(vertical: 4),
               elevation: 4,
               color: colorScheme.surface,
               surfaceTintColor: colorScheme.surfaceTint,
@@ -202,28 +226,49 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                     nodeId: pathNode.id,
                     child: ColoredBox(
                       color: colorScheme.surfaceContainerHighest,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 9,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.route_rounded, size: 19),
-                            SizedBox(width: 8),
-                            Text(
-                              'Path',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                            Spacer(),
-                            Icon(Icons.drag_indicator_rounded, size: 19),
-                          ],
+                      child: SizedBox(
+                        height: 48,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 12, right: 4),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.route_rounded, size: 19),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Path',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              const Spacer(),
+                              GraphCountBadge(
+                                icon: Icons.call_received_rounded,
+                                count: incoming,
+                                tooltip: '$incoming incoming branches',
+                              ),
+                              GraphCountBadge(
+                                icon: Icons.call_made_rounded,
+                                count: outgoing,
+                                tooltip: '$outgoing outgoing branches',
+                              ),
+                              IconButton(
+                                key: ValueKey(
+                                  'path2AutoDeleteNode-${pathNode.id}',
+                                ),
+                                tooltip: 'Delete Auto Node',
+                                onPressed: () => _deleteNode(pathNode.id),
+                                color: colorScheme.error,
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 6, 0),
+                    padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
                     child: Row(
                       children: [
                         Expanded(
@@ -267,57 +312,65 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                                 ),
                           icon: const Icon(Icons.open_in_new_rounded),
                         ),
-                        IconButton(
-                          key: ValueKey('path2AutoDeleteNode-${pathNode.id}'),
-                          tooltip: 'Delete Auto Node',
-                          onPressed: () => _deleteNode(pathNode.id),
-                          color: colorScheme.error,
-                          icon: const Icon(Icons.delete_forever_rounded),
-                        ),
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 7,
+                  if (pathMissing)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                      child: _TopologyBadge(
+                        icon: Icons.warning_amber_rounded,
+                        label: pathNode.pathName == null
+                            ? 'Path unset'
+                            : 'Missing path',
+                        color: colorScheme.error,
+                      ),
                     ),
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (incoming == 0)
-                          const _TopologyBadge(
-                            icon: Icons.start_rounded,
-                            label: 'Start',
-                          ),
-                        if (outgoing == 0)
-                          const _TopologyBadge(
-                            icon: Icons.flag_outlined,
-                            label: 'End',
-                          ),
-                        _TopologyBadge(
-                          icon: Icons.call_received_rounded,
-                          label: '$incoming in',
-                        ),
-                        _TopologyBadge(
-                          icon: Icons.call_made_rounded,
-                          label: '$outgoing out',
-                        ),
-                        if (pathMissing)
-                          _TopologyBadge(
-                            icon: Icons.warning_amber_rounded,
-                            label: pathNode.pathName == null
-                                ? 'Path unset'
-                                : 'Missing path',
-                            color: colorScheme.error,
-                          ),
-                      ],
+                  WaypointEventsSection(
+                    key: ValueKey('autoNodeEvents-${pathNode.id}'),
+                    names: pathNode.events,
+                    onAdd: (name) => _editNodeEvents(
+                      pathNode.id,
+                      (events) => events.add(name),
+                    ),
+                    onRemove: (index) => _editNodeEvents(
+                      pathNode.id,
+                      (events) => events.removeAt(index),
                     ),
                   ),
                 ],
               ),
+            ),
+          ),
+          if (incoming == 0 || outgoing == 0)
+            Positioned(
+              top: -8,
+              left: 16,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (incoming == 0)
+                    const GraphCornerFlag(
+                      icon: Icons.start_rounded,
+                      label: 'Start',
+                      color: Colors.green,
+                    ),
+                  if (incoming == 0 && outgoing == 0) const SizedBox(width: 4),
+                  if (outgoing == 0)
+                    const GraphCornerFlag(
+                      icon: Icons.flag_outlined,
+                      label: 'End',
+                      color: Colors.red,
+                    ),
+                ],
+              ),
+            ),
+          Positioned(
+            top: 0,
+            left: (_nodeSize.width - 28) / 2,
+            child: GraphConnectorHandle(
+              nodeId: pathNode.id,
+              side: GraphConnectorSide.top,
             ),
           ),
           Positioned(
@@ -332,6 +385,10 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
       ),
     );
   }
+
+  bool _isPathMissing(AutoNode node) =>
+      node is PathAutoNode &&
+      (node.pathName == null || !widget.allPathNames.contains(node.pathName));
 
   Widget _buildBranchBadge(AutoBranch branch) {
     final transition = branch.transition;
@@ -591,6 +648,24 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
     }
     _performGraphChange(() {
       widget.auto.nodeById(nodeId)?.editorPosition = newPosition;
+    });
+  }
+
+  void _editNodeEvents(String nodeId, void Function(List<String>) edit) {
+    _performGraphChange(() {
+      final node = widget.auto.nodeById(nodeId);
+      if (node != null) edit(node.events);
+      widget.auto.registerEvents();
+    });
+  }
+
+  void _editBranchEvents(String branchId, void Function(List<String>) edit) {
+    _performGraphChange(() {
+      final branch = widget.auto.branches.firstWhere(
+        (branch) => branch.id == branchId,
+      );
+      edit(branch.events);
+      widget.auto.registerEvents();
     });
   }
 

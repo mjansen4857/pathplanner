@@ -3,7 +3,6 @@ import 'package:flutter/material.dart'
     as legacy
     show
         DropdownButtonHideUnderline,
-        DropdownMenuItem,
         InputDecoration,
         OutlineInputBorder,
         TextFormField;
@@ -58,11 +57,13 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                 child: legacy.DropdownButtonHideUnderline(
                   child: DropdownButton2<String>(
                     hint: const Text('Command Name'),
-                    value: widget.command.name,
+                    valueListenable: AlwaysStoppedAnimation(
+                      widget.command.name,
+                    ),
                     items: ProjectEventRegistry.events.isEmpty
                         ? [
                             // Workaround to prevent menu from disabling itself with empty items list
-                            legacy.DropdownMenuItem(
+                            DropdownItem(
                               value: '',
                               enabled: false,
                               child: Text(
@@ -77,7 +78,7 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                         : [
                             for (String event in ProjectEventRegistry.events)
                               if (event.isNotEmpty)
-                                legacy.DropdownMenuItem(
+                                DropdownItem(
                                   value: event,
                                   child: Text(
                                     event,
@@ -106,8 +107,8 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                     menuItemStyleData: const MenuItemStyleData(),
                     dropdownSearchData: DropdownSearchData(
                       searchController: _controller,
-                      searchInnerWidgetHeight: 42,
-                      searchInnerWidget: Container(
+                      searchBarWidgetHeight: 42,
+                      searchBarWidget: Container(
                         height: 46,
                         padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                         child: legacy.TextFormField(

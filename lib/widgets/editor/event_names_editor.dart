@@ -64,7 +64,7 @@ class EventChip extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (trailing != null) trailing!,
+            ?trailing,
             IconButton(
               onPressed: onRemove,
               icon: const Icon(Icons.close_rounded, size: 13),

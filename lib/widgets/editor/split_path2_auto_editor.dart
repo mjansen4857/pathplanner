@@ -1,3 +1,4 @@
+import 'package:pathplanner/widgets/editor/split_field_clipper.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -74,14 +75,8 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
         widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
     _controller.areas = [
-      Area(
-        weight: _treeOnRight ? 1 - treeWeight : treeWeight,
-        minimalWeight: 0.4,
-      ),
-      Area(
-        weight: _treeOnRight ? treeWeight : 1 - treeWeight,
-        minimalWeight: 0.4,
-      ),
+      Area(flex: _treeOnRight ? 1 - treeWeight : treeWeight, min: 0.4),
+      Area(flex: _treeOnRight ? treeWeight : 1 - treeWeight, min: 0.4),
     ];
   }
 
@@ -137,46 +132,52 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
     return Stack(
       children: [
         Positioned.fill(
-          child: InteractiveViewer(
-            maxScale: 10,
-            boundaryMargin: const EdgeInsets.all(200),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 64),
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio:
-                      widget.fieldImage.defaultSize.width /
-                      widget.fieldImage.defaultSize.height,
-                  child: GestureDetector(
-                    key: const ValueKey('path2AutoFieldGesture'),
-                    behavior: HitTestBehavior.opaque,
-                    onTapDown: (_) =>
-                        FocusManager.instance.primaryFocus?.unfocus(),
-                    onPanDown: (details) =>
-                        _panDownPosition = details.localPosition,
-                    onPanStart: _handlePanStart,
-                    onPanUpdate: _handlePanUpdate,
-                    onPanEnd: (_) => _finishStartingPoseDrag(),
-                    onPanCancel: _finishStartingPoseDrag,
-                    child: Stack(
-                      children: [
-                        widget.fieldImage.getWidget(),
-                        Positioned.fill(
-                          child: CustomPaint(
-                            painter: Path2Painter(
-                              colorScheme: colorScheme,
-                              paintPaths: visibleOccurrences,
-                              fieldImage: widget.fieldImage,
-                              prefs: widget.prefs,
-                              simple: true,
-                              hoveredOccurrenceId: _hoveredAutoNodeId,
-                              autoStartingPose: widget.auto.startingPose,
-                              showStartingPoseHandles: true,
-                              showWaypointRobotPreviews: false,
+          child: ClipRect(
+            clipper: SplitFieldClipper(
+              controller: _controller,
+              fieldOnRight: !_treeOnRight,
+            ),
+            child: InteractiveViewer(
+              maxScale: 10,
+              boundaryMargin: const EdgeInsets.all(200),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 64),
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio:
+                        widget.fieldImage.defaultSize.width /
+                        widget.fieldImage.defaultSize.height,
+                    child: GestureDetector(
+                      key: const ValueKey('path2AutoFieldGesture'),
+                      behavior: HitTestBehavior.opaque,
+                      onTapDown: (_) =>
+                          FocusManager.instance.primaryFocus?.unfocus(),
+                      onPanDown: (details) =>
+                          _panDownPosition = details.localPosition,
+                      onPanStart: _handlePanStart,
+                      onPanUpdate: _handlePanUpdate,
+                      onPanEnd: (_) => _finishStartingPoseDrag(),
+                      onPanCancel: _finishStartingPoseDrag,
+                      child: Stack(
+                        children: [
+                          widget.fieldImage.getWidget(),
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: Path2Painter(
+                                colorScheme: colorScheme,
+                                paintPaths: visibleOccurrences,
+                                fieldImage: widget.fieldImage,
+                                prefs: widget.prefs,
+                                simple: true,
+                                hoveredOccurrenceId: _hoveredAutoNodeId,
+                                autoStartingPose: widget.auto.startingPose,
+                                showStartingPoseHandles: true,
+                                showWaypointRobotPreviews: false,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -194,16 +195,18 @@ class _SplitPath2AutoEditorState extends State<SplitPath2AutoEditor>
           child: MultiSplitView(
             axis: Axis.horizontal,
             controller: _controller,
-            onWeightChange: () {
+            onDividerDragUpdate: (_) {
               final newWeight = _treeOnRight
-                  ? _controller.areas[1].weight
-                  : _controller.areas[0].weight;
+                  ? _controller.areas[1].flex
+                  : _controller.areas[0].flex;
               widget.prefs.setDouble(
                 PrefsKeys.editorTreeWeight,
                 newWeight ?? Defaults.editorTreeWeight,
               );
             },
-            children: _treeOnRight ? [seekbar, graph] : [graph, seekbar],
+            builder: (context, area) => (_treeOnRight
+                ? [seekbar, graph]
+                : [graph, seekbar])[area.index],
           ),
         ),
       ],

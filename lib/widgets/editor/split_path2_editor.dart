@@ -1,3 +1,4 @@
+import 'package:pathplanner/widgets/editor/split_field_clipper.dart';
 import 'package:pathplanner/path2/waypoint_constraints.dart';
 
 import 'dart:math';
@@ -103,14 +104,8 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
         widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
     _splitController.areas = [
-      Area(
-        weight: _graphOnRight ? 1 - graphWeight : graphWeight,
-        minimalWeight: 0.35,
-      ),
-      Area(
-        weight: _graphOnRight ? graphWeight : 1 - graphWeight,
-        minimalWeight: 0.35,
-      ),
+      Area(flex: _graphOnRight ? 1 - graphWeight : graphWeight, min: 0.35),
+      Area(flex: _graphOnRight ? graphWeight : 1 - graphWeight, min: 0.35),
     ];
     if (_applyDefaultConstraints()) widget.path.saveFile();
     WidgetsBinding.instance.addPostFrameCallback((_) => _simulatePath());
@@ -137,7 +132,15 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
 
     return Stack(
       children: [
-        Positioned.fill(child: field),
+        Positioned.fill(
+          child: ClipRect(
+            clipper: SplitFieldClipper(
+              controller: _splitController,
+              fieldOnRight: !_graphOnRight,
+            ),
+            child: field,
+          ),
+        ),
         MultiSplitViewTheme(
           data: MultiSplitViewThemeData(
             dividerPainter: DividerPainters.grooved1(
@@ -148,8 +151,10 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
           child: MultiSplitView(
             axis: Axis.horizontal,
             controller: _splitController,
-            onWeightChange: _saveGraphWeight,
-            children: _graphOnRight ? [seekbar, graph] : [graph, seekbar],
+            onDividerDragUpdate: (_) => _saveGraphWeight(),
+            builder: (context, area) => (_graphOnRight
+                ? [seekbar, graph]
+                : [graph, seekbar])[area.index],
           ),
         ),
       ],
@@ -1177,8 +1182,8 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
 
   void _saveGraphWeight() {
     final weight = _graphOnRight
-        ? _splitController.areas[1].weight
-        : _splitController.areas[0].weight;
+        ? _splitController.areas[1].flex
+        : _splitController.areas[0].flex;
     widget.prefs.setDouble(PrefsKeys.editorTreeWeight, weight ?? 0.5);
   }
 

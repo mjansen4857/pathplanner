@@ -172,7 +172,7 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
                   ),
                   onPressed: () async {
                     if (!_renderGif) {
-                      final imageBytes = await _controller.capture(
+                      final imageBytes = await _controller.capturePng(
                         pixelRatio: 1,
                       );
 
@@ -214,7 +214,7 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
       return;
     }
 
-    final imageBytes = await _controller.capture(pixelRatio: 1);
+    final imageBytes = await _controller.capturePng(pixelRatio: 1);
     _gifImagesBytes.add(imageBytes!);
 
     if (!mounted) {

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart'
     as legacy
     show
         DropdownButtonHideUnderline,
-        DropdownMenuItem,
         InputDecoration,
         OutlineInputBorder,
         TextFormField;
@@ -63,10 +62,12 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
               child: DropdownButton2<String>(
                 isExpanded: true,
                 hint: const Text('Path Name'),
-                value: widget.command.pathName,
+                valueListenable: AlwaysStoppedAnimation(
+                  widget.command.pathName,
+                ),
                 items: List.generate(
                   widget.allPathNames.length,
-                  (index) => legacy.DropdownMenuItem(
+                  (index) => DropdownItem(
                     value: widget.allPathNames[index],
                     child: Tooltip(
                       message: widget.allPathNames[index],
@@ -99,8 +100,8 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
                 menuItemStyleData: const MenuItemStyleData(),
                 dropdownSearchData: DropdownSearchData(
                   searchController: _controller,
-                  searchInnerWidgetHeight: 42,
-                  searchInnerWidget: Container(
+                  searchBarWidgetHeight: 42,
+                  searchBarWidget: Container(
                     height: 46,
                     padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                     child: legacy.TextFormField(

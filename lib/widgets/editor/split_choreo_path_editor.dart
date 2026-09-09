@@ -1,3 +1,4 @@
+import 'package:pathplanner/widgets/editor/split_field_clipper.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/choreo_path.dart';
@@ -51,14 +52,8 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
         widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
     _controller.areas = [
-      Area(
-        weight: _treeOnRight ? (1.0 - treeWeight) : treeWeight,
-        minimalWeight: 0.4,
-      ),
-      Area(
-        weight: _treeOnRight ? treeWeight : (1.0 - treeWeight),
-        minimalWeight: 0.4,
-      ),
+      Area(flex: _treeOnRight ? (1.0 - treeWeight) : treeWeight, min: 0.4),
+      Area(flex: _treeOnRight ? treeWeight : (1.0 - treeWeight), min: 0.4),
     ];
 
     _simulatePath();
@@ -76,27 +71,33 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
 
     return Stack(
       children: [
-        Center(
-          child: InteractiveViewer(
-            child: Padding(
-              padding: const EdgeInsets.all(48),
-              child: Stack(
-                children: [
-                  widget.fieldImage.getWidget(),
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: PathPainter(
-                        colorScheme: colorScheme,
-                        paths: [],
-                        choreoPaths: [widget.path],
-                        fieldImage: widget.fieldImage,
-                        simulatedPath: widget.path.trajectory,
-                        animation: _previewController.view,
-                        prefs: widget.prefs,
+        ClipRect(
+          clipper: SplitFieldClipper(
+            controller: _controller,
+            fieldOnRight: !_treeOnRight,
+          ),
+          child: Center(
+            child: InteractiveViewer(
+              child: Padding(
+                padding: const EdgeInsets.all(48),
+                child: Stack(
+                  children: [
+                    widget.fieldImage.getWidget(),
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: PathPainter(
+                          colorScheme: colorScheme,
+                          paths: [],
+                          choreoPaths: [widget.path],
+                          fieldImage: widget.fieldImage,
+                          simulatedPath: widget.path.trajectory,
+                          animation: _previewController.view,
+                          prefs: widget.prefs,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -111,16 +112,16 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
           child: MultiSplitView(
             axis: Axis.horizontal,
             controller: _controller,
-            onWeightChange: () {
+            onDividerDragUpdate: (_) {
               double? newWeight = _treeOnRight
-                  ? _controller.areas[1].weight
-                  : _controller.areas[0].weight;
+                  ? _controller.areas[1].flex
+                  : _controller.areas[0].flex;
               widget.prefs.setDouble(
                 PrefsKeys.editorTreeWeight,
                 newWeight ?? 0.5,
               );
             },
-            children: [
+            builder: (context, area) => ([
               if (_treeOnRight)
                 PreviewSeekbar(
                   previewController: _previewController,
@@ -184,7 +185,7 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
                       ? widget.path.trajectory.states.last.timeSeconds
                       : 1.0,
                 ),
-            ],
+            ])[area.index],
           ),
         ),
       ],

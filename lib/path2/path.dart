@@ -271,7 +271,7 @@ class Path {
         changed = true;
         node.waypoint.events = [
           for (final name in node.waypoint.events)
-            if (name != oldName) name else if (newName != null) newName,
+            if (name != oldName) name else ?newName,
         ];
       }
     }

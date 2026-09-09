@@ -360,7 +360,7 @@ class Path2Auto {
       changed = true;
       return [
         for (final name in events)
-          if (name != oldName) name else if (newName != null) newName,
+          if (name != oldName) name else ?newName,
       ];
     }
 

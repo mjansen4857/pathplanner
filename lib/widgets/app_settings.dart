@@ -230,7 +230,7 @@ class _AppSettingsState extends State<AppSettings> {
         },
         child: TextField(
           controller: controller,
-          inputFormatters: [if (formatter != null) formatter],
+          inputFormatters: [?formatter],
           style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),

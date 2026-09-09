@@ -45,7 +45,7 @@ class TreeCardNode extends StatelessWidget {
           child: ExpansionTile(
             title: Row(
               children: [
-                if (leading != null) leading!,
+                ?leading,
                 if (leading != null) const SizedBox(width: 8),
                 Expanded(child: title),
               ],

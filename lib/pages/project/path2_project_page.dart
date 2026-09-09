@@ -84,8 +84,8 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
         widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ??
         Defaults.projectLeftWeight;
     _splitController.areas = [
-      Area(weight: leftWeight, minimalWeight: 0.33),
-      Area(weight: 1 - leftWeight, minimalWeight: 0.33),
+      Area(flex: leftWeight, min: 0.33),
+      Area(flex: 1 - leftWeight, min: 0.33),
     ];
     _pathGridCount = _gridCount(leftWeight);
     _autoGridCount = _gridCount(1 - leftWeight);
@@ -216,15 +216,18 @@ class _Path2ProjectPageState extends State<Path2ProjectPage> {
             child: MultiSplitView(
               axis: Axis.horizontal,
               controller: _splitController,
-              onWeightChange: () {
-                final leftWeight = _splitController.areas[0].weight ?? 0.5;
+              onDividerDragUpdate: (_) {
+                final leftWeight = _splitController.areas[0].flex ?? 0.5;
                 setState(() {
                   _pathGridCount = _gridCount(leftWeight);
                   _autoGridCount = _gridCount(1 - leftWeight);
                 });
                 widget.prefs.setDouble(PrefsKeys.projectLeftWeight, leftWeight);
               },
-              children: [_buildPathsPane(context), _buildAutosPane(context)],
+              builder: (context, area) => ([
+                _buildPathsPane(context),
+                _buildAutosPane(context),
+              ])[area.index],
             ),
           ),
         ),

@@ -116,8 +116,8 @@ class _ProjectPageState extends State<ProjectPage> {
         widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ??
         Defaults.projectLeftWeight;
     _controller.areas = [
-      Area(weight: leftWeight, minimalWeight: 0.33),
-      Area(weight: 1.0 - leftWeight, minimalWeight: 0.33),
+      Area(flex: leftWeight, min: 0.33),
+      Area(flex: 1.0 - leftWeight, min: 0.33),
     ];
 
     _pathSortValue =
@@ -311,21 +311,24 @@ class _ProjectPageState extends State<ProjectPage> {
             child: MultiSplitView(
               axis: Axis.horizontal,
               controller: _controller,
-              onWeightChange: () {
+              onDividerDragUpdate: (_) {
                 setState(() {
                   _pathGridCount = _getCrossAxisCountForWeight(
-                    _controller.areas[0].weight!,
+                    _controller.areas[0].flex!,
                   );
                   _autosGridCount = _getCrossAxisCountForWeight(
-                    1.0 - _controller.areas[0].weight!,
+                    1.0 - _controller.areas[0].flex!,
                   );
                 });
                 widget.prefs.setDouble(
                   PrefsKeys.projectLeftWeight,
-                  _controller.areas[0].weight ?? Defaults.projectLeftWeight,
+                  _controller.areas[0].flex ?? Defaults.projectLeftWeight,
                 );
               },
-              children: [_buildPathsGrid(context), _buildAutosGrid(context)],
+              builder: (context, area) => ([
+                _buildPathsGrid(context),
+                _buildAutosGrid(context),
+              ])[area.index],
             ),
           ),
         ),

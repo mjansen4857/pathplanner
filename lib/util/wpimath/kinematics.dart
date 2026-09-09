@@ -72,18 +72,18 @@ class SwerveDriveKinematics {
     _forwardKinematics = Matrix.zero(3, _numModules * 2);
 
     for (int i = 0; i < _numModules; i++) {
-      _inverseKinematics.setRow([1, 0, -_modules[i].y.toDouble()], i * 2);
-      _inverseKinematics.setRow([0, 1, _modules[i].x.toDouble()], i * 2 + 1);
+      _inverseKinematics.setRow(i * 2, [1, 0, -_modules[i].y.toDouble()]);
+      _inverseKinematics.setRow(i * 2 + 1, [0, 1, _modules[i].x.toDouble()]);
     }
 
     Array2d inverse = Array2d.fixed(_numModules * 2, 3);
     for (int i = 0; i < _inverseKinematics.rowCount; i++) {
-      inverse[i] = Array(_inverseKinematics.row(i));
+      inverse[i] = Array(_inverseKinematics.row(i).toList());
     }
     Array2d forward = matrixPseudoInverse(inverse);
 
     for (int i = 0; i < _forwardKinematics.rowCount; i++) {
-      _forwardKinematics.setRow(forward[i], i);
+      _forwardKinematics.setRow(i, forward[i]);
     }
   }
 
@@ -108,26 +108,26 @@ class SwerveDriveKinematics {
 
     if (centerOfRotationMeters != _prevCoR) {
       for (int i = 0; i < _numModules; i++) {
-        _inverseKinematics.setRow([
+        _inverseKinematics.setRow(i * 2, [
           1,
           0,
           -_modules[i].y.toDouble() + centerOfRotationMeters.y,
-        ], i * 2);
-        _inverseKinematics.setRow([
+        ]);
+        _inverseKinematics.setRow(i * 2 + 1, [
           0,
           1,
           _modules[i].x.toDouble() - centerOfRotationMeters.x,
-        ], i * 2 + 1);
+        ]);
       }
       _prevCoR = centerOfRotationMeters;
     }
 
     var chassisSpeedsVector = Matrix.zero(3, 1);
-    chassisSpeedsVector.setColumn([
+    chassisSpeedsVector.setColumn(0, [
       chassisSpeeds.vx.toDouble(),
       chassisSpeeds.vy.toDouble(),
       chassisSpeeds.omega.toDouble(),
-    ], 0);
+    ]);
 
     var moduleStatesMatrix = _inverseKinematics * chassisSpeedsVector;
 
@@ -155,14 +155,14 @@ class SwerveDriveKinematics {
     var moduleStatesMatrix = Matrix.zero(_numModules * 2, 1);
 
     for (int i = 0; i < _numModules; i++) {
-      moduleStatesMatrix.setRow([
+      moduleStatesMatrix.setRow(i * 2, [
         moduleStates[i].speedMetersPerSecond.toDouble() *
             moduleStates[i].angle.cosine,
-      ], i * 2);
-      moduleStatesMatrix.setRow([
+      ]);
+      moduleStatesMatrix.setRow(i * 2 + 1, [
         moduleStates[i].speedMetersPerSecond.toDouble() *
             moduleStates[i].angle.sine,
-      ], i * 2 + 1);
+      ]);
     }
 
     var chassisSpeedsVector = _forwardKinematics * moduleStatesMatrix;

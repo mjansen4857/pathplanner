@@ -1,3 +1,5 @@
+import 'package:pathplanner/widgets/editor/split_field_clipper.dart';
+
 import 'dart:math';
 
 import 'package:material_ui/material_ui.dart';
@@ -114,14 +116,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
         widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
     _controller.areas = [
-      Area(
-        weight: _treeOnRight ? (1.0 - treeWeight) : treeWeight,
-        minimalWeight: 0.4,
-      ),
-      Area(
-        weight: _treeOnRight ? treeWeight : (1.0 - treeWeight),
-        minimalWeight: 0.4,
-      ),
+      Area(flex: _treeOnRight ? (1.0 - treeWeight) : treeWeight, min: 0.4),
+      Area(flex: _treeOnRight ? treeWeight : (1.0 - treeWeight), min: 0.4),
     ];
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _simulatePath());
@@ -139,406 +135,421 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
     return Stack(
       children: [
-        Center(
-          child: InteractiveViewer(
-            maxScale: 10.0,
-            child: GestureDetector(
-              onTapDown: (details) {
-                FocusScopeNode currentScope = FocusScope.of(context);
-                if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-                  FocusManager.instance.primaryFocus!.unfocus();
-                }
-                for (int i = waypoints.length - 1; i >= 0; i--) {
-                  Waypoint w = waypoints[i];
-                  if (w.isPointInAnchor(
-                        _xPixelsToMeters(details.localPosition.dx),
-                        _yPixelsToMeters(details.localPosition.dy),
-                        _pixelsToMeters(
-                          PathPainterUtil.uiPointSizeToPixels(
-                            25,
-                            PathPainter.scale,
-                            widget.fieldImage,
+        ClipRect(
+          clipper: SplitFieldClipper(
+            controller: _controller,
+            fieldOnRight: !_treeOnRight,
+          ),
+          child: Center(
+            child: InteractiveViewer(
+              maxScale: 10.0,
+              child: GestureDetector(
+                onTapDown: (details) {
+                  FocusScopeNode currentScope = FocusScope.of(context);
+                  if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+                    FocusManager.instance.primaryFocus!.unfocus();
+                  }
+                  for (int i = waypoints.length - 1; i >= 0; i--) {
+                    Waypoint w = waypoints[i];
+                    if (w.isPointInAnchor(
+                          _xPixelsToMeters(details.localPosition.dx),
+                          _yPixelsToMeters(details.localPosition.dy),
+                          _pixelsToMeters(
+                            PathPainterUtil.uiPointSizeToPixels(
+                              25,
+                              PathPainter.scale,
+                              widget.fieldImage,
+                            ),
                           ),
-                        ),
-                      ) ||
-                      w.isPointInNextControl(
-                        _xPixelsToMeters(details.localPosition.dx),
-                        _yPixelsToMeters(details.localPosition.dy),
-                        _pixelsToMeters(
-                          PathPainterUtil.uiPointSizeToPixels(
-                            20,
-                            PathPainter.scale,
-                            widget.fieldImage,
+                        ) ||
+                        w.isPointInNextControl(
+                          _xPixelsToMeters(details.localPosition.dx),
+                          _yPixelsToMeters(details.localPosition.dy),
+                          _pixelsToMeters(
+                            PathPainterUtil.uiPointSizeToPixels(
+                              20,
+                              PathPainter.scale,
+                              widget.fieldImage,
+                            ),
                           ),
-                        ),
-                      ) ||
-                      w.isPointInPrevControl(
-                        _xPixelsToMeters(details.localPosition.dx),
-                        _yPixelsToMeters(details.localPosition.dy),
-                        _pixelsToMeters(
-                          PathPainterUtil.uiPointSizeToPixels(
-                            20,
-                            PathPainter.scale,
-                            widget.fieldImage,
+                        ) ||
+                        w.isPointInPrevControl(
+                          _xPixelsToMeters(details.localPosition.dx),
+                          _yPixelsToMeters(details.localPosition.dy),
+                          _pixelsToMeters(
+                            PathPainterUtil.uiPointSizeToPixels(
+                              20,
+                              PathPainter.scale,
+                              widget.fieldImage,
+                            ),
                           ),
-                        ),
-                      )) {
-                    _setSelectedWaypoint(i);
-                    return;
-                  }
-                }
-                _setSelectedWaypoint(null);
-              },
-              onDoubleTapDown: (details) {
-                widget.undoStack.add(
-                  Change(
-                    PathPlannerPath.cloneWaypoints(waypoints),
-                    () {
-                      setState(() {
-                        widget.path.addWaypoint(
-                          Translation2d(
-                            _xPixelsToMeters(details.localPosition.dx),
-                            _yPixelsToMeters(details.localPosition.dy),
-                          ),
-                        );
-                        widget.path.generateAndSavePath();
-                      });
-                      _simulatePath();
-                    },
-                    (oldValue) {
-                      setState(() {
-                        widget.path.waypoints = PathPlannerPath.cloneWaypoints(
-                          oldValue,
-                        );
-                        _setSelectedWaypoint(null);
-                        widget.path.generateAndSavePath();
-                        _simulatePath();
-                      });
-                    },
-                  ),
-                );
-              },
-              onPanStart: (details) {
-                double xPos = _xPixelsToMeters(details.localPosition.dx);
-                double yPos = _yPixelsToMeters(details.localPosition.dy);
-
-                for (int i = waypoints.length - 1; i >= 0; i--) {
-                  Waypoint w = waypoints[i];
-                  if (w.startDragging(
-                    xPos,
-                    yPos,
-                    _pixelsToMeters(
-                      PathPainterUtil.uiPointSizeToPixels(
-                        25,
-                        PathPainter.scale,
-                        widget.fieldImage,
-                      ),
-                    ),
-                    _pixelsToMeters(
-                      PathPainterUtil.uiPointSizeToPixels(
-                        20,
-                        PathPainter.scale,
-                        widget.fieldImage,
-                      ),
-                    ),
-                  )) {
-                    _draggedPoint = w;
-                    _dragOldValue = w.clone();
-                    break;
-                  }
-                }
-
-                // Not dragging any waypoints, check rotations
-                num dotRadius = _pixelsToMeters(
-                  PathPainterUtil.uiPointSizeToPixels(
-                    15,
-                    PathPainter.scale,
-                    widget.fieldImage,
-                  ),
-                );
-                for (int i = 0; i < widget.path.pathPoints.length; i++) {
-                  Rotation2d rotation;
-                  Translation2d pos;
-                  if (i == 0) {
-                    rotation = widget.path.idealStartingState.rotation;
-                    pos = widget.path.pathPoints.first.position;
-                  } else if (i == widget.path.pathPoints.length - 1) {
-                    rotation = widget.path.goalEndState.rotation;
-                    pos = widget.path.pathPoints.last.position;
-                  } else if (widget.path.pathPoints[i].rotationTarget != null) {
-                    rotation =
-                        widget.path.pathPoints[i].rotationTarget!.rotation;
-                    pos = widget.path.pathPoints[i].position;
-                  } else {
-                    continue;
-                  }
-
-                  num dotX =
-                      pos.x +
-                      (((_robotSize.height / 2) + _bumperOffset.x) *
-                          rotation.cosine);
-                  num dotY =
-                      pos.y +
-                      (((_robotSize.height / 2) + _bumperOffset.x) *
-                          rotation.sine);
-                  if (pow(xPos - dotX, 2) + pow(yPos - dotY, 2) <
-                      pow(dotRadius, 2)) {
-                    if (i == 0) {
-                      _draggedRotationIdx = -2;
-                    } else if (i == widget.path.pathPoints.length - 2) {
-                      _draggedRotationIdx = -1;
-                    } else {
-                      _draggedRotationIdx = widget.path.rotationTargets.indexOf(
-                        widget.path.pathPoints[i].rotationTarget!,
-                      );
-                    }
-                    _draggedRotationPos = pos;
-                    _dragRotationOldValue = rotation;
-                    return;
-                  }
-                }
-              },
-              onPanUpdate: (details) {
-                if (_draggedPoint != null) {
-                  num targetX = _xPixelsToMeters(
-                    min(
-                      88 +
-                          (widget.fieldImage.defaultSize.width *
-                              PathPainter.scale),
-                      max(8, details.localPosition.dx),
-                    ),
-                  );
-                  num targetY = _yPixelsToMeters(
-                    min(
-                      88 +
-                          (widget.fieldImage.defaultSize.height *
-                              PathPainter.scale),
-                      max(8, details.localPosition.dy),
-                    ),
-                  );
-
-                  bool snapSetting =
-                      widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
-                      Defaults.snapToGuidelines;
-                  bool ctrlHeld =
-                      HardwareKeyboard.instance.logicalKeysPressed.contains(
-                        LogicalKeyboardKey.controlLeft,
-                      ) ||
-                      HardwareKeyboard.instance.logicalKeysPressed.contains(
-                        LogicalKeyboardKey.controlRight,
-                      );
-
-                  bool shouldSnap = snapSetting ^ ctrlHeld;
-
-                  if (shouldSnap && _draggedPoint!.isAnchorDragging) {
-                    num? closestX;
-                    num? closestY;
-
-                    for (Waypoint w in waypoints) {
-                      if (w != _draggedPoint) {
-                        if (closestX == null ||
-                            (targetX - w.anchor.x).abs() <
-                                (targetX - closestX).abs()) {
-                          closestX = w.anchor.x;
-                        }
-
-                        if (closestY == null ||
-                            (targetY - w.anchor.y).abs() <
-                                (targetY - closestY).abs()) {
-                          closestY = w.anchor.y;
-                        }
-                      }
-                    }
-
-                    if (closestX != null && (targetX - closestX).abs() < 0.1) {
-                      targetX = closestX;
-                    }
-                    if (closestY != null && (targetY - closestY).abs() < 0.1) {
-                      targetY = closestY;
+                        )) {
+                      _setSelectedWaypoint(i);
+                      return;
                     }
                   }
-
-                  setState(() {
-                    _draggedPoint!.dragUpdate(targetX, targetY);
-                    widget.path.generatePathPoints();
-                  });
-                } else if (_draggedRotationIdx != null) {
-                  Translation2d pos;
-                  if (_draggedRotationIdx == -2) {
-                    pos = widget.path.waypoints.first.anchor;
-                  } else if (_draggedRotationIdx == -1) {
-                    pos = widget.path.waypoints.last.anchor;
-                  } else {
-                    pos = _draggedRotationPos!;
-                  }
-
-                  double x = _xPixelsToMeters(details.localPosition.dx);
-                  double y = _yPixelsToMeters(details.localPosition.dy);
-
-                  setState(() {
-                    if (_draggedRotationIdx == -2) {
-                      widget.path.idealStartingState.rotation =
-                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
-                    } else if (_draggedRotationIdx == -1) {
-                      widget.path.goalEndState.rotation =
-                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
-                    } else {
-                      widget
-                          .path
-                          .rotationTargets[_draggedRotationIdx!]
-                          .rotation = Rotation2d.fromComponents(
-                        x - pos.x,
-                        y - pos.y,
-                      );
-                    }
-                  });
-                }
-              },
-              onPanEnd: (details) {
-                if (_draggedPoint != null) {
-                  _draggedPoint!.stopDragging();
-                  int index = waypoints.indexOf(_draggedPoint!);
-                  Waypoint dragEnd = _draggedPoint!.clone();
+                  _setSelectedWaypoint(null);
+                },
+                onDoubleTapDown: (details) {
                   widget.undoStack.add(
                     Change(
-                      _dragOldValue,
+                      PathPlannerPath.cloneWaypoints(waypoints),
                       () {
                         setState(() {
-                          if (waypoints[index] != _draggedPoint) {
-                            waypoints[index] = dragEnd.clone();
-                          }
+                          widget.path.addWaypoint(
+                            Translation2d(
+                              _xPixelsToMeters(details.localPosition.dx),
+                              _yPixelsToMeters(details.localPosition.dy),
+                            ),
+                          );
                           widget.path.generateAndSavePath();
-                          _simulatePath();
-                          widget.onPathChanged?.call();
                         });
-                        if (widget.hotReload) {
-                          widget.telemetry?.hotReloadPath(widget.path);
-                        }
+                        _simulatePath();
                       },
                       (oldValue) {
                         setState(() {
-                          waypoints[index] = oldValue!.clone();
+                          widget.path.waypoints =
+                              PathPlannerPath.cloneWaypoints(oldValue);
+                          _setSelectedWaypoint(null);
                           widget.path.generateAndSavePath();
                           _simulatePath();
-                          widget.onPathChanged?.call();
                         });
-                        if (widget.hotReload) {
-                          widget.telemetry?.hotReloadPath(widget.path);
-                        }
                       },
                     ),
                   );
-                  _draggedPoint = null;
-                } else if (_draggedRotationIdx != null) {
-                  if (_draggedRotationIdx == -2) {
-                    final endRotation = widget.path.idealStartingState.rotation;
-                    widget.undoStack.add(
-                      Change(
-                        _dragRotationOldValue,
-                        () {
-                          setState(() {
-                            widget.path.idealStartingState.rotation =
-                                endRotation;
-                            widget.path.generateAndSavePath();
-                            _simulatePath();
-                            widget.onPathChanged?.call();
-                          });
-                        },
-                        (oldValue) {
-                          setState(() {
-                            widget.path.idealStartingState.rotation = oldValue!;
-                            widget.path.generateAndSavePath();
-                            _simulatePath();
-                            widget.onPathChanged?.call();
-                          });
-                        },
-                      ),
-                    );
-                  } else if (_draggedRotationIdx == -1) {
-                    final endRotation = widget.path.goalEndState.rotation;
-                    widget.undoStack.add(
-                      Change(
-                        _dragRotationOldValue,
-                        () {
-                          setState(() {
-                            widget.path.goalEndState.rotation = endRotation;
-                            widget.path.generateAndSavePath();
-                            _simulatePath();
-                            widget.onPathChanged?.call();
-                          });
-                        },
-                        (oldValue) {
-                          setState(() {
-                            widget.path.goalEndState.rotation = oldValue!;
-                            widget.path.generateAndSavePath();
-                            _simulatePath();
-                            widget.onPathChanged?.call();
-                          });
-                        },
-                      ),
-                    );
-                  } else {
-                    int rotationIdx = _draggedRotationIdx!;
-                    final endRotation =
-                        widget.path.rotationTargets[rotationIdx].rotation;
-                    widget.undoStack.add(
-                      Change(
-                        _dragRotationOldValue,
-                        () {
-                          setState(() {
-                            widget.path.rotationTargets[rotationIdx].rotation =
-                                endRotation;
-                            widget.path.generateAndSavePath();
-                            _simulatePath();
-                            widget.onPathChanged?.call();
-                          });
-                        },
-                        (oldValue) {
-                          setState(() {
-                            widget.path.rotationTargets[rotationIdx].rotation =
-                                oldValue!;
-                            widget.path.generateAndSavePath();
-                            _simulatePath();
-                            widget.onPathChanged?.call();
-                          });
-                        },
-                      ),
-                    );
-                  }
-                  _draggedRotationIdx = null;
-                  _draggedRotationPos = null;
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(48),
-                child: Stack(
-                  children: [
-                    widget.fieldImage.getWidget(),
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: PathPainter(
-                          colorScheme: colorScheme,
-                          paths: [widget.path],
-                          simple: false,
-                          fieldImage: widget.fieldImage,
-                          hoveredWaypoint: _hoveredWaypoint,
-                          selectedWaypoint: _selectedWaypoint,
-                          hoveredZone: _hoveredZone,
-                          selectedZone: _selectedZone,
-                          hoveredPointZone: _hoveredPointZone,
-                          selectedPointZone: _selectedPointZone,
-                          hoveredRotTarget: _hoveredRotTarget,
-                          selectedRotTarget: _selectedRotTarget,
-                          hoveredMarker: _hoveredMarker,
-                          selectedMarker: _selectedMarker,
-                          simulatedPath: _simTraj,
-                          animation: _previewController.view,
-                          prefs: widget.prefs,
-                          optimizedPath: _optimizedPath,
+                },
+                onPanStart: (details) {
+                  double xPos = _xPixelsToMeters(details.localPosition.dx);
+                  double yPos = _yPixelsToMeters(details.localPosition.dy);
+
+                  for (int i = waypoints.length - 1; i >= 0; i--) {
+                    Waypoint w = waypoints[i];
+                    if (w.startDragging(
+                      xPos,
+                      yPos,
+                      _pixelsToMeters(
+                        PathPainterUtil.uiPointSizeToPixels(
+                          25,
+                          PathPainter.scale,
+                          widget.fieldImage,
                         ),
                       ),
+                      _pixelsToMeters(
+                        PathPainterUtil.uiPointSizeToPixels(
+                          20,
+                          PathPainter.scale,
+                          widget.fieldImage,
+                        ),
+                      ),
+                    )) {
+                      _draggedPoint = w;
+                      _dragOldValue = w.clone();
+                      break;
+                    }
+                  }
+
+                  // Not dragging any waypoints, check rotations
+                  num dotRadius = _pixelsToMeters(
+                    PathPainterUtil.uiPointSizeToPixels(
+                      15,
+                      PathPainter.scale,
+                      widget.fieldImage,
                     ),
-                  ],
+                  );
+                  for (int i = 0; i < widget.path.pathPoints.length; i++) {
+                    Rotation2d rotation;
+                    Translation2d pos;
+                    if (i == 0) {
+                      rotation = widget.path.idealStartingState.rotation;
+                      pos = widget.path.pathPoints.first.position;
+                    } else if (i == widget.path.pathPoints.length - 1) {
+                      rotation = widget.path.goalEndState.rotation;
+                      pos = widget.path.pathPoints.last.position;
+                    } else if (widget.path.pathPoints[i].rotationTarget !=
+                        null) {
+                      rotation =
+                          widget.path.pathPoints[i].rotationTarget!.rotation;
+                      pos = widget.path.pathPoints[i].position;
+                    } else {
+                      continue;
+                    }
+
+                    num dotX =
+                        pos.x +
+                        (((_robotSize.height / 2) + _bumperOffset.x) *
+                            rotation.cosine);
+                    num dotY =
+                        pos.y +
+                        (((_robotSize.height / 2) + _bumperOffset.x) *
+                            rotation.sine);
+                    if (pow(xPos - dotX, 2) + pow(yPos - dotY, 2) <
+                        pow(dotRadius, 2)) {
+                      if (i == 0) {
+                        _draggedRotationIdx = -2;
+                      } else if (i == widget.path.pathPoints.length - 2) {
+                        _draggedRotationIdx = -1;
+                      } else {
+                        _draggedRotationIdx = widget.path.rotationTargets
+                            .indexOf(widget.path.pathPoints[i].rotationTarget!);
+                      }
+                      _draggedRotationPos = pos;
+                      _dragRotationOldValue = rotation;
+                      return;
+                    }
+                  }
+                },
+                onPanUpdate: (details) {
+                  if (_draggedPoint != null) {
+                    num targetX = _xPixelsToMeters(
+                      min(
+                        88 +
+                            (widget.fieldImage.defaultSize.width *
+                                PathPainter.scale),
+                        max(8, details.localPosition.dx),
+                      ),
+                    );
+                    num targetY = _yPixelsToMeters(
+                      min(
+                        88 +
+                            (widget.fieldImage.defaultSize.height *
+                                PathPainter.scale),
+                        max(8, details.localPosition.dy),
+                      ),
+                    );
+
+                    bool snapSetting =
+                        widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
+                        Defaults.snapToGuidelines;
+                    bool ctrlHeld =
+                        HardwareKeyboard.instance.logicalKeysPressed.contains(
+                          LogicalKeyboardKey.controlLeft,
+                        ) ||
+                        HardwareKeyboard.instance.logicalKeysPressed.contains(
+                          LogicalKeyboardKey.controlRight,
+                        );
+
+                    bool shouldSnap = snapSetting ^ ctrlHeld;
+
+                    if (shouldSnap && _draggedPoint!.isAnchorDragging) {
+                      num? closestX;
+                      num? closestY;
+
+                      for (Waypoint w in waypoints) {
+                        if (w != _draggedPoint) {
+                          if (closestX == null ||
+                              (targetX - w.anchor.x).abs() <
+                                  (targetX - closestX).abs()) {
+                            closestX = w.anchor.x;
+                          }
+
+                          if (closestY == null ||
+                              (targetY - w.anchor.y).abs() <
+                                  (targetY - closestY).abs()) {
+                            closestY = w.anchor.y;
+                          }
+                        }
+                      }
+
+                      if (closestX != null &&
+                          (targetX - closestX).abs() < 0.1) {
+                        targetX = closestX;
+                      }
+                      if (closestY != null &&
+                          (targetY - closestY).abs() < 0.1) {
+                        targetY = closestY;
+                      }
+                    }
+
+                    setState(() {
+                      _draggedPoint!.dragUpdate(targetX, targetY);
+                      widget.path.generatePathPoints();
+                    });
+                  } else if (_draggedRotationIdx != null) {
+                    Translation2d pos;
+                    if (_draggedRotationIdx == -2) {
+                      pos = widget.path.waypoints.first.anchor;
+                    } else if (_draggedRotationIdx == -1) {
+                      pos = widget.path.waypoints.last.anchor;
+                    } else {
+                      pos = _draggedRotationPos!;
+                    }
+
+                    double x = _xPixelsToMeters(details.localPosition.dx);
+                    double y = _yPixelsToMeters(details.localPosition.dy);
+
+                    setState(() {
+                      if (_draggedRotationIdx == -2) {
+                        widget.path.idealStartingState.rotation =
+                            Rotation2d.fromComponents(x - pos.x, y - pos.y);
+                      } else if (_draggedRotationIdx == -1) {
+                        widget.path.goalEndState.rotation =
+                            Rotation2d.fromComponents(x - pos.x, y - pos.y);
+                      } else {
+                        widget
+                            .path
+                            .rotationTargets[_draggedRotationIdx!]
+                            .rotation = Rotation2d.fromComponents(
+                          x - pos.x,
+                          y - pos.y,
+                        );
+                      }
+                    });
+                  }
+                },
+                onPanEnd: (details) {
+                  if (_draggedPoint != null) {
+                    _draggedPoint!.stopDragging();
+                    int index = waypoints.indexOf(_draggedPoint!);
+                    Waypoint dragEnd = _draggedPoint!.clone();
+                    widget.undoStack.add(
+                      Change(
+                        _dragOldValue,
+                        () {
+                          setState(() {
+                            if (waypoints[index] != _draggedPoint) {
+                              waypoints[index] = dragEnd.clone();
+                            }
+                            widget.path.generateAndSavePath();
+                            _simulatePath();
+                            widget.onPathChanged?.call();
+                          });
+                          if (widget.hotReload) {
+                            widget.telemetry?.hotReloadPath(widget.path);
+                          }
+                        },
+                        (oldValue) {
+                          setState(() {
+                            waypoints[index] = oldValue!.clone();
+                            widget.path.generateAndSavePath();
+                            _simulatePath();
+                            widget.onPathChanged?.call();
+                          });
+                          if (widget.hotReload) {
+                            widget.telemetry?.hotReloadPath(widget.path);
+                          }
+                        },
+                      ),
+                    );
+                    _draggedPoint = null;
+                  } else if (_draggedRotationIdx != null) {
+                    if (_draggedRotationIdx == -2) {
+                      final endRotation =
+                          widget.path.idealStartingState.rotation;
+                      widget.undoStack.add(
+                        Change(
+                          _dragRotationOldValue,
+                          () {
+                            setState(() {
+                              widget.path.idealStartingState.rotation =
+                                  endRotation;
+                              widget.path.generateAndSavePath();
+                              _simulatePath();
+                              widget.onPathChanged?.call();
+                            });
+                          },
+                          (oldValue) {
+                            setState(() {
+                              widget.path.idealStartingState.rotation =
+                                  oldValue!;
+                              widget.path.generateAndSavePath();
+                              _simulatePath();
+                              widget.onPathChanged?.call();
+                            });
+                          },
+                        ),
+                      );
+                    } else if (_draggedRotationIdx == -1) {
+                      final endRotation = widget.path.goalEndState.rotation;
+                      widget.undoStack.add(
+                        Change(
+                          _dragRotationOldValue,
+                          () {
+                            setState(() {
+                              widget.path.goalEndState.rotation = endRotation;
+                              widget.path.generateAndSavePath();
+                              _simulatePath();
+                              widget.onPathChanged?.call();
+                            });
+                          },
+                          (oldValue) {
+                            setState(() {
+                              widget.path.goalEndState.rotation = oldValue!;
+                              widget.path.generateAndSavePath();
+                              _simulatePath();
+                              widget.onPathChanged?.call();
+                            });
+                          },
+                        ),
+                      );
+                    } else {
+                      int rotationIdx = _draggedRotationIdx!;
+                      final endRotation =
+                          widget.path.rotationTargets[rotationIdx].rotation;
+                      widget.undoStack.add(
+                        Change(
+                          _dragRotationOldValue,
+                          () {
+                            setState(() {
+                              widget
+                                      .path
+                                      .rotationTargets[rotationIdx]
+                                      .rotation =
+                                  endRotation;
+                              widget.path.generateAndSavePath();
+                              _simulatePath();
+                              widget.onPathChanged?.call();
+                            });
+                          },
+                          (oldValue) {
+                            setState(() {
+                              widget
+                                      .path
+                                      .rotationTargets[rotationIdx]
+                                      .rotation =
+                                  oldValue!;
+                              widget.path.generateAndSavePath();
+                              _simulatePath();
+                              widget.onPathChanged?.call();
+                            });
+                          },
+                        ),
+                      );
+                    }
+                    _draggedRotationIdx = null;
+                    _draggedRotationPos = null;
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(48),
+                  child: Stack(
+                    children: [
+                      widget.fieldImage.getWidget(),
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: PathPainter(
+                            colorScheme: colorScheme,
+                            paths: [widget.path],
+                            simple: false,
+                            fieldImage: widget.fieldImage,
+                            hoveredWaypoint: _hoveredWaypoint,
+                            selectedWaypoint: _selectedWaypoint,
+                            hoveredZone: _hoveredZone,
+                            selectedZone: _selectedZone,
+                            hoveredPointZone: _hoveredPointZone,
+                            selectedPointZone: _selectedPointZone,
+                            hoveredRotTarget: _hoveredRotTarget,
+                            selectedRotTarget: _selectedRotTarget,
+                            hoveredMarker: _hoveredMarker,
+                            selectedMarker: _selectedMarker,
+                            simulatedPath: _simTraj,
+                            animation: _previewController.view,
+                            prefs: widget.prefs,
+                            optimizedPath: _optimizedPath,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -554,16 +565,16 @@ class _SplitPathEditorState extends State<SplitPathEditor>
           child: MultiSplitView(
             axis: Axis.horizontal,
             controller: _controller,
-            onWeightChange: () {
+            onDividerDragUpdate: (_) {
               double? newWeight = _treeOnRight
-                  ? _controller.areas[1].weight
-                  : _controller.areas[0].weight;
+                  ? _controller.areas[1].flex
+                  : _controller.areas[0].flex;
               widget.prefs.setDouble(
                 PrefsKeys.editorTreeWeight,
                 newWeight ?? 0.5,
               );
             },
-            children: [
+            builder: (context, area) => ([
               if (_treeOnRight)
                 PreviewSeekbar(
                   previewController: _previewController,
@@ -836,7 +847,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   onPauseStateChanged: (value) => _paused = value,
                   totalPathTime: _simTraj?.states.last.timeSeconds ?? 1.0,
                 ),
-            ],
+            ])[area.index],
           ),
         ),
       ],

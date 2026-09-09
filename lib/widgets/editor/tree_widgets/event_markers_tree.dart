@@ -3,7 +3,6 @@ import 'package:flutter/material.dart'
     as legacy
     show
         DropdownButtonHideUnderline,
-        DropdownMenuItem,
         InputDecoration,
         OutlineInputBorder,
         TextFormField;
@@ -158,13 +157,15 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
               child: legacy.DropdownButtonHideUnderline(
                 child: DropdownButton2<String>(
                   hint: const Text('Event Name'),
-                  value: markers[markerIdx].name.isEmpty
-                      ? null
-                      : markers[markerIdx].name,
+                  valueListenable: AlwaysStoppedAnimation(
+                    markers[markerIdx].name.isEmpty
+                        ? null
+                        : markers[markerIdx].name,
+                  ),
                   items: ProjectPage.events.isEmpty
                       ? [
                           // Workaround to prevent menu from disabling itself with empty items list
-                          legacy.DropdownMenuItem(
+                          DropdownItem(
                             value: '',
                             enabled: false,
                             child: Text(
@@ -179,7 +180,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
                       : [
                           for (String event in ProjectPage.events)
                             if (event.isNotEmpty)
-                              legacy.DropdownMenuItem(
+                              DropdownItem(
                                 value: event,
                                 child: Text(
                                   event,
@@ -208,8 +209,8 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
                   menuItemStyleData: const MenuItemStyleData(),
                   dropdownSearchData: DropdownSearchData(
                     searchController: _controller,
-                    searchInnerWidgetHeight: 42,
-                    searchInnerWidget: Container(
+                    searchBarWidgetHeight: 42,
+                    searchBarWidget: Container(
                       height: 46,
                       padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                       child: legacy.TextFormField(

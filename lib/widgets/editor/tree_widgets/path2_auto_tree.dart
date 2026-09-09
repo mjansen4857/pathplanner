@@ -94,7 +94,6 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
           auto: widget.auto,
           undoStack: widget.undoStack,
           onAutoChanged: widget.onAutoChanged,
-          initiallyExpanded: true,
         ),
         const SizedBox(height: 8),
         Expanded(

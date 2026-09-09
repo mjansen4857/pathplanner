@@ -23,7 +23,8 @@ class PathBranchEventChips extends StatelessWidget {
     this.status = const {},
   });
 
-  static Size sizeFor(int count) => Size(220, 68 + count * 36);
+  static Size sizeFor(int count) =>
+      Size(220, 28 + (count > 0 ? 8 + count * 36 : 0));
 
   @override
   Widget build(BuildContext context) {
@@ -31,28 +32,63 @@ class PathBranchEventChips extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          height: 28,
-          child: Material(
-            color: colors.surfaceContainerHighest,
-            shape: StadiumBorder(
-              side: BorderSide(color: colors.outlineVariant),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              key: ValueKey('editBranchTransition-${branch.id}'),
-              onTap: onEditTransition,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Balance the button and gap so the transition stays on the branch.
+            const SizedBox(width: 32),
+            Flexible(
+              child: SizedBox(
+                height: 28,
+                child: Material(
+                  color: colors.surfaceContainerHighest,
+                  shape: StadiumBorder(
+                    side: BorderSide(color: colors.outlineVariant),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    key: ValueKey('editBranchTransition-${branch.id}'),
+                    onTap: onEditTransition,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      child: transitionBadge,
+                    ),
+                  ),
                 ),
-                child: transitionBadge,
               ),
             ),
-          ),
+            const SizedBox(width: 4),
+            SizedBox.square(
+              dimension: 28,
+              child: Material(
+                color: colors.surfaceContainerHighest,
+                shape: StadiumBorder(
+                  side: BorderSide(color: colors.outlineVariant),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: IconButtonTheme(
+                  data: IconButtonThemeData(
+                    style: IconButton.styleFrom(
+                      foregroundColor: colors.onSurface,
+                    ),
+                  ),
+                  child: Tooltip(
+                    message: 'Add event',
+                    child: EventAddButton(
+                      names: branch.events.map((event) => event.name),
+                      onSelected: onAdd,
+                      compact: true,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
+        if (branch.events.isNotEmpty) const SizedBox(height: 8),
         for (var index = 0; index < branch.events.length; index++) ...[
           SizedBox(
             height: 30,
@@ -74,10 +110,6 @@ class PathBranchEventChips extends StatelessWidget {
           ),
           const SizedBox(height: 6),
         ],
-        EventAddButton(
-          names: branch.events.map((event) => event.name),
-          onSelected: onAdd,
-        ),
       ],
     );
   }

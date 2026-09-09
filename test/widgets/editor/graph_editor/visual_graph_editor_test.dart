@@ -188,6 +188,41 @@ void main() {
     expect(moves.single.$3.dy, closeTo(135, 0.01));
   });
 
+  for (final target in ['header-one', 'graphConnector-one-bottom']) {
+    testWidgets('trackpad pan over $target moves only the viewport', (
+      tester,
+    ) async {
+      final controller = VisualGraphController();
+      final moves = <String>[];
+      final connections = <GraphConnectionRequest>[];
+      final emptyConnections = <GraphEmptyConnectionRequest>[];
+      await pumpGraph(
+        tester,
+        controller: controller,
+        onNodeMoved: (id, _, _) => moves.add(id),
+        onConnect: (request) async => connections.add(request),
+        onConnectToEmpty: (request) async => emptyConnections.add(request),
+      );
+      final before = controller.viewportCenterInScene!;
+      final location = tester.getCenter(find.byKey(ValueKey(target)));
+      final gesture = await tester.createGesture(
+        kind: PointerDeviceKind.trackpad,
+      );
+      await gesture.panZoomStart(location);
+      await gesture.panZoomUpdate(location, pan: const Offset(30, 20));
+      await tester.pump();
+      await gesture.panZoomUpdate(location, pan: const Offset(80, 50));
+      await tester.pump();
+      await gesture.panZoomEnd();
+      await tester.pumpAndSettle();
+
+      expect(controller.viewportCenterInScene, isNot(before));
+      expect(moves, isEmpty);
+      expect(connections, isEmpty);
+      expect(emptyConnections, isEmpty);
+    });
+  }
+
   testWidgets('header drag follows the pointer after fitting a large graph', (
     tester,
   ) async {

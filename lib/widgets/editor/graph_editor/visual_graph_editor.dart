@@ -940,6 +940,13 @@ class GraphNodeDragHandle extends StatelessWidget {
       cursor: SystemMouseCursors.move,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
+        // Trackpad pan/zoom belongs to the viewport, not graph edits.
+        supportedDevices: const {
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.touch,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.invertedStylus,
+        },
         dragStartBehavior: DragStartBehavior.down,
         onPanStart: (_) => state._startNodeDrag(nodeId),
         onPanUpdate: (details) => state._updateNodeDrag(nodeId, details.delta),
@@ -976,6 +983,13 @@ class GraphConnectorHandle extends StatelessWidget {
         child: GestureDetector(
           key: ValueKey('graphConnector-$nodeId-${side.name}'),
           behavior: HitTestBehavior.opaque,
+          // Trackpad pan/zoom belongs to the viewport, not graph edits.
+          supportedDevices: const {
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.touch,
+            PointerDeviceKind.stylus,
+            PointerDeviceKind.invertedStylus,
+          },
           dragStartBehavior: DragStartBehavior.down,
           onPanStart: (details) =>
               state._startConnection(nodeId, side, details.globalPosition),

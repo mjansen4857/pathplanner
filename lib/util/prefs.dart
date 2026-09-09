@@ -6,7 +6,6 @@ class PrefsKeys {
   static const String robotLength = 'robotLength';
   static const String teamColor = 'teamColor';
   static const String currentProjectDir = 'currentProjectDir';
-  static const String macOSBookmark = 'macOSBookmark';
   static const String fieldImage = 'fieldImage';
   static const String seen2026ResetPopup = 'seen2026ResetPopup';
   static const String holonomicMode = 'holonomicMode';

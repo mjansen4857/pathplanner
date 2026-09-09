@@ -1,11 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file/file.dart';
-import 'package:file/local.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pathplanner/pages/nav_grid_page.dart';
@@ -54,9 +51,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Directory? _projectDir;
   late Directory _pathplannerDir;
-  final SecureBookmarks? _bookmarks = Platform.isMacOS
-      ? SecureBookmarks()
-      : null;
   final List<FieldImage> _fieldImages = FieldImage.offialFields();
   FieldImage? _fieldImage;
   late AnimationController _animController;
@@ -83,24 +77,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _loadFieldImages().then((_) async {
       String? projectDir = widget.prefs.getString(PrefsKeys.currentProjectDir);
-      if (projectDir != null && Platform.isMacOS && fs is LocalFileSystem) {
-        if (widget.prefs.getString(PrefsKeys.macOSBookmark) != null) {
-          try {
-            await _bookmarks!.resolveBookmark(
-              widget.prefs.getString(PrefsKeys.macOSBookmark)!,
-            );
-
-            await _bookmarks.startAccessingSecurityScopedResource(
-              fs.file(projectDir),
-            );
-          } catch (e) {
-            Log.error('Failed to resolve secure bookmarks', e);
-            projectDir = null;
-          }
-        } else {
-          projectDir = null;
-        }
-      }
 
       while (true) {
         if (projectDir != null) {
@@ -213,12 +189,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    if (Platform.isMacOS && _projectDir != null) {
-      _bookmarks!.stopAccessingSecurityScopedResource(
-        fs.file(_projectDir!.path),
-      );
-    }
-
     _pageController.dispose();
 
     super.dispose();
@@ -724,12 +694,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _initFromProjectDir(String projectDir) async {
     widget.prefs.setString(PrefsKeys.currentProjectDir, projectDir);
-
-    if (Platform.isMacOS) {
-      // Bookmark project on macos so it can be accessed again later
-      String bookmark = await _bookmarks!.bookmark(fs.file(projectDir));
-      widget.prefs.setString(PrefsKeys.macOSBookmark, bookmark);
-    }
 
     // Check if WPILib project
     setState(() {

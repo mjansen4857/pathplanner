@@ -32,8 +32,8 @@ IconData _waypointIcon(Waypoint waypoint) => switch (waypoint.type) {
 /// Geometry settings live in [PathGraphNodeSettingsPanel]. Event assignments
 /// remain directly editable in a separate footer on the graph card.
 class PathGraphNodeCard extends StatelessWidget {
-  static const Size cardSize = Size(300, 142);
-  static const Size pointTowardsCardSize = Size(300, 172);
+  static const Size cardSize = Size(300, 77);
+  static const Size pointTowardsCardSize = Size(300, 132);
 
   static Size sizeFor(
     path2.Path path,
@@ -84,7 +84,6 @@ class PathGraphNodeCard extends StatelessWidget {
     final outgoing = path.branches
         .where((branch) => branch.sourceId == node.id)
         .length;
-    final hasStatusPreview = isRoot || isLeaf;
 
     return MouseRegion(
       onEnter: (_) => onHovered(node.id),
@@ -156,85 +155,50 @@ class PathGraphNodeCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (pointTowards != null)
-                              Wrap(
-                                spacing: 7,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  _InfoBadge(
-                                    key: ValueKey(
-                                      pointTowards.inheritTargetFromParent
-                                          ? 'pathNodeInheritedTarget-${node.id}'
-                                          : 'pathNodeTargetPreview-${node.id}',
-                                    ),
-                                    icon: pointTowards.inheritTargetFromParent
-                                        ? Icons.account_tree_outlined
-                                        : Icons.gps_fixed_rounded,
-                                    label: pointTowards.inheritTargetFromParent
-                                        ? 'Target inherited'
-                                        : 'Target: '
-                                              '${pointTowards.targetPosition.x.toStringAsFixed(2)}, '
-                                              '${pointTowards.targetPosition.y.toStringAsFixed(2)}',
-                                    color: Colors.orange,
+                    if (pointTowards != null)
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Wrap(
+                              spacing: 7,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                _InfoBadge(
+                                  key: ValueKey(
+                                    pointTowards.inheritTargetFromParent
+                                        ? 'pathNodeInheritedTarget-${node.id}'
+                                        : 'pathNodeTargetPreview-${node.id}',
                                   ),
-                                  _InfoBadge(
-                                    key: ValueKey(
-                                      'pathNodeRotationOffsetPreview-${node.id}',
-                                    ),
-                                    icon: Icons.rotate_right_rounded,
-                                    label:
-                                        'Offset: ${pointTowards.rotationOffset.degrees.toStringAsFixed(1)}°',
-                                    color: colorScheme.secondary,
+                                  icon: pointTowards.inheritTargetFromParent
+                                      ? Icons.account_tree_outlined
+                                      : Icons.gps_fixed_rounded,
+                                  label: pointTowards.inheritTargetFromParent
+                                      ? 'Target inherited'
+                                      : 'Target: '
+                                            '${pointTowards.targetPosition.x.toStringAsFixed(2)}, '
+                                            '${pointTowards.targetPosition.y.toStringAsFixed(2)}',
+                                  color: Colors.orange,
+                                ),
+                                _InfoBadge(
+                                  key: ValueKey(
+                                    'pathNodeRotationOffsetPreview-${node.id}',
                                   ),
-                                ],
-                              ),
-                            if (pointTowards != null && hasStatusPreview)
-                              const SizedBox(height: 5),
-                            if (hasStatusPreview)
-                              Wrap(
-                                spacing: 7,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  if (isRoot)
-                                    const _InfoBadge(
-                                      icon: Icons.start_rounded,
-                                      label: 'Start',
-                                      color: Colors.green,
-                                    ),
-                                  if (isLeaf)
-                                    const _InfoBadge(
-                                      icon: Icons.flag_outlined,
-                                      label: 'End',
-                                      color: Colors.red,
-                                    ),
-                                  if (isLeaf &&
-                                      estimatedRuntimeSeconds.isNotEmpty)
-                                    _InfoBadge(
-                                      key: ValueKey(
-                                        'pathNodeRuntime-${node.id}',
-                                      ),
-                                      icon: Icons.timer_outlined,
-                                      label: _runtimeLabel(
-                                        estimatedRuntimeSeconds,
-                                      ),
-                                      color: colorScheme.primary,
-                                    ),
-                                ],
-                              ),
-                          ],
+                                  icon: Icons.rotate_right_rounded,
+                                  label:
+                                      'Offset: ${pointTowards.rotationOffset.degrees.toStringAsFixed(1)}°',
+                                  color: colorScheme.secondary,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
                     WaypointEventsSection(
                       key: ValueKey('waypointEvents-${node.id}'),
                       names: waypoint.events,
@@ -251,6 +215,40 @@ class PathGraphNodeCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (isRoot || isLeaf)
+              Positioned(
+                top: -8,
+                left: 16,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isRoot)
+                      const _CornerFlag(
+                        icon: Icons.start_rounded,
+                        label: 'Start',
+                        color: Colors.green,
+                      ),
+                    if (isRoot && isLeaf) const SizedBox(width: 4),
+                    if (isLeaf)
+                      const _CornerFlag(
+                        icon: Icons.flag_outlined,
+                        label: 'End',
+                        color: Colors.red,
+                      ),
+                  ],
+                ),
+              ),
+            if (isLeaf && estimatedRuntimeSeconds.isNotEmpty)
+              Positioned(
+                top: -8,
+                right: 16,
+                child: _CornerFlag(
+                  key: ValueKey('pathNodeRuntime-${node.id}'),
+                  icon: Icons.timer_outlined,
+                  label: _runtimeLabel(estimatedRuntimeSeconds),
+                  color: colorScheme.primary,
+                ),
+              ),
             Positioned(
               top: 0,
               left: cardSize.width / 2 - 14,
@@ -731,7 +729,10 @@ class PathGraphNodeSettingsPanel extends StatelessWidget {
                               key: ValueKey(
                                 'pathNodeToleranceSection-${node.id}',
                               ),
-                              padding: const EdgeInsets.only(top: 14, bottom: 8),
+                              padding: const EdgeInsets.only(
+                                top: 14,
+                                bottom: 8,
+                              ),
                               child: Row(
                                 children: [
                                   Text(
@@ -846,6 +847,60 @@ class _CountBadge extends StatelessWidget {
             Text('$count', style: const TextStyle(fontSize: 11)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A tab with a flat lower edge attached to the top of the card.
+class _CornerFlag extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _CornerFlag({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 22,
+      constraints: const BoxConstraints(maxWidth: 126),
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          color.withAlpha(35),
+          Theme.of(context).colorScheme.surfaceContainerHighest,
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
+        border: Border(
+          top: BorderSide(color: color.withAlpha(100)),
+          left: BorderSide(color: color.withAlpha(100)),
+          right: BorderSide(color: color.withAlpha(100)),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 3),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

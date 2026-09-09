@@ -568,7 +568,7 @@ void main() {
               find.byKey(ValueKey('pathNodeInheritedTarget-${child.id}')),
             )
             .dy,
-        lessThan(tester.getTopLeft(find.text('End')).dy),
+        greaterThan(tester.getTopLeft(find.text('End')).dy),
       );
 
       BoxDecoration badgeDecoration(Finder badge) =>

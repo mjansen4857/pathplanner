@@ -20,6 +20,151 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
 void main() {
+  for (final type in ['Path', 'External Command']) {
+    testWidgets('connects to a new $type node as one undoable change', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1000, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final source = ExternalCommandAutoNode(
+        commandName: 'Start',
+        editorPosition: const Offset(50, 50),
+      );
+      final auto = Path2Auto(
+        name: 'Test',
+        nodes: [source],
+        autoDir: '/autos',
+        fs: MemoryFileSystem(),
+      );
+      final undoStack = ChangeStack();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Path2AutoTree(
+              auto: auto,
+              allPathNames: const ['Test Path'],
+              undoStack: undoStack,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final editor = tester.widget<VisualGraphEditor>(
+        find.byType(VisualGraphEditor),
+      );
+      final pending = editor.onConnectToEmpty!(
+        GraphEmptyConnectionRequest(
+          nodeId: source.id,
+          side: GraphConnectorSide.bottom,
+          scenePosition: const Offset(200, 450),
+          globalPosition: const Offset(200, 450),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(SimpleDialogOption, type));
+      await tester.pumpAndSettle();
+      if (type == 'Path') {
+        await tester.tap(
+          find.byKey(const ValueKey('path2AutoChoosePath-Test Path')),
+        );
+        await tester.pumpAndSettle();
+      }
+      expect(auto.nodes, hasLength(1));
+      await tester.tap(find.byKey(const ValueKey('path2AutoSaveTransition')));
+      await tester.pumpAndSettle();
+      await pending;
+      expect(auto.nodes, hasLength(2));
+      expect(auto.nodes.last.type, type == 'Path' ? 'path' : 'external');
+      expect(auto.branches.single.sourceId, source.id);
+      expect(auto.branches.single.targetId, auto.nodes.last.id);
+      expect(auto.branches.single.transition, isA<FinishedTransition>());
+      undoStack.undo();
+      await tester.pumpAndSettle();
+      expect(auto.nodes, hasLength(1));
+      expect(auto.branches, isEmpty);
+      undoStack.redo();
+      await tester.pumpAndSettle();
+      expect(auto.nodes, hasLength(2));
+      expect(auto.branches, hasLength(1));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets(
+    'external command names edit, undo, redo and delete without paths',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1000, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final auto = Path2Auto.defaultAuto(
+        autoDir: '/autos',
+        fs: MemoryFileSystem(),
+      );
+      final undoStack = ChangeStack();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Path2AutoTree(
+              auto: auto,
+              allPathNames: const [],
+              undoStack: undoStack,
+            ),
+          ),
+        ),
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('path2AutoAddExternalCommandNode')),
+      );
+      await tester.pumpAndSettle();
+      expect(auto.nodes.single, isA<ExternalCommandAutoNode>());
+      expect(find.text('Missing command name'), findsOneWidget);
+      expect(auto.diagnostics.configurationWarnings, hasLength(1));
+      final id = auto.nodes.single.id;
+      final field = find.descendant(
+        of: find.byKey(ValueKey('path2AutoCommandName-$id')),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(field, 'Run Intake');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(
+        (auto.nodes.single as ExternalCommandAutoNode).commandName,
+        'Run Intake',
+      );
+      expect(find.text('Missing command name'), findsNothing);
+      expect(auto.diagnostics.configurationWarnings, isEmpty);
+      undoStack.undo();
+      await tester.pumpAndSettle();
+      expect(find.text('Missing command name'), findsOneWidget);
+      expect((auto.nodes.single as ExternalCommandAutoNode).commandName, '');
+      expect(tester.widget<TextField>(field).controller!.text, '');
+      undoStack.redo();
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(field).controller!.text, 'Run Intake');
+      await tester.enterText(field, '   ');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(find.text('Missing command name'), findsOneWidget);
+      expect(auto.diagnostics.configurationWarnings, hasLength(1));
+      await tester.enterText(field, 'Stop Intake');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      expect(
+        (auto.nodes.single as ExternalCommandAutoNode).commandName,
+        'Stop Intake',
+      );
+      await tester.tap(find.byKey(ValueKey('path2AutoDeleteNode-$id')));
+      await tester.pumpAndSettle();
+      expect(auto.nodes, isEmpty);
+      undoStack.undo();
+      await tester.pumpAndSettle();
+      expect(
+        (auto.nodes.single as ExternalCommandAutoNode).commandName,
+        'Stop Intake',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'auto node and branch events use inline pickers and undoable string lists',
     (tester) async {

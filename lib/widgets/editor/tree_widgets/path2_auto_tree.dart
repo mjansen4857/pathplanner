@@ -57,6 +57,17 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                 label: const Text('Add Path'),
               ),
               const SizedBox(width: 8),
+              FilledButton.icon(
+                key: const ValueKey('path2AutoAddExternalCommandNode'),
+                onPressed: _addExternalCommandNode,
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.surfaceContainerHighest,
+                  foregroundColor: colorScheme.onSurface,
+                ),
+                icon: const Icon(Icons.add),
+                label: const Text('Add Command'),
+              ),
+              const SizedBox(width: 8),
               if (warningMessages.isNotEmpty)
                 Tooltip(
                   message: warningMessages.join('\n'),
@@ -114,7 +125,10 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                           size: Size(
                             _nodeSize.width,
                             _nodeSize.height +
-                                (_isPathMissing(node) ? 28 : 0) +
+                                (_isPathMissing(node) ||
+                                        _isCommandNameMissing(node)
+                                    ? 28
+                                    : 0) +
                                 WaypointEventsSection.heightFor(
                                   node.events,
                                   MediaQuery.textScalerOf(context),
@@ -166,7 +180,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                       child: IgnorePointer(
                         child: Center(
                           child: Text(
-                            'Add a path node to begin this auto',
+                            'Add a node to begin this auto',
                             key: ValueKey('path2AutoEmptyGraph'),
                           ),
                         ),
@@ -182,29 +196,24 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
   }
 
   Widget _buildNodeCard(AutoNode node) {
-    return switch (node) {
-      PathAutoNode() => _buildPathNodeCard(node),
-    };
-  }
-
-  Widget _buildPathNodeCard(PathAutoNode pathNode) {
     final colorScheme = Theme.of(context).colorScheme;
     final incoming = widget.auto.branches
-        .where((branch) => branch.targetId == pathNode.id)
+        .where((branch) => branch.targetId == node.id)
         .length;
     final outgoing = widget.auto.branches
-        .where((branch) => branch.sourceId == pathNode.id)
+        .where((branch) => branch.sourceId == node.id)
         .length;
-    final pathMissing = _isPathMissing(pathNode);
+    final pathNode = node is PathAutoNode ? node : null;
+    final pathMissing = _isPathMissing(node);
     final selectableNames = widget.allPathNames.toSet().toList()..sort();
-    if (pathNode.pathName != null &&
-        !selectableNames.contains(pathNode.pathName)) {
+    if (pathNode?.pathName != null &&
+        !selectableNames.contains(pathNode!.pathName)) {
       selectableNames.insert(0, pathNode.pathName!);
     }
 
     return MouseRegion(
-      key: ValueKey('path2AutoNode-${pathNode.id}'),
-      onEnter: (_) => widget.onNodeHovered?.call(pathNode.id),
+      key: ValueKey('path2AutoNode-${node.id}'),
+      onEnter: (_) => widget.onNodeHovered?.call(node.id),
       onExit: (_) => widget.onNodeHovered?.call(null),
       child: Stack(
         clipBehavior: Clip.none,
@@ -222,7 +231,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   GraphNodeDragHandle(
-                    nodeId: pathNode.id,
+                    nodeId: node.id,
                     child: ColoredBox(
                       color: colorScheme.surfaceContainerHighest,
                       child: SizedBox(
@@ -231,13 +240,20 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                           padding: const EdgeInsets.only(left: 12, right: 4),
                           child: Row(
                             children: [
-                              const Icon(Icons.route_rounded, size: 19),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Path',
-                                style: TextStyle(fontWeight: FontWeight.w600),
+                              if (pathNode != null) ...[
+                                const Icon(Icons.route_rounded, size: 19),
+                                const SizedBox(width: 8),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  pathNode != null
+                                      ? 'Path'
+                                      : 'External Command',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
-                              const Spacer(),
                               GraphCountBadge(
                                 icon: Icons.call_received_rounded,
                                 count: incoming,
@@ -249,11 +265,9 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                                 tooltip: '$outgoing outgoing branches',
                               ),
                               IconButton(
-                                key: ValueKey(
-                                  'path2AutoDeleteNode-${pathNode.id}',
-                                ),
+                                key: ValueKey('path2AutoDeleteNode-${node.id}'),
                                 tooltip: 'Delete Auto Node',
-                                onPressed: () => _deleteNode(pathNode.id),
+                                onPressed: () => _deleteNode(node.id),
                                 color: colorScheme.error,
                                 icon: const Icon(
                                   Icons.delete_outline,
@@ -266,55 +280,65 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: InputDecorator(
-                            key: ValueKey('path2AutoNodePath-${pathNode.id}'),
-                            decoration: const InputDecoration(
-                              labelText: 'Path',
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: pathNode.pathName,
-                                isExpanded: true,
+                  if (node is ExternalCommandAutoNode)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                      child: _ExternalCommandNameField(
+                        key: ValueKey('path2AutoCommandName-${node.id}'),
+                        name: node.commandName,
+                        onSubmitted: (name) => _setCommandName(node.id, name),
+                      ),
+                    ),
+                  if (pathNode != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: InputDecorator(
+                              key: ValueKey('path2AutoNodePath-${node.id}'),
+                              decoration: const InputDecoration(
+                                labelText: 'Path',
+                                border: OutlineInputBorder(),
                                 isDense: true,
-                                hint: const Text('Select path'),
-                                items: [
-                                  for (final pathName in selectableNames)
-                                    DropdownMenuItem(
-                                      value: pathName,
-                                      child: Text(
-                                        widget.allPathNames.contains(pathName)
-                                            ? pathName
-                                            : '$pathName (missing)',
-                                        overflow: TextOverflow.ellipsis,
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: pathNode.pathName,
+                                  isExpanded: true,
+                                  isDense: true,
+                                  hint: const Text('Select path'),
+                                  items: [
+                                    for (final pathName in selectableNames)
+                                      DropdownMenuItem(
+                                        value: pathName,
+                                        child: Text(
+                                          widget.allPathNames.contains(pathName)
+                                              ? pathName
+                                              : '$pathName (missing)',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
-                                ],
-                                onChanged: (pathName) =>
-                                    _setNodePath(pathNode.id, pathName),
+                                  ],
+                                  onChanged: (pathName) =>
+                                      _setNodePath(node.id, pathName),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        IconButton(
-                          tooltip: 'Open Path',
-                          onPressed: pathMissing
-                              ? null
-                              : () => widget.onEditPathPressed?.call(
-                                  pathNode.pathName,
-                                ),
-                          icon: const Icon(Icons.open_in_new_rounded),
-                        ),
-                      ],
+                          IconButton(
+                            tooltip: 'Open Path',
+                            onPressed: pathMissing
+                                ? null
+                                : () => widget.onEditPathPressed?.call(
+                                    pathNode.pathName,
+                                  ),
+                            icon: const Icon(Icons.open_in_new_rounded),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  if (pathMissing)
+                  if (pathNode != null && pathMissing)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
                       child: _TopologyBadge(
@@ -325,15 +349,22 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
                         color: colorScheme.error,
                       ),
                     ),
-                  WaypointEventsSection(
-                    key: ValueKey('autoNodeEvents-${pathNode.id}'),
-                    names: pathNode.events,
-                    onAdd: (name) => _editNodeEvents(
-                      pathNode.id,
-                      (events) => events.add(name),
+                  if (_isCommandNameMissing(node))
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                      child: _TopologyBadge(
+                        icon: Icons.warning_amber_rounded,
+                        label: 'Missing command name',
+                        color: colorScheme.error,
+                      ),
                     ),
+                  WaypointEventsSection(
+                    key: ValueKey('autoNodeEvents-${node.id}'),
+                    names: node.events,
+                    onAdd: (name) =>
+                        _editNodeEvents(node.id, (events) => events.add(name)),
                     onRemove: (index) => _editNodeEvents(
-                      pathNode.id,
+                      node.id,
                       (events) => events.removeAt(index),
                     ),
                   ),
@@ -368,7 +399,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
             top: 0,
             left: (_nodeSize.width - 28) / 2,
             child: GraphConnectorHandle(
-              nodeId: pathNode.id,
+              nodeId: node.id,
               side: GraphConnectorSide.top,
             ),
           ),
@@ -376,7 +407,7 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
             bottom: 0,
             left: (_nodeSize.width - 28) / 2,
             child: GraphConnectorHandle(
-              nodeId: pathNode.id,
+              nodeId: node.id,
               side: GraphConnectorSide.bottom,
             ),
           ),
@@ -388,6 +419,9 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
   bool _isPathMissing(AutoNode node) =>
       node is PathAutoNode &&
       (node.pathName == null || !widget.allPathNames.contains(node.pathName));
+
+  bool _isCommandNameMissing(AutoNode node) =>
+      node is ExternalCommandAutoNode && node.commandName.trim().isEmpty;
 
   Widget _buildBranchBadge(AutoBranch branch) {
     final transition = branch.transition;
@@ -443,6 +477,24 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
     return messages;
   }
 
+  void _addExternalCommandNode() {
+    final viewportCenter =
+        _graphController.viewportCenterInScene ?? const Offset(300, 220);
+    final node = ExternalCommandAutoNode(
+      editorPosition: viewportCenter - _nodeSize.center(Offset.zero),
+    );
+    _performGraphChange(() => widget.auto.addNode(node.clone()));
+  }
+
+  void _setCommandName(String nodeId, String name) {
+    final node = widget.auto.nodeById(nodeId);
+    if (node is! ExternalCommandAutoNode || node.commandName == name) return;
+    _performGraphChange(() {
+      final current = widget.auto.nodeById(nodeId);
+      if (current is ExternalCommandAutoNode) current.commandName = name;
+    });
+  }
+
   Future<void> _addToolbarNode() async {
     final pathName = await _choosePath();
     if (!mounted || pathName == null) {
@@ -483,14 +535,33 @@ class _Path2AutoTreeState extends State<Path2AutoTree> {
   }
 
   Future<void> _connectToNewNode(GraphEmptyConnectionRequest request) async {
-    final pathName = await _choosePath();
-    if (!mounted || pathName == null) {
-      return;
-    }
-    final node = PathAutoNode(
-      pathName: pathName,
-      editorPosition: request.scenePosition - _nodeSize.center(Offset.zero),
+    final type = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Add Node'),
+        children: [
+          if (widget.allPathNames.isNotEmpty)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop('path'),
+              child: const Text('Path'),
+            ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.of(context).pop('external'),
+            child: const Text('External Command'),
+          ),
+        ],
+      ),
     );
+    if (!mounted || type == null) return;
+    final position = request.scenePosition - _nodeSize.center(Offset.zero);
+    final AutoNode node;
+    if (type == 'path') {
+      final pathName = await _choosePath();
+      if (!mounted || pathName == null) return;
+      node = PathAutoNode(pathName: pathName, editorPosition: position);
+    } else {
+      node = ExternalCommandAutoNode(editorPosition: position);
+    }
     final sourceId = request.existingNodeIsSource ? request.nodeId : node.id;
     final targetId = request.existingNodeIsSource ? node.id : request.nodeId;
     final transition = await _chooseTransition(
@@ -905,4 +976,64 @@ class _AutoTransitionDialogState extends State<_AutoTransitionDialog> {
     final trimmed = value?.trim();
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
+}
+
+class _ExternalCommandNameField extends StatefulWidget {
+  final String name;
+  final ValueChanged<String> onSubmitted;
+
+  const _ExternalCommandNameField({
+    super.key,
+    required this.name,
+    required this.onSubmitted,
+  });
+
+  @override
+  State<_ExternalCommandNameField> createState() =>
+      _ExternalCommandNameFieldState();
+}
+
+class _ExternalCommandNameFieldState extends State<_ExternalCommandNameField> {
+  late final TextEditingController _controller;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.name);
+    _focusNode.addListener(_onFocusChanged);
+  }
+
+  void _onFocusChanged() {
+    if (!_focusNode.hasFocus) widget.onSubmitted(_controller.text);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ExternalCommandNameField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.name != widget.name && _controller.text != widget.name) {
+      _controller.text = widget.name;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TextField(
+    controller: _controller,
+    focusNode: _focusNode,
+    decoration: const InputDecoration(
+      labelText: 'Command Name',
+      border: OutlineInputBorder(),
+      isDense: true,
+    ),
+    onSubmitted: widget.onSubmitted,
+    onTapOutside: (_) => _focusNode.unfocus(),
+  );
 }

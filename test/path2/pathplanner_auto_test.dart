@@ -60,6 +60,61 @@ void main() {
     startingPoseInitialized: initialized,
   );
 
+  test('external commands survive save, reload, duplication and snapshots', () {
+    final external = path2_auto.ExternalCommandAutoNode(
+      id: _nodeB,
+      commandName: 'Intake.Start',
+      editorPosition: const Offset(80, 300),
+      events: ['started'],
+    );
+    final graph = auto(nodes: [node(_nodeA, 'First'), external]);
+    graph.saveFile();
+    final restored = path2_auto.Path2Auto.fromJson(
+      jsonDecode(fs.file('/autos/Test Auto.auto').readAsStringSync()),
+      graph.name,
+      '/autos',
+      fs,
+    );
+    expect(restored, graph);
+    expect(restored.nodes.last, external);
+    expect(graph.getAllPathNames(), ['First']);
+    final snapshot = graph.snapshotGraph();
+    final duplicate = graph.duplicate('Copy');
+    external.commandName = 'Changed';
+    external.events.add('later');
+    expect(
+      (duplicate.nodes.last as path2_auto.ExternalCommandAutoNode).commandName,
+      'Intake.Start',
+    );
+    graph.restoreGraph(snapshot);
+    expect(
+      (graph.nodes.last as path2_auto.ExternalCommandAutoNode).commandName,
+      'Intake.Start',
+    );
+    expect(graph.nodes.last.events, ['started']);
+    expect(graph.branches.single.targetId, external.id);
+  });
+
+  test('external command names must be strings and may be empty drafts', () {
+    final external = path2_auto.ExternalCommandAutoNode(
+      editorPosition: Offset.zero,
+    );
+    expect(path2_auto.AutoNode.fromJson(external.toJson()), external);
+    for (final invalid in [
+      null,
+      42,
+      ['name'],
+    ]) {
+      expect(
+        () => path2_auto.AutoNode.fromJson({
+          ...external.toJson(),
+          'commandName': invalid,
+        }),
+        throwsFormatException,
+      );
+    }
+  });
+
   path2.Path posePath(
     String name,
     Translation2d position, {

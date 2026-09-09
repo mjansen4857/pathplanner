@@ -48,6 +48,7 @@ sealed class AutoNode implements GraphNodeData {
     }
     return switch (type) {
       'path' => PathAutoNode.fromJson(json),
+      'external' => ExternalCommandAutoNode.fromJson(json),
       _ => throw FormatException('Unknown auto node type: $type'),
     };
   }
@@ -108,6 +109,66 @@ final class PathAutoNode extends AutoNode {
   int get hashCode => Object.hash(
     id,
     pathName,
+    editorPosition,
+    const ListEquality<String>().hash(events),
+  );
+}
+
+final class ExternalCommandAutoNode extends AutoNode {
+  String commandName;
+
+  ExternalCommandAutoNode({
+    super.id,
+    this.commandName = '',
+    required super.editorPosition,
+    super.events,
+  });
+
+  factory ExternalCommandAutoNode.fromJson(Map<String, dynamic> json) {
+    final commandName = json['commandName'];
+    if (commandName is! String) {
+      throw const FormatException('commandName must be a string');
+    }
+    return ExternalCommandAutoNode(
+      id: _requiredId(json, 'id', 'Auto node ID'),
+      commandName: commandName,
+      events: _eventsFromJson(json['events']),
+      editorPosition: editorPositionFromJson(json['editorPosition']),
+    );
+  }
+
+  @override
+  String get type => 'external';
+
+  @override
+  ExternalCommandAutoNode clone() => ExternalCommandAutoNode(
+    id: id,
+    commandName: commandName,
+    editorPosition: editorPosition,
+    events: events,
+  );
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'type': type,
+    'commandName': commandName,
+    'events': List<String>.of(events),
+    'editorPosition': editorPositionToJson(editorPosition),
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is ExternalCommandAutoNode &&
+      other.id == id &&
+      other.commandName == commandName &&
+      other.editorPosition == editorPosition &&
+      const ListEquality<String>().equals(other.events, events);
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    commandName,
     editorPosition,
     const ListEquality<String>().hash(events),
   );
@@ -384,6 +445,11 @@ class Path2Auto {
         configurationWarnings.add(
           'Auto node ${node.id} references missing path "$pathName"',
         );
+      }
+    }
+    for (final node in nodes.whereType<ExternalCommandAutoNode>()) {
+      if (node.commandName.trim().isEmpty) {
+        configurationWarnings.add('External Command node has no command name');
       }
     }
     for (final branch in branches) {

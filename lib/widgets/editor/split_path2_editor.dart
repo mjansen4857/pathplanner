@@ -6,6 +6,7 @@ import 'package:pathplanner/widgets/editor/graph_editor/path_branch_event_chips.
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path2/graph.dart';
 import 'package:pathplanner/path2/path.dart' as path2;
@@ -127,90 +128,95 @@ class _SplitPath2EditorState extends State<SplitPath2Editor>
     final field = _buildFieldPane(colorScheme);
     final graph = _buildGraphPane(colorScheme);
 
-    return MultiSplitViewTheme(
-      data: MultiSplitViewThemeData(
-        dividerPainter: DividerPainters.grooved1(
-          color: colorScheme.surfaceContainerHighest,
-          highlightedColor: colorScheme.primary,
+    final seekbar = PreviewSeekbar(
+      previewController: _previewController,
+      onPauseStateChanged: (paused) => _previewPaused = paused,
+      totalPathTime: _simulation?.totalTimeSeconds ?? 0,
+      enabled: _simulation != null,
+    );
+
+    return Stack(
+      children: [
+        Positioned.fill(child: field),
+        MultiSplitViewTheme(
+          data: MultiSplitViewThemeData(
+            dividerPainter: DividerPainters.grooved1(
+              color: colorScheme.surfaceContainerHighest,
+              highlightedColor: colorScheme.primary,
+            ),
+          ),
+          child: MultiSplitView(
+            axis: Axis.horizontal,
+            controller: _splitController,
+            onWeightChange: _saveGraphWeight,
+            children: _graphOnRight ? [seekbar, graph] : [graph, seekbar],
+          ),
         ),
-      ),
-      child: MultiSplitView(
-        axis: Axis.horizontal,
-        controller: _splitController,
-        onWeightChange: _saveGraphWeight,
-        children: _graphOnRight ? [field, graph] : [graph, field],
-      ),
+      ],
     );
   }
 
   Widget _buildFieldPane(ColorScheme colorScheme) {
     final visibleNodeIds = _visibleFieldNodeIds;
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: InteractiveViewer(
-            maxScale: 10,
-            boundaryMargin: const EdgeInsets.all(200),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 64),
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio:
-                      widget.fieldImage.defaultSize.width /
-                      widget.fieldImage.defaultSize.height,
-                  child: GestureDetector(
-                    key: const ValueKey('path2FieldGesture'),
-                    behavior: HitTestBehavior.opaque,
-                    onTapDown: _handleFieldTapDown,
-                    onDoubleTapDown: (details) =>
-                        _doubleTapPosition = details.localPosition,
-                    onDoubleTap: _addFieldWaypoint,
-                    onDoubleTapCancel: () => _doubleTapPosition = null,
-                    onPanDown: (details) =>
-                        _panDownPosition = details.localPosition,
-                    onPanStart: _handleFieldPanStart,
-                    onPanUpdate: _handleFieldPanUpdate,
-                    onPanEnd: (_) => _finishFieldDrag(),
-                    onPanCancel: _cancelFieldDrag,
-                    child: Stack(
-                      children: [
-                        widget.fieldImage.getWidget(),
-                        Positioned.fill(
-                          child: CustomPaint(
-                            painter: Path2Painter(
-                              colorScheme: colorScheme,
-                              paintPaths: [
-                                Path2PaintPath(
-                                  path: widget.path,
-                                  visibleNodeIds: visibleNodeIds,
-                                ),
-                              ],
-                              fieldImage: widget.fieldImage,
-                              prefs: widget.prefs,
-                              hoveredNodeId: _hoveredNodeId,
-                              selectedNodeId: _selectedNodeId,
-                              simulations: _simulation?.traversals ?? const [],
-                              animation: _previewController.view,
-                              simulationDurationSeconds:
-                                  _simulation?.totalTimeSeconds ?? 0,
-                            ),
+    return InteractiveViewer(
+      maxScale: 10,
+      boundaryMargin: const EdgeInsets.all(200),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 64),
+        child: Center(
+          child: AspectRatio(
+            aspectRatio:
+                widget.fieldImage.defaultSize.width /
+                widget.fieldImage.defaultSize.height,
+            child: GestureDetector(
+              key: const ValueKey('path2FieldGesture'),
+              supportedDevices: const {
+                PointerDeviceKind.mouse,
+                PointerDeviceKind.touch,
+                PointerDeviceKind.stylus,
+                PointerDeviceKind.invertedStylus,
+              },
+              behavior: HitTestBehavior.opaque,
+              onTapDown: _handleFieldTapDown,
+              onDoubleTapDown: (details) =>
+                  _doubleTapPosition = details.localPosition,
+              onDoubleTap: _addFieldWaypoint,
+              onDoubleTapCancel: () => _doubleTapPosition = null,
+              onPanDown: (details) => _panDownPosition = details.localPosition,
+              onPanStart: _handleFieldPanStart,
+              onPanUpdate: _handleFieldPanUpdate,
+              onPanEnd: (_) => _finishFieldDrag(),
+              onPanCancel: _cancelFieldDrag,
+              child: Stack(
+                children: [
+                  widget.fieldImage.getWidget(),
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: Path2Painter(
+                        colorScheme: colorScheme,
+                        paintPaths: [
+                          Path2PaintPath(
+                            path: widget.path,
+                            visibleNodeIds: visibleNodeIds,
                           ),
-                        ),
-                      ],
+                        ],
+                        fieldImage: widget.fieldImage,
+                        prefs: widget.prefs,
+                        hoveredNodeId: _hoveredNodeId,
+                        selectedNodeId: _selectedNodeId,
+                        simulations: _simulation?.traversals ?? const [],
+                        animation: _previewController.view,
+                        simulationDurationSeconds:
+                            _simulation?.totalTimeSeconds ?? 0,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
         ),
-        PreviewSeekbar(
-          previewController: _previewController,
-          onPauseStateChanged: (paused) => _previewPaused = paused,
-          totalPathTime: _simulation?.totalTimeSeconds ?? 0,
-          enabled: _simulation != null,
-        ),
-      ],
+      ),
     );
   }
 

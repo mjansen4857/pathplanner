@@ -76,10 +76,26 @@ void main() {
     },
   );
 
+  Future<void> panFieldIntoView(WidgetTester tester) async {
+    final field = find.byKey(const ValueKey('path2FieldGesture'));
+    final location = tester.getTopLeft(field) + const Offset(100, 100);
+    final gesture = await tester.createGesture(
+      kind: PointerDeviceKind.trackpad,
+    );
+    await gesture.panZoomStart(location);
+    await gesture.panZoomUpdate(location, pan: const Offset(-50, 0));
+    await tester.pump();
+    await gesture.panZoomUpdate(location, pan: const Offset(-450, 0));
+    await tester.pump();
+    await gesture.panZoomEnd();
+    await tester.pumpAndSettle();
+  }
+
   Future<void> doubleClickField(
     WidgetTester tester,
     Translation2d position,
   ) async {
+    await panFieldIntoView(tester);
     final field = find.byKey(const ValueKey('path2FieldGesture'));
     final box = tester.renderObject<RenderBox>(field);
     final location = box.localToGlobal(
@@ -751,7 +767,7 @@ void main() {
     );
   });
 
-  testWidgets('field viewport fills the available editor pane', (tester) async {
+  testWidgets('field viewport extends behind the side panel', (tester) async {
     await pumpEditor(tester);
     final gesture = find.byKey(const ValueKey('path2FieldGesture'));
     final viewer = find.ancestor(
@@ -760,7 +776,13 @@ void main() {
     );
 
     expect(viewer, findsOneWidget);
-    expect(tester.getSize(viewer).height, closeTo(900, 0.1));
+    expect(tester.getSize(viewer), const Size(1500, 900));
+    expect(
+      tester
+          .getRect(viewer)
+          .overlaps(tester.getRect(find.byType(VisualGraphEditor))),
+      isTrue,
+    );
     expect(
       tester.getRect(viewer).contains(tester.getRect(gesture).center),
       isTrue,
@@ -905,6 +927,8 @@ void main() {
       await pumpEditor(tester);
       await tester.tap(find.byKey(ValueKey('graphNode-${child.id}')));
       await tester.pump();
+
+      await panFieldIntoView(tester);
 
       final painterFinder = find.byWidgetPredicate(
         (widget) => widget is CustomPaint && widget.painter is Path2Painter,

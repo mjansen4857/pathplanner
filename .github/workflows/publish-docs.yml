@@ -129,7 +129,7 @@ jobs:
           name: docs
 
       - name: Unzip docs artifact
-        run: unzip -O UTF-8 -qq ${{ env.ARTIFACT }} -d _site
+        run: unzip -qq "${{ env.ARTIFACT }}" -d _site
 
       - name: Fix permissions
         run: |

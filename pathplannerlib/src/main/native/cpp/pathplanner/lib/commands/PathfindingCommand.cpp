@@ -5,7 +5,7 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include <vector>
-#include <wpi/hal/UsageReporting.hpp>
+#include <wpi/util/UsageReporting.hpp>
 
 using namespace pathplanner;
 
@@ -54,7 +54,7 @@ PathfindingCommand::PathfindingCommand(
 	m_goalEndState = GoalEndState(goalEndVel, targetRotation);
 
 	m_instances++;
-	HAL_ReportUsage("PathPlanner/PathFindingCommand", m_instances, "");
+	wpi::util::ReportUsage("PathPlanner/PathFindingCommand", m_instances, "");
 }
 
 PathfindingCommand::PathfindingCommand(wpi::math::Pose2d targetPose,
@@ -77,7 +77,7 @@ PathfindingCommand::PathfindingCommand(wpi::math::Pose2d targetPose,
 	Pathfinding::ensureInitialized();
 
 	m_instances++;
-	HAL_ReportUsage("PathPlanner/PathFindingCommand", m_instances, "");
+	wpi::util::ReportUsage("PathPlanner/PathFindingCommand", m_instances, "");
 }
 
 void PathfindingCommand::Initialize() {

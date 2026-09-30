@@ -158,7 +158,8 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 					wpi::units::newton_t appliedForce { 0.0 };
 					if (wheelForceDist() > 1e-6) {
 						appliedForce = wpi::units::newton_t { wheelForceDist()
-								* (wheelForces[m].Angle()
+								* (wheelForces[m].Angle().value_or(
+										wpi::math::Rotation2d { })
 										- state.moduleStates[m].angle).Cos() };
 					}
 					wpi::units::newton_meter_t wheelTorque = appliedForce
@@ -285,7 +286,8 @@ void PathPlannerTrajectory::generateStates(
 			if (headingTranslation.Norm()() <= 1e-6) {
 				state.heading = wpi::math::Rotation2d();
 			} else {
-				state.heading = headingTranslation.Angle();
+				state.heading = headingTranslation.Angle().value_or(
+						wpi::math::Rotation2d { });
 			}
 		} else {
 			state.heading = states[i - 1].heading;
@@ -331,7 +333,8 @@ void PathPlannerTrajectory::generateStates(
 							wpi::math::Rotation2d();
 				} else {
 					states[i].moduleStates[m].fieldAngle =
-							fieldTranslation.Angle();
+							fieldTranslation.Angle().value_or(
+									wpi::math::Rotation2d { });
 				}
 				states[i].moduleStates[m].angle =
 						states[i].moduleStates[m].fieldAngle
@@ -385,12 +388,14 @@ void PathPlannerTrajectory::forwardAccelPass(
 
 			// Calculate the torque this module will apply to the robot
 			wpi::math::Rotation2d angleToModule =
-					(state.moduleStates[m].fieldPos - state.pose.Translation()).Angle();
+					(state.moduleStates[m].fieldPos - state.pose.Translation()).Angle().value_or(
+							wpi::math::Rotation2d { });
 			wpi::math::Rotation2d theta;
 			if (forceVec.Norm()() <= 1e-6) {
 				theta = wpi::math::Rotation2d() - angleToModule;
 			} else {
-				theta = forceVec.Angle() - angleToModule;
+				theta = forceVec.Angle().value_or(wpi::math::Rotation2d { })
+						- angleToModule;
 			}
 			totalTorque += forceAtCarpet * config.modulePivotDistance[m]
 					* theta.Sin();
@@ -551,12 +556,14 @@ void PathPlannerTrajectory::reverseAccelPass(
 
 			// Calculate the torque this module will apply to the robot
 			wpi::math::Rotation2d angleToModule =
-					(state.moduleStates[m].fieldPos - state.pose.Translation()).Angle();
+					(state.moduleStates[m].fieldPos - state.pose.Translation()).Angle().value_or(
+							wpi::math::Rotation2d { });
 			wpi::math::Rotation2d theta;
 			if (forceVec.Norm()() <= 1e-6) {
 				theta = wpi::math::Rotation2d() - angleToModule;
 			} else {
-				theta = forceVec.Angle() - angleToModule;
+				theta = forceVec.Angle().value_or(wpi::math::Rotation2d { })
+						- angleToModule;
 			}
 			totalTorque += forceAtCarpet * config.modulePivotDistance[m]
 					* theta.Sin();

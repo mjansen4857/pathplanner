@@ -5,7 +5,7 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import java.util.List;
 import org.wpilib.math.geometry.Translation2d;
-import org.wpilib.math.util.Pair;
+import org.wpilib.util.Pair;
 
 /** Interface for a pathfinder that can be used by PPLib's pathfinding commands */
 public interface Pathfinder {

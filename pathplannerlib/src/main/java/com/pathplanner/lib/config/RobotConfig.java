@@ -7,8 +7,6 @@ import org.ejml.simple.SimpleMatrix;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.wpilib.driverstation.Alert;
-import org.wpilib.driverstation.Alert.Level;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.kinematics.*;
@@ -17,6 +15,8 @@ import org.wpilib.system.Filesystem;
 import org.wpilib.units.measure.Distance;
 import org.wpilib.units.measure.Mass;
 import org.wpilib.units.measure.MomentOfInertia;
+import org.wpilib.util.Alert;
+import org.wpilib.util.Alert.Level;
 
 /**
  * Configuration class describing everything that needs to be known about the robot to generate
@@ -121,7 +121,8 @@ public class RobotConfig {
     for (int i = 0; i < this.numModules; i++) {
       Translation2d modPosReciprocal =
           new Translation2d(
-              1.0 / this.moduleLocations[i].getNorm(), this.moduleLocations[i].getAngle());
+              1.0 / this.moduleLocations[i].getNorm(),
+              this.moduleLocations[i].getAngle().orElse(Rotation2d.ZERO));
       this.forceKinematics.setRow(i * 2, 0, /* Start Data */ 1, 0, -modPosReciprocal.getY());
       this.forceKinematics.setRow(i * 2 + 1, 0, /* Start Data */ 0, 1, modPosReciprocal.getX());
     }
@@ -174,7 +175,8 @@ public class RobotConfig {
     for (int i = 0; i < this.numModules; i++) {
       Translation2d modPosReciprocal =
           new Translation2d(
-              1.0 / this.moduleLocations[i].getNorm(), this.moduleLocations[i].getAngle());
+              1.0 / this.moduleLocations[i].getNorm(),
+              this.moduleLocations[i].getAngle().orElse(Rotation2d.ZERO));
       this.forceKinematics.setRow(i * 2, 0, /* Start Data */ 1, 0, -modPosReciprocal.getY());
       this.forceKinematics.setRow(i * 2 + 1, 0, /* Start Data */ 0, 1, modPosReciprocal.getX());
     }

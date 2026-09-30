@@ -272,9 +272,10 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		// Calculate the torque this module will apply to the chassis
 		if (!epsilonEquals(0, moduleForceVec.Norm().value())) {
 			wpi::math::Rotation2d angleToModule =
-					m_robotConfig.moduleLocations[m].Angle();
-			wpi::math::Rotation2d theta = moduleForceVec.Angle()
-					- angleToModule;
+					m_robotConfig.moduleLocations[m].Angle().value_or(
+							wpi::math::Rotation2d { });
+			wpi::math::Rotation2d theta = moduleForceVec.Angle().value_or(
+					wpi::math::Rotation2d { }) - angleToModule;
 			chassisTorque += forceAtCarpet
 					* m_robotConfig.modulePivotDistance[m] * theta.Sin();
 		}
@@ -371,10 +372,10 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		wpi::units::meter_t wheelForceDist = wheelForces[m].Norm();
 		wpi::units::newton_t appliedForce =
 				wheelForceDist > 1e-6_m ?
-						wpi::units::newton_t {
-								wheelForceDist.value()
-										* (wheelForces[m].Angle()
-												- retStates[m].angle).Cos() } :
+						wpi::units::newton_t { wheelForceDist.value()
+								* (wheelForces[m].Angle().value_or(
+										wpi::math::Rotation2d { })
+										- retStates[m].angle).Cos() } :
 						0_N;
 		wpi::units::newton_meter_t wheelTorque = appliedForce
 				* m_robotConfig.moduleConfig.wheelRadius;

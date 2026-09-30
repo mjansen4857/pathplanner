@@ -4,7 +4,7 @@
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include <wpi/system/Filesystem.hpp>
 #include <wpi/util/MemoryBuffer.hpp>
-#include <wpi/hal/UsageReporting.hpp>
+#include <wpi/util/UsageReporting.hpp>
 #include <stdexcept>
 
 using namespace pathplanner;
@@ -56,7 +56,7 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName, bool mirror) {
 	m_autoLoop = std::make_unique<wpi::EventLoop>();
 
 	m_instances++;
-	HAL_ReportUsage("PathPlanner/PathPlannerAuto", m_instances, "");
+	wpi::util::ReportUsage("PathPlanner/PathPlannerAuto", m_instances, "");
 }
 
 PathPlannerAuto::PathPlannerAuto(wpi::cmd::CommandPtr &&autoCommand,
@@ -67,7 +67,7 @@ PathPlannerAuto::PathPlannerAuto(wpi::cmd::CommandPtr &&autoCommand,
 	m_autoLoop = std::make_unique<wpi::EventLoop>();
 
 	m_instances++;
-	HAL_ReportUsage("PathPlanner/PathPlannerAuto", m_instances, "");
+	wpi::util::ReportUsage("PathPlanner/PathPlannerAuto", m_instances, "");
 }
 
 wpi::cmd::Trigger PathPlannerAuto::nearFieldPositionAutoFlipped(

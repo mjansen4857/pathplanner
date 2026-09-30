@@ -21,8 +21,8 @@ import org.wpilib.command2.Subsystem;
 import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
-import org.wpilib.smartdashboard.SendableChooser;
 import org.wpilib.system.Filesystem;
+import org.wpilib.tunable.Selectable;
 import org.wpilib.units.measure.LinearVelocity;
 
 /** Utility class used to build auto routines */
@@ -389,58 +389,58 @@ public class AutoBuilder {
   }
 
   /**
-   * Create and populate a sendable chooser with all PathPlannerAutos in the project. The default
+   * Create and populate a selectable chooser with all PathPlannerAutos in the project. The default
    * option will be Commands.none()
    *
-   * @return SendableChooser populated with all autos
+   * @return Selectable populated with all autos
    */
-  public static SendableChooser<Command> buildAutoChooser() {
+  public static Selectable<Command> buildAutoChooser() {
     return buildAutoChooser("");
   }
 
   /**
-   * Create and populate a sendable chooser with all PathPlannerAutos in the project
+   * Create and populate a selectable chooser with all PathPlannerAutos in the project
    *
    * @param defaultAutoName The name of the auto that should be the default option. If this is an
    *     empty string, or if an auto with the given name does not exist, the default option will be
    *     Commands.none()
-   * @return SendableChooser populated with all autos
+   * @return Selectable populated with all autos
    */
-  public static SendableChooser<Command> buildAutoChooser(String defaultAutoName) {
+  public static Selectable<Command> buildAutoChooser(String defaultAutoName) {
     return buildAutoChooserWithOptionsModifier(defaultAutoName, (stream) -> stream);
   }
 
   /**
-   * Create and populate a sendable chooser with all PathPlannerAutos in the project. The default
+   * Create and populate a selectable chooser with all PathPlannerAutos in the project. The default
    * option will be Commands.none()
    *
    * @param optionsModifier A lambda function that can be used to modify the options before they go
    *     into the AutoChooser
-   * @return SendableChooser populated with all autos
+   * @return Selectable populated with all autos
    */
-  public static SendableChooser<Command> buildAutoChooserWithOptionsModifier(
+  public static Selectable<Command> buildAutoChooserWithOptionsModifier(
       Function<Stream<PathPlannerAuto>, Stream<PathPlannerAuto>> optionsModifier) {
     return buildAutoChooserWithOptionsModifier("", optionsModifier);
   }
 
   /**
-   * Create and populate a sendable chooser with all PathPlannerAutos in the project
+   * Create and populate a selectable chooser with all PathPlannerAutos in the project
    *
    * @param defaultAutoName The name of the auto that should be the default option. If this is an
    *     empty string, or if an auto with the given name does not exist, the default option will be
    *     Commands.none()
    * @param optionsModifier A lambda function that can be used to modify the options before they go
    *     into the AutoChooser
-   * @return SendableChooser populated with all autos
+   * @return Selectable populated with all autos
    */
-  public static SendableChooser<Command> buildAutoChooserWithOptionsModifier(
+  public static Selectable<Command> buildAutoChooserWithOptionsModifier(
       String defaultAutoName,
       Function<Stream<PathPlannerAuto>, Stream<PathPlannerAuto>> optionsModifier) {
     if (!AutoBuilder.isConfigured()) {
       throw new RuntimeException(
           "AutoBuilder was not configured before attempting to build an auto chooser");
     }
-    SendableChooser<Command> chooser = new SendableChooser<>();
+    Selectable<Command> chooser = new Selectable<>();
     List<String> autoNames = getAllAutoNames();
     PathPlannerAuto defaultOption = null;
     List<PathPlannerAuto> options = new ArrayList<>();
@@ -453,14 +453,12 @@ public class AutoBuilder {
       }
     }
     if (defaultOption == null) {
-      chooser.setDefaultOption("None", Commands.none());
+      chooser.addDefault("None", Commands.none());
     } else {
-      chooser.setDefaultOption(defaultOption.getName(), defaultOption);
-      chooser.addOption("None", Commands.none());
+      chooser.addDefault(defaultOption.getName(), defaultOption);
+      chooser.add("None", Commands.none());
     }
-    optionsModifier
-        .apply(options.stream())
-        .forEach(auto -> chooser.addOption(auto.getName(), auto));
+    optionsModifier.apply(options.stream()).forEach(auto -> chooser.add(auto.getName(), auto));
     return chooser;
   }
 

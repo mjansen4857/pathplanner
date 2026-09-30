@@ -11,7 +11,7 @@
 #include <wpi/util/MemoryBuffer.hpp>
 #include <optional>
 #include <utility>
-#include <wpi/hal/UsageReporting.hpp>
+#include <wpi/util/UsageReporting.hpp>
 
 using namespace pathplanner;
 
@@ -44,7 +44,7 @@ PathPlannerPath::PathPlannerPath(std::vector<Waypoint> waypoints,
 	precalcValues();
 
 	m_instances++;
-	HAL_ReportUsage("PathPlanner/PathPlannerPath", m_instances, "");
+	wpi::util::ReportUsage("PathPlanner/PathPlannerPath", m_instances, "");
 }
 
 PathPlannerPath::PathPlannerPath(PathConstraints constraints,
@@ -52,7 +52,7 @@ PathPlannerPath::PathPlannerPath(PathConstraints constraints,
 		constraints), m_idealStartingState(std::nullopt), m_goalEndState(
 		goalEndState), m_reversed(false), m_isChoreoPath(false) {
 	m_instances++;
-	HAL_ReportUsage("PathPlanner/PathPlannerPath", m_instances, "");
+	wpi::util::ReportUsage("PathPlanner/PathPlannerPath", m_instances, "");
 }
 
 void PathPlannerPath::hotReload(const wpi::util::json &json) {
@@ -572,7 +572,8 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 		if (pointZone.has_value()) {
 			PointTowardsZone zone = pointZone.value();
 			wpi::math::Rotation2d angleToTarget = (zone.getTargetPosition()
-					- points[i].position).Angle();
+					- points[i].position).Angle().value_or(
+					wpi::math::Rotation2d { });
 			wpi::math::Rotation2d rotation = angleToTarget
 					+ zone.getRotationOffset();
 			points[i].rotationTarget = RotationTarget(

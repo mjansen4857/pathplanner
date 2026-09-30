@@ -192,16 +192,16 @@ public class FollowPathCommand extends Command {
   public static Command warmupCommand() {
     List<Waypoint> waypoints =
         PathPlannerPath.waypointsFromPoses(
-            new Pose2d(0.0, 0.0, Rotation2d.kZero), new Pose2d(6.0, 6.0, Rotation2d.kZero));
+            new Pose2d(0.0, 0.0, Rotation2d.ZERO), new Pose2d(6.0, 6.0, Rotation2d.ZERO));
     PathPlannerPath path =
         new PathPlannerPath(
             waypoints,
             new PathConstraints(4.0, 4.0, 4.0, 4.0),
-            new IdealStartingState(0.0, Rotation2d.kZero),
-            new GoalEndState(0.0, Rotation2d.kCW_90deg));
+            new IdealStartingState(0.0, Rotation2d.ZERO),
+            new GoalEndState(0.0, Rotation2d.CW_90DEG));
     return new FollowPathCommand(
             path,
-            () -> Pose2d.kZero,
+            () -> Pose2d.ZERO,
             ChassisVelocities::new,
             (speeds, feedforwards) -> {},
             new PPHolonomicDriveController(

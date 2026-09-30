@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.wpilib.command2.*;
 import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.math.util.Pair;
+import org.wpilib.util.Pair;
 
 /** Utility class for managing named commands */
 public class NamedCommands {

@@ -17,7 +17,6 @@ import java.util.function.Supplier;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.Subsystem;
-import org.wpilib.hardware.hal.HAL;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
@@ -25,6 +24,7 @@ import org.wpilib.math.system.DCMotor;
 import org.wpilib.math.util.MathUtil;
 import org.wpilib.system.Timer;
 import org.wpilib.units.measure.LinearVelocity;
+import org.wpilib.util.UsageReporting;
 
 /** Base pathfinding command */
 public class PathfindingCommand extends Command {
@@ -93,7 +93,7 @@ public class PathfindingCommand extends Command {
       Subsystem... requirements) {
     addRequirements(requirements);
     Pathfinding.ensureInitialized();
-    Rotation2d targetRotation = Rotation2d.kZero;
+    Rotation2d targetRotation = Rotation2d.ZERO;
     double goalEndVel = targetPath.getGlobalConstraints().maxVelocityMPS();
     if (targetPath.isChoreoPath()) {
       // Can get() here without issue since all choreo trajectories have ideal trajectories
@@ -121,7 +121,7 @@ public class PathfindingCommand extends Command {
     this.robotConfig = robotConfig;
     this.shouldFlipPath = shouldFlipPath;
     instances++;
-    HAL.reportUsage("PathPlanner/PathFindingCommand", instances, "");
+    UsageReporting.reportUsage("PathPlanner/PathFindingCommand", instances, "");
   }
 
   /**
@@ -167,7 +167,7 @@ public class PathfindingCommand extends Command {
     this.robotConfig = robotConfig;
     this.shouldFlipPath = () -> false;
     instances++;
-    HAL.reportUsage("PathPlanner/PathFindingCommand", instances, "");
+    UsageReporting.reportUsage("PathPlanner/PathFindingCommand", instances, "");
   }
 
   /**
@@ -398,7 +398,7 @@ public class PathfindingCommand extends Command {
     return new PathfindingCommand(
             new Pose2d(15.0, 4.0, Rotation2d.k180deg),
             new PathConstraints(4, 3, 4, 4),
-            () -> new Pose2d(1.5, 4, Rotation2d.kZero),
+            () -> new Pose2d(1.5, 4, Rotation2d.ZERO),
             ChassisVelocities::new,
             (speeds, feedforwards) -> {},
             new PPHolonomicDriveController(

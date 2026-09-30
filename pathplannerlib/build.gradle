@@ -1,12 +1,11 @@
 import org.wpilib.toolchain.*
-import org.wpilib.nativeutils.dependencies.WPISharedMavenDependency
 
 plugins {
     id 'cpp'
     id 'java'
     id 'google-test'
     id "org.wpilib.WPILibRepositoriesPlugin" version '2027.0.0'
-    id 'org.wpilib.NativeUtils' version '2027.13.1'
+    id 'org.wpilib.NativeUtils' version '2027.14.3'
     id 'org.wpilib.GradleJni' version '2027.0.0'
     id 'com.diffplug.spotless' version '8.6.0'
 }
@@ -30,13 +29,6 @@ java {
 
 repositories {
     mavenCentral()
-    // GoogleTest is no longer published with WPILib starting with alpha 7.
-    maven {
-        url = 'https://frcmaven.wpi.edu/artifactory/release-2027'
-        content {
-            includeGroup 'org.wpilib.thirdparty.googletest'
-        }
-    }
 }
 if (project.hasProperty('releaseMode')) {
     wpilibRepositories.addAllReleaseRepositories(project)
@@ -46,22 +38,6 @@ if (project.hasProperty('releaseMode')) {
 
 // Apply C++ configuration
 apply from: 'config.gradle'
-
-// NativeUtils 2027.13.1 does not include alpha 7's telemetry and tunables libraries.
-['telemetry', 'tunables'].each { name ->
-    nativeUtils.getNativeDependencyContainer().register("${name}_shared", WPISharedMavenDependency) {
-        groupId = "org.wpilib.${name}"
-        artifactId = "${name}-cpp"
-        headerClassifier = 'headers'
-        sourceClassifier = 'sources'
-        ext = 'zip'
-        version = rootProject.ext.wpilibVersion
-        targetPlatforms.addAll(nativeUtils.wpi.platforms.allPlatforms)
-    }
-}
-nativeUtils.getNativeDependencyContainer().named('wpilib_shared') {
-    dependencies.addAll('telemetry_shared', 'tunables_shared')
-}
 
 // Apply Java configuration
 dependencies {
@@ -150,7 +126,7 @@ model {
                 }
             }
 
-            nativeUtils.useRequiredLibrary(it, "googletest_static")
+            nativeUtils.useRequiredLibrary(it, "catch2_static")
             nativeUtils.useRequiredLibrary(it, "wpilib_shared")
 
             binaries.all {

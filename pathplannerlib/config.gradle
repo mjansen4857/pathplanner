@@ -13,10 +13,6 @@ nativeUtils {
     }
 }
 
-nativeUtils.getNativeDependencyContainer().named('googletest_static') {
-    version = '2027.0.0-alpha-6'
-}
-
 nativeUtils.wpi.addWarnings()
 nativeUtils.wpi.addWarningsAsErrors()
 

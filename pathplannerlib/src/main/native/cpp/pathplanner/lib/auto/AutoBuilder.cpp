@@ -161,7 +161,7 @@ void AutoBuilder::regenerateSendableReferences() {
 	}
 }
 
-wpi::SendableChooser<wpi::cmd::Command*> AutoBuilder::buildAutoChooser(
+wpi::tunables::Selectable<wpi::cmd::Command*> AutoBuilder::buildAutoChooser(
 		std::string defaultAutoName) {
 	return buildAutoChooserFilterPath(
 			[](const PathPlannerAuto &autoCommand,
@@ -170,7 +170,7 @@ wpi::SendableChooser<wpi::cmd::Command*> AutoBuilder::buildAutoChooser(
 			},defaultAutoName);
 }
 
-wpi::SendableChooser<wpi::cmd::Command*> AutoBuilder::buildAutoChooserFilter(
+wpi::tunables::Selectable<wpi::cmd::Command*> AutoBuilder::buildAutoChooserFilter(
 		std::function<bool(const PathPlannerAuto&)> filter,
 		std::string defaultAutoName) {
 	return buildAutoChooserFilterPath(
@@ -180,7 +180,7 @@ wpi::SendableChooser<wpi::cmd::Command*> AutoBuilder::buildAutoChooserFilter(
 			},defaultAutoName);
 }
 
-wpi::SendableChooser<wpi::cmd::Command*> AutoBuilder::buildAutoChooserFilterPath(
+wpi::tunables::Selectable<wpi::cmd::Command*> AutoBuilder::buildAutoChooserFilterPath(
 		std::function<bool(const PathPlannerAuto&, std::filesystem::path)> filter,
 		std::string defaultAutoName) {
 	if (!m_configured) {
@@ -193,7 +193,7 @@ wpi::SendableChooser<wpi::cmd::Command*> AutoBuilder::buildAutoChooserFilterPath
 		m_commandRefsGeneratedForSendable = true;
 	}
 
-	wpi::SendableChooser<wpi::cmd::Command*> sendableChooser;
+	wpi::tunables::Selectable<wpi::cmd::Command*> sendableChooser;
 	bool defaultSelected = false;
 
 	for (const std::pair<const std::filesystem::path, wpi::cmd::CommandPtr> &entry : m_autoCommands) {
@@ -201,21 +201,21 @@ wpi::SendableChooser<wpi::cmd::Command*> AutoBuilder::buildAutoChooserFilterPath
 
 		// Found the default for sendableChooser
 		if (defaultAutoName == autoName) {
-			sendableChooser.SetDefaultOption(autoName, entry.second.get());
+			sendableChooser.AddDefault(autoName, entry.second.get());
 			defaultSelected = true;
 		} else if (filter(*static_cast<PathPlannerAuto*>(entry.second.get()),
 				entry.first)) {
-			sendableChooser.AddOption(autoName, entry.second.get());
+			sendableChooser.Add(autoName, entry.second.get());
 		}
 	}
 
 	// None is the default
 	if (!defaultSelected || defaultAutoName == "") {
-		sendableChooser.SetDefaultOption("None", m_noneCommand.get());
+		sendableChooser.AddDefault("None", m_noneCommand.get());
 	}
 	// None is just there, extra precaution for programmers
 	else {
-		sendableChooser.AddOption("None", m_noneCommand.get());
+		sendableChooser.Add("None", m_noneCommand.get());
 	}
 
 	return sendableChooser;

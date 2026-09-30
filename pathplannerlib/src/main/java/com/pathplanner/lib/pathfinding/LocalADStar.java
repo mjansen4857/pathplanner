@@ -13,8 +13,8 @@ import org.json.simple.parser.JSONParser;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
-import org.wpilib.math.util.Pair;
 import org.wpilib.system.Filesystem;
+import org.wpilib.util.Pair;
 
 /**
  * Implementation of AD* running locally in a background thread
@@ -86,9 +86,9 @@ public class LocalADStar implements Pathfinder {
   public LocalADStar() {
     planningThread = new Thread(this::runThread);
     requestStart = new GridPosition(0, 0);
-    requestRealStartPos = Translation2d.kZero;
+    requestRealStartPos = Translation2d.ZERO;
     requestGoal = new GridPosition(0, 0);
-    requestRealGoalPos = Translation2d.kZero;
+    requestRealGoalPos = Translation2d.ZERO;
     staticObstacles.clear();
     dynamicObstacles.clear();
     File navGridFile = new File(Filesystem.getDeployDirectory(), "pathplanner/navgrid.json");
@@ -391,15 +391,17 @@ public class LocalADStar implements Pathfinder {
     fieldPosPath.set(fieldPosPath.size() - 1, realGoalPos);
     List<Pose2d> pathPoses = new ArrayList<>();
     pathPoses.add(
-        new Pose2d(fieldPosPath.get(0), fieldPosPath.get(1).minus(fieldPosPath.get(0)).getAngle()));
+        new Pose2d(
+            fieldPosPath.get(0),
+            fieldPosPath.get(1).minus(fieldPosPath.get(0)).getAngle().orElse(Rotation2d.ZERO)));
     for (int i = 1; i < fieldPosPath.size() - 1; i++) {
       Translation2d last = fieldPosPath.get(i - 1);
       Translation2d current = fieldPosPath.get(i);
       Translation2d next = fieldPosPath.get(i + 1);
       Translation2d anchor1 = current.minus(last).times(SMOOTHING_ANCHOR_PCT).plus(last);
-      Rotation2d heading1 = current.minus(last).getAngle();
+      Rotation2d heading1 = current.minus(last).getAngle().orElse(Rotation2d.ZERO);
       Translation2d anchor2 = current.minus(next).times(SMOOTHING_ANCHOR_PCT).plus(next);
-      Rotation2d heading2 = next.minus(anchor2).getAngle();
+      Rotation2d heading2 = next.minus(anchor2).getAngle().orElse(Rotation2d.ZERO);
       pathPoses.add(new Pose2d(anchor1, heading1));
       pathPoses.add(new Pose2d(anchor2, heading2));
     }
@@ -409,7 +411,8 @@ public class LocalADStar implements Pathfinder {
             fieldPosPath
                 .get(fieldPosPath.size() - 1)
                 .minus(fieldPosPath.get(fieldPosPath.size() - 2))
-                .getAngle()));
+                .getAngle()
+                .orElse(Rotation2d.ZERO)));
     return PathPlannerPath.waypointsFromPoses(pathPoses);
   }
 

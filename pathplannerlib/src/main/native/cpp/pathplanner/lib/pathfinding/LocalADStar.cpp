@@ -382,7 +382,8 @@ std::vector<Waypoint> LocalADStar::createWaypoints(
 
 	std::vector < wpi::math::Pose2d > pathPoses;
 	pathPoses.emplace_back(fieldPosPath[0],
-			(fieldPosPath[1] - fieldPosPath[0]).Angle());
+			(fieldPosPath[1] - fieldPosPath[0]).Angle().value_or(
+					wpi::math::Rotation2d { }));
 	for (size_t i = 1; i < fieldPosPath.size() - 1; i++) {
 		wpi::math::Translation2d last = fieldPosPath[i - 1];
 		wpi::math::Translation2d current = fieldPosPath[i];
@@ -390,17 +391,20 @@ std::vector<Waypoint> LocalADStar::createWaypoints(
 
 		wpi::math::Translation2d anchor1 = ((current - last)
 				* SMOOTHING_ANCHOR_PCT) + last;
-		wpi::math::Rotation2d heading1 = (current - last).Angle();
+		wpi::math::Rotation2d heading1 = (current - last).Angle().value_or(
+				wpi::math::Rotation2d { });
 		wpi::math::Translation2d anchor2 = ((current - next)
 				* SMOOTHING_ANCHOR_PCT) + next;
-		wpi::math::Rotation2d heading2 = (next - anchor2).Angle();
+		wpi::math::Rotation2d heading2 = (next - anchor2).Angle().value_or(
+				wpi::math::Rotation2d { });
 
 		pathPoses.emplace_back(anchor1, heading1);
 		pathPoses.emplace_back(anchor2, heading2);
 	}
 	pathPoses.emplace_back(fieldPosPath[fieldPosPath.size() - 1],
 			(fieldPosPath[fieldPosPath.size() - 1]
-					- fieldPosPath[fieldPosPath.size() - 2]).Angle());
+					- fieldPosPath[fieldPosPath.size() - 2]).Angle().value_or(
+					wpi::math::Rotation2d { }));
 
 	return PathPlannerPath::waypointsFromPoses(pathPoses);
 }

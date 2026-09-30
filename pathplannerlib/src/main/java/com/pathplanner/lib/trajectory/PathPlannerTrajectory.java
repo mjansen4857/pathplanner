@@ -167,7 +167,11 @@ public class PathPlannerTrajectory {
             double appliedForce =
                 wheelForceDist > 1e-6
                     ? wheelForceDist
-                        * wheelForces[m].getAngle().minus(state.moduleStates[m].angle).getCos()
+                        * wheelForces[m]
+                            .getAngle()
+                            .orElse(Rotation2d.ZERO)
+                            .minus(state.moduleStates[m].angle)
+                            .getCos()
                     : 0.0;
             double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
             double torqueCurrent = config.moduleConfig.driveMotor.getCurrent(wheelTorque);
@@ -243,9 +247,9 @@ public class PathPlannerTrajectory {
         Translation2d headingTranslation =
             path.getPoint(i + 1).position.minus(state.pose.getTranslation());
         if (headingTranslation.getNorm() <= 1e-6) {
-          state.heading = Rotation2d.kZero;
+          state.heading = Rotation2d.ZERO;
         } else {
-          state.heading = headingTranslation.getAngle();
+          state.heading = headingTranslation.getAngle().orElse(Rotation2d.ZERO);
         }
       } else {
         state.heading = states.get(i - 1).heading;
@@ -285,9 +289,10 @@ public class PathPlannerTrajectory {
                   .fieldPos
                   .minus(states.get(i).moduleStates[m].fieldPos);
           if (fieldTranslation.getNorm() <= 1e-6) {
-            states.get(i).moduleStates[m].fieldAngle = Rotation2d.kZero;
+            states.get(i).moduleStates[m].fieldAngle = Rotation2d.ZERO;
           } else {
-            states.get(i).moduleStates[m].fieldAngle = fieldTranslation.getAngle();
+            states.get(i).moduleStates[m].fieldAngle =
+                fieldTranslation.getAngle().orElse(Rotation2d.ZERO);
           }
           states.get(i).moduleStates[m].angle =
               states.get(i).moduleStates[m].fieldAngle.minus(states.get(i).pose.getRotation());
@@ -308,7 +313,7 @@ public class PathPlannerTrajectory {
       var nextState = states.get(i + 1);
 
       // Calculate the linear force vector and torque acting on the whole robot
-      Translation2d linearForceVec = Translation2d.kZero;
+      Translation2d linearForceVec = Translation2d.ZERO;
       double totalTorque = 0.0;
       for (int m = 0; m < config.numModules; m++) {
         double lastVel = prevState.moduleStates[m].velocity;
@@ -332,12 +337,17 @@ public class PathPlannerTrajectory {
 
         // Calculate the torque this module will apply to the robot
         Rotation2d angleToModule =
-            state.moduleStates[m].fieldPos.minus(state.pose.getTranslation()).getAngle();
+            state
+                .moduleStates[m]
+                .fieldPos
+                .minus(state.pose.getTranslation())
+                .getAngle()
+                .orElse(Rotation2d.ZERO);
         Rotation2d theta;
         if (forceVec.getNorm() <= 1e-6) {
-          theta = Rotation2d.kZero.minus(angleToModule);
+          theta = Rotation2d.ZERO.minus(angleToModule);
         } else {
-          theta = forceVec.getAngle().minus(angleToModule);
+          theta = forceVec.getAngle().orElse(Rotation2d.ZERO).minus(angleToModule);
         }
         totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
       }
@@ -448,7 +458,7 @@ public class PathPlannerTrajectory {
       var nextState = states.get(i + 1);
 
       // Calculate the linear force vector and torque acting on the whole robot
-      Translation2d linearForceVec = Translation2d.kZero;
+      Translation2d linearForceVec = Translation2d.ZERO;
       double totalTorque = 0.0;
       for (int m = 0; m < config.numModules; m++) {
         double lastVel = nextState.moduleStates[m].velocity;
@@ -473,12 +483,17 @@ public class PathPlannerTrajectory {
 
         // Calculate the torque this module will apply to the robot
         Rotation2d angleToModule =
-            state.moduleStates[m].fieldPos.minus(state.pose.getTranslation()).getAngle();
+            state
+                .moduleStates[m]
+                .fieldPos
+                .minus(state.pose.getTranslation())
+                .getAngle()
+                .orElse(Rotation2d.ZERO);
         Rotation2d theta;
         if (forceVec.getNorm() <= 1e-6) {
-          theta = Rotation2d.kZero.minus(angleToModule);
+          theta = Rotation2d.ZERO.minus(angleToModule);
         } else {
-          theta = forceVec.getAngle().minus(angleToModule);
+          theta = forceVec.getAngle().orElse(Rotation2d.ZERO).minus(angleToModule);
         }
         totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
       }

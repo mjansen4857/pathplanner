@@ -50,8 +50,8 @@ public class FlippingUtil {
    */
   public static Rotation2d flipFieldRotation(Rotation2d rotation) {
     return switch (symmetryType) {
-      case kMirrored -> Rotation2d.kPi.minus(rotation);
-      case kRotational -> rotation.minus(Rotation2d.kPi);
+      case kMirrored -> Rotation2d.PI.minus(rotation);
+      case kRotational -> rotation.minus(Rotation2d.PI);
     };
   }
 

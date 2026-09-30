@@ -16,13 +16,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.wpilib.command2.Command;
-import org.wpilib.hardware.hal.HAL;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.math.util.MathUtil;
 import org.wpilib.system.Filesystem;
+import org.wpilib.util.UsageReporting;
 
 /** A PathPlanner path. NOTE: This is not a trajectory and isn't directly followed. */
 public class PathPlannerPath {
@@ -112,7 +112,7 @@ public class PathPlannerPath {
     precalcValues();
 
     instances++;
-    HAL.reportUsage("PathPlanner/PathPlannerPath", instances, "");
+    UsageReporting.reportUsage("PathPlanner/PathPlannerPath", instances, "");
   }
 
   /**
@@ -177,7 +177,7 @@ public class PathPlannerPath {
     this.allPoints = new ArrayList<>();
 
     instances++;
-    HAL.reportUsage("PathPlanner/PathPlannerPath", instances, "");
+    UsageReporting.reportUsage("PathPlanner/PathPlannerPath", instances, "");
   }
 
   /**
@@ -657,7 +657,7 @@ public class PathPlannerPath {
    * @return Initial heading
    */
   public Rotation2d getInitialHeading() {
-    return getPoint(1).position.minus(getPoint(0).position).getAngle();
+    return getPoint(1).position.minus(getPoint(0).position).getAngle().orElse(Rotation2d.ZERO);
   }
 
   /**
@@ -846,7 +846,11 @@ public class PathPlannerPath {
       var pointZone = pointZoneForWaypointPos(points.get(i).waypointRelativePos);
       if (pointZone != null) {
         Rotation2d angleToTarget =
-            pointZone.targetPosition().minus(points.get(i).position).getAngle();
+            pointZone
+                .targetPosition()
+                .minus(points.get(i).position)
+                .getAngle()
+                .orElse(Rotation2d.ZERO);
         Rotation2d rotation = angleToTarget.plus(pointZone.rotationOffset());
         points.get(i).rotationTarget =
             new RotationTarget(points.get(i).waypointRelativePos, rotation);
@@ -1306,7 +1310,7 @@ public class PathPlannerPath {
    */
   public List<Pose2d> getPathPoses() {
     return allPoints.stream()
-        .map(p -> new Pose2d(p.position, Rotation2d.kZero))
+        .map(p -> new Pose2d(p.position, Rotation2d.ZERO))
         .collect(Collectors.toList());
   }
 

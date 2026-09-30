@@ -9,7 +9,7 @@
 #include <map>
 #include <filesystem>
 #include <wpi/commands2/Command.hpp>
-#include <wpi/smartdashboard/SendableChooser.hpp>
+#include <wpi/tunables/Selectable.hpp>
 #include <memory>
 #include <wpi/util/json.hpp>
 #include <wpi/util/array.hpp>
@@ -209,7 +209,7 @@ public:
 			PathConstraints pathfindingConstraints);
 
 	/**
-	 * Modifies the existing references that buildAutoChooser returns in SendableChooser to the most recent in the pathplanner/auto deploy directory
+	 * Modifies the existing references that buildAutoChooser returns in Selectable to the most recent in the pathplanner/auto deploy directory
 	 * 
 	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on every call
 	 * Adds new auto paths from the pathplanner/auto deploy directory however doesn't remove autos already previously loaded
@@ -218,49 +218,49 @@ public:
 	static void regenerateSendableReferences();
 
 	/**
-	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
+	 * Populate a selectable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
 	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
 	 *
 	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
 	 *     empty string, or if an auto with the given name does not exist, the default option will be
 	 *     wpi::cmd::None()
-	 * @return SendableChooser populated with all autos
+	 * @return Selectable populated with all autos
 	 */
-	static wpi::SendableChooser<wpi::cmd::Command*> buildAutoChooser(
+	static wpi::tunables::Selectable<wpi::cmd::Command*> buildAutoChooser(
 			std::string defaultAutoName = "");
 
 	/**
-	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
+	 * Populate a selectable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
 	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
 	 * Filters certain PathPlannerAuto bases on their properties
 	 *
-	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
+	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to selectable chooser
 	 * 		while returning false prevents it from being added. 
 	 * 		autoCommand, const reference to PathPlannerAuto command which was generated
 	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
 	 *     empty string, or if an auto with the given name does not exist, the default option will be
-	 *     wpi::cmd::None(), defaultAutoName doesn't get filter out and always is in final sendable chooser (if found)
-	 * @return SendableChooser populated with all autos
+	 *     wpi::cmd::None(), defaultAutoName doesn't get filter out and always is in final selectable chooser (if found)
+	 * @return Selectable populated with all autos
 	 */
-	static wpi::SendableChooser<wpi::cmd::Command*> buildAutoChooserFilter(
+	static wpi::tunables::Selectable<wpi::cmd::Command*> buildAutoChooserFilter(
 			std::function<bool(const PathPlannerAuto&)> filter,
 			std::string defaultAutoName = "");
 
 	/**
-	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
+	 * Populate a selectable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
 	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
 	 * Filters certain PathPlannerAuto bases on their properties and their filepath
 	 *
-	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
+	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to selectable chooser
 	 * 		while returning false prevents it from being added. 
 	 * 		autoCommand, const reference to PathPlannerAuto command which was generated
 	 * 		autoPath, path to the autoCommand relative to pathplanner/auto deploy directory with extension ".auto"
 	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
 	 *     empty string, or if an auto with the given name does not exist, the default option will be
-	 *     wpi::cmd::None(), defaultAutoName doesn't get filter out and always is in final sendable chooser (if found)
-	 * @return SendableChooser populated with all autos
+	 *     wpi::cmd::None(), defaultAutoName doesn't get filter out and always is in final selectable chooser (if found)
+	 * @return Selectable populated with all autos
 	 */
-	static wpi::SendableChooser<wpi::cmd::Command*> buildAutoChooserFilterPath(
+	static wpi::tunables::Selectable<wpi::cmd::Command*> buildAutoChooserFilterPath(
 			std::function<bool(const PathPlannerAuto&, std::filesystem::path)> filter,
 			std::string defaultAutoName = "");
 

@@ -8,6 +8,7 @@ nativeUtils {
     wpi {
         configureDependencies {
             wpiVersion = rootProject.ext.wpilibVersion
+            mrcLibVersion = '2027.1.0-alpha-1-116-g5288562'
         }
     }
 }
@@ -19,7 +20,7 @@ nativeUtils.setSinglePrintPerPlatform()
 
 nativeUtils.wpi.addVendorDeps()
 nativeUtils.wpi.getVendorDeps().getFixedVersion().set(rootProject.ext.wpilibVersion)
-nativeUtils.wpi.getVendorDeps().getWpilibYear().set("2027_alpha6")
+nativeUtils.wpi.getVendorDeps().getWpilibYear().set("2027_alpha7")
 nativeUtils.wpi.getVendorDeps().loadAll()
 nativeUtils.wpi.getVendorDeps().getNativeVendor().initializeNativeDependencies()
 nativeUtils.wpi.getVendorDeps().addVendorReposToMaven(false)

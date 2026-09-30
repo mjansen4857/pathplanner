@@ -1,18 +1,19 @@
-#include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "pathplanner/lib/path/GoalEndState.h"
 
 using namespace pathplanner;
 
-TEST(GoalEndStateTest, TestGetters) {
+TEST_CASE("GoalEndStateTest/TestGetters", "[GoalEndStateTest]") {
 	GoalEndState endState(2_mps, wpi::math::Rotation2d(35_deg));
 
-	EXPECT_DOUBLE_EQ(2.0, endState.getVelocity()());
-	EXPECT_EQ(wpi::math::Rotation2d(35_deg), endState.getRotation());
+	CHECK_THAT(endState.getVelocity()(), Catch::Matchers::WithinULP(2.0, 4));
+	CHECK(endState.getRotation() == wpi::math::Rotation2d(35_deg));
 }
 
-TEST(GoalEndStateTest, TestFromJson) {
+TEST_CASE("GoalEndStateTest/TestFromJson", "[GoalEndStateTest]") {
 	wpi::util::json json = wpi::util::json::object("velocity", 1.25,
 			"rotation", -15.5);
 
-	EXPECT_EQ(GoalEndState(1.25_mps, wpi::math::Rotation2d(-15.5_deg)), GoalEndState::fromJson(json));
+	CHECK(GoalEndState::fromJson(json) == GoalEndState(1.25_mps, wpi::math::Rotation2d(-15.5_deg)));
 }

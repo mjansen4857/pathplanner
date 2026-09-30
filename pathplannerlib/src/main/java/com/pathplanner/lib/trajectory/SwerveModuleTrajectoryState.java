@@ -8,10 +8,10 @@ import org.wpilib.math.kinematics.SwerveModuleVelocity;
 public class SwerveModuleTrajectoryState extends SwerveModuleVelocity {
 
   /** Field relative angle of the swerve module */
-  protected Rotation2d fieldAngle = Rotation2d.kZero;
+  protected Rotation2d fieldAngle = Rotation2d.ZERO;
 
   /** Position of this module on the field */
-  protected Translation2d fieldPos = Translation2d.kZero;
+  protected Translation2d fieldPos = Translation2d.ZERO;
 
   /** Difference in module position between this state and the previous state */
   protected double deltaPos = 0.0;

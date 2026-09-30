@@ -20,13 +20,13 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
   public ChassisVelocities fieldSpeeds = new ChassisVelocities();
 
   /** Field-relative robot pose at this state */
-  public Pose2d pose = Pose2d.kZero;
+  public Pose2d pose = Pose2d.ZERO;
 
   /** The linear velocity at this state in m/s */
   public double linearVelocity = 0.0;
 
   /** The field-relative heading, or direction of travel, at this state */
-  public Rotation2d heading = Rotation2d.kZero;
+  public Rotation2d heading = Rotation2d.ZERO;
 
   /** The feedforwards for each module */
   public DriveFeedforwards feedforwards;
@@ -36,7 +36,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
   protected double deltaPos = 0.0;
 
   /** The difference in rotation between this state and the previous state */
-  protected Rotation2d deltaRot = Rotation2d.kZero;
+  protected Rotation2d deltaRot = Rotation2d.ZERO;
 
   /**
    * The {@link com.pathplanner.lib.trajectory.SwerveModuleTrajectoryState} states for this state

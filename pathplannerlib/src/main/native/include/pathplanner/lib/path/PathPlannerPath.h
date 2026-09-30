@@ -208,7 +208,8 @@ public:
 	 * @return Initial heading
 	 */
 	inline wpi::math::Rotation2d getInitialHeading() const {
-		return (getPoint(1).position - getPoint(0).position).Angle();
+		return (getPoint(1).position - getPoint(0).position).Angle().value_or(
+				wpi::math::Rotation2d { });
 	}
 
 	/**

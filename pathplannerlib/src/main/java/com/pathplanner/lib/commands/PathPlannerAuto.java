@@ -24,13 +24,13 @@ import org.wpilib.command2.Commands;
 import org.wpilib.command2.button.Trigger;
 import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.event.EventLoop;
-import org.wpilib.hardware.hal.HAL;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.system.Filesystem;
 import org.wpilib.system.Timer;
 import org.wpilib.units.measure.Distance;
 import org.wpilib.units.measure.Time;
+import org.wpilib.util.UsageReporting;
 
 /** A command that loads and runs an autonomous routine built using PathPlanner. */
 public class PathPlannerAuto extends Command {
@@ -132,7 +132,7 @@ public class PathPlannerAuto extends Command {
     this.autoTimer = new Timer();
 
     instances++;
-    HAL.reportUsage("PathPlanner/PathPlannerAuto", instances, "");
+    UsageReporting.reportUsage("PathPlanner/PathPlannerAuto", instances, "");
   }
 
   /**
@@ -151,7 +151,7 @@ public class PathPlannerAuto extends Command {
     this.autoTimer = new Timer();
 
     instances++;
-    HAL.reportUsage("PathPlanner/PathPlannerAuto", instances, "");
+    UsageReporting.reportUsage("PathPlanner/PathPlannerAuto", instances, "");
   }
 
   /**
@@ -160,7 +160,7 @@ public class PathPlannerAuto extends Command {
    * @param autoCommand The command this auto should run
    */
   public PathPlannerAuto(Command autoCommand) {
-    this(autoCommand, Pose2d.kZero);
+    this(autoCommand, Pose2d.ZERO);
   }
 
   /**

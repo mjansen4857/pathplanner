@@ -14,16 +14,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: wpilib/systemcore-cross-ubuntu:2027-24.04
+          - container: wpilib/systemcore-cross-debian:trixie
             artifact-name: PPLib-Linux
             build-options: "-Ponlylinuxx86-64"
-          - container: wpilib/raspbian-cross-ubuntu:2027-bookworm-24.04
-            artifact-name: PPLib-Arm32
-            build-options: "-Ponlylinuxarm32"
-          - container: wpilib/aarch64-cross-ubuntu:2027-bookworm-24.04
+          - container: wpilib/aarch64-cross-debian:trixie
             artifact-name: PPLib-Arm64
             build-options: "-Ponlylinuxarm64"
-          - container: wpilib/systemcore-cross-ubuntu:2027-24.04
+          - container: wpilib/systemcore-cross-debian:trixie
             artifact-name: PPLib-SystemCore
             build-options: "-Ponlylinuxsystemcore"
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
@@ -62,12 +59,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-2022
+          - os: windows-2025
             artifact-name: PPLib-Win64
             os-name: windows
+            build-options: "-Ponlywindowsx86-64"
           - os: macos-15
             artifact-name: PPLib-macOS
             os-name: macos
+            build-options: "-Ponlyosxuniversal"
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
     runs-on: ${{ matrix.os }}
     steps:
@@ -90,16 +89,12 @@ jobs:
         run: sed -i '' "s/0.0.0/${{ github.event.inputs.version }}/g" publish.gradle
         working-directory: ./pathplannerlib
 
-      - name: Install SystemCore Toolchain
-        run: ./gradlew installSystemCoreToolchain
-        working-directory: ./pathplannerlib
-      
       - name: Ensure spotless is applied
         run: ./gradlew spotlessApply
         working-directory: ./pathplannerlib
       
       - name: Build
-        run: ./gradlew build -Pbuildalldesktop -PreleaseMode
+        run: ./gradlew build ${{ matrix.build-options }} -PreleaseMode
         working-directory: ./pathplannerlib
       
       - name: Upload artifact

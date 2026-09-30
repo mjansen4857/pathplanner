@@ -209,7 +209,7 @@ public class SwerveSetpointGenerator {
                 .unaryMinus()
                 .rotateBy(desiredModuleStates[m].angle);
         if (flipHeading(necessaryRotation)) {
-          necessaryRotation = necessaryRotation.rotateBy(Rotation2d.kPi);
+          necessaryRotation = necessaryRotation.rotateBy(Rotation2d.PI);
         }
 
         // getRadians() bounds to +/- Pi.
@@ -315,8 +315,8 @@ public class SwerveSetpointGenerator {
 
       // Calculate the torque this module will apply to the chassis
       if (!epsilonEquals(0, moduleForceVec.getNorm())) {
-        Rotation2d angleToModule = config.moduleLocations[m].getAngle();
-        Rotation2d theta = moduleForceVec.getAngle().minus(angleToModule);
+        Rotation2d angleToModule = config.moduleLocations[m].getAngle().orElse(Rotation2d.ZERO);
+        Rotation2d theta = moduleForceVec.getAngle().orElse(Rotation2d.ZERO).minus(angleToModule);
         chassisTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
       }
     }
@@ -390,7 +390,12 @@ public class SwerveSetpointGenerator {
       double wheelForceDist = wheelForces[m].getNorm();
       double appliedForce =
           wheelForceDist > 1e-6
-              ? wheelForceDist * wheelForces[m].getAngle().minus(retStates[m].angle).getCos()
+              ? wheelForceDist
+                  * wheelForces[m]
+                      .getAngle()
+                      .orElse(Rotation2d.ZERO)
+                      .minus(retStates[m].angle)
+                      .getCos()
               : 0.0;
       double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
       double torqueCurrent = config.moduleConfig.driveMotor.getCurrent(wheelTorque);

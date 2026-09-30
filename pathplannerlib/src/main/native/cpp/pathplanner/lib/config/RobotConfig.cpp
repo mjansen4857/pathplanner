@@ -26,7 +26,7 @@ RobotConfig::RobotConfig(wpi::units::kilogram_t mass,
 	for (size_t i = 0; i < numModules; i++) {
 		wpi::math::Translation2d modPosReciprocal = wpi::math::Translation2d(
 				wpi::units::meter_t { 1.0 / moduleLocations[i].Norm()() },
-				moduleLocations[i].Angle());
+				moduleLocations[i].Angle().value_or(wpi::math::Rotation2d { }));
 		swerveForceKinematics.template block<2, 3>(i * 2, 0) << 1, 0, (-modPosReciprocal.Y()).value(), 0, 1, (modPosReciprocal.X()).value();
 	}
 	// No need to set up diff force kinematics, it will not be used
@@ -49,7 +49,7 @@ RobotConfig::RobotConfig(wpi::units::kilogram_t mass,
 	for (size_t i = 0; i < numModules; i++) {
 		wpi::math::Translation2d modPosReciprocal = wpi::math::Translation2d(
 				wpi::units::meter_t { 1.0 / moduleLocations[i].Norm()() },
-				moduleLocations[i].Angle());
+				moduleLocations[i].Angle().value_or(wpi::math::Rotation2d { }));
 		diffForceKinematics.template block<2, 3>(i * 2, 0) << 1, 0, (-modPosReciprocal.Y()).value(), 0, 1, (modPosReciprocal.X()).value();
 	}
 	// No need to set up swerve force kinematics, it will not be used

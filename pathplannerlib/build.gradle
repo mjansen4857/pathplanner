@@ -5,7 +5,7 @@ plugins {
     id 'java'
     id 'google-test'
     id "org.wpilib.WPILibRepositoriesPlugin" version '2027.0.0'
-    id 'org.wpilib.NativeUtils' version '2027.7.1'
+    id 'org.wpilib.NativeUtils' version '2027.14.3'
     id 'org.wpilib.GradleJni' version '2027.0.0'
     id 'com.diffplug.spotless' version '8.6.0'
 }
@@ -17,7 +17,7 @@ ext.getCurrentArch = {
 def systemArch = getCurrentArch()
 
 // WPILib Version
-ext.wpilibVersion = "2027.0.0-alpha-6"
+ext.wpilibVersion = "2027.0.0-alpha-7"
 
 java {
     toolchain {
@@ -30,7 +30,6 @@ java {
 repositories {
     mavenCentral()
 }
-wpilibRepositories.use2027Repos()
 if (project.hasProperty('releaseMode')) {
     wpilibRepositories.addAllReleaseRepositories(project)
 } else {
@@ -47,11 +46,13 @@ dependencies {
     implementation "org.wpilib.ntcore:ntcore-java:$wpilibVersion"
     implementation "org.wpilib.wpilibj:wpilibj-java:$wpilibVersion"
     implementation "org.wpilib.wpiutil:wpiutil-java:$wpilibVersion"
+    implementation "org.wpilib.telemetry:telemetry-java:$wpilibVersion"
+    implementation "org.wpilib.tunables:tunables-java:$wpilibVersion"
     implementation "org.wpilib.wpimath:wpimath-java:$wpilibVersion"
     implementation "org.wpilib.wpiunits:wpiunits-java:$wpilibVersion"
     implementation "org.wpilib.hal:hal-java:$wpilibVersion"
     implementation "org.wpilib.commandsv2:commandsv2-java:$wpilibVersion"
-    implementation "org.ejml:ejml-simple:0.44.0"
+    implementation "org.ejml:ejml-simple:0.46.0"
     implementation "com.fasterxml.jackson.core:jackson-annotations:2.19.2"
     implementation "com.fasterxml.jackson.core:jackson-core:2.19.2"
     implementation "com.fasterxml.jackson.core:jackson-databind:2.19.2"
@@ -125,7 +126,7 @@ model {
                 }
             }
 
-            nativeUtils.useRequiredLibrary(it, "googletest_static")
+            nativeUtils.useRequiredLibrary(it, "catch2_static")
             nativeUtils.useRequiredLibrary(it, "wpilib_shared")
 
             binaries.all {

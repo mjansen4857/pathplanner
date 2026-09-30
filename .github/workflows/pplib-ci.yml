@@ -15,7 +15,7 @@ jobs:
   formatting:
     name: "[PPLib] Check Formatting"
     runs-on: ubuntu-24.04
-    container: wpilib/systemcore-cross-ubuntu:2027-24.04
+    container: wpilib/systemcore-cross-debian:trixie
 
     steps:
       - name: Checkout repo
@@ -32,7 +32,7 @@ jobs:
   test:
     name: "[PPLib] Unit Tests"
     runs-on: ubuntu-24.04
-    container: wpilib/systemcore-cross-ubuntu:2027-24.04
+    container: wpilib/systemcore-cross-debian:trixie
 
     steps:
       - name: Checkout repo
@@ -117,16 +117,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: wpilib/systemcore-cross-ubuntu:2027-24.04
+          - container: wpilib/systemcore-cross-debian:trixie
             artifact-name: PPLib-Linux
             build-options: "-Ponlylinuxx86-64"
-          - container: wpilib/raspbian-cross-ubuntu:bookworm-24.04
-            artifact-name: PPLib-Arm32
-            build-options: "-Ponlylinuxarm32"
-          - container: wpilib/aarch64-cross-ubuntu:bookworm-24.04
+          - container: wpilib/aarch64-cross-debian:trixie
             artifact-name: PPLib-Arm64
             build-options: "-Ponlylinuxarm64"
-          - container: wpilib/systemcore-cross-ubuntu:2027-24.04
+          - container: wpilib/systemcore-cross-debian:trixie
             artifact-name: PPLib-SystemCore
             build-options: "-Ponlylinuxsystemcore"
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
@@ -166,12 +163,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-2022
+          - os: windows-2025
             artifact-name: PPLib-Win64
             os-name: windows
+            build-options: "-Ponlywindowsx86-64"
           - os: macos-15
             artifact-name: PPLib-macOS
             os-name: macos
+            build-options: "-Ponlyosxuniversal"
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
     needs: [formatting, test]
     runs-on: ${{ matrix.os }}
@@ -195,16 +194,12 @@ jobs:
         run: sed -i '' "s/0.0.0/${{ env.VERSION_NAME }}/g" publish.gradle
         working-directory: ./pathplannerlib
 
-      - name: Install SystemCore Toolchain
-        run: ./gradlew installSystemCoreToolchain
-        working-directory: ./pathplannerlib
-      
       - name: Ensure spotless is applied
         run: ./gradlew spotlessApply
         working-directory: ./pathplannerlib
       
       - name: Build
-        run: ./gradlew build -Pbuildalldesktop
+        run: ./gradlew build ${{ matrix.build-options }}
         working-directory: ./pathplannerlib
       
       - name: Upload artifact

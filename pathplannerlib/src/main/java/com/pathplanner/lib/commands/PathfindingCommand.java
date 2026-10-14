@@ -350,6 +350,56 @@ public class PathfindingCommand implements Command {
   public PathfindingCommand(
       Pose2d targetPose,
       PathConstraints constraints,
+      double goalEndVel,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisVelocities> speedsSupplier,
+      BiConsumer<ChassisVelocities, DriveFeedforwards> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      Mechanism... requirements) {
+    this(
+        targetPose,
+        constraints,
+        goalEndVel,
+        poseSupplier,
+        speedsSupplier,
+        output,
+        controller,
+        robotConfig,
+        "[PathPlanner] pathfind to pose",
+        requirements);
+  }
+
+  /**
+   * Constructs a new base pathfinding command that will generate a path towards
+   * the given pose.
+   *
+   * @param targetPose     the pose to pathfind to, the rotation component is only
+   *                       relevant for
+   *                       holonomic drive trains
+   * @param constraints    the path constraints to use while pathfinding
+   * @param goalEndVel     The goal end velocity when reaching the target pose
+   * @param poseSupplier   a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative
+   *                       speeds
+   * @param output         Output function that accepts robot-relative
+   *                       ChassisSpeeds and feedforwards for
+   *                       each drive motor. If using swerve, these feedforwards
+   *                       will be in FL, FR, BL, BR order. If
+   *                       using a differential drive, they will be in L, R order.
+   *                       <p>
+   *                       NOTE: These feedforwards are assuming unoptimized
+   *                       module states. When you optimize your
+   *                       module states, you will need to reverse the
+   *                       feedforwards for modules that have been flipped
+   * @param controller     Path following controller that will be used to follow
+   *                       the path
+   * @param robotConfig    The robot configuration
+   * @param requirements   the subsystems required by this command
+   */
+  public PathfindingCommand(
+      Pose2d targetPose,
+      PathConstraints constraints,
       LinearVelocity goalEndVel,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisVelocities> speedsSupplier,

@@ -510,10 +510,10 @@ public class AutoBuilder {
     }
 
     if (defaultOption == null) {
-      chooser.addDefault("None", CommandUtil.NULLO);
+      chooser.addDefault("None", CommandUtil.DO_NOTHING);
     } else {
       chooser.addDefault(defaultOption.name(), defaultOption);
-      chooser.add("None", CommandUtil.NULLO);
+      chooser.add("None", CommandUtil.DO_NOTHING);
     }
     optionsModifier.apply(options.stream()).forEach(auto -> chooser.add(auto.name(), auto));
     return chooser;

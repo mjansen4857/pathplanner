@@ -337,4 +337,12 @@ public class FollowPathCommand implements Command {
             .named("[PathPlanner] FollowPathCommand: notify finished warmup"))
         .named("[PathPlanner] FollowPathCommand: warmup");
   }
+
+  public Scheduler getEventScheduler() {
+    return eventScheduler;
+  }
+
+  public EventLoop getEventLoop() {
+    return eventLoop;
+  }
 }

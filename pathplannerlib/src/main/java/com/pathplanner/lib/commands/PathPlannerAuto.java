@@ -317,14 +317,13 @@ public class PathPlannerAuto implements Command {
   }
 
   /**
-   * Create an EventTrigger that will be polled by this auto instead of globally
-   * across all path following commands
+   * Create an EventTrigger that will be polled by this auto.
    *
    * @param eventName The event name that controls this trigger
    * @return EventTrigger for this auto
    */
   public Trigger event(String eventName) {
-    return new EventTrigger(autoLoop, eventName);
+    return new EventTrigger(this, eventName);
   }
 
   /**
@@ -452,14 +451,13 @@ public class PathPlannerAuto implements Command {
   }
 
   /**
-   * Create a PointTowardsZoneTrigger that will be polled by this auto instead of
-   * globally across all path following commands
+   * Create a PointTowardsZoneTrigger that will be polled by this auto.
    *
    * @param zoneName The point towards zone name that controls this trigger
    * @return PointTowardsZoneTrigger for this auto
    */
   public Trigger pointTowardsZone(String zoneName) {
-    return new PointTowardsZoneTrigger(autoLoop, zoneName);
+    return new PointTowardsZoneTrigger(this, zoneName);
   }
 
   /**
@@ -731,5 +729,13 @@ public class PathPlannerAuto implements Command {
       }
     }
     return paths;
+  }
+
+  public EventLoop getAutoLoop() {
+    return autoLoop;
+  }
+
+  public Scheduler getAutoScheduler() {
+    return autoScheduler;
   }
 }

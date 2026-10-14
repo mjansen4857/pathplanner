@@ -3,37 +3,39 @@ package com.pathplanner.lib.events;
 import java.util.HashMap;
 import java.util.function.BooleanSupplier;
 
-import org.wpilib.command3.Scheduler;
 import org.wpilib.command3.Trigger;
-import org.wpilib.event.EventLoop;
+
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 
 /**
- * A trigger that will be controlled by the placement of event markers/zones in a
- * PathPlannerTrajectory
+ * A trigger that will be controlled by the placement of event markers/zones in
+ * a PathPlannerTrajectory
  */
 public class EventTrigger extends Trigger {
 
   private static final HashMap<String, Boolean> eventConditions = new HashMap<>();
 
   /**
-   * Create a new EventTrigger. This will run on the EventScheduler's event loop, which will be
-   * polled any time a path following command is running.
+   * Create a new EventTrigger. This is only polled while the given
+   * {@link PathPlannerAuto} is running.
    *
-   * @param name The name of the event. This will be the name of the event marker in the GUI
+   * @param auto The PathPlannerAuto whose loop and scheduler we bind to
+   * @param name The name of the point towards zone
    */
-  public EventTrigger(String name) {
-    super(Scheduler.getDefault(), EventScheduler.getEventLoop(), pollCondition(name));
+  public EventTrigger(PathPlannerAuto auto, String name) {
+    super(auto.getAutoScheduler(), auto.getAutoLoop(), pollCondition(name));
   }
 
   /**
-   * Create a new EventTrigger that gets polled by the given event loop instead of the
-   * EventScheduler
+   * Create a new EventTrigger. This is only polled while the given
+   * {@link FollowPathCommand} is running.
    *
-   * @param eventLoop The event loop to poll this trigger
-   * @param name The name of the event. This will be the name of the event marker in the GUI
+   * @param cmd  The FollowPathCommand whose loop and scheduler we bind to
+   * @param name The name of the point towards zone
    */
-  public EventTrigger(EventLoop eventLoop, String name) {
-    super(Scheduler.getDefault(), eventLoop, pollCondition(name));
+  public EventTrigger(FollowPathCommand cmd, String name) {
+    super(cmd.getEventScheduler(), cmd.getEventLoop(), pollCondition(name));
   }
 
   /**
@@ -53,7 +55,7 @@ public class EventTrigger extends Trigger {
   /**
    * Set the value of an event condition
    *
-   * @param name The name of the condition
+   * @param name  The name of the condition
    * @param value The value of the condition
    */
   protected static void setCondition(String name, boolean value) {

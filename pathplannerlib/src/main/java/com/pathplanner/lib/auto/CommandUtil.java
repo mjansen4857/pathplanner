@@ -30,7 +30,7 @@ public class CommandUtil {
     return Command.noRequirements(coro -> coro.await(eventCommand)).named(name);
   }
 
-  public static final Command NULLO = Command.noRequirements(_ -> {}).named("[PathPlanner] null");
+  public static final Command DO_NOTHING = Command.noRequirements(_ -> {}).named("[PathPlanner] null");
 
   /**
    * Builds a command from the given JSON object.
@@ -57,7 +57,7 @@ public class CommandUtil {
       case "parallel" -> parallelGroupFromData(data, loadChoreoPaths, mirror);
       case "race" -> raceGroupFromData(data, loadChoreoPaths, mirror);
       case "deadline" -> deadlineGroupFromData(data, loadChoreoPaths, mirror);
-      default -> NULLO;
+      default -> DO_NOTHING;
     };
   }
 
@@ -135,7 +135,7 @@ public class CommandUtil {
       outer.optional(deadline, inner.withAutomaticName());
       return outer.withAutomaticName();
     } else {
-      return NULLO;
+      return DO_NOTHING;
     }
   }
 }

@@ -3,25 +3,28 @@ package com.pathplanner.lib.commands;
 import static org.wpilib.units.Units.Meters;
 import static org.wpilib.units.Units.Seconds;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.auto.AutoBuilderException;
-import com.pathplanner.lib.auto.CommandUtil;
-import com.pathplanner.lib.events.*;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import com.pathplanner.lib.util.FileVersionException;
-import com.pathplanner.lib.util.FlippingUtil;
-import com.pathplanner.lib.util.PPLibTelemetry;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.wpilib.command2.Command;
-import org.wpilib.command2.Commands;
-import org.wpilib.command2.button.Trigger;
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Coroutine;
+import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.Scheduler;
+import org.wpilib.command3.Trigger;
 import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.event.EventLoop;
 import org.wpilib.math.geometry.Pose2d;
@@ -32,8 +35,24 @@ import org.wpilib.units.measure.Distance;
 import org.wpilib.units.measure.Time;
 import org.wpilib.util.UsageReporting;
 
-/** A command that loads and runs an autonomous routine built using PathPlanner. */
-public class PathPlannerAuto extends Command {
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.AutoBuilderException;
+import com.pathplanner.lib.auto.CommandUtil;
+import com.pathplanner.lib.events.Event;
+import com.pathplanner.lib.events.EventTrigger;
+import com.pathplanner.lib.events.OneShotTriggerEvent;
+import com.pathplanner.lib.events.PointTowardsZoneTrigger;
+import com.pathplanner.lib.events.TriggerEvent;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
+import com.pathplanner.lib.util.FileVersionException;
+import com.pathplanner.lib.util.FlippingUtil;
+import com.pathplanner.lib.util.PPLibTelemetry;
+
+/**
+ * A command that loads and runs an autonomous routine built using PathPlanner.
+ */
+public class PathPlannerAuto implements Command {
 
   /** The currently running path name. Used to handle activePath triggers */
   public static String currentPathName = "";
@@ -58,38 +77,62 @@ public class PathPlannerAuto extends Command {
 
   private boolean isRunning = false;
 
-  /**
-   * Constructs a new PathPlannerAuto command.
-   *
-   * @param autoName the name of the autonomous routine to load and run
-   * @throws AutoBuilderException if AutoBuilder is not configured before attempting to load the
-   *     autonomous routine
-   */
-  public PathPlannerAuto(String autoName) {
-    this(autoName, false);
+  private String autoName;
+
+  private Set<Mechanism> requirements;
+
+  @Override
+  public String name() {
+    return autoName;
+  }
+
+  @Override
+  public Set<Mechanism> requirements() {
+    return requirements;
   }
 
   /**
    * Constructs a new PathPlannerAuto command.
    *
    * @param autoName the name of the autonomous routine to load and run
-   * @param mirror Mirror all paths to the other side of the current alliance. For example, if a
-   *     path is on the right of the blue alliance side of the field, it will be mirrored to the
-   *     left of the blue alliance side of the field.
-   * @throws AutoBuilderException if AutoBuilder is not configured before attempting to load the
-   *     autonomous routine
+   * @throws AutoBuilderException if AutoBuilder is not configured before
+   *                              attempting to load the
+   *                              autonomous routine
    */
+  public PathPlannerAuto(String autoName) {
+    this(autoName, false, new HashSet<>());
+  }
+
   public PathPlannerAuto(String autoName, boolean mirror) {
+    this(autoName, mirror, new HashSet<>());
+  }
+
+  /**
+   * Constructs a new PathPlannerAuto command.
+   *
+   * @param autoName the name of the autonomous routine to load and run
+   * @param mirror   Mirror all paths to the other side of the current alliance.
+   *                 For example, if a
+   *                 path is on the right of the blue alliance side of the field,
+   *                 it will be mirrored to the
+   *                 left of the blue alliance side of the field.
+   * @throws AutoBuilderException if AutoBuilder is not configured before
+   *                              attempting to load the
+   *                              autonomous routine
+   */
+  public PathPlannerAuto(String autoName, boolean mirror, Set<Mechanism> requirements) {
+    this.autoName = autoName;
+    this.requirements = requirements;
+
     if (!AutoBuilder.isConfigured()) {
       throw new AutoBuilderException(
           "AutoBuilder was not configured before attempting to load a PathPlannerAuto from file");
     }
 
-    try (BufferedReader br =
-        new BufferedReader(
-            new FileReader(
-                new File(
-                    Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
+    try (BufferedReader br = new BufferedReader(
+        new FileReader(
+            new File(
+                Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
       StringBuilder fileContentBuilder = new StringBuilder();
       String line;
       while ((line = br.readLine()) != null) {
@@ -109,23 +152,21 @@ public class PathPlannerAuto extends Command {
       initFromJson(json, mirror);
     } catch (FileNotFoundException e) {
       DriverStationErrors.reportError(e.getMessage(), e.getStackTrace());
-      autoCommand = Commands.none();
+      autoCommand = null;
     } catch (IOException e) {
       DriverStationErrors.reportError(
           "Failed to read file required by auto: " + autoName, e.getStackTrace());
-      autoCommand = Commands.none();
+      autoCommand = null;
     } catch (ParseException e) {
       DriverStationErrors.reportError(
           "Failed to parse JSON in file required by auto: " + autoName, e.getStackTrace());
-      autoCommand = Commands.none();
+      autoCommand = null;
     } catch (FileVersionException e) {
       DriverStationErrors.reportError(
           "Failed to load auto: " + autoName + ". " + e.getMessage(), e.getStackTrace());
-      autoCommand = Commands.none();
+      autoCommand = null;
     }
 
-    addRequirements(autoCommand.getRequirements());
-    setName(autoName);
     PPLibTelemetry.registerHotReloadAuto(autoName, this);
 
     this.autoLoop = new EventLoop();
@@ -138,14 +179,15 @@ public class PathPlannerAuto extends Command {
   /**
    * Create a PathPlannerAuto from a custom command
    *
-   * @param autoCommand The command this auto should run
-   * @param startingPose The starting pose of the auto. Only used for the getStartingPose method
+   * @param autoCommand  The command this auto should run
+   * @param startingPose The starting pose of the auto. Only used for the
+   *                     getStartingPose method
    */
   public PathPlannerAuto(Command autoCommand, Pose2d startingPose) {
     this.autoCommand = autoCommand;
     this.startingPose = startingPose;
 
-    addRequirements(autoCommand.getRequirements());
+    this.requirements = autoCommand.requirements();
 
     this.autoLoop = new EventLoop();
     this.autoTimer = new Timer();
@@ -164,7 +206,8 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Get the starting pose of this auto, relative to a blue alliance origin. If there are no paths
+   * Get the starting pose of this auto, relative to a blue alliance origin. If
+   * there are no paths
    * in this auto, the starting pose will be null.
    *
    * @return The blue alliance starting pose
@@ -174,7 +217,8 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that is high when this auto is running, and low when it is not running
+   * Create a trigger that is high when this auto is running, and low when it is
+   * not running
    *
    * @return isRunning trigger
    */
@@ -183,7 +227,8 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Used by path following commands to inform autos of what trajectory is currently being followed
+   * Used by path following commands to inform autos of what trajectory is
+   * currently being followed
    *
    * @param trajectory The current trajectory being followed
    */
@@ -204,13 +249,11 @@ public class PathPlannerAuto extends Command {
         if (!eventEndPositions.containsKey(event.getEventName())) {
           eventEndPositions.put(event.getEventName(), new ArrayList<>());
         }
-        Translation2d pos =
-            currentTrajectory.sample(event.getTimestampSeconds()).pose.getTranslation();
+        Translation2d pos = currentTrajectory.sample(event.getTimestampSeconds()).pose.getTranslation();
         eventStartPositions.get(event.getEventName()).add(pos);
         eventEndPositions.get(event.getEventName()).add(pos);
       } else if (e instanceof TriggerEvent event) {
-        Translation2d pos =
-            currentTrajectory.sample(event.getTimestampSeconds()).pose.getTranslation();
+        Translation2d pos = currentTrajectory.sample(event.getTimestampSeconds()).pose.getTranslation();
         if (event.getValue()) {
           if (!eventStartPositions.containsKey(event.getEventName())) {
             eventStartPositions.put(event.getEventName(), new ArrayList<>());
@@ -229,7 +272,8 @@ public class PathPlannerAuto extends Command {
   /**
    * Trigger that is high when the given time has elapsed
    *
-   * @param time The amount of time this auto should run before the trigger is activated
+   * @param time The amount of time this auto should run before the trigger is
+   *             activated
    * @return timeElapsed trigger
    */
   public Trigger timeElapsed(double time) {
@@ -239,7 +283,8 @@ public class PathPlannerAuto extends Command {
   /**
    * Trigger that is high when the given time has elapsed
    *
-   * @param time The amount of time this auto should run before the trigger is activated
+   * @param time The amount of time this auto should run before the trigger is
+   *             activated
    * @return timeElapsed trigger
    */
   public Trigger timeElapsed(Time time) {
@@ -250,7 +295,7 @@ public class PathPlannerAuto extends Command {
    * Trigger that is high when within a range of time since the start of this auto
    *
    * @param startTime The starting time of the range
-   * @param endTime The ending time of the range
+   * @param endTime   The ending time of the range
    * @return timeRange trigger
    */
   public Trigger timeRange(double startTime, double endTime) {
@@ -261,7 +306,7 @@ public class PathPlannerAuto extends Command {
    * Trigger that is high when within a range of time since the start of this auto
    *
    * @param startTime The starting time of the range
-   * @param endTime The ending time of the range
+   * @param endTime   The ending time of the range
    * @return timeRange trigger
    */
   public Trigger timeRange(Time startTime, Time endTime) {
@@ -269,7 +314,8 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create an EventTrigger that will be polled by this auto instead of globally across all path
+   * Create an EventTrigger that will be polled by this auto instead of globally
+   * across all path
    * following commands
    *
    * @param eventName The event name that controls this trigger
@@ -280,11 +326,13 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that will be activated a given time before an event is reached. The trigger
+   * Create a trigger that will be activated a given time before an event is
+   * reached. The trigger
    * will go low after passing the given event.
    *
-   * @param eventName The event name
-   * @param timeSeconds The amount of time before the event this trigger should activate, in seconds
+   * @param eventName   The event name
+   * @param timeSeconds The amount of time before the event this trigger should
+   *                    activate, in seconds
    * @return beforeEvent trigger
    */
   public Trigger beforeEvent(String eventName, double timeSeconds) {
@@ -318,11 +366,13 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that will be activated a given time before an event is reached. The trigger
+   * Create a trigger that will be activated a given time before an event is
+   * reached. The trigger
    * will go low after passing the given event.
    *
    * @param eventName The event name
-   * @param time The amount of time before the event this trigger should activate
+   * @param time      The amount of time before the event this trigger should
+   *                  activate
    * @return beforeEvent trigger
    */
   public Trigger beforeEvent(String eventName, Time time) {
@@ -330,11 +380,13 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that will be activated when the robot is within a given distance from the
+   * Create a trigger that will be activated when the robot is within a given
+   * distance from the
    * start of an event
    *
-   * @param eventName The event name
-   * @param distanceMeters The distance from the event that will activate this trigger, in meters
+   * @param eventName      The event name
+   * @param distanceMeters The distance from the event that will activate this
+   *                       trigger, in meters
    * @return distanceFromEvent trigger
    */
   public Trigger distanceFromEvent(String eventName, double distanceMeters) {
@@ -353,11 +405,12 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that will be activated when the robot is within a given distance from the
+   * Create a trigger that will be activated when the robot is within a given
+   * distance from the
    * start of an event
    *
    * @param eventName The event name
-   * @param distance The distance from the event that will activate this trigger
+   * @param distance  The distance from the event that will activate this trigger
    * @return distanceFromEvent trigger
    */
   public Trigger distanceFromEvent(String eventName, Distance distance) {
@@ -365,11 +418,13 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that will be activated when the robot is within a given distance from the end
+   * Create a trigger that will be activated when the robot is within a given
+   * distance from the end
    * of an event
    *
-   * @param eventName The event name
-   * @param distanceMeters The distance from the event that will activate this trigger, in meters
+   * @param eventName      The event name
+   * @param distanceMeters The distance from the event that will activate this
+   *                       trigger, in meters
    * @return distanceFromEventEnd trigger
    */
   public Trigger distanceFromEventEnd(String eventName, double distanceMeters) {
@@ -388,11 +443,12 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that will be activated when the robot is within a given distance from the end
+   * Create a trigger that will be activated when the robot is within a given
+   * distance from the end
    * of an event
    *
    * @param eventName The event name
-   * @param distance The distance from the event that will activate this trigger
+   * @param distance  The distance from the event that will activate this trigger
    * @return distanceFromEventEnd trigger
    */
   public Trigger distanceFromEventEnd(String eventName, Distance distance) {
@@ -400,7 +456,8 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a PointTowardsZoneTrigger that will be polled by this auto instead of globally across
+   * Create a PointTowardsZoneTrigger that will be polled by this auto instead of
+   * globally across
    * all path following commands
    *
    * @param zoneName The point towards zone name that controls this trigger
@@ -421,28 +478,30 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that is high when near a given field position. This field position is not
+   * Create a trigger that is high when near a given field position. This field
+   * position is not
    * automatically flipped
    *
-   * @param fieldPosition The target field position
-   * @param toleranceMeters The position tolerance, in meters. The trigger will be high when within
-   *     this distance from the target position
+   * @param fieldPosition   The target field position
+   * @param toleranceMeters The position tolerance, in meters. The trigger will be
+   *                        high when within
+   *                        this distance from the target position
    * @return nearFieldPosition trigger
    */
   public Trigger nearFieldPosition(Translation2d fieldPosition, double toleranceMeters) {
     return condition(
-        () ->
-            AutoBuilder.getCurrentPose().getTranslation().getDistance(fieldPosition)
-                <= toleranceMeters);
+        () -> AutoBuilder.getCurrentPose().getTranslation().getDistance(fieldPosition) <= toleranceMeters);
   }
 
   /**
-   * Create a trigger that is high when near a given field position. This field position is not
+   * Create a trigger that is high when near a given field position. This field
+   * position is not
    * automatically flipped
    *
    * @param fieldPosition The target field position
-   * @param tolerance The position tolerance. The trigger will be high when within this distance
-   *     from the target position
+   * @param tolerance     The position tolerance. The trigger will be high when
+   *                      within this distance
+   *                      from the target position
    * @return nearFieldPosition trigger
    */
   public Trigger nearFieldPosition(Translation2d fieldPosition, Distance tolerance) {
@@ -450,12 +509,14 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that is high when near a given field position. This field position will be
+   * Create a trigger that is high when near a given field position. This field
+   * position will be
    * automatically flipped
    *
    * @param blueFieldPosition The target field position if on the blue alliance
-   * @param toleranceMeters The position tolerance, in meters. The trigger will be high when within
-   *     this distance from the target position
+   * @param toleranceMeters   The position tolerance, in meters. The trigger will
+   *                          be high when within
+   *                          this distance from the target position
    * @return nearFieldPositionAutoFlipped trigger
    */
   public Trigger nearFieldPositionAutoFlipped(
@@ -464,22 +525,22 @@ public class PathPlannerAuto extends Command {
     return condition(
         () -> {
           if (AutoBuilder.shouldFlip()) {
-            return AutoBuilder.getCurrentPose().getTranslation().getDistance(redFieldPosition)
-                <= toleranceMeters;
+            return AutoBuilder.getCurrentPose().getTranslation().getDistance(redFieldPosition) <= toleranceMeters;
           } else {
-            return AutoBuilder.getCurrentPose().getTranslation().getDistance(blueFieldPosition)
-                <= toleranceMeters;
+            return AutoBuilder.getCurrentPose().getTranslation().getDistance(blueFieldPosition) <= toleranceMeters;
           }
         });
   }
 
   /**
-   * Create a trigger that is high when near a given field position. This field position will be
+   * Create a trigger that is high when near a given field position. This field
+   * position will be
    * automatically flipped
    *
    * @param blueFieldPosition The target field position if on the blue alliance
-   * @param tolerance The position tolerance. The trigger will be high when within this distance
-   *     from the target position
+   * @param tolerance         The position tolerance. The trigger will be high
+   *                          when within this distance
+   *                          from the target position
    * @return nearFieldPositionAutoFlipped trigger
    */
   public Trigger nearFieldPositionAutoFlipped(Translation2d blueFieldPosition, Distance tolerance) {
@@ -487,13 +548,18 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that will be high when the robot is within a given area on the field. These
+   * Create a trigger that will be high when the robot is within a given area on
+   * the field. These
    * positions will not be automatically flipped
    *
-   * @param boundingBoxMin The minimum position of the bounding box for the target field area. The X
-   *     and Y coordinates of this position should be less than the max position.
-   * @param boundingBoxMax The maximum position of the bounding box for the target field area. The X
-   *     and Y coordinates of this position should be greater than the min position.
+   * @param boundingBoxMin The minimum position of the bounding box for the target
+   *                       field area. The X
+   *                       and Y coordinates of this position should be less than
+   *                       the max position.
+   * @param boundingBoxMax The maximum position of the bounding box for the target
+   *                       field area. The X
+   *                       and Y coordinates of this position should be greater
+   *                       than the min position.
    * @return inFieldArea trigger
    */
   public Trigger inFieldArea(Translation2d boundingBoxMin, Translation2d boundingBoxMax) {
@@ -513,15 +579,20 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger that will be high when the robot is within a given area on the field. These
+   * Create a trigger that will be high when the robot is within a given area on
+   * the field. These
    * positions will be automatically flipped
    *
-   * @param blueBoundingBoxMin The minimum position of the bounding box for the target field area if
-   *     on the blue alliance. The X and Y coordinates of this position should be less than the max
-   *     position.
-   * @param blueBoundingBoxMax The maximum position of the bounding box for the target field area if
-   *     on the blue alliance. The X and Y coordinates of this position should be greater than the
-   *     min position.
+   * @param blueBoundingBoxMin The minimum position of the bounding box for the
+   *                           target field area if
+   *                           on the blue alliance. The X and Y coordinates of
+   *                           this position should be less than the max
+   *                           position.
+   * @param blueBoundingBoxMax The maximum position of the bounding box for the
+   *                           target field area if
+   *                           on the blue alliance. The X and Y coordinates of
+   *                           this position should be greater than the
+   *                           min position.
    * @return inFieldAreaAutoFlipped trigger
    */
   public Trigger inFieldAreaAutoFlipped(
@@ -551,14 +622,24 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a trigger with a custom condition. This will be polled by this auto's event loop so that
+   * Create a trigger with a custom condition. This will be polled by this auto's
+   * event loop so that
    * its condition is only polled when this auto is running.
    *
    * @param condition The condition represented by this trigger
    * @return Custom condition trigger
    */
   public Trigger condition(BooleanSupplier condition) {
-    return new Trigger(autoLoop, condition);
+    return new Trigger(Scheduler.getDefault(), autoLoop, condition);
+  }
+
+  @Override
+  public void run(Coroutine coroutine) {
+    autoTimer.restart();
+    isRunning = true;
+    autoCommand.run(coroutine);
+    isRunning = false;
+    autoTimer.stop();
   }
 
   @Override
@@ -593,16 +674,16 @@ public class PathPlannerAuto extends Command {
    *
    * @param autoName Name of the auto to get the path group from
    * @return List of paths in the auto
-   * @throws IOException if attempting to load a file that does not exist or cannot be read
+   * @throws IOException    if attempting to load a file that does not exist or
+   *                        cannot be read
    * @throws ParseException If JSON within file cannot be parsed
    */
   public static List<PathPlannerPath> getPathGroupFromAutoFile(String autoName)
       throws IOException, ParseException {
-    try (BufferedReader br =
-        new BufferedReader(
-            new FileReader(
-                new File(
-                    Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
+    try (BufferedReader br = new BufferedReader(
+        new FileReader(
+            new File(
+                Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
       StringBuilder fileContentBuilder = new StringBuilder();
       String line;
       while ((line = br.readLine()) != null) {
@@ -616,7 +697,8 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Reloads the autonomous routine with the given JSON object and updates the requirements of this
+   * Reloads the autonomous routine with the given JSON object and updates the
+   * requirements of this
    * command.
    *
    * @param autoJson the JSON object representing the updated autonomous routine
@@ -642,8 +724,7 @@ public class PathPlannerAuto extends Command {
         path0 = path0.mirrorPath();
       }
       if (AutoBuilder.isHolonomic()) {
-        this.startingPose =
-            new Pose2d(path0.getPoint(0).position, path0.getIdealStartingState().rotation());
+        this.startingPose = new Pose2d(path0.getPoint(0).position, path0.getIdealStartingState().rotation());
       } else {
         this.startingPose = path0.getStartingDifferentialPose();
       }

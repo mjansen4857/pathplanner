@@ -51,7 +51,7 @@ dependencies {
     implementation "org.wpilib.wpimath:wpimath-java:$wpilibVersion"
     implementation "org.wpilib.wpiunits:wpiunits-java:$wpilibVersion"
     implementation "org.wpilib.hal:hal-java:$wpilibVersion"
-    implementation "org.wpilib.commandsv2:commandsv2-java:$wpilibVersion"
+    implementation "org.wpilib:commandsv3-java:$wpilibVersion"
     implementation "org.ejml:ejml-simple:0.46.0"
     implementation "com.fasterxml.jackson.core:jackson-annotations:2.19.2"
     implementation "com.fasterxml.jackson.core:jackson-core:2.19.2"

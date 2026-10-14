@@ -2,7 +2,9 @@ package com.pathplanner.lib.events;
 
 import java.util.HashMap;
 import java.util.function.BooleanSupplier;
-import org.wpilib.command2.button.Trigger;
+
+import org.wpilib.command3.Scheduler;
+import org.wpilib.command3.Trigger;
 import org.wpilib.event.EventLoop;
 
 /** A trigger that will be controlled by the robot entering/leaving a point towards zone */
@@ -17,7 +19,7 @@ public class PointTowardsZoneTrigger extends Trigger {
    * @param name The name of the point towards zone
    */
   public PointTowardsZoneTrigger(String name) {
-    super(EventScheduler.getEventLoop(), pollCondition(name));
+    super(Scheduler.getDefault(), EventScheduler.getEventLoop(), pollCondition(name));
   }
 
   /**
@@ -28,7 +30,7 @@ public class PointTowardsZoneTrigger extends Trigger {
    * @param name The name of the point towards zone
    */
   public PointTowardsZoneTrigger(EventLoop eventLoop, String name) {
-    super(eventLoop, pollCondition(name));
+    super(Scheduler.getDefault(), eventLoop, pollCondition(name));
   }
 
   /**

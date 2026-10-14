@@ -2,7 +2,9 @@ package com.pathplanner.lib.events;
 
 import java.util.HashMap;
 import java.util.function.BooleanSupplier;
-import org.wpilib.command2.button.Trigger;
+
+import org.wpilib.command3.Scheduler;
+import org.wpilib.command3.Trigger;
 import org.wpilib.event.EventLoop;
 
 /**
@@ -20,7 +22,7 @@ public class EventTrigger extends Trigger {
    * @param name The name of the event. This will be the name of the event marker in the GUI
    */
   public EventTrigger(String name) {
-    super(EventScheduler.getEventLoop(), pollCondition(name));
+    super(Scheduler.getDefault(), EventScheduler.getEventLoop(), pollCondition(name));
   }
 
   /**
@@ -31,7 +33,7 @@ public class EventTrigger extends Trigger {
    * @param name The name of the event. This will be the name of the event marker in the GUI
    */
   public EventTrigger(EventLoop eventLoop, String name) {
-    super(eventLoop, pollCondition(name));
+    super(Scheduler.getDefault(), eventLoop, pollCondition(name));
   }
 
   /**

@@ -2,6 +2,7 @@ package com.pathplanner.lib.events;
 
 import static org.wpilib.units.Units.Seconds;
 
+import org.wpilib.command3.Scheduler;
 import org.wpilib.units.measure.Time;
 
 /** Base class for an event to be handled while path following */
@@ -68,7 +69,7 @@ public abstract class Event {
    *
    * @param eventScheduler Reference to the EventScheduler handling this event
    */
-  public abstract void handleEvent(EventScheduler eventScheduler);
+  public abstract void handleEvent(Scheduler eventScheduler);
 
   /**
    * Cancel this event. This will be called if a path following command ends before this event gets
@@ -76,7 +77,7 @@ public abstract class Event {
    *
    * @param eventScheduler Reference to the EventScheduler handling this event
    */
-  public abstract void cancelEvent(EventScheduler eventScheduler);
+  public abstract void cancelEvent(Scheduler eventScheduler);
 
   /**
    * Copy this event with a different timestamp

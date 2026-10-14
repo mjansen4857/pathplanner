@@ -18,8 +18,8 @@ public class PointTowardsZoneTrigger extends Trigger {
    *
    * @param name The name of the point towards zone
    */
-  public PointTowardsZoneTrigger(String name) {
-    super(Scheduler.getDefault(), EventScheduler.getEventLoop(), pollCondition(name));
+  public PointTowardsZoneTrigger(Scheduler scheduler, EventLoop eventLoop, String name) {
+    super(scheduler, eventLoop, pollCondition(name));
   }
 
   /**

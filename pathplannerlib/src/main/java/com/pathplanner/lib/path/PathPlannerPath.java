@@ -1,21 +1,26 @@
 package com.pathplanner.lib.path;
 
-import com.pathplanner.lib.auto.CommandUtil;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.events.Event;
-import com.pathplanner.lib.events.OneShotTriggerEvent;
-import com.pathplanner.lib.events.ScheduleCommandEvent;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-import com.pathplanner.lib.util.*;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.wpilib.command2.Command;
+import org.wpilib.command3.Command;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
@@ -23,6 +28,19 @@ import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.math.util.MathUtil;
 import org.wpilib.system.Filesystem;
 import org.wpilib.util.UsageReporting;
+
+import com.pathplanner.lib.auto.CommandUtil;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.events.Event;
+import com.pathplanner.lib.events.OneShotTriggerEvent;
+import com.pathplanner.lib.events.ScheduleCommandEvent;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.FileVersionException;
+import com.pathplanner.lib.util.FlippingUtil;
+import com.pathplanner.lib.util.GeometryUtil;
+import com.pathplanner.lib.util.PPLibTelemetry;
 
 /** A PathPlanner path. NOTE: This is not a trajectory and isn't directly followed. */
 public class PathPlannerPath {

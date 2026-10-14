@@ -3,7 +3,8 @@ package com.pathplanner.lib.auto;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.wpilib.command2.*;
+
+import org.wpilib.command3.Command;
 import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.util.Pair;
 
@@ -61,14 +62,14 @@ public class NamedCommands {
    */
   public static Command getCommand(String name) {
     if (hasCommand(name)) {
-      return CommandUtil.wrappedEventCommand(namedCommands.get(name));
+      return CommandUtil.wrappedEventCommand(namedCommands.get(name), name);
     } else {
       DriverStationErrors.reportWarning(
           "PathPlanner attempted to create a command '"
               + name
               + "' that has not been registered with NamedCommands.registerCommand",
           false);
-      return Commands.none();
+      return Command.noRequirements(_ -> {}).named("[PathPlanner] (placeholder: no such command " + name + ")");
     }
   }
 

@@ -71,11 +71,11 @@ public class FollowPathCommand implements Command {
 
   private Set<Mechanism> driveRequirements;
 
-  private String name;
+  private final String name;
 
   @Override
   public String name() {
-    return this.name;
+    return name;
   }
 
   @Override
@@ -128,9 +128,9 @@ public class FollowPathCommand implements Command {
     this.controller = controller;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = shouldFlipPath;
-    this.name = name;
     this.eventScheduler = Scheduler.createIndependentScheduler();
     this.eventLoop = new EventLoop();
+    this.name = name;
     this.driveRequirements = Set.of(requirements);
 
     // Add all event scheduler requirements to this command's requirements
@@ -145,6 +145,27 @@ public class FollowPathCommand implements Command {
     // Ensure the ideal trajectory is generated
     Optional<PathPlannerTrajectory> idealTrajectory = this.path.getIdealTrajectory(this.robotConfig);
     idealTrajectory.ifPresent(traj -> this.trajectory = traj);
+  }
+
+  public FollowPathCommand(
+      PathPlannerPath path,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisVelocities> speedsSupplier,
+      BiConsumer<ChassisVelocities, DriveFeedforwards> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      BooleanSupplier shouldFlipPath,
+      Mechanism... requirements) {
+    this(
+        path,
+        poseSupplier,
+        speedsSupplier,
+        output,
+        controller,
+        robotConfig,
+        shouldFlipPath,
+        "[PathPlanner] follow " + path.name,
+        requirements);
   }
 
   private Set<Mechanism> getPathRequirements(PathPlannerPath path) {
@@ -187,6 +208,16 @@ public class FollowPathCommand implements Command {
 
   @Override
   public void run(Coroutine coroutine) {
+    init();
+
+    while (tick(coroutine)) {
+      coroutine.yield();
+    }
+
+    end(false);
+  }
+
+  public void init() {
     if (shouldFlipPath.getAsBoolean() && !originalPath.preventFlipping) {
       path = originalPath.flipPath();
     } else {
@@ -209,44 +240,42 @@ public class FollowPathCommand implements Command {
 
     timer.reset();
     timer.start();
+  }
 
-    while (true) {
-      double currentTime = timer.get();
-      var targetState = trajectory.sample(currentTime);
-      if (!controller.isHolonomic() && path.isReversed()) {
-        targetState = targetState.reverse();
-      }
-
-      currentPose = poseSupplier.get();
-      currentSpeeds = speedsSupplier.get();
-
-      ChassisVelocities targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
-      double currentVel = Math.hypot(currentSpeeds.vx, currentSpeeds.vy);
-      PPLibTelemetry.setCurrentPose(currentPose);
-      PathPlannerLogging.logCurrentPose(currentPose);
-      PPLibTelemetry.setTargetPose(targetState.pose);
-      PathPlannerLogging.logTargetPose(targetState.pose);
-      PPLibTelemetry.setVelocities(
-          currentVel, targetState.linearVelocity, currentSpeeds.omega, targetSpeeds.omega);
-      output.accept(targetSpeeds, targetState.feedforwards);
-
-      // Check for events that should be handled this loop
-      while (!upcomingEvents.isEmpty() && currentTime >= upcomingEvents.peek().getTimestampSeconds()) {
-        upcomingEvents.poll().handleEvent(this.eventScheduler);
-      }
-
-      // Run currently running commands
-      this.eventScheduler.run();
-      this.eventLoop.poll();
-
-      double totalTime = trajectory.getTotalTimeSeconds();
-      if (timer.hasElapsed(totalTime) || !Double.isFinite(totalTime))
-        break;
-
-      coroutine.yield();
+  /** {@return whether the loop (command) should continue} */
+  public boolean tick(Coroutine coro) {
+    double currentTime = timer.get();
+    var targetState = trajectory.sample(currentTime);
+    if (!controller.isHolonomic() && path.isReversed()) {
+      targetState = targetState.reverse();
     }
 
-    end(false);
+    Pose2d currentPose = poseSupplier.get();
+    ChassisVelocities currentSpeeds = speedsSupplier.get();
+
+    ChassisVelocities targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
+    double currentVel = Math.hypot(currentSpeeds.vx, currentSpeeds.vy);
+    PPLibTelemetry.setCurrentPose(currentPose);
+    PathPlannerLogging.logCurrentPose(currentPose);
+    PPLibTelemetry.setTargetPose(targetState.pose);
+    PathPlannerLogging.logTargetPose(targetState.pose);
+    PPLibTelemetry.setVelocities(
+        currentVel, targetState.linearVelocity, currentSpeeds.omega, targetSpeeds.omega);
+    output.accept(targetSpeeds, targetState.feedforwards);
+
+    // Check for events that should be handled this loop
+    while (!this.upcomingEvents.isEmpty() && currentTime >= this.upcomingEvents.peek().getTimestampSeconds()) {
+      this.upcomingEvents.poll().handleEvent(this.eventScheduler);
+    }
+
+    // Run currently running commands
+    this.eventScheduler.run();
+    this.eventLoop.poll();
+
+    double totalTime = trajectory.getTotalTimeSeconds();
+    if (this.timer.hasElapsed(totalTime) || !Double.isFinite(totalTime))
+      return false;
+    return true;
   }
 
   @Override
@@ -302,9 +331,10 @@ public class FollowPathCommand implements Command {
             new ModuleConfig(
                 0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0, 1),
             0.55),
-        () -> true, "[PathPlanner] warmup internal command")
-        .andThen(Command.noRequirements(_ -> System.out.println("[PathPlanner] FollowPathCommand finished warmup"))
-            .named("[PathPlanner] notify finished warmup"))
-        .named("[PathPlanner] warmup");
+        () -> true, "[PathPlanner] FollowPathCommand: internal warmup")
+        .andThen(Command
+            .noRequirements(_ -> System.out.println("[PathPlanner] FollowPathCommand: finished warmup"))
+            .named("[PathPlanner] FollowPathCommand: notify finished warmup"))
+        .named("[PathPlanner] FollowPathCommand: warmup");
   }
 }

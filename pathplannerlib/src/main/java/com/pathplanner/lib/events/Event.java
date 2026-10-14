@@ -67,17 +67,17 @@ public abstract class Event {
   /**
    * Handle this event
    *
-   * @param eventScheduler Reference to the EventScheduler handling this event
+   * @param scheduler Reference to the Scheduler handling this event
    */
-  public abstract void handleEvent(Scheduler eventScheduler);
+  public abstract void handleEvent(Scheduler scheduler);
 
   /**
    * Cancel this event. This will be called if a path following command ends before this event gets
    * handled.
    *
-   * @param eventScheduler Reference to the EventScheduler handling this event
+   * @param scheduler Reference to the Scheduler handling this event
    */
-  public abstract void cancelEvent(Scheduler eventScheduler);
+  public abstract void cancelEvent(Scheduler scheduler);
 
   /**
    * Copy this event with a different timestamp

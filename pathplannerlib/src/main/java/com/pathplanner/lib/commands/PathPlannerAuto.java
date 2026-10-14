@@ -73,6 +73,8 @@ public class PathPlannerAuto implements Command {
 
   private final EventLoop autoLoop;
 
+  private final Scheduler autoScheduler;
+
   private final Timer autoTimer;
 
   private boolean isRunning = false;
@@ -169,6 +171,7 @@ public class PathPlannerAuto implements Command {
 
     PPLibTelemetry.registerHotReloadAuto(autoName, this);
 
+    this.autoScheduler = Scheduler.createIndependentScheduler();
     this.autoLoop = new EventLoop();
     this.autoTimer = new Timer();
 
@@ -189,6 +192,7 @@ public class PathPlannerAuto implements Command {
 
     this.requirements = autoCommand.requirements();
 
+    this.autoScheduler = Scheduler.createIndependentScheduler();
     this.autoLoop = new EventLoop();
     this.autoTimer = new Timer();
 
@@ -207,8 +211,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Get the starting pose of this auto, relative to a blue alliance origin. If
-   * there are no paths
-   * in this auto, the starting pose will be null.
+   * there are no paths in this auto, the starting pose will be null.
    *
    * @return The blue alliance starting pose
    */
@@ -315,8 +318,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create an EventTrigger that will be polled by this auto instead of globally
-   * across all path
-   * following commands
+   * across all path following commands
    *
    * @param eventName The event name that controls this trigger
    * @return EventTrigger for this auto
@@ -327,8 +329,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that will be activated a given time before an event is
-   * reached. The trigger
-   * will go low after passing the given event.
+   * reached. The trigger will go low after passing the given event.
    *
    * @param eventName   The event name
    * @param timeSeconds The amount of time before the event this trigger should
@@ -367,8 +368,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that will be activated a given time before an event is
-   * reached. The trigger
-   * will go low after passing the given event.
+   * reached. The trigger will go low after passing the given event.
    *
    * @param eventName The event name
    * @param time      The amount of time before the event this trigger should
@@ -381,8 +381,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that will be activated when the robot is within a given
-   * distance from the
-   * start of an event
+   * distance from the start of an event
    *
    * @param eventName      The event name
    * @param distanceMeters The distance from the event that will activate this
@@ -406,8 +405,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that will be activated when the robot is within a given
-   * distance from the
-   * start of an event
+   * distance from the start of an event
    *
    * @param eventName The event name
    * @param distance  The distance from the event that will activate this trigger
@@ -419,8 +417,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that will be activated when the robot is within a given
-   * distance from the end
-   * of an event
+   * distance from the end of an event
    *
    * @param eventName      The event name
    * @param distanceMeters The distance from the event that will activate this
@@ -444,8 +441,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that will be activated when the robot is within a given
-   * distance from the end
-   * of an event
+   * distance from the end of an event
    *
    * @param eventName The event name
    * @param distance  The distance from the event that will activate this trigger
@@ -457,8 +453,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a PointTowardsZoneTrigger that will be polled by this auto instead of
-   * globally across
-   * all path following commands
+   * globally across all path following commands
    *
    * @param zoneName The point towards zone name that controls this trigger
    * @return PointTowardsZoneTrigger for this auto
@@ -479,8 +474,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that is high when near a given field position. This field
-   * position is not
-   * automatically flipped
+   * position is not automatically flipped
    *
    * @param fieldPosition   The target field position
    * @param toleranceMeters The position tolerance, in meters. The trigger will be
@@ -495,8 +489,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that is high when near a given field position. This field
-   * position is not
-   * automatically flipped
+   * position is not automatically flipped
    *
    * @param fieldPosition The target field position
    * @param tolerance     The position tolerance. The trigger will be high when
@@ -510,8 +503,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that is high when near a given field position. This field
-   * position will be
-   * automatically flipped
+   * position will be automatically flipped
    *
    * @param blueFieldPosition The target field position if on the blue alliance
    * @param toleranceMeters   The position tolerance, in meters. The trigger will
@@ -534,8 +526,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that is high when near a given field position. This field
-   * position will be
-   * automatically flipped
+   * position will be automatically flipped
    *
    * @param blueFieldPosition The target field position if on the blue alliance
    * @param tolerance         The position tolerance. The trigger will be high
@@ -549,8 +540,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger that will be high when the robot is within a given area on
-   * the field. These
-   * positions will not be automatically flipped
+   * the field. These positions will not be automatically flipped
    *
    * @param boundingBoxMin The minimum position of the bounding box for the target
    *                       field area. The X
@@ -623,50 +613,33 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Create a trigger with a custom condition. This will be polled by this auto's
-   * event loop so that
-   * its condition is only polled when this auto is running.
+   * event loop so that its condition is only polled when this auto is running.
    *
    * @param condition The condition represented by this trigger
    * @return Custom condition trigger
    */
   public Trigger condition(BooleanSupplier condition) {
-    return new Trigger(Scheduler.getDefault(), autoLoop, condition);
+    return new Trigger(autoScheduler, autoLoop, condition);
   }
 
   @Override
   public void run(Coroutine coroutine) {
-    autoTimer.restart();
-    isRunning = true;
-    autoCommand.run(coroutine);
-    isRunning = false;
-    autoTimer.stop();
-  }
+    coroutine.scheduler().sideload(coro -> {
+      isRunning = true;
+      autoTimer.restart();
 
-  @Override
-  public void initialize() {
-    autoCommand.initialize();
-    autoTimer.restart();
-    isRunning = true;
-    autoLoop.poll();
-  }
+      while (Scheduler.getDefault().isRunning(this.autoCommand)) {
+        autoLoop.poll();
+        autoScheduler.run();
+        coro.yield();
+      }
 
-  @Override
-  public void execute() {
-    autoCommand.execute();
-    autoLoop.poll();
-  }
+      // only runs on tick after command ends!
+      autoTimer.stop();
+      isRunning = false;
+    });
 
-  @Override
-  public boolean isFinished() {
-    return autoCommand.isFinished();
-  }
-
-  @Override
-  public void end(boolean interrupted) {
-    autoCommand.end(interrupted);
-    autoTimer.stop();
-    isRunning = false;
-    autoLoop.poll();
+    coroutine.await(autoCommand);
   }
 
   /**
@@ -698,8 +671,7 @@ public class PathPlannerAuto implements Command {
 
   /**
    * Reloads the autonomous routine with the given JSON object and updates the
-   * requirements of this
-   * command.
+   * requirements of this command.
    *
    * @param autoJson the JSON object representing the updated autonomous routine
    */
@@ -732,7 +704,7 @@ public class PathPlannerAuto implements Command {
       this.startingPose = null;
     }
     if (resetOdom) {
-      this.autoCommand = Commands.sequence(AutoBuilder.resetOdom(this.startingPose), cmd);
+      this.autoCommand = Command.sequence(AutoBuilder.resetOdom(this.startingPose), cmd).withAutomaticName();
     } else {
       this.autoCommand = cmd;
     }

@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 import org.wpilib.math.controller.PIDController;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
-import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
 
 /** Path following controller for holonomic drive trains */
@@ -19,8 +18,6 @@ public class PPHolonomicDriveController implements PathFollowingController {
   private final PIDController yController;
 
   private final PIDController rotationController;
-
-  private Translation2d translationError = new Translation2d();
 
   private boolean isEnabled = true;
 
@@ -102,8 +99,6 @@ public class PPHolonomicDriveController implements PathFollowingController {
       Pose2d currentPose, PathPlannerTrajectoryState targetState) {
     double xFF = targetState.fieldSpeeds.vx;
     double yFF = targetState.fieldSpeeds.vy;
-
-    this.translationError = currentPose.getTranslation().minus(targetState.pose.getTranslation());
 
     if (!this.isEnabled) {
       return new ChassisVelocities(xFF, yFF, 0).toRobotRelative(currentPose.getRotation());

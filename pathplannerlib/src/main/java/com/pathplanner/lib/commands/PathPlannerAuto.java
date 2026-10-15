@@ -105,6 +105,18 @@ public class PathPlannerAuto implements Command {
     this(autoName, false, new HashSet<>());
   }
 
+  /**
+   * Constructs a new PathPlannerAuto command.
+   *
+   * @param autoName     the name of the autonomous routine to load and run
+   * @param mirror       Mirror all paths to the other side of the current
+   *                     alliance. For example, if a path is on the right of the
+   *                     blue alliance side of the field, it will be mirrored to
+   *                     the left of the blue alliance side of the field.
+   * @throws AutoBuilderException if AutoBuilder is not configured before
+   *                              attempting to load the
+   *                              autonomous routine
+   */
   public PathPlannerAuto(String autoName, boolean mirror) {
     this(autoName, mirror, new HashSet<>());
   }
@@ -112,12 +124,12 @@ public class PathPlannerAuto implements Command {
   /**
    * Constructs a new PathPlannerAuto command.
    *
-   * @param autoName the name of the autonomous routine to load and run
-   * @param mirror   Mirror all paths to the other side of the current alliance.
-   *                 For example, if a
-   *                 path is on the right of the blue alliance side of the field,
-   *                 it will be mirrored to the
-   *                 left of the blue alliance side of the field.
+   * @param autoName     the name of the autonomous routine to load and run
+   * @param mirror       Mirror all paths to the other side of the current
+   *                     alliance. For example, if a path is on the right of the
+   *                     blue alliance side of the field, it will be mirrored to
+   *                     the left of the blue alliance side of the field.
+   * @param requirements the auto's requirements
    * @throws AutoBuilderException if AutoBuilder is not configured before
    *                              attempting to load the
    *                              autonomous routine
@@ -731,11 +743,13 @@ public class PathPlannerAuto implements Command {
     return paths;
   }
 
-  public EventLoop getAutoLoop() {
-    return autoLoop;
-  }
-
+  /** {@return this auto's event scheduler} */
   public Scheduler getAutoScheduler() {
     return autoScheduler;
+  }
+
+  /** {@return this auto's event loop} */
+  public EventLoop getAutoLoop() {
+    return autoLoop;
   }
 }

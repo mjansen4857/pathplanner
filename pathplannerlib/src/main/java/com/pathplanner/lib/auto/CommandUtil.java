@@ -18,19 +18,20 @@ public class CommandUtil {
 
   /**
    * Wraps a command with a functional command that calls the command's
-   * initialize, execute, end,
-   * and isFinished methods. This allows a command in the event map to be reused
-   * multiple times in
-   * different command groups
+   * initialize, execute, end, and isFinished methods. This allows a command in
+   * the event map to be reused multiple times in different command groups
    *
    * @param eventCommand the command to wrap
+   * @param name         name of the command
    * @return a functional command that wraps the given command
    */
   public static Command wrappedEventCommand(Command eventCommand, String name) {
     return Command.noRequirements(coro -> coro.await(eventCommand)).named(name);
   }
 
-  public static final Command DO_NOTHING = Command.noRequirements(_ -> {}).named("[PathPlanner] null");
+  /** Equivalent to Commandsv2 Commands.none(). */
+  public static final Command DO_NOTHING = Command.noRequirements(_ -> {
+  }).named("[PathPlanner] null");
 
   /**
    * Builds a command from the given JSON object.

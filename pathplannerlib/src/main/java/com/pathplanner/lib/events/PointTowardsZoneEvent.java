@@ -39,7 +39,7 @@ public class PointTowardsZoneEvent extends Event {
   /**
    * Handle this event
    *
-   * @param eventScheduler Reference to the EventScheduler running this event
+   * @param scheduler Reference to the Scheduler running this event
    */
   @Override
   public void handleEvent(Scheduler scheduler) {

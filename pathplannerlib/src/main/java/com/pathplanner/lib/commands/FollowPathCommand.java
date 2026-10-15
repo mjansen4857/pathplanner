@@ -107,6 +107,7 @@ public class FollowPathCommand implements Command {
    * @param shouldFlipPath Should the path be flipped to the other side of the
    *                       field? This will
    *                       maintain a global blue alliance origin.
+   * @param name           Name of the command
    * @param requirements   Subsystems required by this command, usually just the
    *                       drive subsystem
    */
@@ -147,6 +148,33 @@ public class FollowPathCommand implements Command {
     idealTrajectory.ifPresent(traj -> this.trajectory = traj);
   }
 
+  /**
+   * Construct a base path following command named based on the path's name
+   *
+   * @param path           The path to follow
+   * @param poseSupplier   Function that supplies the current field-relative pose
+   *                       of the robot
+   * @param speedsSupplier Function that supplies the current robot-relative
+   *                       chassis speeds
+   * @param output         Output function that accepts robot-relative
+   *                       ChassisSpeeds and feedforwards for
+   *                       each drive motor. If using swerve, these feedforwards
+   *                       will be in FL, FR, BL, BR order. If
+   *                       using a differential drive, they will be in L, R order.
+   *                       <p>
+   *                       NOTE: These feedforwards are assuming unoptimized
+   *                       module states. When you optimize your
+   *                       module states, you will need to reverse the
+   *                       feedforwards for modules that have been flipped
+   * @param controller     Path following controller that will be used to follow
+   *                       the path
+   * @param robotConfig    The robot configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the
+   *                       field? This will
+   *                       maintain a global blue alliance origin.
+   * @param requirements   Subsystems required by this command, usually just the
+   *                       drive subsystem
+   */
   public FollowPathCommand(
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
@@ -210,14 +238,14 @@ public class FollowPathCommand implements Command {
   public void run(Coroutine coroutine) {
     init();
 
-    while (tick(coroutine)) {
+    while (tick()) {
       coroutine.yield();
     }
 
     end(false);
   }
 
-  public void init() {
+  private void init() {
     if (shouldFlipPath.getAsBoolean() && !originalPath.preventFlipping) {
       path = originalPath.flipPath();
     } else {
@@ -243,7 +271,7 @@ public class FollowPathCommand implements Command {
   }
 
   /** {@return whether the loop (command) should continue} */
-  public boolean tick(Coroutine coro) {
+  public boolean tick() {
     double currentTime = timer.get();
     var targetState = trajectory.sample(currentTime);
     if (!controller.isHolonomic() && path.isReversed()) {
@@ -338,10 +366,12 @@ public class FollowPathCommand implements Command {
         .named("[PathPlanner] FollowPathCommand: warmup");
   }
 
+  /** {@return this command's event scheduler} */
   public Scheduler getEventScheduler() {
     return eventScheduler;
   }
 
+  /** {@return this command's event loop} */
   public EventLoop getEventLoop() {
     return eventLoop;
   }

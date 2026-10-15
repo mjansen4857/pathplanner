@@ -2,9 +2,8 @@ package com.pathplanner.lib.events;
 
 import static org.wpilib.units.Units.Seconds;
 
-import org.wpilib.command2.Command;
-import org.wpilib.command2.CommandScheduler;
-import org.wpilib.command2.Commands;
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Scheduler;
 import org.wpilib.units.measure.Time;
 
 /** Event that will activate a trigger, then deactivate it the next loop */
@@ -23,10 +22,10 @@ public class OneShotTriggerEvent extends Event {
   public OneShotTriggerEvent(double timestamp, String name) {
     super(timestamp);
     this.name = name;
-    this.resetCommand =
-        Commands.waitSeconds(0.0)
-            .andThen(Commands.runOnce(() -> EventTrigger.setCondition(name, false)))
-            .ignoringDisable(true);
+    this.resetCommand = Command.noRequirements(coro -> {
+      coro.yield();
+      EventTrigger.setCondition(name, false);
+    }).named("[PathPlanner] reset command for OneShotTriggerEvent '" + name + "'");
   }
 
   /**
@@ -49,15 +48,16 @@ public class OneShotTriggerEvent extends Event {
   }
 
   @Override
-  public void handleEvent(EventScheduler eventScheduler) {
+  public void handleEvent(Scheduler scheduler) {
     EventTrigger.setCondition(name, true);
+
     // We schedule this command with the main command scheduler so that it is guaranteed to be run
     // in its entirety, since the EventScheduler could cancel this command before it finishes
-    CommandScheduler.getInstance().schedule(resetCommand);
+    Scheduler.getDefault().schedule(resetCommand);
   }
 
   @Override
-  public void cancelEvent(EventScheduler eventScheduler) {
+  public void cancelEvent(Scheduler scheduler) {
     // Do nothing
   }
 

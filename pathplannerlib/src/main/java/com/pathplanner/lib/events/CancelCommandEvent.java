@@ -2,7 +2,8 @@ package com.pathplanner.lib.events;
 
 import static org.wpilib.units.Units.Seconds;
 
-import org.wpilib.command2.Command;
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Scheduler;
 import org.wpilib.units.measure.Time;
 
 /** Event that will cancel a command within the EventScheduler */
@@ -32,12 +33,12 @@ public class CancelCommandEvent extends Event {
   }
 
   @Override
-  public void handleEvent(EventScheduler eventScheduler) {
-    eventScheduler.cancelCommand(command);
+  public void handleEvent(Scheduler scheduler) {
+    scheduler.cancel(command);
   }
 
   @Override
-  public void cancelEvent(EventScheduler eventScheduler) {
+  public void cancelEvent(Scheduler scheduler) {
     // Do nothing, the event scheduler will already cancel all commands
   }
 

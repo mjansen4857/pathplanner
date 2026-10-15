@@ -1,41 +1,49 @@
 package com.pathplanner.lib.auto;
 
-import com.pathplanner.lib.path.PathPlannerPath;
+import static org.wpilib.units.Units.Seconds;
+
 import java.io.IOException;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
-import org.wpilib.command2.*;
+import org.wpilib.command3.Command;
+import org.wpilib.command3.ParallelGroupBuilder;
+import org.wpilib.command3.SequentialGroupBuilder;
+
+import com.pathplanner.lib.path.PathPlannerPath;
 
 /** Utility class for building commands used in autos */
 public class CommandUtil {
 
   /**
-   * Wraps a command with a functional command that calls the command's initialize, execute, end,
-   * and isFinished methods. This allows a command in the event map to be reused multiple times in
-   * different command groups
+   * Wraps a command with a functional command that calls the command's
+   * initialize, execute, end, and isFinished methods. This allows a command in
+   * the event map to be reused multiple times in different command groups
    *
    * @param eventCommand the command to wrap
+   * @param name         name of the command
    * @return a functional command that wraps the given command
    */
-  public static Command wrappedEventCommand(Command eventCommand) {
-    return new FunctionalCommand(
-        eventCommand::initialize,
-        eventCommand::execute,
-        eventCommand::end,
-        eventCommand::isFinished,
-        eventCommand.getRequirements().toArray(Subsystem[]::new));
+  public static Command wrappedEventCommand(Command eventCommand, String name) {
+    return Command.noRequirements(coro -> coro.await(eventCommand)).named(name);
   }
+
+  /** Equivalent to Commandsv2 Commands.none(). */
+  public static final Command DO_NOTHING = Command.noRequirements(_ -> {
+  }).named("[PathPlanner] null");
 
   /**
    * Builds a command from the given JSON object.
    *
-   * @param commandJson the JSON object to build the command from
+   * @param commandJson     the JSON object to build the command from
    * @param loadChoreoPaths Load path commands using choreo trajectories
-   * @param mirror Should the paths be mirrored
+   * @param mirror          Should the paths be mirrored
    * @return a command built from the JSON object
-   * @throws IOException if attempting to load a path file that does not exist or cannot be read
-   * @throws ParseException If attempting to load a path with JSON that cannot be parsed
+   * @throws IOException    if attempting to load a path file that does not exist
+   *                        or cannot be read
+   * @throws ParseException If attempting to load a path with JSON that cannot be
+   *                        parsed
    */
   public static Command commandFromJson(
       JSONObject commandJson, boolean loadChoreoPaths, boolean mirror)
@@ -50,20 +58,20 @@ public class CommandUtil {
       case "parallel" -> parallelGroupFromData(data, loadChoreoPaths, mirror);
       case "race" -> raceGroupFromData(data, loadChoreoPaths, mirror);
       case "deadline" -> deadlineGroupFromData(data, loadChoreoPaths, mirror);
-      default -> Commands.none();
+      default -> DO_NOTHING;
     };
   }
 
   private static Command waitCommandFromData(JSONObject dataJson) {
+    double waitTime;
     try {
-      double waitTime = ((Number) dataJson.get("waitTime")).doubleValue();
-      return Commands.waitSeconds(waitTime);
+      waitTime = ((Number) dataJson.get("waitTime")).doubleValue();
     } catch (Exception ignored) {
       // Failed to load wait time as a number. This is probably a choreo expression
       JSONObject waitTimeJson = (JSONObject) dataJson.get("waitTime");
-      double waitTime = ((Number) waitTimeJson.get("val")).doubleValue();
-      return Commands.waitSeconds(waitTime);
+      waitTime = ((Number) waitTimeJson.get("val")).doubleValue();
     }
+    return Command.waitFor(Seconds.of(waitTime)).named("[PathPlanner] waiting t=" + waitTime);
   }
 
   private static Command namedCommandFromData(JSONObject dataJson) {
@@ -74,10 +82,9 @@ public class CommandUtil {
   private static Command pathCommandFromData(
       JSONObject dataJson, boolean choreoPath, boolean mirror) throws IOException, ParseException {
     String pathName = (String) dataJson.get("pathName");
-    PathPlannerPath path =
-        choreoPath
-            ? PathPlannerPath.fromChoreoTrajectory(pathName)
-            : PathPlannerPath.fromPathFile(pathName);
+    PathPlannerPath path = choreoPath
+        ? PathPlannerPath.fromChoreoTrajectory(pathName)
+        : PathPlannerPath.fromPathFile(pathName);
     if (mirror) {
       path = path.mirrorPath();
     }
@@ -87,31 +94,31 @@ public class CommandUtil {
   private static Command sequentialGroupFromData(
       JSONObject dataJson, boolean loadChoreoPaths, boolean mirror)
       throws IOException, ParseException {
-    SequentialCommandGroup group = new SequentialCommandGroup();
+    SequentialGroupBuilder group = new SequentialGroupBuilder();
     for (var cmdJson : (JSONArray) dataJson.get("commands")) {
-      group.addCommands(commandFromJson((JSONObject) cmdJson, loadChoreoPaths, mirror));
+      group.andThen(commandFromJson((JSONObject) cmdJson, loadChoreoPaths, mirror));
     }
-    return group;
+    return group.withAutomaticName();
   }
 
   private static Command parallelGroupFromData(
       JSONObject dataJson, boolean loadChoreoPaths, boolean mirror)
       throws IOException, ParseException {
-    ParallelCommandGroup group = new ParallelCommandGroup();
+    ParallelGroupBuilder group = new ParallelGroupBuilder();
     for (var cmdJson : (JSONArray) dataJson.get("commands")) {
-      group.addCommands(commandFromJson((JSONObject) cmdJson, loadChoreoPaths, mirror));
+      group.alongWith(commandFromJson((JSONObject) cmdJson, loadChoreoPaths, mirror));
     }
-    return group;
+    return group.withAutomaticName();
   }
 
   private static Command raceGroupFromData(
       JSONObject dataJson, boolean loadChoreoPaths, boolean mirror)
       throws IOException, ParseException {
-    ParallelRaceGroup group = new ParallelRaceGroup();
+    ParallelGroupBuilder group = new ParallelGroupBuilder();
     for (var cmdJson : (JSONArray) dataJson.get("commands")) {
-      group.addCommands(commandFromJson((JSONObject) cmdJson, loadChoreoPaths, mirror));
+      group.optional(commandFromJson((JSONObject) cmdJson, loadChoreoPaths, mirror));
     }
-    return group;
+    return group.withAutomaticName();
   }
 
   private static Command deadlineGroupFromData(
@@ -120,13 +127,16 @@ public class CommandUtil {
     JSONArray cmds = (JSONArray) dataJson.get("commands");
     if (!cmds.isEmpty()) {
       Command deadline = commandFromJson((JSONObject) cmds.get(0), loadChoreoPaths, mirror);
-      ParallelDeadlineGroup group = new ParallelDeadlineGroup(deadline);
+      ParallelGroupBuilder inner = new ParallelGroupBuilder();
       for (int i = 1; i < cmds.size(); i++) {
-        group.addCommands(commandFromJson((JSONObject) cmds.get(i), loadChoreoPaths, mirror));
+        inner.requiring(commandFromJson((JSONObject) cmds.get(i), loadChoreoPaths, mirror));
       }
-      return group;
+
+      ParallelGroupBuilder outer = new ParallelGroupBuilder();
+      outer.optional(deadline, inner.withAutomaticName());
+      return outer.withAutomaticName();
     } else {
-      return Commands.none();
+      return DO_NOTHING;
     }
   }
 }

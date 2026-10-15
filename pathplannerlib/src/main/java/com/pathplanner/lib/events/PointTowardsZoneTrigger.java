@@ -2,33 +2,40 @@ package com.pathplanner.lib.events;
 
 import java.util.HashMap;
 import java.util.function.BooleanSupplier;
-import org.wpilib.command2.button.Trigger;
-import org.wpilib.event.EventLoop;
 
-/** A trigger that will be controlled by the robot entering/leaving a point towards zone */
+import org.wpilib.command3.Trigger;
+
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+
+/**
+ * A trigger that will be controlled by the robot entering/leaving a point
+ * towards zone
+ */
 public class PointTowardsZoneTrigger extends Trigger {
 
   private static final HashMap<String, Boolean> zoneConditions = new HashMap<>();
 
   /**
-   * Create a new PointTowardsZoneTrigger. This will run on the EventScheduler's event loop, which
-   * will be polled any time a path following command is running.
+   * Create a new PointTowardsZoneTrigger. This is only polled while the given
+   * {@link PathPlannerAuto} is running.
    *
+   * @param auto The auto whose loop and scheduler we bind to
    * @param name The name of the point towards zone
    */
-  public PointTowardsZoneTrigger(String name) {
-    super(EventScheduler.getEventLoop(), pollCondition(name));
+  public PointTowardsZoneTrigger(PathPlannerAuto auto, String name) {
+    super(auto.getAutoScheduler(), auto.getAutoLoop(), pollCondition(name));
   }
 
   /**
-   * Create a new PointTowardsZoneTrigger that gets polled by the given event loop instead of the
-   * EventScheduler
+   * Create a new PointTowardsZoneTrigger. This is only polled while the given
+   * {@link FollowPathCommand} is running.
    *
-   * @param eventLoop The event loop to poll this trigger
+   * @param cmd  The path-following command whose loop and scheduler we bind to
    * @param name The name of the point towards zone
    */
-  public PointTowardsZoneTrigger(EventLoop eventLoop, String name) {
-    super(eventLoop, pollCondition(name));
+  public PointTowardsZoneTrigger(FollowPathCommand cmd, String name) {
+    super(cmd.getEventScheduler(), cmd.getEventLoop(), pollCondition(name));
   }
 
   /**
@@ -48,8 +55,9 @@ public class PointTowardsZoneTrigger extends Trigger {
   /**
    * Set the value of a zone condition
    *
-   * @param name The name of the condition
-   * @param withinZone Is the robot within the point towards zone with the given name
+   * @param name       The name of the condition
+   * @param withinZone Is the robot within the point towards zone with the given
+   *                   name
    */
   protected static void setWithinZone(String name, boolean withinZone) {
     zoneConditions.put(name, withinZone);

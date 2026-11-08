@@ -884,8 +884,11 @@ class _ProjectPageState extends State<ProjectPage> {
           pathName = 'Copy of $pathName';
         }
 
+        final copy = _paths[i].duplicate(pathName);
+        copy.generateAndSavePath();
+
         setState(() {
-          _paths.add(_paths[i].duplicate(pathName));
+          _paths.add(copy);
           _sortPaths(_pathSortValue);
         });
       },
@@ -1431,8 +1434,11 @@ class _ProjectPageState extends State<ProjectPage> {
           autoName = 'Copy of $autoName';
         }
 
+        final copy = _autos[i].duplicate(autoName);
+        copy.saveFile();
+
         setState(() {
-          _autos.add(_autos[i].duplicate(autoName));
+          _autos.add(copy);
           _sortAutos(_autoSortValue);
         });
       },
@@ -1727,14 +1733,17 @@ class _ProjectPageState extends State<ProjectPage> {
       autoName = 'New $autoName';
     }
 
+    final auto = PathPlannerAuto.defaultAuto(
+      autoDir: _autosDirectory.path,
+      name: autoName,
+      fs: fs,
+      folder: _autoFolder,
+      choreoAuto: choreo,
+    );
+    auto.saveFile();
+
     setState(() {
-      _autos.add(PathPlannerAuto.defaultAuto(
-        autoDir: _autosDirectory.path,
-        name: autoName,
-        fs: fs,
-        folder: _autoFolder,
-        choreoAuto: choreo,
-      ));
+      _autos.add(auto);
       _sortAutos(_autoSortValue);
     });
   }
@@ -1749,14 +1758,17 @@ class _ProjectPageState extends State<ProjectPage> {
       pathName = 'New $pathName';
     }
 
+    final path = PathPlannerPath.defaultPath(
+      pathDir: _pathsDirectory.path,
+      name: pathName,
+      fs: fs,
+      folder: _pathFolder,
+      constraints: _getDefaultConstraints(),
+    );
+    path.generateAndSavePath();
+
     setState(() {
-      _paths.add(PathPlannerPath.defaultPath(
-        pathDir: _pathsDirectory.path,
-        name: pathName,
-        fs: fs,
-        folder: _pathFolder,
-        constraints: _getDefaultConstraints(),
-      ));
+      _paths.add(path);
       _sortPaths(_pathSortValue);
     });
   }

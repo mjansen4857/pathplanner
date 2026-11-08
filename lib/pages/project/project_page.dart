@@ -491,27 +491,7 @@ class _ProjectPageState extends State<ProjectPage> {
                         .setStringList(PrefsKeys.pathFolders, _pathFolders);
                     widget.onFoldersChanged?.call();
                   },
-                  onAddItem: () {
-                    List<String> pathNames = [];
-                    for (PathPlannerPath path in _paths) {
-                      pathNames.add(path.name);
-                    }
-                    String pathName = 'New Path';
-                    while (pathNames.contains(pathName)) {
-                      pathName = 'New $pathName';
-                    }
-
-                    setState(() {
-                      _paths.add(PathPlannerPath.defaultPath(
-                        pathDir: _pathsDirectory.path,
-                        name: pathName,
-                        fs: fs,
-                        folder: _pathFolder,
-                        constraints: _getDefaultConstraints(),
-                      ));
-                      _sortPaths(_pathSortValue);
-                    });
-                  },
+                  onAddItem: _createNewPath,
                   isPathsView: true,
                 ),
                 GridView.count(
@@ -619,27 +599,7 @@ class _ProjectPageState extends State<ProjectPage> {
                       .setStringList(PrefsKeys.pathFolders, _pathFolders);
                   widget.onFoldersChanged?.call();
                 },
-                onAddItem: () {
-                  List<String> pathNames = [];
-                  for (PathPlannerPath path in _paths) {
-                    pathNames.add(path.name);
-                  }
-                  String pathName = 'New Path';
-                  while (pathNames.contains(pathName)) {
-                    pathName = 'New $pathName';
-                  }
-
-                  setState(() {
-                    _paths.add(PathPlannerPath.defaultPath(
-                      pathDir: _pathsDirectory.path,
-                      name: pathName,
-                      fs: fs,
-                      folder: _pathFolder,
-                      constraints: _getDefaultConstraints(),
-                    ));
-                    _sortPaths(_pathSortValue);
-                  });
-                },
+                onAddItem: _createNewPath,
                 isPathsView: true,
               ),
               Expanded(
@@ -1776,6 +1736,28 @@ class _ProjectPageState extends State<ProjectPage> {
         choreoAuto: choreo,
       ));
       _sortAutos(_autoSortValue);
+    });
+  }
+
+  void _createNewPath() {
+    List<String> pathNames = [];
+    for (PathPlannerPath path in _paths) {
+      pathNames.add(path.name);
+    }
+    String pathName = 'New Path';
+    while (pathNames.contains(pathName)) {
+      pathName = 'New $pathName';
+    }
+
+    setState(() {
+      _paths.add(PathPlannerPath.defaultPath(
+        pathDir: _pathsDirectory.path,
+        name: pathName,
+        fs: fs,
+        folder: _pathFolder,
+        constraints: _getDefaultConstraints(),
+      ));
+      _sortPaths(_pathSortValue);
     });
   }
 

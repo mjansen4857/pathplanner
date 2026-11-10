@@ -323,18 +323,22 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
                   double x = _xPixelsToMeters(details.localPosition.dx);
                   double y = _yPixelsToMeters(details.localPosition.dy);
+                  bool shiftHeld = HardwareKeyboard.instance.logicalKeysPressed
+                          .contains(LogicalKeyboardKey.shiftLeft) ||
+                      HardwareKeyboard.instance.logicalKeysPressed
+                          .contains(LogicalKeyboardKey.shiftRight);
 
                   setState(() {
                     if (_draggedRotationIdx == -2) {
                       widget.path.idealStartingState.rotation =
-                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
+                          _getUpdatedRotation(pos, x, y, shouldSnap: shiftHeld);
                     } else if (_draggedRotationIdx == -1) {
                       widget.path.goalEndState.rotation =
-                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
+                          _getUpdatedRotation(pos, x, y, shouldSnap: shiftHeld);
                     } else {
                       widget.path.rotationTargets[_draggedRotationIdx!]
                               .rotation =
-                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
+                          _getUpdatedRotation(pos, x, y, shouldSnap: shiftHeld);
                     }
                   });
                 }
@@ -862,6 +866,18 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
   double _pixelsToMeters(double pixels) {
     return (pixels / PathPainter.scale) / widget.fieldImage.pixelsPerMeter;
+  }
+
+  Rotation2d _getUpdatedRotation(
+      Translation2d pointPosition, double cursorX, double cursorY,
+      {required bool shouldSnap, num stepDeg = 45}) {
+    Rotation2d angle = Rotation2d.fromComponents(
+        cursorX - pointPosition.x, cursorY - pointPosition.y);
+    if (shouldSnap) {
+      angle =
+          Rotation2d.fromDegrees((angle.degrees / stepDeg).round() * stepDeg);
+    }
+    return angle;
   }
 
   PathConstraints _getDefaultConstraints() {

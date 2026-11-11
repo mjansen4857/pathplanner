@@ -113,7 +113,8 @@ public class SwerveSetpointGenerator {
     SwerveModuleVelocity[] desiredModuleStates =
         config.toSwerveModuleStates(desiredStateRobotRelative);
     // Make sure desiredState respects velocity limits.
-    SwerveDriveKinematics.desaturateWheelVelocities(desiredModuleStates, maxSpeed);
+    desiredModuleStates =
+        SwerveDriveKinematics.desaturateWheelVelocities(desiredModuleStates, maxSpeed);
     desiredStateRobotRelative = config.toChassisSpeeds(desiredModuleStates);
 
     // Special case: desiredState is a complete stop. In this case, module angle is arbitrary, so
@@ -278,7 +279,8 @@ public class SwerveSetpointGenerator {
       double reverseModuleTorque = config.moduleConfig.driveMotor.getTorque(reverseCurrentDraw);
 
       double prevSpeed = prevSetpoint.moduleStates()[m].velocity;
-      desiredModuleStates[m].optimize(prevSetpoint.moduleStates()[m].angle);
+      desiredModuleStates[m] =
+          desiredModuleStates[m].optimize(prevSetpoint.moduleStates()[m].angle);
       double desiredSpeed = desiredModuleStates[m].velocity;
 
       int forceSign;

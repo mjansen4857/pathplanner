@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:scidart/numdart.dart';
 
 class Waypoint {
   static const num minControlLength = 0.25;
@@ -169,7 +170,8 @@ class Waypoint {
     return false;
   }
 
-  void dragUpdate(num x, num y) {
+  void dragUpdate(num x, num y,
+      {bool shouldSnapAngle = false}) {
     if (_isAnchorDragging && !isLocked) {
       move(x, y);
     } else if (_isNextControlDragging) {
@@ -181,7 +183,8 @@ class Waypoint {
           nextControl = newPoint;
         }
       } else {
-        nextControl = Translation2d(x, y);
+        nextControl =
+            _getRelativePosition(x, y, shouldSnapAngle: shouldSnapAngle);
       }
 
       if (prevControl != null) {
@@ -200,7 +203,8 @@ class Waypoint {
           prevControl = newPoint;
         }
       } else {
-        prevControl = Translation2d(x, y);
+        prevControl =
+            _getRelativePosition(x, y, shouldSnapAngle: shouldSnapAngle);
       }
 
       if (nextControl != null) {
@@ -240,6 +244,17 @@ class Waypoint {
       closestPoint = lineStart.interpolate(lineEnd, t);
     }
     return closestPoint;
+  }
+
+  Translation2d _getRelativePosition(num x, num y,
+      {required bool shouldSnapAngle, num stepDeg = 45}) {
+    Translation2d relativePosition = Translation2d(x, y) - anchor;
+    Rotation2d angle = relativePosition.angle;
+    if (shouldSnapAngle) {
+      angle =
+          Rotation2d.fromDegrees((angle.degrees / stepDeg).round() * stepDeg);
+    }
+    return Translation2d.fromAngle(relativePosition.norm, angle) + anchor;
   }
 
   @override

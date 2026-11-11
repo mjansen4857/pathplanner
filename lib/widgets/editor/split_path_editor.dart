@@ -257,6 +257,10 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                 }
               },
               onPanUpdate: (details) {
+                bool shiftHeld = HardwareKeyboard.instance.logicalKeysPressed
+                        .contains(LogicalKeyboardKey.shiftLeft) ||
+                    HardwareKeyboard.instance.logicalKeysPressed
+                        .contains(LogicalKeyboardKey.shiftRight);
                 if (_draggedPoint != null) {
                   num targetX = _xPixelsToMeters(min(
                       88 +
@@ -308,7 +312,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   }
 
                   setState(() {
-                    _draggedPoint!.dragUpdate(targetX, targetY);
+                    _draggedPoint!.dragUpdate(targetX, targetY, shouldSnapAngle: shiftHeld);
                     widget.path.generatePathPoints();
                   });
                 } else if (_draggedRotationIdx != null) {
@@ -323,10 +327,6 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
                   double x = _xPixelsToMeters(details.localPosition.dx);
                   double y = _yPixelsToMeters(details.localPosition.dy);
-                  bool shiftHeld = HardwareKeyboard.instance.logicalKeysPressed
-                          .contains(LogicalKeyboardKey.shiftLeft) ||
-                      HardwareKeyboard.instance.logicalKeysPressed
-                          .contains(LogicalKeyboardKey.shiftRight);
 
                   setState(() {
                     if (_draggedRotationIdx == -2) {

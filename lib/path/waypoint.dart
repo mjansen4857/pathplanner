@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'dart:math';
 
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:scidart/numdart.dart';

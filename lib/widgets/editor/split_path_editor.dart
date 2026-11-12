@@ -312,7 +312,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   }
 
                   setState(() {
-                    _draggedPoint!.dragUpdate(targetX, targetY, shouldSnapAngle: shiftHeld);
+                    _draggedPoint!.dragUpdate(targetX, targetY,
+                        shouldSnapAngle: shiftHeld);
                     widget.path.generatePathPoints();
                   });
                 } else if (_draggedRotationIdx != null) {
@@ -870,7 +871,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
   Rotation2d _getUpdatedRotation(
       Translation2d pointPosition, double cursorX, double cursorY,
-      {required bool shouldSnap, num stepDeg = 45}) {
+      {required bool shouldSnap}) {
+    const num stepDeg = 45;
     Rotation2d angle = Rotation2d.fromComponents(
         cursorX - pointPosition.x, cursorY - pointPosition.y);
     if (shouldSnap) {

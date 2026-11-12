@@ -169,8 +169,7 @@ class Waypoint {
     return false;
   }
 
-  void dragUpdate(num x, num y,
-      {bool shouldSnapAngle = false}) {
+  void dragUpdate(num x, num y, {bool shouldSnapAngle = false}) {
     if (_isAnchorDragging && !isLocked) {
       move(x, y);
     } else if (_isNextControlDragging) {
@@ -246,7 +245,8 @@ class Waypoint {
   }
 
   Translation2d _getRelativePosition(num x, num y,
-      {required bool shouldSnapAngle, num stepDeg = 45}) {
+      {required bool shouldSnapAngle}) {
+    const num stepDeg = 45;
     Translation2d relativePosition = Translation2d(x, y) - anchor;
     Rotation2d angle = relativePosition.angle;
     if (shouldSnapAngle) {

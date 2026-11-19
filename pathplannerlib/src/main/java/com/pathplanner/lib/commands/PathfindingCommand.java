@@ -7,16 +7,23 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
-import com.pathplanner.lib.path.*;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import com.pathplanner.lib.util.*;
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.FlippingUtil;
+import com.pathplanner.lib.util.PPLibTelemetry;
+import com.pathplanner.lib.util.PathPlannerLogging;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
-import org.wpilib.command2.Command;
-import org.wpilib.command2.Commands;
-import org.wpilib.command2.Subsystem;
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Coroutine;
+import org.wpilib.command3.Mechanism;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
@@ -27,7 +34,7 @@ import org.wpilib.units.measure.LinearVelocity;
 import org.wpilib.util.UsageReporting;
 
 /** Base pathfinding command */
-public class PathfindingCommand extends Command {
+public class PathfindingCommand implements Command {
 
   private static int instances = 0;
 
@@ -63,6 +70,20 @@ public class PathfindingCommand extends Command {
 
   private boolean finish = false;
 
+  private String name;
+
+  private Set<Mechanism> requirements;
+
+  @Override
+  public String name() {
+    return name;
+  }
+
+  @Override
+  public Set<Mechanism> requirements() {
+    return this.requirements;
+  }
+
   /**
    * Constructs a new base pathfinding command that will generate a path towards the given path.
    *
@@ -90,13 +111,15 @@ public class PathfindingCommand extends Command {
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
-      Subsystem... requirements) {
-    addRequirements(requirements);
+      Mechanism... requirements) {
+
     Pathfinding.ensureInitialized();
     Rotation2d targetRotation = Rotation2d.ZERO;
     double goalEndVel = targetPath.getGlobalConstraints().maxVelocityMPS();
+
     if (targetPath.isChoreoPath()) {
-      // Can get() here without issue since all choreo trajectories have ideal trajectories
+      // Can get() here without issue since all choreo trajectories have ideal
+      // trajectories
       PathPlannerTrajectory choreoTraj = targetPath.getIdealTrajectory(robotConfig).orElseThrow();
       targetRotation = choreoTraj.getInitialState().pose.getRotation();
       goalEndVel = choreoTraj.getInitialState().linearVelocity;
@@ -108,6 +131,8 @@ public class PathfindingCommand extends Command {
         }
       }
     }
+
+    this.requirements = Set.of(requirements);
     this.targetPath = targetPath;
     this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
     this.originalTargetPose =
@@ -120,8 +145,143 @@ public class PathfindingCommand extends Command {
     this.output = output;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = shouldFlipPath;
+    this.name = "[PathPlanner] pathfind to path";
     instances++;
     UsageReporting.reportUsage("PathPlanner/PathFindingCommand", instances, "");
+  }
+
+  /**
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
+   *
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the target pose
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param name Name of the command
+   * @param requirements the subsystems required by this command
+   */
+  public PathfindingCommand(
+      Pose2d targetPose,
+      PathConstraints constraints,
+      double goalEndVel,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisVelocities> speedsSupplier,
+      BiConsumer<ChassisVelocities, DriveFeedforwards> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      String name,
+      Mechanism... requirements) {
+
+    Pathfinding.ensureInitialized();
+    this.targetPath = null;
+    this.targetPose = targetPose;
+    this.originalTargetPose =
+        new Pose2d(this.targetPose.getTranslation(), this.targetPose.getRotation());
+    this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation());
+    this.constraints = constraints;
+    this.controller = controller;
+    this.poseSupplier = poseSupplier;
+    this.speedsSupplier = speedsSupplier;
+    this.output = output;
+    this.robotConfig = robotConfig;
+    this.shouldFlipPath = () -> false;
+    this.requirements = Set.of(requirements);
+    this.name = name;
+    instances++;
+    UsageReporting.reportUsage("PathPlanner/PathFindingCommand", instances, "");
+  }
+
+  /**
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
+   *
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the target pose
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param name Name of the command
+   * @param requirements the subsystems required by this command
+   */
+  public PathfindingCommand(
+      Pose2d targetPose,
+      PathConstraints constraints,
+      LinearVelocity goalEndVel,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisVelocities> speedsSupplier,
+      BiConsumer<ChassisVelocities, DriveFeedforwards> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      String name,
+      Mechanism... requirements) {
+    this(
+        targetPose,
+        constraints,
+        goalEndVel.in(MetersPerSecond),
+        poseSupplier,
+        speedsSupplier,
+        output,
+        controller,
+        robotConfig,
+        name,
+        requirements);
+  }
+
+  /**
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
+   *
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param name Name of the command
+   * @param requirements the subsystems required by this command
+   */
+  public PathfindingCommand(
+      Pose2d targetPose,
+      PathConstraints constraints,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisVelocities> speedsSupplier,
+      BiConsumer<ChassisVelocities, DriveFeedforwards> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      String name,
+      Mechanism... requirements) {
+    this(
+        targetPose,
+        constraints,
+        0.0,
+        poseSupplier,
+        speedsSupplier,
+        output,
+        controller,
+        robotConfig,
+        name,
+        requirements);
   }
 
   /**
@@ -151,23 +311,18 @@ public class PathfindingCommand extends Command {
       BiConsumer<ChassisVelocities, DriveFeedforwards> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
-      Subsystem... requirements) {
-    addRequirements(requirements);
-    Pathfinding.ensureInitialized();
-    this.targetPath = null;
-    this.targetPose = targetPose;
-    this.originalTargetPose =
-        new Pose2d(this.targetPose.getTranslation(), this.targetPose.getRotation());
-    this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation());
-    this.constraints = constraints;
-    this.controller = controller;
-    this.poseSupplier = poseSupplier;
-    this.speedsSupplier = speedsSupplier;
-    this.output = output;
-    this.robotConfig = robotConfig;
-    this.shouldFlipPath = () -> false;
-    instances++;
-    UsageReporting.reportUsage("PathPlanner/PathFindingCommand", instances, "");
+      Mechanism... requirements) {
+    this(
+        targetPose,
+        constraints,
+        goalEndVel,
+        poseSupplier,
+        speedsSupplier,
+        output,
+        controller,
+        robotConfig,
+        "[PathPlanner] pathfind to pose",
+        requirements);
   }
 
   /**
@@ -197,7 +352,7 @@ public class PathfindingCommand extends Command {
       BiConsumer<ChassisVelocities, DriveFeedforwards> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
-      Subsystem... requirements) {
+      Mechanism... requirements) {
     this(
         targetPose,
         constraints,
@@ -207,6 +362,7 @@ public class PathfindingCommand extends Command {
         output,
         controller,
         robotConfig,
+        "[PathPlanner] pathfind to pose",
         requirements);
   }
 
@@ -235,7 +391,7 @@ public class PathfindingCommand extends Command {
       BiConsumer<ChassisVelocities, DriveFeedforwards> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
-      Subsystem... requirements) {
+      Mechanism... requirements) {
     this(
         targetPose,
         constraints,
@@ -245,11 +401,11 @@ public class PathfindingCommand extends Command {
         output,
         controller,
         robotConfig,
+        "[PathPlanner] pathfind to pose",
         requirements);
   }
 
-  @Override
-  public void initialize() {
+  void initialize() {
     currentTrajectory = null;
     timeOffset = 0;
     finish = false;
@@ -272,11 +428,7 @@ public class PathfindingCommand extends Command {
     }
   }
 
-  @Override
-  public void execute() {
-    if (finish) {
-      return;
-    }
+  void execute() {
     Pose2d currentPose = poseSupplier.get();
     ChassisVelocities currentSpeeds = speedsSupplier.get();
     PathPlannerLogging.logCurrentPose(currentPose);
@@ -288,6 +440,7 @@ public class PathfindingCommand extends Command {
                     .getTranslation()
                     .getDistance(currentTrajectory.getEndState().pose.getTranslation())
                 < 2.0;
+
     if (!skipUpdates && Pathfinding.isNewPathAvailable()) {
       currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);
       if (currentPath != null) {
@@ -331,9 +484,11 @@ public class PathfindingCommand extends Command {
             (currentPose.getTranslation().getDistance(closestState1.pose.getTranslation())) / d;
         t = Math.clamp(t, 0.0, 1.0);
         timeOffset = MathUtil.lerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
-        // If the robot is stationary and at the start of the path, set the time offset to the next
+        // If the robot is stationary and at the start of the path, set the time offset
+        // to the next
         // loop
-        // This can prevent an issue where the robot will remain stationary if new paths come in
+        // This can prevent an issue where the robot will remain stationary if new paths
+        // come in
         // every loop
         if (timeOffset <= 0.02 && Math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 0.1) {
           timeOffset = 0.02;
@@ -344,14 +499,15 @@ public class PathfindingCommand extends Command {
       timer.reset();
       timer.start();
     }
+
     if (currentTrajectory != null) {
       var targetState = currentTrajectory.sample(timer.get() + timeOffset);
       ChassisVelocities targetSpeeds =
           controller.calculateRobotRelativeSpeeds(currentPose, targetState);
       double currentVel = Math.hypot(currentSpeeds.vx, currentSpeeds.vy);
       PPLibTelemetry.setCurrentPose(currentPose);
-      PathPlannerLogging.logCurrentPose(currentPose);
       PPLibTelemetry.setTargetPose(targetState.pose);
+      PathPlannerLogging.logCurrentPose(currentPose);
       PathPlannerLogging.logTargetPose(targetState.pose);
       PPLibTelemetry.setVelocities(
           currentVel, targetState.linearVelocity, currentSpeeds.omega, targetSpeeds.omega);
@@ -359,11 +515,9 @@ public class PathfindingCommand extends Command {
     }
   }
 
-  @Override
-  public boolean isFinished() {
-    if (finish) {
-      return true;
-    }
+  boolean isFinished() {
+    if (finish) return true;
+
     if (targetPath != null && !targetPath.isChoreoPath()) {
       Pose2d currentPose = poseSupplier.get();
       ChassisVelocities currentSpeeds = speedsSupplier.get();
@@ -378,15 +532,30 @@ public class PathfindingCommand extends Command {
     return false;
   }
 
-  @Override
-  public void end(boolean interrupted) {
+  void end(boolean interrupted) {
     timer.stop();
-    // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
+    // Only output 0 speeds when ending a path that is supposed to stop, this allows
+    // interrupting
     // the command to smoothly transition into some auto-alignment routine
     if (!interrupted && goalEndState.velocityMPS() < 0.1) {
       output.accept(new ChassisVelocities(), DriveFeedforwards.zeros(robotConfig.numModules));
     }
     PathPlannerLogging.logActivePath(null);
+  }
+
+  @Override
+  public void run(Coroutine coroutine) {
+    initialize();
+    while (!isFinished()) {
+      execute();
+      coroutine.yield();
+    }
+    end(false);
+  }
+
+  @Override
+  public void onCancel() {
+    end(true);
   }
 
   /**
@@ -408,8 +577,12 @@ public class PathfindingCommand extends Command {
                 6.8,
                 new ModuleConfig(
                     0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0, 1),
-                0.55))
-        .andThen(Commands.print("[PathPlanner] PathfindingCommand finished warmup"))
-        .ignoringDisable(true);
+                0.55),
+            "[PathPlanner] PathfindingCommand: internal warmup")
+        .andThen(
+            Command.noRequirements(
+                    _ -> System.out.println("[PathPlanner] PathfindingCommand: finished warmup"))
+                .named("[PathPlanner] PathfindingCommand: notify finished warmup"))
+        .named("[PathPlanner] PathfindingCommand: warmup");
   }
 }

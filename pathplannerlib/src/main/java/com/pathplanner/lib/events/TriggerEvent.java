@@ -2,6 +2,7 @@ package com.pathplanner.lib.events;
 
 import static org.wpilib.units.Units.Seconds;
 
+import org.wpilib.command3.Scheduler;
 import org.wpilib.units.measure.Time;
 
 /** Event for setting the value of an event trigger */
@@ -56,15 +57,15 @@ public class TriggerEvent extends Event {
   /**
    * Handle this event
    *
-   * @param eventScheduler Reference to the EventScheduler running this event
+   * @param scheduler Reference to the Scheduler running this event
    */
   @Override
-  public void handleEvent(EventScheduler eventScheduler) {
+  public void handleEvent(Scheduler scheduler) {
     EventTrigger.setCondition(name, active);
   }
 
   @Override
-  public void cancelEvent(EventScheduler eventScheduler) {
+  public void cancelEvent(Scheduler scheduler) {
     if (!active) {
       // Ensure this event's condition gets set to false
       EventTrigger.setCondition(name, false);

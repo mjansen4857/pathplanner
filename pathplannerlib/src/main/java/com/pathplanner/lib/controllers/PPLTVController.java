@@ -10,9 +10,6 @@ import org.wpilib.math.numbers.N3;
 
 /** LTV following controller */
 public class PPLTVController extends LTVUnicycleController implements PathFollowingController {
-
-  private double lastError = 0;
-
   /**
    * Constructs a linear time-varying unicycle controller with default maximum desired error
    * tolerances of (0.0625 m, 0.125 m, 2 rad) and default maximum desired control effort of (1 m/s,
@@ -49,8 +46,6 @@ public class PPLTVController extends LTVUnicycleController implements PathFollow
   @Override
   public ChassisVelocities calculateRobotRelativeSpeeds(
       Pose2d currentPose, PathPlannerTrajectoryState targetState) {
-    lastError = currentPose.getTranslation().getDistance(targetState.pose.getTranslation());
-
     return calculate(
         currentPose, targetState.pose, targetState.linearVelocity, targetState.fieldSpeeds.omega);
   }
@@ -62,9 +57,7 @@ public class PPLTVController extends LTVUnicycleController implements PathFollow
    * @param currentSpeeds Current robot relative chassis speeds
    */
   @Override
-  public void reset(Pose2d currentPose, ChassisVelocities currentSpeeds) {
-    lastError = 0;
-  }
+  public void reset(Pose2d currentPose, ChassisVelocities currentSpeeds) {}
 
   /**
    * Is this controller for holonomic drivetrains? Used to handle some differences in functionality

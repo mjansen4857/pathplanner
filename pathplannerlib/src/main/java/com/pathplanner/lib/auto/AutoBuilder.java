@@ -2,7 +2,10 @@ package com.pathplanner.lib.auto;
 
 import static org.wpilib.units.Units.MetersPerSecond;
 
-import com.pathplanner.lib.commands.*;
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.commands.PathfindThenFollowPath;
+import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
@@ -12,12 +15,16 @@ import com.pathplanner.lib.util.FlippingUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.wpilib.command2.Command;
-import org.wpilib.command2.Commands;
-import org.wpilib.command2.Subsystem;
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Mechanism;
 import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
@@ -56,7 +63,8 @@ public class AutoBuilder {
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
-      Subsystem... driveRequirements) {
+      Mechanism... driveRequirements) {
+
     if (globals.configured) {
       DriverStationErrors.reportError(
           "Auto builder has already been configured. This is likely in error.", true);
@@ -126,7 +134,7 @@ public class AutoBuilder {
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
-      Subsystem... driveRequirements) {
+      Mechanism... driveRequirements) {
     configure(
         poseSupplier,
         resetPose,
@@ -335,10 +343,16 @@ public class AutoBuilder {
    */
   public static Command pathfindToPoseFlipped(
       Pose2d pose, PathConstraints constraints, double goalEndVelocity) {
-    return Commands.either(
-        pathfindToPose(FlippingUtil.flipFieldPose(pose), constraints, goalEndVelocity),
-        pathfindToPose(pose, constraints, goalEndVelocity),
-        globals.shouldFlipPath);
+    return Command.noRequirements(
+            coro -> {
+              if (globals.shouldFlipPath.getAsBoolean()) {
+                coro.await(
+                    pathfindToPose(FlippingUtil.flipFieldPose(pose), constraints, goalEndVelocity));
+              } else {
+                coro.await(pathfindToPose(pose, constraints, goalEndVelocity));
+              }
+            })
+        .named("[PathPlanner] pathfind to pose");
   }
 
   /**
@@ -452,13 +466,14 @@ public class AutoBuilder {
         options.add(auto);
       }
     }
+
     if (defaultOption == null) {
-      chooser.addDefault("None", Commands.none());
+      chooser.addDefault("None", CommandUtil.DO_NOTHING);
     } else {
-      chooser.addDefault(defaultOption.getName(), defaultOption);
-      chooser.add("None", Commands.none());
+      chooser.addDefault(defaultOption.name(), defaultOption);
+      chooser.add("None", CommandUtil.DO_NOTHING);
     }
-    optionsModifier.apply(options.stream()).forEach(auto -> chooser.add(auto.getName(), auto));
+    optionsModifier.apply(options.stream()).forEach(auto -> chooser.add(auto.name(), auto));
     return chooser;
   }
 
@@ -512,15 +527,16 @@ public class AutoBuilder {
     if (!AutoBuilder.isConfigured()) {
       throw new RuntimeException("AutoBuilder was not configured before use");
     }
-    return Commands.runOnce(
-        () -> {
-          boolean flip = globals.shouldFlipPath.getAsBoolean();
-          if (flip) {
-            globals.resetPose.accept(FlippingUtil.flipFieldPose(bluePose));
-          } else {
-            globals.resetPose.accept(bluePose);
-          }
-        });
+    return Command.noRequirements(
+            _ -> {
+              boolean flip = globals.shouldFlipPath.getAsBoolean();
+              if (flip) {
+                globals.resetPose.accept(FlippingUtil.flipFieldPose(bluePose));
+              } else {
+                globals.resetPose.accept(bluePose);
+              }
+            })
+        .named("[PathPlanner] reset odometry");
   }
 
   /** Functional interface for a function that takes 3 inputs */

@@ -6,22 +6,37 @@ import static org.wpilib.units.Units.Seconds;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.AutoBuilderException;
 import com.pathplanner.lib.auto.CommandUtil;
-import com.pathplanner.lib.events.*;
+import com.pathplanner.lib.events.Event;
+import com.pathplanner.lib.events.EventTrigger;
+import com.pathplanner.lib.events.OneShotTriggerEvent;
+import com.pathplanner.lib.events.PointTowardsZoneTrigger;
+import com.pathplanner.lib.events.TriggerEvent;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.FlippingUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.wpilib.command2.Command;
-import org.wpilib.command2.Commands;
-import org.wpilib.command2.button.Trigger;
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Coroutine;
+import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.Scheduler;
+import org.wpilib.command3.Trigger;
 import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.event.EventLoop;
 import org.wpilib.math.geometry.Pose2d;
@@ -33,7 +48,7 @@ import org.wpilib.units.measure.Time;
 import org.wpilib.util.UsageReporting;
 
 /** A command that loads and runs an autonomous routine built using PathPlanner. */
-public class PathPlannerAuto extends Command {
+public class PathPlannerAuto implements Command {
 
   /** The currently running path name. Used to handle activePath triggers */
   public static String currentPathName = "";
@@ -54,9 +69,25 @@ public class PathPlannerAuto extends Command {
 
   private final EventLoop autoLoop;
 
+  private final Scheduler autoScheduler;
+
   private final Timer autoTimer;
 
   private boolean isRunning = false;
+
+  private String autoName;
+
+  private Set<Mechanism> requirements;
+
+  @Override
+  public String name() {
+    return autoName;
+  }
+
+  @Override
+  public Set<Mechanism> requirements() {
+    return requirements;
+  }
 
   /**
    * Constructs a new PathPlannerAuto command.
@@ -66,7 +97,7 @@ public class PathPlannerAuto extends Command {
    *     autonomous routine
    */
   public PathPlannerAuto(String autoName) {
-    this(autoName, false);
+    this(autoName, false, new HashSet<>());
   }
 
   /**
@@ -80,6 +111,24 @@ public class PathPlannerAuto extends Command {
    *     autonomous routine
    */
   public PathPlannerAuto(String autoName, boolean mirror) {
+    this(autoName, mirror, new HashSet<>());
+  }
+
+  /**
+   * Constructs a new PathPlannerAuto command.
+   *
+   * @param autoName the name of the autonomous routine to load and run
+   * @param mirror Mirror all paths to the other side of the current alliance. For example, if a
+   *     path is on the right of the blue alliance side of the field, it will be mirrored to the
+   *     left of the blue alliance side of the field.
+   * @param requirements the auto's requirements
+   * @throws AutoBuilderException if AutoBuilder is not configured before attempting to load the
+   *     autonomous routine
+   */
+  public PathPlannerAuto(String autoName, boolean mirror, Set<Mechanism> requirements) {
+    this.autoName = autoName;
+    this.requirements = requirements;
+
     if (!AutoBuilder.isConfigured()) {
       throw new AutoBuilderException(
           "AutoBuilder was not configured before attempting to load a PathPlannerAuto from file");
@@ -109,25 +158,24 @@ public class PathPlannerAuto extends Command {
       initFromJson(json, mirror);
     } catch (FileNotFoundException e) {
       DriverStationErrors.reportError(e.getMessage(), e.getStackTrace());
-      autoCommand = Commands.none();
+      autoCommand = null;
     } catch (IOException e) {
       DriverStationErrors.reportError(
           "Failed to read file required by auto: " + autoName, e.getStackTrace());
-      autoCommand = Commands.none();
+      autoCommand = null;
     } catch (ParseException e) {
       DriverStationErrors.reportError(
           "Failed to parse JSON in file required by auto: " + autoName, e.getStackTrace());
-      autoCommand = Commands.none();
+      autoCommand = null;
     } catch (FileVersionException e) {
       DriverStationErrors.reportError(
           "Failed to load auto: " + autoName + ". " + e.getMessage(), e.getStackTrace());
-      autoCommand = Commands.none();
+      autoCommand = null;
     }
 
-    addRequirements(autoCommand.getRequirements());
-    setName(autoName);
     PPLibTelemetry.registerHotReloadAuto(autoName, this);
 
+    this.autoScheduler = Scheduler.createIndependentScheduler();
     this.autoLoop = new EventLoop();
     this.autoTimer = new Timer();
 
@@ -145,8 +193,9 @@ public class PathPlannerAuto extends Command {
     this.autoCommand = autoCommand;
     this.startingPose = startingPose;
 
-    addRequirements(autoCommand.getRequirements());
+    this.requirements = autoCommand.requirements();
 
+    this.autoScheduler = Scheduler.createIndependentScheduler();
     this.autoLoop = new EventLoop();
     this.autoTimer = new Timer();
 
@@ -269,14 +318,13 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create an EventTrigger that will be polled by this auto instead of globally across all path
-   * following commands
+   * Create an EventTrigger that will be polled by this auto.
    *
    * @param eventName The event name that controls this trigger
    * @return EventTrigger for this auto
    */
   public Trigger event(String eventName) {
-    return new EventTrigger(autoLoop, eventName);
+    return new EventTrigger(this, eventName);
   }
 
   /**
@@ -400,14 +448,13 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
-   * Create a PointTowardsZoneTrigger that will be polled by this auto instead of globally across
-   * all path following commands
+   * Create a PointTowardsZoneTrigger that will be polled by this auto.
    *
    * @param zoneName The point towards zone name that controls this trigger
    * @return PointTowardsZoneTrigger for this auto
    */
   public Trigger pointTowardsZone(String zoneName) {
-    return new PointTowardsZoneTrigger(autoLoop, zoneName);
+    return new PointTowardsZoneTrigger(this, zoneName);
   }
 
   /**
@@ -558,34 +605,30 @@ public class PathPlannerAuto extends Command {
    * @return Custom condition trigger
    */
   public Trigger condition(BooleanSupplier condition) {
-    return new Trigger(autoLoop, condition);
+    return new Trigger(autoScheduler, autoLoop, condition);
   }
 
   @Override
-  public void initialize() {
-    autoCommand.initialize();
-    autoTimer.restart();
-    isRunning = true;
-    autoLoop.poll();
-  }
+  public void run(Coroutine coroutine) {
+    coroutine
+        .scheduler()
+        .sideload(
+            coro -> {
+              isRunning = true;
+              autoTimer.restart();
 
-  @Override
-  public void execute() {
-    autoCommand.execute();
-    autoLoop.poll();
-  }
+              while (Scheduler.getDefault().isRunning(this.autoCommand)) {
+                autoLoop.poll();
+                autoScheduler.run();
+                coro.yield();
+              }
 
-  @Override
-  public boolean isFinished() {
-    return autoCommand.isFinished();
-  }
+              // only runs on tick after command ends!
+              autoTimer.stop();
+              isRunning = false;
+            });
 
-  @Override
-  public void end(boolean interrupted) {
-    autoCommand.end(interrupted);
-    autoTimer.stop();
-    isRunning = false;
-    autoLoop.poll();
+    coroutine.await(autoCommand);
   }
 
   /**
@@ -651,7 +694,8 @@ public class PathPlannerAuto extends Command {
       this.startingPose = null;
     }
     if (resetOdom) {
-      this.autoCommand = Commands.sequence(AutoBuilder.resetOdom(this.startingPose), cmd);
+      this.autoCommand =
+          Command.sequence(AutoBuilder.resetOdom(this.startingPose), cmd).withAutomaticName();
     } else {
       this.autoCommand = cmd;
     }
@@ -678,5 +722,15 @@ public class PathPlannerAuto extends Command {
       }
     }
     return paths;
+  }
+
+  /** {@return this auto's event scheduler} */
+  public Scheduler getAutoScheduler() {
+    return autoScheduler;
+  }
+
+  /** {@return this auto's event loop} */
+  public EventLoop getAutoLoop() {
+    return autoLoop;
   }
 }

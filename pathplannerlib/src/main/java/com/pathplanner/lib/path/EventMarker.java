@@ -2,7 +2,7 @@ package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.auto.CommandUtil;
 import org.json.simple.JSONObject;
-import org.wpilib.command2.Command;
+import org.wpilib.command3.Command;
 
 /**
  * Position along the path that will trigger a command when reached

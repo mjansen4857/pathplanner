@@ -1,24 +1,19 @@
 package com.pathplanner.lib.events;
 
-import java.util.HashMap;
-import java.util.function.BooleanSupplier;
-
-import org.wpilib.command3.Trigger;
-
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import java.util.HashMap;
+import java.util.function.BooleanSupplier;
+import org.wpilib.command3.Trigger;
 
-/**
- * A trigger that will be controlled by the robot entering/leaving a point
- * towards zone
- */
+/** A trigger that will be controlled by the robot entering/leaving a point towards zone */
 public class PointTowardsZoneTrigger extends Trigger {
 
   private static final HashMap<String, Boolean> zoneConditions = new HashMap<>();
 
   /**
-   * Create a new PointTowardsZoneTrigger. This is only polled while the given
-   * {@link PathPlannerAuto} is running.
+   * Create a new PointTowardsZoneTrigger. This is only polled while the given {@link
+   * PathPlannerAuto} is running.
    *
    * @param auto The auto whose loop and scheduler we bind to
    * @param name The name of the point towards zone
@@ -28,10 +23,10 @@ public class PointTowardsZoneTrigger extends Trigger {
   }
 
   /**
-   * Create a new PointTowardsZoneTrigger. This is only polled while the given
-   * {@link FollowPathCommand} is running.
+   * Create a new PointTowardsZoneTrigger. This is only polled while the given {@link
+   * FollowPathCommand} is running.
    *
-   * @param cmd  The path-following command whose loop and scheduler we bind to
+   * @param cmd The path-following command whose loop and scheduler we bind to
    * @param name The name of the point towards zone
    */
   public PointTowardsZoneTrigger(FollowPathCommand cmd, String name) {
@@ -55,9 +50,8 @@ public class PointTowardsZoneTrigger extends Trigger {
   /**
    * Set the value of a zone condition
    *
-   * @param name       The name of the condition
-   * @param withinZone Is the robot within the point towards zone with the given
-   *                   name
+   * @param name The name of the condition
+   * @param withinZone Is the robot within the point towards zone with the given name
    */
   protected static void setWithinZone(String name, boolean withinZone) {
     zoneConditions.put(name, withinZone);

@@ -2,8 +2,8 @@ package com.pathplanner.lib.auto;
 
 import static org.wpilib.units.Units.Seconds;
 
+import com.pathplanner.lib.path.PathPlannerPath;
 import java.io.IOException;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -11,18 +11,16 @@ import org.wpilib.command3.Command;
 import org.wpilib.command3.ParallelGroupBuilder;
 import org.wpilib.command3.SequentialGroupBuilder;
 
-import com.pathplanner.lib.path.PathPlannerPath;
-
 /** Utility class for building commands used in autos */
 public class CommandUtil {
 
   /**
-   * Wraps a command with a functional command that calls the command's
-   * initialize, execute, end, and isFinished methods. This allows a command in
-   * the event map to be reused multiple times in different command groups
+   * Wraps a command with a functional command that calls the command's initialize, execute, end,
+   * and isFinished methods. This allows a command in the event map to be reused multiple times in
+   * different command groups
    *
    * @param eventCommand the command to wrap
-   * @param name         name of the command
+   * @param name name of the command
    * @return a functional command that wraps the given command
    */
   public static Command wrappedEventCommand(Command eventCommand, String name) {
@@ -30,20 +28,18 @@ public class CommandUtil {
   }
 
   /** Equivalent to Commandsv2 Commands.none(). */
-  public static final Command DO_NOTHING = Command.noRequirements(_ -> {
-  }).named("[PathPlanner] null");
+  public static final Command DO_NOTHING =
+      Command.noRequirements(_ -> {}).named("[PathPlanner] null");
 
   /**
    * Builds a command from the given JSON object.
    *
-   * @param commandJson     the JSON object to build the command from
+   * @param commandJson the JSON object to build the command from
    * @param loadChoreoPaths Load path commands using choreo trajectories
-   * @param mirror          Should the paths be mirrored
+   * @param mirror Should the paths be mirrored
    * @return a command built from the JSON object
-   * @throws IOException    if attempting to load a path file that does not exist
-   *                        or cannot be read
-   * @throws ParseException If attempting to load a path with JSON that cannot be
-   *                        parsed
+   * @throws IOException if attempting to load a path file that does not exist or cannot be read
+   * @throws ParseException If attempting to load a path with JSON that cannot be parsed
    */
   public static Command commandFromJson(
       JSONObject commandJson, boolean loadChoreoPaths, boolean mirror)
@@ -82,9 +78,10 @@ public class CommandUtil {
   private static Command pathCommandFromData(
       JSONObject dataJson, boolean choreoPath, boolean mirror) throws IOException, ParseException {
     String pathName = (String) dataJson.get("pathName");
-    PathPlannerPath path = choreoPath
-        ? PathPlannerPath.fromChoreoTrajectory(pathName)
-        : PathPlannerPath.fromPathFile(pathName);
+    PathPlannerPath path =
+        choreoPath
+            ? PathPlannerPath.fromChoreoTrajectory(pathName)
+            : PathPlannerPath.fromPathFile(pathName);
     if (mirror) {
       path = path.mirrorPath();
     }

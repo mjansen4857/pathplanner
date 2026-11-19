@@ -1,5 +1,17 @@
 package com.pathplanner.lib.path;
 
+import com.pathplanner.lib.auto.CommandUtil;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.events.Event;
+import com.pathplanner.lib.events.OneShotTriggerEvent;
+import com.pathplanner.lib.events.ScheduleCommandEvent;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.FileVersionException;
+import com.pathplanner.lib.util.FlippingUtil;
+import com.pathplanner.lib.util.GeometryUtil;
+import com.pathplanner.lib.util.PPLibTelemetry;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,7 +27,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -28,19 +39,6 @@ import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.math.util.MathUtil;
 import org.wpilib.system.Filesystem;
 import org.wpilib.util.UsageReporting;
-
-import com.pathplanner.lib.auto.CommandUtil;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.events.Event;
-import com.pathplanner.lib.events.OneShotTriggerEvent;
-import com.pathplanner.lib.events.ScheduleCommandEvent;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-import com.pathplanner.lib.util.DriveFeedforwards;
-import com.pathplanner.lib.util.FileVersionException;
-import com.pathplanner.lib.util.FlippingUtil;
-import com.pathplanner.lib.util.GeometryUtil;
-import com.pathplanner.lib.util.PPLibTelemetry;
 
 /** A PathPlanner path. NOTE: This is not a trajectory and isn't directly followed. */
 public class PathPlannerPath {

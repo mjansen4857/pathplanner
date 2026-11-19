@@ -2,23 +2,6 @@ package com.pathplanner.lib.commands;
 
 import static org.wpilib.units.Units.MetersPerSecond;
 
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
-
-import org.wpilib.command3.Command;
-import org.wpilib.command3.Coroutine;
-import org.wpilib.command3.Mechanism;
-import org.wpilib.math.geometry.Pose2d;
-import org.wpilib.math.geometry.Rotation2d;
-import org.wpilib.math.kinematics.ChassisVelocities;
-import org.wpilib.math.system.DCMotor;
-import org.wpilib.math.util.MathUtil;
-import org.wpilib.system.Timer;
-import org.wpilib.units.measure.LinearVelocity;
-import org.wpilib.util.UsageReporting;
-
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -34,6 +17,21 @@ import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.FlippingUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Coroutine;
+import org.wpilib.command3.Mechanism;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.system.Timer;
+import org.wpilib.units.measure.LinearVelocity;
+import org.wpilib.util.UsageReporting;
 
 /** Base pathfinding command */
 public class PathfindingCommand implements Command {
@@ -87,31 +85,22 @@ public class PathfindingCommand implements Command {
   }
 
   /**
-   * Constructs a new base pathfinding command that will generate a path towards
-   * the given path.
+   * Constructs a new base pathfinding command that will generate a path towards the given path.
    *
-   * @param targetPath     the path to pathfind to
-   * @param constraints    the path constraints to use while pathfinding
-   * @param poseSupplier   a supplier for the robot's current pose
-   * @param speedsSupplier a supplier for the robot's current robot relative
-   *                       speeds
-   * @param output         Output function that accepts robot-relative
-   *                       ChassisSpeeds and feedforwards for
-   *                       each drive motor. If using swerve, these feedforwards
-   *                       will be in FL, FR, BL, BR order. If
-   *                       using a differential drive, they will be in L, R order.
-   *                       <p>
-   *                       NOTE: These feedforwards are assuming unoptimized
-   *                       module states. When you optimize your
-   *                       module states, you will need to reverse the
-   *                       feedforwards for modules that have been flipped
-   * @param controller     Path following controller that will be used to follow
-   *                       the path
-   * @param robotConfig    The robot configuration
-   * @param shouldFlipPath Should the target path be flipped to the other side of
-   *                       the field? This
-   *                       will maintain a global blue alliance origin.
-   * @param requirements   the subsystems required by this command
+   * @param targetPath the path to pathfind to
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
+   * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
       PathPlannerPath targetPath,
@@ -146,7 +135,8 @@ public class PathfindingCommand implements Command {
     this.requirements = Set.of(requirements);
     this.targetPath = targetPath;
     this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
-    this.originalTargetPose = new Pose2d(this.targetPose.getTranslation(), this.targetPose.getRotation());
+    this.originalTargetPose =
+        new Pose2d(this.targetPose.getTranslation(), this.targetPose.getRotation());
     this.goalEndState = new GoalEndState(goalEndVel, targetRotation);
     this.constraints = constraints;
     this.controller = controller;
@@ -161,32 +151,23 @@ public class PathfindingCommand implements Command {
   }
 
   /**
-   * Constructs a new base pathfinding command that will generate a path towards
-   * the given pose.
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
    *
-   * @param targetPose     the pose to pathfind to, the rotation component is only
-   *                       relevant for
-   *                       holonomic drive trains
-   * @param constraints    the path constraints to use while pathfinding
-   * @param goalEndVel     The goal end velocity when reaching the target pose
-   * @param poseSupplier   a supplier for the robot's current pose
-   * @param speedsSupplier a supplier for the robot's current robot relative
-   *                       speeds
-   * @param output         Output function that accepts robot-relative
-   *                       ChassisSpeeds and feedforwards for
-   *                       each drive motor. If using swerve, these feedforwards
-   *                       will be in FL, FR, BL, BR order. If
-   *                       using a differential drive, they will be in L, R order.
-   *                       <p>
-   *                       NOTE: These feedforwards are assuming unoptimized
-   *                       module states. When you optimize your
-   *                       module states, you will need to reverse the
-   *                       feedforwards for modules that have been flipped
-   * @param controller     Path following controller that will be used to follow
-   *                       the path
-   * @param robotConfig    The robot configuration
-   * @param name           Name of the command
-   * @param requirements   the subsystems required by this command
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the target pose
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param name Name of the command
+   * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
       Pose2d targetPose,
@@ -203,7 +184,8 @@ public class PathfindingCommand implements Command {
     Pathfinding.ensureInitialized();
     this.targetPath = null;
     this.targetPose = targetPose;
-    this.originalTargetPose = new Pose2d(this.targetPose.getTranslation(), this.targetPose.getRotation());
+    this.originalTargetPose =
+        new Pose2d(this.targetPose.getTranslation(), this.targetPose.getRotation());
     this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation());
     this.constraints = constraints;
     this.controller = controller;
@@ -219,32 +201,23 @@ public class PathfindingCommand implements Command {
   }
 
   /**
-   * Constructs a new base pathfinding command that will generate a path towards
-   * the given pose.
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
    *
-   * @param targetPose     the pose to pathfind to, the rotation component is only
-   *                       relevant for
-   *                       holonomic drive trains
-   * @param constraints    the path constraints to use while pathfinding
-   * @param goalEndVel     The goal end velocity when reaching the target pose
-   * @param poseSupplier   a supplier for the robot's current pose
-   * @param speedsSupplier a supplier for the robot's current robot relative
-   *                       speeds
-   * @param output         Output function that accepts robot-relative
-   *                       ChassisSpeeds and feedforwards for
-   *                       each drive motor. If using swerve, these feedforwards
-   *                       will be in FL, FR, BL, BR order. If
-   *                       using a differential drive, they will be in L, R order.
-   *                       <p>
-   *                       NOTE: These feedforwards are assuming unoptimized
-   *                       module states. When you optimize your
-   *                       module states, you will need to reverse the
-   *                       feedforwards for modules that have been flipped
-   * @param controller     Path following controller that will be used to follow
-   *                       the path
-   * @param robotConfig    The robot configuration
-   * @param name           Name of the command
-   * @param requirements   the subsystems required by this command
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the target pose
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param name Name of the command
+   * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
       Pose2d targetPose,
@@ -271,31 +244,22 @@ public class PathfindingCommand implements Command {
   }
 
   /**
-   * Constructs a new base pathfinding command that will generate a path towards
-   * the given pose.
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
    *
-   * @param targetPose     the pose to pathfind to, the rotation component is only
-   *                       relevant for
-   *                       holonomic drive trains
-   * @param constraints    the path constraints to use while pathfinding
-   * @param poseSupplier   a supplier for the robot's current pose
-   * @param speedsSupplier a supplier for the robot's current robot relative
-   *                       speeds
-   * @param output         Output function that accepts robot-relative
-   *                       ChassisSpeeds and feedforwards for
-   *                       each drive motor. If using swerve, these feedforwards
-   *                       will be in FL, FR, BL, BR order. If
-   *                       using a differential drive, they will be in L, R order.
-   *                       <p>
-   *                       NOTE: These feedforwards are assuming unoptimized
-   *                       module states. When you optimize your
-   *                       module states, you will need to reverse the
-   *                       feedforwards for modules that have been flipped
-   * @param controller     Path following controller that will be used to follow
-   *                       the path
-   * @param robotConfig    The robot configuration
-   * @param name           Name of the command
-   * @param requirements   the subsystems required by this command
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param name Name of the command
+   * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
       Pose2d targetPose,
@@ -321,31 +285,22 @@ public class PathfindingCommand implements Command {
   }
 
   /**
-   * Constructs a new base pathfinding command that will generate a path towards
-   * the given pose.
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
    *
-   * @param targetPose     the pose to pathfind to, the rotation component is only
-   *                       relevant for
-   *                       holonomic drive trains
-   * @param constraints    the path constraints to use while pathfinding
-   * @param goalEndVel     The goal end velocity when reaching the target pose
-   * @param poseSupplier   a supplier for the robot's current pose
-   * @param speedsSupplier a supplier for the robot's current robot relative
-   *                       speeds
-   * @param output         Output function that accepts robot-relative
-   *                       ChassisSpeeds and feedforwards for
-   *                       each drive motor. If using swerve, these feedforwards
-   *                       will be in FL, FR, BL, BR order. If
-   *                       using a differential drive, they will be in L, R order.
-   *                       <p>
-   *                       NOTE: These feedforwards are assuming unoptimized
-   *                       module states. When you optimize your
-   *                       module states, you will need to reverse the
-   *                       feedforwards for modules that have been flipped
-   * @param controller     Path following controller that will be used to follow
-   *                       the path
-   * @param robotConfig    The robot configuration
-   * @param requirements   the subsystems required by this command
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the target pose
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
       Pose2d targetPose,
@@ -371,31 +326,22 @@ public class PathfindingCommand implements Command {
   }
 
   /**
-   * Constructs a new base pathfinding command that will generate a path towards
-   * the given pose.
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
    *
-   * @param targetPose     the pose to pathfind to, the rotation component is only
-   *                       relevant for
-   *                       holonomic drive trains
-   * @param constraints    the path constraints to use while pathfinding
-   * @param goalEndVel     The goal end velocity when reaching the target pose
-   * @param poseSupplier   a supplier for the robot's current pose
-   * @param speedsSupplier a supplier for the robot's current robot relative
-   *                       speeds
-   * @param output         Output function that accepts robot-relative
-   *                       ChassisSpeeds and feedforwards for
-   *                       each drive motor. If using swerve, these feedforwards
-   *                       will be in FL, FR, BL, BR order. If
-   *                       using a differential drive, they will be in L, R order.
-   *                       <p>
-   *                       NOTE: These feedforwards are assuming unoptimized
-   *                       module states. When you optimize your
-   *                       module states, you will need to reverse the
-   *                       feedforwards for modules that have been flipped
-   * @param controller     Path following controller that will be used to follow
-   *                       the path
-   * @param robotConfig    The robot configuration
-   * @param requirements   the subsystems required by this command
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the target pose
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
       Pose2d targetPose,
@@ -421,30 +367,21 @@ public class PathfindingCommand implements Command {
   }
 
   /**
-   * Constructs a new base pathfinding command that will generate a path towards
-   * the given pose.
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
    *
-   * @param targetPose     the pose to pathfind to, the rotation component is only
-   *                       relevant for
-   *                       holonomic drive trains
-   * @param constraints    the path constraints to use while pathfinding
-   * @param poseSupplier   a supplier for the robot's current pose
-   * @param speedsSupplier a supplier for the robot's current robot relative
-   *                       speeds
-   * @param output         Output function that accepts robot-relative
-   *                       ChassisSpeeds and feedforwards for
-   *                       each drive motor. If using swerve, these feedforwards
-   *                       will be in FL, FR, BL, BR order. If
-   *                       using a differential drive, they will be in L, R order.
-   *                       <p>
-   *                       NOTE: These feedforwards are assuming unoptimized
-   *                       module states. When you optimize your
-   *                       module states, you will need to reverse the
-   *                       feedforwards for modules that have been flipped
-   * @param controller     Path following controller that will be used to follow
-   *                       the path
-   * @param robotConfig    The robot configuration
-   * @param requirements   the subsystems required by this command
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
       Pose2d targetPose,
@@ -475,7 +412,8 @@ public class PathfindingCommand implements Command {
     Pose2d currentPose = poseSupplier.get();
     controller.reset(currentPose, speedsSupplier.get());
     if (targetPath != null) {
-      originalTargetPose = new Pose2d(this.targetPath.getPoint(0).position, originalTargetPose.getRotation());
+      originalTargetPose =
+          new Pose2d(this.targetPath.getPoint(0).position, originalTargetPose.getRotation());
       if (shouldFlipPath.getAsBoolean()) {
         targetPose = FlippingUtil.flipFieldPose(this.originalTargetPose);
         goalEndState = new GoalEndState(goalEndState.velocityMPS(), targetPose.getRotation());
@@ -496,33 +434,39 @@ public class PathfindingCommand implements Command {
     PathPlannerLogging.logCurrentPose(currentPose);
     PPLibTelemetry.setCurrentPose(currentPose);
     // Skip new paths if we are close to the end
-    boolean skipUpdates = currentTrajectory != null
-        && currentPose
-            .getTranslation()
-            .getDistance(currentTrajectory.getEndState().pose.getTranslation()) < 2.0;
+    boolean skipUpdates =
+        currentTrajectory != null
+            && currentPose
+                    .getTranslation()
+                    .getDistance(currentTrajectory.getEndState().pose.getTranslation())
+                < 2.0;
 
     if (!skipUpdates && Pathfinding.isNewPathAvailable()) {
       currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);
       if (currentPath != null) {
-        currentTrajectory = new PathPlannerTrajectory(
-            currentPath, currentSpeeds, currentPose.getRotation(), robotConfig);
+        currentTrajectory =
+            new PathPlannerTrajectory(
+                currentPath, currentSpeeds, currentPose.getRotation(), robotConfig);
         if (!Double.isFinite(currentTrajectory.getTotalTimeSeconds())) {
           finish = true;
           return;
-
         }
         // Find the two closest states in front of and behind robot
         int closestState1Idx = 0;
         int closestState2Idx = 1;
         while (closestState2Idx < currentTrajectory.getStates().size() - 1) {
-          double closest2Dist = currentTrajectory
-              .getState(closestState2Idx).pose
-              .getTranslation()
-              .getDistance(currentPose.getTranslation());
-          double nextDist = currentTrajectory
-              .getState(closestState2Idx + 1).pose
-              .getTranslation()
-              .getDistance(currentPose.getTranslation());
+          double closest2Dist =
+              currentTrajectory
+                  .getState(closestState2Idx)
+                  .pose
+                  .getTranslation()
+                  .getDistance(currentPose.getTranslation());
+          double nextDist =
+              currentTrajectory
+                  .getState(closestState2Idx + 1)
+                  .pose
+                  .getTranslation()
+                  .getDistance(currentPose.getTranslation());
           if (nextDist < closest2Dist) {
             closestState1Idx++;
             closestState2Idx++;
@@ -534,8 +478,10 @@ public class PathfindingCommand implements Command {
         // This will account for the delay in pathfinding
         var closestState1 = currentTrajectory.getState(closestState1Idx);
         var closestState2 = currentTrajectory.getState(closestState2Idx);
-        double d = closestState1.pose.getTranslation().getDistance(closestState2.pose.getTranslation());
-        double t = (currentPose.getTranslation().getDistance(closestState1.pose.getTranslation())) / d;
+        double d =
+            closestState1.pose.getTranslation().getDistance(closestState2.pose.getTranslation());
+        double t =
+            (currentPose.getTranslation().getDistance(closestState1.pose.getTranslation())) / d;
         t = Math.clamp(t, 0.0, 1.0);
         timeOffset = MathUtil.lerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
         // If the robot is stationary and at the start of the path, set the time offset
@@ -556,7 +502,8 @@ public class PathfindingCommand implements Command {
 
     if (currentTrajectory != null) {
       var targetState = currentTrajectory.sample(timer.get() + timeOffset);
-      ChassisVelocities targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
+      ChassisVelocities targetSpeeds =
+          controller.calculateRobotRelativeSpeeds(currentPose, targetState);
       double currentVel = Math.hypot(currentSpeeds.vx, currentSpeeds.vy);
       PPLibTelemetry.setCurrentPose(currentPose);
       PPLibTelemetry.setTargetPose(targetState.pose);
@@ -569,15 +516,15 @@ public class PathfindingCommand implements Command {
   }
 
   boolean isFinished() {
-    if (finish)
-      return true;
+    if (finish) return true;
 
     if (targetPath != null && !targetPath.isChoreoPath()) {
       Pose2d currentPose = poseSupplier.get();
       ChassisVelocities currentSpeeds = speedsSupplier.get();
       double currentVel = Math.hypot(currentSpeeds.vx, currentSpeeds.vy);
       double stoppingDistance = Math.pow(currentVel, 2) / (2 * constraints.maxAccelerationMPSSq());
-      return currentPose.getTranslation().getDistance(targetPose.getTranslation()) <= stoppingDistance;
+      return currentPose.getTranslation().getDistance(targetPose.getTranslation())
+          <= stoppingDistance;
     }
     if (currentTrajectory != null) {
       return timer.hasElapsed(currentTrajectory.getTotalTimeSeconds() - timeOffset);
@@ -618,24 +565,24 @@ public class PathfindingCommand implements Command {
    */
   public static Command warmupCommand() {
     return new PathfindingCommand(
-        new Pose2d(15.0, 4.0, Rotation2d.k180deg),
-        new PathConstraints(4, 3, 4, 4),
-        () -> new Pose2d(1.5, 4, Rotation2d.ZERO),
-        ChassisVelocities::new,
-        (speeds, feedforwards) -> {
-        },
-        new PPHolonomicDriveController(
-            new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
-        new RobotConfig(
-            75,
-            6.8,
-            new ModuleConfig(
-                0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0, 1),
-            0.55),
-        "[PathPlanner] PathfindingCommand: internal warmup")
-        .andThen(Command
-            .noRequirements(_ -> System.out.println("[PathPlanner] PathfindingCommand: finished warmup"))
-            .named("[PathPlanner] PathfindingCommand: notify finished warmup"))
+            new Pose2d(15.0, 4.0, Rotation2d.k180deg),
+            new PathConstraints(4, 3, 4, 4),
+            () -> new Pose2d(1.5, 4, Rotation2d.ZERO),
+            ChassisVelocities::new,
+            (speeds, feedforwards) -> {},
+            new PPHolonomicDriveController(
+                new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
+            new RobotConfig(
+                75,
+                6.8,
+                new ModuleConfig(
+                    0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0, 1),
+                0.55),
+            "[PathPlanner] PathfindingCommand: internal warmup")
+        .andThen(
+            Command.noRequirements(
+                    _ -> System.out.println("[PathPlanner] PathfindingCommand: finished warmup"))
+                .named("[PathPlanner] PathfindingCommand: notify finished warmup"))
         .named("[PathPlanner] PathfindingCommand: warmup");
   }
 }

@@ -57,8 +57,7 @@ public class PPLTVController extends LTVUnicycleController implements PathFollow
    * @param currentSpeeds Current robot relative chassis speeds
    */
   @Override
-  public void reset(Pose2d currentPose, ChassisVelocities currentSpeeds) {
-  }
+  public void reset(Pose2d currentPose, ChassisVelocities currentSpeeds) {}
 
   /**
    * Is this controller for holonomic drivetrains? Used to handle some differences in functionality

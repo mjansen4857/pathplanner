@@ -22,10 +22,13 @@ public class OneShotTriggerEvent extends Event {
   public OneShotTriggerEvent(double timestamp, String name) {
     super(timestamp);
     this.name = name;
-    this.resetCommand = Command.noRequirements(coro -> {
-      coro.yield();
-      EventTrigger.setCondition(name, false);
-    }).named("[PathPlanner] reset command for OneShotTriggerEvent '" + name + "'");
+    this.resetCommand =
+        Command.noRequirements(
+                coro -> {
+                  coro.yield();
+                  EventTrigger.setCondition(name, false);
+                })
+            .named("[PathPlanner] reset command for OneShotTriggerEvent '" + name + "'");
   }
 
   /**

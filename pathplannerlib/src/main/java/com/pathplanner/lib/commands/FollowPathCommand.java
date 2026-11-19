@@ -1,30 +1,5 @@
 package com.pathplanner.lib.commands;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.PriorityQueue;
-import java.util.Queue;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
-
-import org.wpilib.command3.Command;
-import org.wpilib.command3.Coroutine;
-import org.wpilib.command3.Mechanism;
-import org.wpilib.command3.Scheduler;
-import org.wpilib.event.EventLoop;
-import org.wpilib.math.geometry.Pose2d;
-import org.wpilib.math.geometry.Rotation2d;
-import org.wpilib.math.kinematics.ChassisVelocities;
-import org.wpilib.math.system.DCMotor;
-import org.wpilib.system.Timer;
-
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -41,6 +16,29 @@ import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Coroutine;
+import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.Scheduler;
+import org.wpilib.event.EventLoop;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.system.Timer;
 
 /** Base command for following a path */
 public class FollowPathCommand implements Command {
@@ -86,30 +84,20 @@ public class FollowPathCommand implements Command {
   /**
    * Construct a base path following command
    *
-   * @param path           The path to follow
-   * @param poseSupplier   Function that supplies the current field-relative pose
-   *                       of the robot
-   * @param speedsSupplier Function that supplies the current robot-relative
-   *                       chassis speeds
-   * @param output         Output function that accepts robot-relative
-   *                       ChassisSpeeds and feedforwards for
-   *                       each drive motor. If using swerve, these feedforwards
-   *                       will be in FL, FR, BL, BR order. If
-   *                       using a differential drive, they will be in L, R order.
-   *                       <p>
-   *                       NOTE: These feedforwards are assuming unoptimized
-   *                       module states. When you optimize your
-   *                       module states, you will need to reverse the
-   *                       feedforwards for modules that have been flipped
-   * @param controller     Path following controller that will be used to follow
-   *                       the path
-   * @param robotConfig    The robot configuration
-   * @param shouldFlipPath Should the path be flipped to the other side of the
-   *                       field? This will
-   *                       maintain a global blue alliance origin.
-   * @param name           Name of the command
-   * @param requirements   Subsystems required by this command, usually just the
-   *                       drive subsystem
+   * @param path The path to follow
+   * @param poseSupplier Function that supplies the current field-relative pose of the robot
+   * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+   *     maintain a global blue alliance origin.
+   * @param name Name of the command
+   * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathCommand(
       PathPlannerPath path,
@@ -144,36 +132,27 @@ public class FollowPathCommand implements Command {
 
     this.path = this.originalPath;
     // Ensure the ideal trajectory is generated
-    Optional<PathPlannerTrajectory> idealTrajectory = this.path.getIdealTrajectory(this.robotConfig);
+    Optional<PathPlannerTrajectory> idealTrajectory =
+        this.path.getIdealTrajectory(this.robotConfig);
     idealTrajectory.ifPresent(traj -> this.trajectory = traj);
   }
 
   /**
    * Construct a base path following command named based on the path's name
    *
-   * @param path           The path to follow
-   * @param poseSupplier   Function that supplies the current field-relative pose
-   *                       of the robot
-   * @param speedsSupplier Function that supplies the current robot-relative
-   *                       chassis speeds
-   * @param output         Output function that accepts robot-relative
-   *                       ChassisSpeeds and feedforwards for
-   *                       each drive motor. If using swerve, these feedforwards
-   *                       will be in FL, FR, BL, BR order. If
-   *                       using a differential drive, they will be in L, R order.
-   *                       <p>
-   *                       NOTE: These feedforwards are assuming unoptimized
-   *                       module states. When you optimize your
-   *                       module states, you will need to reverse the
-   *                       feedforwards for modules that have been flipped
-   * @param controller     Path following controller that will be used to follow
-   *                       the path
-   * @param robotConfig    The robot configuration
-   * @param shouldFlipPath Should the path be flipped to the other side of the
-   *                       field? This will
-   *                       maintain a global blue alliance origin.
-   * @param requirements   Subsystems required by this command, usually just the
-   *                       drive subsystem
+   * @param path The path to follow
+   * @param poseSupplier Function that supplies the current field-relative pose of the robot
+   * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+   *     maintain a global blue alliance origin.
+   * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathCommand(
       PathPlannerPath path,
@@ -207,20 +186,24 @@ public class FollowPathCommand implements Command {
   }
 
   private final Map<Command, Boolean> eventCommands = new HashMap<>();
-  private final Queue<Event> upcomingEvents = new PriorityQueue<>(
-      Comparator.comparingDouble(Event::getTimestampSeconds));
+  private final Queue<Event> upcomingEvents =
+      new PriorityQueue<>(Comparator.comparingDouble(Event::getTimestampSeconds));
 
-  private PathPlannerTrajectory setupTrajectory(Pose2d currentPose, ChassisVelocities currentSpeeds) {
+  private PathPlannerTrajectory setupTrajectory(
+      Pose2d currentPose, ChassisVelocities currentSpeeds) {
     if (path.getIdealStartingState() != null) {
       // Check if we match the ideal starting state
       double linearVel = Math.hypot(currentSpeeds.vx, currentSpeeds.vy);
-      boolean idealVelocity = Math.abs(linearVel - path.getIdealStartingState().velocityMPS()) <= 0.25;
-      boolean idealRotation = !robotConfig.isHolonomic
-          || Math.abs(
-              currentPose
-                  .getRotation()
-                  .minus(path.getIdealStartingState().rotation())
-                  .getDegrees()) <= 30.0;
+      boolean idealVelocity =
+          Math.abs(linearVel - path.getIdealStartingState().velocityMPS()) <= 0.25;
+      boolean idealRotation =
+          !robotConfig.isHolonomic
+              || Math.abs(
+                      currentPose
+                          .getRotation()
+                          .minus(path.getIdealStartingState().rotation())
+                          .getDegrees())
+                  <= 30.0;
       if (idealVelocity && idealRotation) {
         // We can use the ideal trajectory
         return path.getIdealTrajectory(robotConfig).orElseThrow();
@@ -281,7 +264,8 @@ public class FollowPathCommand implements Command {
     Pose2d currentPose = poseSupplier.get();
     ChassisVelocities currentSpeeds = speedsSupplier.get();
 
-    ChassisVelocities targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
+    ChassisVelocities targetSpeeds =
+        controller.calculateRobotRelativeSpeeds(currentPose, targetState);
     double currentVel = Math.hypot(currentSpeeds.vx, currentSpeeds.vy);
     PPLibTelemetry.setCurrentPose(currentPose);
     PathPlannerLogging.logCurrentPose(currentPose);
@@ -292,7 +276,8 @@ public class FollowPathCommand implements Command {
     output.accept(targetSpeeds, targetState.feedforwards);
 
     // Check for events that should be handled this loop
-    while (!this.upcomingEvents.isEmpty() && currentTime >= this.upcomingEvents.peek().getTimestampSeconds()) {
+    while (!this.upcomingEvents.isEmpty()
+        && currentTime >= this.upcomingEvents.peek().getTimestampSeconds()) {
       this.upcomingEvents.poll().handleEvent(this.eventScheduler);
     }
 
@@ -301,8 +286,7 @@ public class FollowPathCommand implements Command {
     this.eventLoop.poll();
 
     double totalTime = trajectory.getTotalTimeSeconds();
-    if (this.timer.hasElapsed(totalTime) || !Double.isFinite(totalTime))
-      return false;
+    if (this.timer.hasElapsed(totalTime) || !Double.isFinite(totalTime)) return false;
     return true;
   }
 
@@ -332,37 +316,39 @@ public class FollowPathCommand implements Command {
   }
 
   /**
-   * Create a command to warmup on-the-fly generation, replanning, and the path
-   * following command
+   * Create a command to warmup on-the-fly generation, replanning, and the path following command
    *
    * @return Path following warmup command
    */
   public static Command warmupCommand() {
-    List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(
-        new Pose2d(0.0, 0.0, Rotation2d.ZERO), new Pose2d(6.0, 6.0, Rotation2d.ZERO));
-    PathPlannerPath path = new PathPlannerPath(
-        waypoints,
-        new PathConstraints(4.0, 4.0, 4.0, 4.0),
-        new IdealStartingState(0.0, Rotation2d.ZERO),
-        new GoalEndState(0.0, Rotation2d.CW_90DEG));
+    List<Waypoint> waypoints =
+        PathPlannerPath.waypointsFromPoses(
+            new Pose2d(0.0, 0.0, Rotation2d.ZERO), new Pose2d(6.0, 6.0, Rotation2d.ZERO));
+    PathPlannerPath path =
+        new PathPlannerPath(
+            waypoints,
+            new PathConstraints(4.0, 4.0, 4.0, 4.0),
+            new IdealStartingState(0.0, Rotation2d.ZERO),
+            new GoalEndState(0.0, Rotation2d.CW_90DEG));
     return new FollowPathCommand(
-        path,
-        () -> Pose2d.ZERO,
-        ChassisVelocities::new,
-        (speeds, feedforwards) -> {
-        },
-        new PPHolonomicDriveController(
-            new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
-        new RobotConfig(
-            75,
-            6.8,
-            new ModuleConfig(
-                0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0, 1),
-            0.55),
-        () -> true, "[PathPlanner] FollowPathCommand: internal warmup")
-        .andThen(Command
-            .noRequirements(_ -> System.out.println("[PathPlanner] FollowPathCommand: finished warmup"))
-            .named("[PathPlanner] FollowPathCommand: notify finished warmup"))
+            path,
+            () -> Pose2d.ZERO,
+            ChassisVelocities::new,
+            (speeds, feedforwards) -> {},
+            new PPHolonomicDriveController(
+                new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
+            new RobotConfig(
+                75,
+                6.8,
+                new ModuleConfig(
+                    0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0, 1),
+                0.55),
+            () -> true,
+            "[PathPlanner] FollowPathCommand: internal warmup")
+        .andThen(
+            Command.noRequirements(
+                    _ -> System.out.println("[PathPlanner] FollowPathCommand: finished warmup"))
+                .named("[PathPlanner] FollowPathCommand: notify finished warmup"))
         .named("[PathPlanner] FollowPathCommand: warmup");
   }
 
